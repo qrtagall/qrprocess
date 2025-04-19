@@ -12,26 +12,27 @@
     }
 
     body {
-      margin: 0;
-      padding: 0;
-      background: #f4f4f4;
-      font-family: 'Segoe UI', sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+		margin: 0;
+		padding: 0;
+		background: #f4f4f4;
+		font-family: 'Segoe UI', sans-serif;
+		min-height: 100vh;
+		display: block; 
+		overflow-y: auto; 
     }
 
     #popup {
 	  position: relative;
-      background: white;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.1);
-      text-align: center;
-      width: 320px;
-      animation: fadeIn 0.4s ease;
-    }
+	  background: white;
+	  padding: 30px;
+	  border-radius: 12px;
+	  box-shadow: 0 0 20px rgba(0,0,0,0.1);
+	  text-align: center;
+	  width: 320px;
+	  margin: 80px auto; /* this centers it with scroll */
+	  animation: fadeIn 0.4s ease;
+	}
+
 
     h2 {
       margin-top: 0;
@@ -150,33 +151,72 @@
 	  font-family: monospace;
 	}
 
+	#mainContent {
+	  display: flex;
+	  flex-direction: column;
+	  align-items: center;
+	  max-width: 800px;
+	  margin: 40px auto;
+	  padding: 30px;
+	  background-color: white;
+	  border-radius: 12px;
+	  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+	}
+
+	#mainContent h2 {
+	  color: var(--primary);
+	  font-size: 24px;
+	  margin-bottom: 20px;
+	  text-align: center;
+	}
+
+	#mainContent p {
+	  width: 100%;
+	  font-size: 16px;
+	  text-align: left;
+	  margin: 10px 0;
+	  line-height: 1.5;
+	}
+
+	#mainContent iframe,
+	#mainContent img {
+	  max-width: 100%;
+	  border: 1px solid #ccc;
+	  border-radius: 8px;
+	  margin: 20px 0;
+	}
+
 
   </style>
 </head>
 <body>
-  <div id="popup">
-    <h2>🔍 Verifying QR ID</h2>
-    <p id="idText" style="font-size:14px; color:gray;"></p>
-    <div id="result">Processing...</div>
-    
-	<div id="loginSection" class="login-options" style="display:none;">
-		  <p>Login to Claim as Owner of this QR</p>
-		  <div class="auth-buttons-vertical">
-			<button class="auth-button-box enabled" onclick="googleLogin()">
-			  <img class="auth-logo" src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo">
-			  <span>Continue with Google</span>
-			</button>
-			<button class="auth-button-box disabled">
-			  <img class="auth-logo" src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="Apple Logo">
-			  <span>Apple</span>
-			</button>
-		  </div>
+
+<!-- Spinner & Popup -->
+	<div id="popup">
+	  <h2>🔍 Verifying QR ID</h2>
+	  <p id="idText" style="font-size:14px; color:gray;"></p>
+	  <div id="spinner" style="margin-top:20px;">⏳ Please wait...</div>
+	  <div id="result" style="display:none;"></div>
+
+	  <div id="loginSection" class="login-options" style="display:none;">
+		<p>Login to Claim as Owner of this QR</p>
+		<div class="auth-buttons-vertical">
+		  <button class="auth-button-box enabled" onclick="googleLogin()">
+			<img class="auth-logo" src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo">
+			<span>Continue with Google</span>
+		  </button>
 		</div>
-		
-	<div id="versionTag">V-1.0</div>	
+	  </div>
 
+	  <div id="versionTag">V-2.0</div>
+	</div>
 
-  </div>
+	<!-- Main Content for Verified IDs -->
+	<div id="mainContent" style="display:none; padding:30px; max-width:600px; font-family:'Segoe UI', sans-serif;">
+	  <h2 id="assetTitle" style="color:var(--primary); font-size:24px;"></h2>
+	  <div id="assetLinks" style="margin-top:10px;"></div>
+	</div>
+
 
   <script>
     const SALT = "QRTagall@2025";
@@ -212,10 +252,13 @@
     async function verifyId() {
   const id = getQueryParam("id");
   const resultDiv = document.getElementById("result");
+  const spinner = document.getElementById("spinner");
   const idText = document.getElementById("idText");
   const loginSection = document.getElementById("loginSection");
 
   if (!id) {
+    spinner.style.display = "none";
+    resultDiv.style.display = "block";
     resultDiv.textContent = "❌ No ID provided in URL.";
     resultDiv.style.color = "var(--error)";
     return;
@@ -224,6 +267,8 @@
   idText.textContent = id;
 
   if (!id.includes("_")) {
+    spinner.style.display = "none";
+    resultDiv.style.display = "block";
     resultDiv.textContent = "❌ Invalid format. Expected format: TIMESTAMP_SIGNATURE";
     resultDiv.style.color = "var(--error)";
     return;
@@ -232,6 +277,8 @@
   const [timestamp, hashPart] = id.split("_");
 
   if (!/^\d{17}$/.test(timestamp)) {
+    spinner.style.display = "none";
+    resultDiv.style.display = "block";
     resultDiv.textContent = "❌ Invalid timestamp format.";
     resultDiv.style.color = "var(--error)";
     return;
@@ -241,15 +288,152 @@
   const isValid = expectedHash.startsWith(hashPart);
 
   if (isValid) {
-    resultDiv.textContent = "✅ Valid ID (verified as QRTagAll-issued)";
-    resultDiv.style.color = "var(--valid)";
-    loginSection.style.display = "block";  // ✅ THIS IS IMPORTANT
+    await fetchAssetData(id);
   } else {
+    spinner.style.display = "none";
+    resultDiv.style.display = "block";
     resultDiv.textContent = "❌ Invalid ID (Signature mismatch or tampered)";
     resultDiv.style.color = "var(--error)";
     loginSection.style.display = "none";
   }
 }
+
+
+	function convertDriveUrl(value) {
+	  const match = value.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+	  if (match) {
+		const fileId = match[1];
+		return `https://drive.google.com/uc?export=download&id=${fileId}`;
+	  }
+	  return value;
+	}
+
+
+
+
+async function resolveAndRender(value, i) {
+value = convertDriveUrl(value); // 👈 Patch Google Drive link if needed
+  try {
+    const resolveUrl = `https://script.google.com/macros/s/AKfycbzgrQ9JzTzDY57cxlWs-g4kbiCb4C5j9X54BzE2eniGp3LQYKSFqNr5-yai4ZJmfjO83Q/exec?resolve=${encodeURIComponent(value)}`;
+    const res = await fetch(resolveUrl);
+    const json = await res.json();
+
+    if (json.error) return `<p>⚠️ Couldn’t load Info ${i}</p>`;
+
+    const finalUrl = json.resolvedUrl;
+    const contentType = json.contentType;
+
+    if (/image/i.test(contentType)) {
+      return `<div><b>🖼️ Image ${i}</b><br><img src="${finalUrl}" style="max-width:100%;"></div>`;
+    } else if (/video/i.test(contentType)) {
+      return `<div><b>🎥 Video ${i}</b><br><video controls width="100%"><source src="${finalUrl}"></video></div>`;
+    } else if (/pdf/i.test(contentType)) {
+      return `<p>📄 <a href="${finalUrl}" target="_blank">View PDF ${i}</a></p>`;
+    } else {
+      return `<p>🔗 <a href="${finalUrl}" target="_blank">Link ${i}</a></p>`;
+    }
+
+  } catch (e) {
+    return `<p>⚠️ Error loading Info ${i}</p>`;
+  }
+}
+
+
+
+
+async function renderInfoBlock(data) {
+  let html = "";
+
+  for (let i = 1; i <= 10; i++) {
+    const value = data[`info${i}`];
+    if (!value) continue;
+
+    if (value.startsWith("http")) {
+
+      // ✅ Special handling for Google Drive links
+      
+		if (/drive\.google\.com/.test(value)) {
+		  const match = value.match(/\/d\/([^/]+)/);
+		  const fileId = match ? match[1] : null;
+
+		  if (fileId) {
+			const iframePreview = `https://drive.google.com/file/d/${fileId}/preview`;
+
+			html += `
+			  <div style="margin-bottom:20px;">
+				<iframe src="${iframePreview}" width="100%" height="400" frameborder="0"
+				  allow="autoplay; encrypted-media" 
+				  sandbox="allow-scripts allow-same-origin allow-presentation">
+				</iframe>
+			  </div>`;
+		  } else {
+			html += `<p><a href="${value}" target="_blank">🔗 Open Drive File</a></p>`;
+		  }
+		}
+	  
+	  
+	  else {
+        // 🌐 All other URLs — resolve and render
+        html += await resolveAndRender(value, i);
+      }
+
+    } else {
+      // 📝 Plain text content
+      html += `<p>📝 <b>Note ${i}:</b> ${value}</p>`;
+    }
+  }
+
+  return html;
+}
+
+
+
+
+
+
+
+async function fetchAssetData(id) {
+  const popup = document.getElementById("popup");
+  const mainContent = document.getElementById("mainContent");
+  const assetTitle = document.getElementById("assetTitle");
+  const assetLinks = document.getElementById("assetLinks");
+  const resultDiv = document.getElementById("result");
+  const spinner = document.getElementById("spinner");
+  const loginSection = document.getElementById("loginSection");
+
+  try {
+    const apiUrl = `https://script.google.com/macros/s/AKfycbzgrQ9JzTzDY57cxlWs-g4kbiCb4C5j9X54BzE2eniGp3LQYKSFqNr5-yai4ZJmfjO83Q/exec?id=${encodeURIComponent(id)}`;
+    const res = await fetch(apiUrl);
+    const json = await res.json();
+
+    spinner.style.display = "none";
+
+    if (!json.found) {
+      resultDiv.style.display = "block";
+      resultDiv.innerHTML = "🔎 This ID is unclaimed or missing in records.";
+      loginSection.style.display = "block";
+      return;
+    }
+
+    // 🧠 Show content in main section
+    popup.style.display = "none";
+    mainContent.style.display = "block";
+
+    const data = json.data;
+    assetTitle.textContent = data.Description || "Verified Asset";
+
+   assetLinks.innerHTML = await renderInfoBlock(data);
+
+
+
+  } catch (err) {
+    spinner.style.display = "none";
+    resultDiv.style.display = "block";
+    resultDiv.innerHTML = "❌ Error retrieving data."+err;
+  }
+}
+
+
 
 
     verifyId();
