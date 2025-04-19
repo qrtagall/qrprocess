@@ -23,6 +23,7 @@
     }
 
     #popup {
+	  position: relative;
       background: white;
       padding: 30px;
       border-radius: 12px;
@@ -64,6 +65,92 @@
       from { opacity: 0; transform: scale(0.95); }
       to { opacity: 1; transform: scale(1); }
     }
+
+    .login-options {
+      margin-top: 25px;
+    }
+
+    .login-options p {
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    .auth-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+    }
+
+    .auth-button {
+      width: 40px;
+      height: 40px;
+      opacity: 0.3;
+      cursor: not-allowed;
+      transition: transform 0.2s;
+    }
+
+    .auth-button.enabled {
+      opacity: 1;
+      cursor: pointer;
+    }
+
+    .auth-button.enabled:hover {
+      transform: scale(1.1);
+    }
+	
+	.auth-buttons-vertical {
+	  display: flex;
+	  flex-direction: column;
+	  align-items: center;
+	  gap: 12px;
+	  margin-top: 10px;
+	}
+
+	.auth-button-box {
+	  display: flex;
+	  align-items: center;
+	  gap: 10px;
+	  padding: 10px 20px;
+	  border-radius: 8px;
+	  border: 1px solid #ccc;
+	  background-color: #fff;
+	  font-size: 14px;
+	  font-weight: 500;
+	  color: #333;
+	  width: 220px;
+	  justify-content: center;
+	  cursor: not-allowed;
+	  opacity: 0.5;
+	  transition: transform 0.2s, box-shadow 0.2s;
+	}
+
+	.auth-button-box img.auth-logo {
+	  width: 18px;
+	  height: 18px;
+	  object-fit: contain;
+	}
+
+	.auth-button-box.enabled {
+	  opacity: 1;
+	  cursor: pointer;
+	}
+
+	.auth-button-box.enabled:hover {
+	  transform: scale(1.03);
+	  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+	}
+
+	#versionTag {
+	  font-size: 8px;
+	  color: #666;
+	  position: absolute;
+	  bottom: 12px;
+	  right: 20px;
+	  font-family: monospace;
+	}
+
+
   </style>
 </head>
 <body>
@@ -71,7 +158,24 @@
     <h2>🔍 Verifying QR ID</h2>
     <p id="idText" style="font-size:14px; color:gray;"></p>
     <div id="result">Processing...</div>
-    <button id="claimBtn" onclick="claimQRCode()">✅ Claim QR Code</button>
+    
+	<div id="loginSection" class="login-options" style="display:none;">
+		  <p>Login to Claim as Owner of this QR</p>
+		  <div class="auth-buttons-vertical">
+			<button class="auth-button-box enabled" onclick="googleLogin()">
+			  <img class="auth-logo" src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo">
+			  <span>Continue with Google</span>
+			</button>
+			<button class="auth-button-box disabled">
+			  <img class="auth-logo" src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="Apple Logo">
+			  <span>Apple</span>
+			</button>
+		  </div>
+		</div>
+		
+	<div id="versionTag">V-1.0</div>	
+
+
   </div>
 
   <script>
@@ -95,47 +199,58 @@
       // TODO: Redirect or initiate claim form
     }
 
-    async function verifyId() {
-      const id = getQueryParam("id");
-      const resultDiv = document.getElementById("result");
-      const idText = document.getElementById("idText");
-      const claimBtn = document.getElementById("claimBtn");
-
-      if (!id) {
-        resultDiv.textContent = "❌ No ID provided in URL.";
-        resultDiv.style.color = "var(--error)";
-        return;
-      }
-
-      idText.textContent = id;
-
-      if (!id.includes("_")) {
-        resultDiv.textContent = "❌ Invalid format. Expected format: TIMESTAMP_HASH";
-        resultDiv.style.color = "var(--error)";
-        return;
-      }
-
-      const [timestamp, hashPart] = id.split("_");
-
-      if (!/^\d{17}$/.test(timestamp)) {
-        resultDiv.textContent = "❌ Invalid timestamp format.";
-        resultDiv.style.color = "var(--error)";
-        return;
-      }
-
-      const expectedHash = await sha256(timestamp + SALT);
-      const isValid = expectedHash.startsWith(hashPart);
-
-      if (isValid) {
-        resultDiv.textContent = "✅ Valid ID (verified as QRTagall-issued)";
-        resultDiv.style.color = "var(--valid)";
-        claimBtn.style.display = "inline-block";
-      } else {
-        resultDiv.textContent = "❌ Invalid ID (hash mismatch or tampered)";
-        resultDiv.style.color = "var(--error)";
-        claimBtn.style.display = "none";
-      }
+    function googleLogin() {
+      alert("🔐 Redirecting to Google OAuth...");
+      // Example placeholder — replace with actual OAuth 2.0 redirect
+      // const clientId = 'YOUR_GOOGLE_CLIENT_ID';
+      // const redirectUri = 'https://your-site.com/oauth2callback';
+      // const scope = 'email profile';
+      // const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${encodeURIComponent(scope)}`;
+      // window.location.href = authUrl;
     }
+
+    async function verifyId() {
+  const id = getQueryParam("id");
+  const resultDiv = document.getElementById("result");
+  const idText = document.getElementById("idText");
+  const loginSection = document.getElementById("loginSection");
+
+  if (!id) {
+    resultDiv.textContent = "❌ No ID provided in URL.";
+    resultDiv.style.color = "var(--error)";
+    return;
+  }
+
+  idText.textContent = id;
+
+  if (!id.includes("_")) {
+    resultDiv.textContent = "❌ Invalid format. Expected format: TIMESTAMP_SIGNATURE";
+    resultDiv.style.color = "var(--error)";
+    return;
+  }
+
+  const [timestamp, hashPart] = id.split("_");
+
+  if (!/^\d{17}$/.test(timestamp)) {
+    resultDiv.textContent = "❌ Invalid timestamp format.";
+    resultDiv.style.color = "var(--error)";
+    return;
+  }
+
+  const expectedHash = await sha256(timestamp + SALT);
+  const isValid = expectedHash.startsWith(hashPart);
+
+  if (isValid) {
+    resultDiv.textContent = "✅ Valid ID (verified as QRTagAll-issued)";
+    resultDiv.style.color = "var(--valid)";
+    loginSection.style.display = "block";  // ✅ THIS IS IMPORTANT
+  } else {
+    resultDiv.textContent = "❌ Invalid ID (Signature mismatch or tampered)";
+    resultDiv.style.color = "var(--error)";
+    loginSection.style.display = "none";
+  }
+}
+
 
     verifyId();
   </script>
