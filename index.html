@@ -43,6 +43,23 @@
       font-weight: bold;
     }
 
+    #claimBtn {
+      margin-top: 25px;
+      display: none;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    #claimBtn:hover {
+      background-color: #005fa3;
+    }
+
     @keyframes fadeIn {
       from { opacity: 0; transform: scale(0.95); }
       to { opacity: 1; transform: scale(1); }
@@ -54,6 +71,7 @@
     <h2>🔍 Verifying QR ID</h2>
     <p id="idText" style="font-size:14px; color:gray;"></p>
     <div id="result">Processing...</div>
+    <button id="claimBtn" onclick="claimQRCode()">✅ Claim QR Code</button>
   </div>
 
   <script>
@@ -72,10 +90,16 @@
       return urlParams.get(param);
     }
 
+    function claimQRCode() {
+      alert("🚀 Claim process initiated. This part will be linked to actual claiming logic.");
+      // TODO: Redirect or initiate claim form
+    }
+
     async function verifyId() {
       const id = getQueryParam("id");
       const resultDiv = document.getElementById("result");
       const idText = document.getElementById("idText");
+      const claimBtn = document.getElementById("claimBtn");
 
       if (!id) {
         resultDiv.textContent = "❌ No ID provided in URL.";
@@ -102,10 +126,15 @@
       const expectedHash = await sha256(timestamp + SALT);
       const isValid = expectedHash.startsWith(hashPart);
 
-      resultDiv.textContent = isValid
-        ? "✅ Valid ID (verified as QRTagall-issued)"
-        : "❌ Invalid ID (hash mismatch or tampered)";
-      resultDiv.style.color = isValid ? "var(--valid)" : "var(--error)";
+      if (isValid) {
+        resultDiv.textContent = "✅ Valid ID (verified as QRTagall-issued)";
+        resultDiv.style.color = "var(--valid)";
+        claimBtn.style.display = "inline-block";
+      } else {
+        resultDiv.textContent = "❌ Invalid ID (hash mismatch or tampered)";
+        resultDiv.style.color = "var(--error)";
+        claimBtn.style.display = "none";
+      }
     }
 
     verifyId();
