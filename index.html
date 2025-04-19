@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>QRTagall | ID Verifier</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --primary: #0077cc;
+      --valid: #00cc88;
+      --error: #ff4444;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f4f4f4;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    #popup {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      text-align: center;
+      width: 320px;
+      animation: fadeIn 0.4s ease;
+    }
+
+    h2 {
+      margin-top: 0;
+      color: var(--primary);
+    }
+
+    #result {
+      font-size: 16px;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <div id="popup">
+    <h2>🔍 Verifying QR ID</h2>
+    <p id="idText" style="font-size:14px; color:gray;"></p>
+    <div id="result">Processing...</div>
+  </div>
+
+  <script>
+    const SALT = "QRTagall@2025";
+
+    async function sha256(input) {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(input);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      return Array.from(new Uint8Array(hashBuffer))
+        .map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+
+    async function verifyId() {
+      const id = getQueryParam("id");
+      const resultDiv = document.getElementById("result");
+      const idText = document.getElementById("idText");
+
+      if (!id) {
+        resultDiv.textContent = "❌ No ID provided in URL.";
+        resultDiv.style.color = "var(--error)";
+        return;
+      }
+
+      idText.textContent = id;
+
+      if (!id.includes("_")) {
+        resultDiv.textContent = "❌ Invalid format. Expected format: TIMESTAMP_HASH";
+        resultDiv.style.color = "var(--error)";
+        return;
+      }
+
+      const [timestamp, hashPart] = id.split("_");
+
+      if (!/^\d{17}$/.test(timestamp)) {
+        resultDiv.textContent = "❌ Invalid timestamp format.";
+        resultDiv.style.color = "var(--error)";
+        return;
+      }
+
+      const expectedHash = await sha256(timestamp + SALT);
+      const isValid = expectedHash.startsWith(hashPart);
+
+      resultDiv.textContent = isValid
+        ? "✅ Valid ID (verified as QRTagall-issued)"
+        : "❌ Invalid ID (hash mismatch or tampered)";
+      resultDiv.style.color = isValid ? "var(--valid)" : "var(--error)";
+    }
+
+    verifyId();
+  </script>
+</body>
+</html>
