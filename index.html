@@ -186,6 +186,28 @@
 	  margin: 20px 0;
 	}
 
+		#editBtn.disabled-button {
+	  margin-top: 40px;
+	  padding: 14px 30px;
+	  font-size: 18px;
+	  font-weight: 600;
+	  border-radius: 10px;
+	  background-color: #ccc;
+	  color: #666;
+	  border: none;
+	  cursor: not-allowed;
+	  opacity: 0.6;
+	}
+
+	#editBtn.enabled {
+	  background-color: var(--primary);
+	  color: white;
+	  cursor: pointer;
+	  opacity: 1;
+	}
+
+
+
 
   </style>
 </head>
@@ -208,18 +230,26 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">V-2.0</div>
+	  <div id="versionTag">V-1.3</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
 	<div id="mainContent" style="display:none; padding:30px; max-width:600px; font-family:'Segoe UI', sans-serif;">
 	  <h2 id="assetTitle" style="color:var(--primary); font-size:24px;"></h2>
 	  <div id="assetLinks" style="margin-top:10px;"></div>
+
+	  <!-- 🔐 Log-in to Edit button (disabled for now) -->
+	  <button id="editBtn" disabled class="disabled-button" onclick="editAlert()">
+		  🔐 Log-in to Edit
+		</button>
+
 	</div>
 
 
   <script>
-    const SALT = "QRTagall@2025";
+	
+    
+	const SALT = "QRTagall@2025";
 
     async function sha256(input) {
       const encoder = new TextEncoder();
@@ -248,6 +278,8 @@
       // const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${encodeURIComponent(scope)}`;
       // window.location.href = authUrl;
     }
+	
+	
 
     async function verifyId() {
   const id = getQueryParam("id");
@@ -255,6 +287,7 @@
   const spinner = document.getElementById("spinner");
   const idText = document.getElementById("idText");
   const loginSection = document.getElementById("loginSection");
+ 
 
   if (!id) {
     spinner.style.display = "none";
@@ -418,6 +451,12 @@ async function fetchAssetData(id) {
     // 🧠 Show content in main section
     popup.style.display = "none";
     mainContent.style.display = "block";
+	
+	
+	document.getElementById("editBtn").disabled = false;
+	document.getElementById("editBtn").classList.remove("disabled-button");
+	document.getElementById("editBtn").classList.add("enabled");
+
 
     const data = json.data;
     assetTitle.textContent = data.Description || "Verified Asset";
@@ -430,6 +469,15 @@ async function fetchAssetData(id) {
     spinner.style.display = "none";
     resultDiv.style.display = "block";
     resultDiv.innerHTML = "❌ Error retrieving data."+err;
+  }
+}
+
+function editAlert() {
+  if (document.getElementById("editBtn").disabled) {
+    alert("🔐 Please log in first to edit this asset.");
+  } else {
+    alert("✅ Edit mode coming soon...");
+    // TODO: Redirect to edit form or open modal
   }
 }
 
