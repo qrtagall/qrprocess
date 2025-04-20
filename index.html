@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     :root {
-      --primary: #0077cc;
+      --primary: #005aab;
       --valid: #00cc88;
       --error: #ff4444;
     }
@@ -186,25 +186,33 @@
 	  margin: 20px 0;
 	}
 
-		#editBtn.disabled-button {
-	  margin-top: 40px;
-	  padding: 14px 30px;
-	  font-size: 18px;
-	  font-weight: 600;
-	  border-radius: 10px;
-	  background-color: #ccc;
-	  color: #666;
-	  border: none;
-	  cursor: not-allowed;
-	  opacity: 0.6;
-	}
+	.editBtn {
+  transition: all 0.3s ease;
+}
 
-	#editBtn.enabled {
-	  background-color: var(--primary);
-	  color: white;
-	  cursor: pointer;
-	  opacity: 1;
-	}
+.disabled-button {
+  margin-top: 40px;
+  padding: 16px 48px;
+  font-size: 18px;
+  font-weight: 600;
+  border-radius: 12px;
+  background-color: #ccc;
+  color: #bbb;
+  border: none;
+  cursor: not-allowed;
+  opacity: 0.6;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.enabled {
+  background-color: var(--primary);
+  color: white;
+  cursor: pointer;
+  opacity: 1;
+  box-shadow: 0 4px 10px rgba(0, 119, 204, 0.2);
+  padding: 18px 52px;   /* ✅ new size here */
+  font-size: 19px;
+}
 
 
 
@@ -230,7 +238,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">V-1.3</div>
+	  <div id="versionTag">V-1.4</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -238,10 +246,15 @@
 	  <h2 id="assetTitle" style="color:var(--primary); font-size:24px;"></h2>
 	  <div id="assetLinks" style="margin-top:10px;"></div>
 
+
+		<hr style="border: none; height: 3px; width: 80%; background: linear-gradient(to right, orange, #ffa500); margin: 60px auto 30px auto; border-radius: 5px;">
+
 	  <!-- 🔐 Log-in to Edit button (disabled for now) -->
-	  <button id="editBtn" disabled class="disabled-button" onclick="editAlert()">
-		  🔐 Log-in to Edit
-		</button>
+	  <div style="display: flex; justify-content: center; margin-top: 40px;">
+	 	  <button id="editBtn" class="enabled" onclick="editAlert()">
+			🔐 Log-in to Edit Details
+		  </button>
+		</div>
 
 	</div>
 
@@ -342,32 +355,66 @@
 	}
 
 
+function getIconFromTitle(title = "") {
+  const lower = title.toLowerCase();
+
+  if (lower.includes("image") || lower.includes("photo") || lower.includes("pic")) return "🖼️";
+  if (lower.includes("video") || lower.includes("clip")) return "🎥";
+  if (lower.includes("pdf") || lower.includes("manual") || lower.includes("doc")) return "📄";
+  if (lower.includes("invoice") || lower.includes("bill") || lower.includes("receipt")) return "🧾";
+  if (lower.includes("map") || lower.includes("location")) return "🗺️";
+  if (lower.includes("drawing") || lower.includes("sketch")) return "📐";
+  if (lower.includes("audio") || lower.includes("mp3") || lower.includes("sound")) return "🎧";
+
+  return "🔗"; // default
+}
 
 
-async function resolveAndRender(value, i) {
-value = convertDriveUrl(value); // 👈 Patch Google Drive link if needed
+
+async function resolveAndRender(value, i, customTitle = `Link ${i}`) {
+  value = convertDriveUrl(value); 
+
+  const isFileLikely = /\.(jpg|jpeg|png|gif|webp|mp4|webm|ogg|pdf)$/i.test(value);
+
+	// 🧠 Pick emoji based on keywords in custom title
+	const lower = customTitle.toLowerCase();
+	const icon = getIconFromTitle(customTitle);
+
   try {
-    const resolveUrl = `https://script.google.com/macros/s/AKfycbzgrQ9JzTzDY57cxlWs-g4kbiCb4C5j9X54BzE2eniGp3LQYKSFqNr5-yai4ZJmfjO83Q/exec?resolve=${encodeURIComponent(value)}`;
-    const res = await fetch(resolveUrl);
-    const json = await res.json();
+    let finalUrl = value;
+    let contentType = "";
 
-    if (json.error) return `<p>⚠️ Couldn’t load Info ${i}</p>`;
+    if (isFileLikely) {
+      const resolveUrl = `https://script.google.com/macros/s/AKfycbzgrQ9JzTzDY57cxlWs-g4kbiCb4C5j9X54BzE2eniGp3LQYKSFqNr5-yai4ZJmfjO83Q/exec?resolve=${encodeURIComponent(value)}`;
+      const res = await fetch(resolveUrl);
+      const json = await res.json();
 
-    const finalUrl = json.resolvedUrl;
-    const contentType = json.contentType;
+      if (json.error) return `<p>⚠️ Couldn’t load ${customTitle}</p>`;
+
+      finalUrl = json.resolvedUrl;
+      contentType = json.contentType;
+    }
 
     if (/image/i.test(contentType)) {
-      return `<div><b>🖼️ Image ${i}</b><br><img src="${finalUrl}" style="max-width:100%;"></div>`;
+      return `<div><b>${icon} ${customTitle}</b><br><img src="${finalUrl}" style="max-width:100%;"></div>`;
     } else if (/video/i.test(contentType)) {
-      return `<div><b>🎥 Video ${i}</b><br><video controls width="100%"><source src="${finalUrl}"></video></div>`;
+      return `<div><b>${icon} ${customTitle}</b><br><video controls width="100%"><source src="${finalUrl}"></video></div>`;
     } else if (/pdf/i.test(contentType)) {
-      return `<p>📄 <a href="${finalUrl}" target="_blank">View PDF ${i}</a></p>`;
+      return `<p>${icon} <a href="${finalUrl}" target="_blank">${customTitle}</a></p>`;
     } else {
-      return `<p>🔗 <a href="${finalUrl}" target="_blank">Link ${i}</a></p>`;
+      const linkHost = finalUrl.match(/https?:\/\/([^/]+)/)?.[1] || "link";
+      return `
+        <div style="display:flex; align-items:center; border:1px solid #ddd; padding:12px; border-radius:8px; margin-bottom:10px;">
+          <img src="https://www.google.com/s2/favicons?domain=${linkHost}&sz=64" alt="favicon" style="width:32px;height:32px;margin-right:10px;">
+          <div style="flex-grow:1;">
+            <div style="font-size:15px; font-weight:500; color:#333;">${icon} ${customTitle}</div>
+            <a href="${finalUrl}" target="_blank" style="font-size:14px; color:var(--primary); text-decoration:none;">↗️ Visit</a>
+          </div>
+        </div>`;
     }
 
   } catch (e) {
-    return `<p>⚠️ Error loading Info ${i}</p>`;
+    return `<p>⚠️ Error loading ${customTitle}</p>`;
   }
 }
 
@@ -378,46 +425,49 @@ async function renderInfoBlock(data) {
   let html = "";
 
   for (let i = 1; i <= 10; i++) {
-    const value = data[`info${i}`];
-    if (!value) continue;
+    let raw = data[`info${i}`];
+    if (!raw) continue;
+
+    // Extract title (in [Title]) if present
+    const titleMatch = raw.match(/^\[(.*?)\]/);
+    const title = titleMatch ? titleMatch[1].trim() : `Note ${i}`;
+    const value = titleMatch ? raw.replace(/^\[.*?\]/, '').trim() : raw;
 
     if (value.startsWith("http")) {
+      // ✅ Google Drive preview
+      if (/drive\.google\.com/.test(value)) {
+        const match = value.match(/\/d\/([^/]+)/);
+        const fileId = match ? match[1] : null;
 
-      // ✅ Special handling for Google Drive links
-      
-		if (/drive\.google\.com/.test(value)) {
-		  const match = value.match(/\/d\/([^/]+)/);
-		  const fileId = match ? match[1] : null;
-
-		  if (fileId) {
-			const iframePreview = `https://drive.google.com/file/d/${fileId}/preview`;
-
-			html += `
+        if (fileId) {
+          const iframePreview = `https://drive.google.com/file/d/${fileId}/preview`;
+		  const icon = getIconFromTitle(title);
+          html += `
 			  <div style="margin-bottom:20px;">
+				<b>${icon} ${title}</b><br>
 				<iframe src="${iframePreview}" width="100%" height="400" frameborder="0"
 				  allow="autoplay; encrypted-media" 
 				  sandbox="allow-scripts allow-same-origin allow-presentation">
 				</iframe>
 			  </div>`;
-		  } else {
-			html += `<p><a href="${value}" target="_blank">🔗 Open Drive File</a></p>`;
-		  }
-		}
-	  
-	  
-	  else {
-        // 🌐 All other URLs — resolve and render
-        html += await resolveAndRender(value, i);
+        } else {
+          html += `<p>🔗 <b>${title}:</b> <a href="${value}" target="_blank">${value}</a></p>`;
+        }
+
+      } else {
+        // 🌐 Other URLs → Resolve with custom title
+        html += await resolveAndRender(value, i, title);
       }
 
     } else {
       // 📝 Plain text content
-      html += `<p>📝 <b>Note ${i}:</b> ${value}</p>`;
+      html += `<p>📝 <b>${title}:</b> ${value}</p>`;
     }
   }
 
   return html;
 }
+
 
 
 
