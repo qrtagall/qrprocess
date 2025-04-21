@@ -238,7 +238,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">V-2.0</div>
+	  <div id="versionTag">V-2.1</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -607,34 +607,26 @@ async function fetchAssetData(id) {
 	
     assetTitle.textContent = data.Description || "Verified Asset";
     assetLinks.innerHTML = await renderInfoBlock(data);
-	console.log("🗃️ 1 Stored UserName from MasterSheet:", data.UserName);
+	
+	const sessionEmail = (data.SessionEmail || "").trim().toLowerCase();
+	const ownerEmail = (data.UserName || "").trim().toLowerCase();
+
+	console.log("Session:", sessionEmail, " | Owner:", ownerEmail);
 
 
 	
 
-
-    // ✅ Step 1: Fetch current session email from AppScript-C
-    const userRes = await fetch(`https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec?getEmail=1`);
-    const userJson = await userRes.json();
-    const sessionEmail = userJson.email || "";
-
-    console.log("📨 Session Email:", sessionEmail);
-    console.log("🗃️ Stored UserName from MasterSheet:", data.UserName);
-
-    // ✅ Step 2: Compare and update Edit button
-    const isOwner = sessionEmail.trim().toLowerCase() === (data.UserName || "").trim().toLowerCase();
-
-    if (isOwner) {
-      editBtn.innerHTML = "✏️ Edit Details";
-      editBtn.disabled = false;
-      editBtn.classList.remove("disabled-button");
-      editBtn.classList.add("enabled");
-    } else {
-      editBtn.innerHTML = "🔐 Log-in to Edit Details";
-      editBtn.disabled = true;
-      editBtn.classList.remove("enabled");
-      editBtn.classList.add("disabled-button");
-    }
+		if (sessionEmail && sessionEmail === ownerEmail) {
+		  editBtn.innerHTML = "✏️ Edit Details";
+		  editBtn.disabled = false;
+		  editBtn.classList.remove("disabled-button");
+		  editBtn.classList.add("enabled");
+		} else {
+		  editBtn.innerHTML = "🔐 Log-in to Edit Details";
+		  editBtn.disabled = true;
+		  editBtn.classList.remove("enabled");
+		  editBtn.classList.add("disabled-button");
+		}
 
   } catch (err) {
     spinner.style.display = "none";
