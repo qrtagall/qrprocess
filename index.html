@@ -307,58 +307,8 @@
 	*/
 	
 	
-	/*
 	
-	async function handleClaimedReturn() {
-  const id = getQueryParam("id");
-  const claimed = getQueryParam("claimed");
-
-  if (!id || !claimed) return;
-
-  const spinner = document.getElementById("spinner");
-  const result = document.getElementById("result");
-  const webAppUrl = "https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec";// GwebAppUrl; // Already defined in your script
-
-  spinner.style.display = "block";
-  result.style.display = "block";
-  result.style.color = "black";
-  result.innerHTML = "🔄 Finalizing your QR claim...";
-
-  try {
-    const response = await fetch(`${webAppUrl}?initClaim=${encodeURIComponent(id)}`);
-    const json = await response.json();
-
-    spinner.style.display = "none";
-
-    if (json.success) {
-      navigator.clipboard.writeText(json.spreadsheetUrl); // ✅ Copy to clipboard silently
-
-      result.innerHTML = `
-        <div style="text-align:left; padding:10px 20px; background:#e6ffe6; border:1px solid #00cc88; border-radius:10px;">
-          <p style="margin:5px 0;"><span style="font-size:20px;">✅</span> <b>QR Claimed Successfully!</b></p>
-          <p style="margin:5px 0;">📧 <b>User:</b> ${json.email}</p>
-          <p style="margin:5px 0;">🔗 <b>Spreadsheet:</b> <a href="${json.spreadsheetUrl}" target="_blank">${json.spreadsheetUrl}</a></p>
-          <p style="margin:5px 0; font-size:12px; color:#555;">(Link copied to clipboard)</p>
-        </div>
-      `;
-    } 
-	else {
-      result.style.color = "red";
-      result.innerHTML = `❌ Claim failed: ${json.error || json.details || "Unknown error"}`;
-    }
-  } catch (err) {
-    spinner.style.display = "none";
-    result.style.color = "red";
-    result.innerHTML = "❌ Network error while finalizing QR claim.";
-    console.error(err);
-  }
-
-  // ✅ Optional: Clean up URL after displaying result
-  setTimeout(cleanUpUrl, 2000);
-}
-
-*/
-
+/*
 async function handleClaimedReturn() {
   const id = getQueryParam("id");
   const claimed = getQueryParam("claimed");
@@ -404,7 +354,7 @@ async function handleClaimedReturn() {
 
   } catch (err) {
     spinner.style.display = "none";
-    result.style.color = "red";
+    result.style.color = "blue";
     //result.innerHTML = "❌ Network error while finalizing QR claim. Please try again.";
 	//result.innerHTML += `<br><code style="font-size:12px; color:gray;">${err.message || err}</code>`;
 
@@ -414,6 +364,62 @@ async function handleClaimedReturn() {
   // Optional: clean up ?id=...&claimed=... from URL
   setTimeout(cleanUpUrl, 2000);
 }
+*/
+
+
+function handleClaimedReturn() {
+  const spinner = document.getElementById("spinner");
+  const result = document.getElementById("result");
+  const webAppUrl = "https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec";
+
+  window.addEventListener("message", async (event) => {
+    const { claimed, id } = event.data || {};
+    if (!claimed || !id) return;
+
+    spinner.style.display = "block";
+    result.style.display = "block";
+    result.style.color = "black";
+    result.innerHTML = "🔄 Finalizing your QR claim... Please wait.";
+
+    try {
+      const response = await fetch(`${webAppUrl}?initClaim=${encodeURIComponent(id)}`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const json = await response.json();
+
+      spinner.style.display = "none";
+
+      if (json.success) {
+        try {
+          await navigator.clipboard.writeText(json.spreadsheetUrl);
+        } catch (e) {
+          console.warn("📋 Clipboard copy failed:", e);
+        }
+
+        result.innerHTML = `
+          <div style="text-align:left; padding:10px 20px; background:#e6ffe6; border:1px solid #00cc88; border-radius:10px;">
+            <p style="margin:5px 0;"><span style="font-size:20px;">✅</span> <b>QR Claimed Successfully!</b></p>
+            <p style="margin:5px 0;">📧 <b>User:</b> ${json.email}</p>
+            <p style="margin:5px 0;">🔗 <b>Spreadsheet:</b> <a href="${json.spreadsheetUrl}" target="_blank">${json.spreadsheetUrl}</a></p>
+            <p style="margin:5px 0; font-size:12px; color:#555;">(Link copied to clipboard)</p>
+          </div>
+        `;
+      } else {
+        result.style.color = "red";
+        result.innerHTML = `❌ Claim failed: ${json.error || json.details || "Unknown error"}`;
+      }
+
+    } catch (err) {
+      spinner.style.display = "none";
+      result.style.color = "red";
+      result.innerHTML = `❌ Network error while finalizing QR claim.`;
+      console.error("Finalizing QR claim error:", err);
+    }
+
+    // Optional cleanup
+    setTimeout(cleanUpUrl, 2000);
+  });
+}
+
 
 
 	
@@ -425,7 +431,30 @@ function cleanUpUrl() {
 }
 
 	
+	
 	function googleLogin() {
+  const id = getQueryParam("id");
+  const webAppUrl = "https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec";
+  //const redirectBack = 'file:///G:/QrTagAll/Code/process/popup-callback.html';//`https://process.qrtagall.com/popup-callback.html`;
+	const redirectBack = `https://process.qrtagall.com/popup-callback.html`;
+
+  const claimUrl = `${webAppUrl}?initClaim=${encodeURIComponent(id)}&redirect=${encodeURIComponent(redirectBack)}&id=${encodeURIComponent(id)}`;
+
+  const popup = window.open(claimUrl, "QRClaimPopup", "width=500,height=600");
+
+  const spinner = document.getElementById("spinner");
+  const result = document.getElementById("result");
+  const loginSection = document.getElementById("loginSection");
+
+  spinner.style.display = "block";
+  result.style.display = "block";
+  result.textContent = "🔐 Waiting for Google login...";
+  loginSection.style.display = "none";
+}
+
+
+
+	function googleLogin1() {
   const id = getQueryParam("id");
   const webAppUrl = "https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec";
 
@@ -442,15 +471,19 @@ function cleanUpUrl() {
 
 	//CM EDIT
 	// Build redirect-back URL
-	const redirectBack = `${window.location.origin}${window.location.pathname}?id=${encodeURIComponent(id)}&claimed=1`;
-	//const redirectBack = "https://process.qrtagall.com/?id=" + encodeURIComponent(id) + "&claimed=1";
+	//const redirectBack = `${window.location.origin}${window.location.pathname}?id=${encodeURIComponent(id)}&claimed=1`;
+	const redirectBack = "https://process.qrtagall.com/?id=" + encodeURIComponent(id) + "&claimed=1";
 
   
   
 
   // Redirect to Apps Script with OAuth & return
   setTimeout(() => {
-    window.location.href = `${webAppUrl}?initClaim=${encodeURIComponent(id)}&redirect=${encodeURIComponent(redirectBack)}`;
+	//window.location.href = `https://process.qrtagall.com/?id=${id}&claimed=1`;
+
+    //window.location.href = `${webAppUrl}?initClaim=${encodeURIComponent(id)}&redirect=${encodeURIComponent(redirectBack)}`;
+	    window.location.replace(`${webAppUrl}?initClaim=${encodeURIComponent(id)}&redirect=${encodeURIComponent(redirectBack)}`);
+
   }, 1000);
 }
 
@@ -582,6 +615,42 @@ async function resolveAndRender(value, i, customTitle = `Link ${i}`) {
 
 
 
+async function handleClaimedReturnFromPopup(id) {
+  const spinner = document.getElementById("spinner");
+  const result = document.getElementById("result");
+
+  spinner.style.display = "block";
+  result.style.display = "block";
+  result.style.color = "black";
+  result.innerHTML = "🔄 Finalizing your QR claim...";
+
+  try {
+    const webAppUrl = "https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec";
+    const response = await fetch(`${webAppUrl}?initClaim=${encodeURIComponent(id)}`);
+    const json = await response.json();
+
+    spinner.style.display = "none";
+
+    if (json.success) {
+      result.innerHTML = `
+        ✅ QR Claimed<br>
+        📧 ${json.email}<br>
+        🔗 <a href="${json.spreadsheetUrl}" target="_blank">${json.spreadsheetUrl}</a>
+      `;
+    } else {
+      result.style.color = "red";
+      result.innerHTML = "❌ Claim failed: " + (json.details || "Unknown error");
+    }
+
+  } catch (err) {
+    spinner.style.display = "none";
+    result.style.color = "red";
+    result.innerHTML = "❌ Network error while finalizing QR claim.";
+    console.error(err);
+  }
+}
+
+
 
 async function renderInfoBlock(data) {
   let html = "";
@@ -675,7 +744,37 @@ async function fetchAssetData(id) {
 	  assetLinks.innerHTML = "<p>⚠️ Unable to render asset data.</p>";
 	}
 	
+	/*
+	const ownerEmail = (data.UserName || "").trim().toLowerCase();
+
+	//console.log("Session:", sessionEmail, " | Owner:", ownerEmail);
+	console.log("Owner:", ownerEmail);
+
 	
+	
+	const userRes = await fetch("https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec?getEmail=1");
+	const userJson = await userRes.json();
+	const sessionEmail = "xxx";//userJson.email || "";
+	
+	
+	console.log("Session:", sessionEmail, " | Owner:", ownerEmail);
+
+
+		if (sessionEmail && sessionEmail === ownerEmail) {
+		  editBtn.innerHTML = "✏️ Edit Details";
+		  editBtn.disabled = false;
+		  editBtn.classList.remove("disabled-button");
+		  editBtn.classList.add("enabled");
+		} else {
+		  editBtn.innerHTML = "🔐 Log-in to Edit Details";
+		  editBtn.disabled = true;
+		  editBtn.classList.remove("enabled");
+		  editBtn.classList.add("disabled-button");
+		}
+		
+		*/
+		
+
   } catch (err) {
     spinner.style.display = "none";
     resultDiv.style.display = "block";
