@@ -38,6 +38,7 @@
     const params = new URLSearchParams(window.location.search);
     const id = params.get("id");
     const claimed = params.get("claimed");
+    const email = params.get("email");
 
     console.log("🧾 ID parsed in popup:", id);
 
@@ -45,7 +46,7 @@
       // ✅ 1. BroadcastChannel (main route)
       try {
         const channel = new BroadcastChannel("qr_claim_channel");
-        channel.postMessage({ id, claimed: true });
+        channel.postMessage({ id, claimed: true,email });
         console.log("📡 Broadcast sent to main window");
       } catch (e) {
         console.warn("⚠️ BroadcastChannel not supported:", e);
@@ -55,7 +56,7 @@
       try {
         if (window.opener && !window.opener.closed) {
           console.log("📤 Sending postMessage to parent window");
-          window.opener.postMessage({ id, claimed: true }, "*");
+          window.opener.postMessage({ id, claimed: true,email }, "*");
         } else {
           console.warn("⚠️ window.opener is null or closed");
         }
@@ -68,6 +69,7 @@
         localStorage.setItem("qr_claimed", JSON.stringify({
           id,
           claimed: true,
+          email,
           timestamp: new Date().toISOString()
         }));
         console.log("📦 Stored in localStorage");
