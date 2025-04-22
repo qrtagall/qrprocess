@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>QRTagAll - Claim Finalized</title>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const id = urlParams.get("id");
+
+    // Send result back to main window
+    if (window.opener) {
+      window.opener.postMessage({ claimed: true, id }, "*");
+    }
+
+    // Optionally close this window after short delay
+    setTimeout(() => window.close(), 1000);
+  </script>
+</head>
+<body>
+  <p>✅ QR Claim completed. You can close this window.</p>
+</body>
+</html>
