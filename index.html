@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">V-2.15</div>
+	  <div id="versionTag">V-2.16</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -346,7 +346,7 @@ let popupRef = null;
 
 function googleLogin() {
   const id = getQueryParam("id");
-  const webAppUrl = "https://script.google.com/macros/s/..." // your script URL
+  const webAppUrl = "https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec";
   const redirectBack = `https://process.qrtagall.com/popup-callback.html`;
   const claimUrl = `${webAppUrl}?initClaim=${encodeURIComponent(id)}&redirect=${encodeURIComponent(redirectBack)}&id=${encodeURIComponent(id)}`;
 
