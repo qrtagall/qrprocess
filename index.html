@@ -221,7 +221,16 @@
 </head>
 <body>
 
-	
+	<script>
+  window.addEventListener("message", async (event) => {
+    const { claimed, id } = event.data || {};
+    if (!claimed || !id) return;
+
+    console.log("📨 Message received from popup:", event.data);
+    await handleClaimedReturnFromPopup(id); // This already exists
+  });
+</script>
+
 	
 <!-- Spinner & Popup -->
 	<div id="popup">
@@ -265,13 +274,7 @@
 	
     
 	const SALT = "QRTagall@2025";
-  window.addEventListener("message", async (event) => {
-    const { claimed, id } = event.data || {};
-    if (!claimed || !id) return;
-
-    console.log("📨 Message received from popup:", event.data);
-    await handleClaimedReturnFromPopup(id); // This already exists
-  });
+ 
 	
     async function sha256(input) {
       const encoder = new TextEncoder();
