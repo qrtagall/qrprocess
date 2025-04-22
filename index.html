@@ -307,6 +307,7 @@
 	*/
 	
 	
+	/*
 	
 	async function handleClaimedReturn() {
   const id = getQueryParam("id");
@@ -356,6 +357,65 @@
   setTimeout(cleanUpUrl, 2000);
 }
 
+*/
+
+async function handleClaimedReturn() {
+  const id = getQueryParam("id");
+  const claimed = getQueryParam("claimed");
+
+  if (!id || !claimed) return;
+
+  const spinner = document.getElementById("spinner");
+  const result = document.getElementById("result");
+  const webAppUrl = "https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec";
+
+  spinner.style.display = "block";
+  result.style.display = "block";
+  result.style.color = "black";
+  result.innerHTML = "🔄 Finalizing your QR claim... Please wait.";
+
+  try {
+    const response = await fetch(`${webAppUrl}?initClaim=${encodeURIComponent(id)}`);
+
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const json = await response.json();
+    spinner.style.display = "none";
+
+    if (json.success) {
+      try {
+        await navigator.clipboard.writeText(json.spreadsheetUrl);
+      } catch (e) {
+        console.warn("Clipboard copy failed:", e);
+      }
+
+      result.innerHTML = `
+        <div style="text-align:left; padding:10px 20px; background:#e6ffe6; border:1px solid #00cc88; border-radius:10px;">
+          <p style="margin:5px 0;"><span style="font-size:20px;">✅</span> <b>QR Claimed Successfully!</b></p>
+          <p style="margin:5px 0;">📧 <b>User:</b> ${json.email}</p>
+          <p style="margin:5px 0;">🔗 <b>Spreadsheet:</b> <a href="${json.spreadsheetUrl}" target="_blank">${json.spreadsheetUrl}</a></p>
+          <p style="margin:5px 0; font-size:12px; color:#555;">(Link copied to clipboard)</p>
+        </div>
+      `;
+    } else {
+      result.style.color = "red";
+      result.innerHTML = `❌ Claim failed: ${json.error || json.details || "Unknown error"}`;
+    }
+
+  } catch (err) {
+    spinner.style.display = "none";
+    result.style.color = "red";
+    //result.innerHTML = "❌ Network error while finalizing QR claim. Please try again.";
+	result.innerHTML += `<br><code style="font-size:12px; color:gray;">${err.message || err}</code>`;
+
+    console.error("Finalizing QR claim error:", err);
+  }
+
+  // Optional: clean up ?id=...&claimed=... from URL
+  setTimeout(cleanUpUrl, 2000);
+}
+
+
 	
 
 function cleanUpUrl() {
@@ -382,8 +442,8 @@ function cleanUpUrl() {
 
 	//CM EDIT
 	// Build redirect-back URL
-	//const redirectBack = `${window.location.origin}${window.location.pathname}?id=${encodeURIComponent(id)}&claimed=1`;
-	const redirectBack = "https://process.qrtagall.com/?id=" + encodeURIComponent(id) + "&claimed=1";
+	const redirectBack = `${window.location.origin}${window.location.pathname}?id=${encodeURIComponent(id)}&claimed=1`;
+	//const redirectBack = "https://process.qrtagall.com/?id=" + encodeURIComponent(id) + "&claimed=1";
 
   
   
