@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">Ver-2.34</div>
+	  <div id="versionTag">Ver-2.35</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -297,7 +297,7 @@ function cleanUpUrl() {
   window.history.replaceState({}, document.title, url.toString());
 }
 
-
+/*
 window.addEventListener("load", () => {
   const claimedEmail = localStorage.getItem("qr_claimed_email");
   if (claimedEmail) {
@@ -312,7 +312,7 @@ window.addEventListener("load", () => {
     //localStorage.removeItem("qr_claimed_email");
   }
 });
-
+*/
 
 
 let popupRef = null;
@@ -365,6 +365,7 @@ async function onClaimReceived(id, emailFromPopup = null) {
 
     const email = json.email || emailFromPopup || "Unknown";
 
+	localStorage.setItem("qr_claimed_email", finalEmail);	  
     if (json.success) {
       try { await navigator.clipboard.writeText(json.spreadsheetUrl); } catch {}
 
