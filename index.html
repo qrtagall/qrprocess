@@ -247,7 +247,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">V-2.9</div>
+	  <div id="versionTag">V-2.10</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -331,7 +331,10 @@ function googleLogin() {
 
   const claimUrl = `${webAppUrl}?initClaim=${encodeURIComponent(id)}&redirect=${encodeURIComponent(redirectBack)}&id=${encodeURIComponent(id)}`;
 
-  const popup = window.open(claimUrl, "QRClaimPopup", "width=500,height=600",noopener=false");
+  const popup = window.open(claimUrl, "QRClaimPopup", "width=500,height=600,noopener=false");
+if (!popup) {
+  alert("Popup blocked. Please allow popups for this site.");
+}
 
 // ✅ Watch for message + remove spinner after 10 sec fallback
 const timeout = setTimeout(() => {
