@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">V-2.25</div>
+	  <div id="versionTag">V-2.26</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -340,6 +340,7 @@ function googleLogin() {
   const redirectBack = `https://process.qrtagall.com/popup-callback.html`;
   const claimUrl = `${webAppUrl}?initClaim=${encodeURIComponent(id)}&redirect=${encodeURIComponent(redirectBack)}&id=${encodeURIComponent(id)}`;
 
+	console.log("⏳ Scheduling fallback polling...");
 	setTimeout(() => {
     //if (!window.claimReceived) 
     {
