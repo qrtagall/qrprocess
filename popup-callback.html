@@ -5,9 +5,11 @@
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get("id");
-
+    console.log("🧾 ID parsed in popup:", id);
+    
     // Send result back to main window
     if (window.opener) {
+      console.log("✅ Sending message to parent");
       window.opener.postMessage({ claimed: true, id }, "*");
     }
 
@@ -25,7 +27,7 @@
       } catch (e) {}
     }, 1000);
     setTimeout(() => {
-      document.body.innerHTML += "<p style='font-size:12px; color:gray'>(If not closed, please close manually)</p>";
+      document.body.innerHTML += "<p style='font-size:12px; color:gray'>(If not closed, please close manually..)</p>";
     }, 3000);
   </script>
 </body>
