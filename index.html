@@ -220,15 +220,7 @@
   </style>
 </head>
 <body>
-/*
-	<script>
 
-		window.addEventListener("message", (event) => {
-  console.log("📨 Message received from popup:", event.data);
-});
-		
-</script>
-*/
 	
 <!-- Spinner & Popup -->
 	<div id="popup">
@@ -247,7 +239,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">V-2.12</div>
+	  <div id="versionTag">V-2.13</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -304,8 +296,19 @@ function cleanUpUrl() {
   window.history.replaceState({}, document.title, url.toString());
 }
 
-	
 
+
+const channel = new BroadcastChannel("qr_claim_channel");
+
+channel.addEventListener("message", async (event) => {
+  const { id, claimed } = event.data || {};
+  if (!id || !claimed) return;
+
+  console.log("📨 Message from popup via channel:", event.data);
+  await handleClaimedReturnFromPopup(id);
+});
+
+	  /*
    window.addEventListener("message", async (event) => {
     console.log("📨 Message received from popup:", event.data);
 
@@ -321,6 +324,7 @@ function cleanUpUrl() {
       console.error("❌ Error in handleClaimedReturnFromPopup:", e);
     }
   });
+	  */
 
 	  
 function googleLogin() {
