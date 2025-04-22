@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">V-2.29</div>
+	  <div id="versionTag">V-2.30</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -358,9 +358,12 @@ function googleLogin() {
   //startClaimPolling(id);
 }
 
-// Main handler when claim is confirmed
-async function onClaimReceived(id) {
+
+	  
+// ✅ Main handler when claim is confirmed
+async function onClaimReceived(id, emailFromPopup = null) {
   clearInterval(pollingInterval);
+
   const spinner = document.getElementById("spinner");
   const result = document.getElementById("result");
 
@@ -374,11 +377,14 @@ async function onClaimReceived(id) {
 
     spinner.style.display = "none";
 
+    const email = json.email || emailFromPopup || "Unknown";
+
     if (json.success) {
       try { await navigator.clipboard.writeText(json.spreadsheetUrl); } catch {}
+
       result.innerHTML = `
         ✅ QR Claimed<br>
-        📧 ${json.email}<br>
+        📧 ${email}<br>
         🔗 <a href="${json.spreadsheetUrl}" target="_blank">${json.spreadsheetUrl}</a>
         <p style="font-size:12px; color:#555;">(Link copied to clipboard)</p>
       `;
@@ -386,16 +392,24 @@ async function onClaimReceived(id) {
       result.style.color = "red";
       result.innerHTML = `❌ Claim failed: ${json.details || "Unknown error"}`;
     }
+
   } catch (err) {
-    //spinner.style.display = "none";
-    //result.style.color = "red";
-    //result.textContent = "❌ Network error while finalizing QR claim.";
-	console.error("🛑 Finalize Claim Error:", err);
+    spinner.style.display = "none";
+    result.style.color = "red";
+    result.textContent = "❌ Network error while finalizing QR claim.";
+    console.error("🛑 Finalize Claim Error:", err);
   }
 
-  if (popupRef && !popupRef.closed) popupRef.close();
-  setTimeout(() => window.location.reload(), 2000); // 🔄 Auto-refresh
+  // ✅ Close popup if still open
+  if (typeof popupRef !== "undefined" && popupRef && !popupRef.closed) {
+    popupRef.close();
+  }
+
+  // 🔄 Auto-refresh page after short delay
+  setTimeout(() => window.location.reload(), 2000);
 }
+
+	  
 
 
 	  
@@ -403,10 +417,16 @@ async function onClaimReceived(id) {
 try {
   const channel = new BroadcastChannel("qr_claim_channel");
   channel.addEventListener("message", (event) => {
-    const { claimed, id } = event.data || {};
+    const { claimed, id, email } = event.data || {};
+
+if (email) {
+    console.log("👤 Email from popup:", email);
+    window.sessionStorage.setItem("claimedEmail", email);
+  }
+	  
     if (claimed && id) {
       console.log("📨 Received via BroadcastChannel:", id);
-      onClaimReceived(id);
+      onClaimReceived(id,email);
     }
   });
 } catch (e) {
@@ -415,24 +435,41 @@ try {
 
 // postMessage fallback
 window.addEventListener("message", (event) => {
-  const { claimed, id } = event.data || {};
+  const { claimed, id, email } = event.data || {};
+
+if (email) {
+    console.log("👤 Email from popup:", email);
+    window.sessionStorage.setItem("claimedEmail", email);
+  }
+	
   if (claimed && id) {
     console.log("📨 Received via postMessage:", id);
-    onClaimReceived(id);
+    onClaimReceived(id,email);
   }
 });
 
 // localStorage signal fallback
 window.addEventListener("storage", (event) => {
-  if (event.key === "qr_claimed_id" && event.newValue) {
-    const id = event.newValue;
-    console.log("📥 Received via localStorage:", id);
-    localStorage.removeItem("qr_claimed_id");
-    onClaimReceived(id);
+  if (event.key === "qr_claimed_data" && event.newValue) {
+    try {
+      const data = JSON.parse(event.newValue);
+      const id = data.id;
+      const email = data.email || "";
+
+      if (id) {
+        console.log("📥 Received via localStorage:", data);
+        localStorage.removeItem("qr_claimed_data");
+        onClaimReceived(id, email);
+      }
+    } catch (e) {
+      console.warn("⚠️ Failed to parse localStorage claim data:", e);
+    }
   }
 });
 
-// As last resort: polling
+
+	  
+// 🕵️ As last resort: polling for claim confirmation
 function startClaimPolling(id) {
   let attempts = 0;
   const claimCheckInterval = 5000; // 5 seconds
@@ -445,23 +482,26 @@ function startClaimPolling(id) {
       clearInterval(pollingInterval);
       return;
     }
-	console.warn("Claim polling trigger");
+
+    console.log("🔄 Polling attempt", attempts);
+
     try {
       const trackerUrl = `https://script.google.com/macros/s/AKfycbzgrQ9JzTzDY57cxlWs-g4kbiCb4C5j9X54BzE2eniGp3LQYKSFqNr5-yai4ZJmfjO83Q/exec?id=${encodeURIComponent(id)}`;
       const res = await fetch(trackerUrl);
       const json = await res.json();
 
       if (json.found && json.data && json.data.UserName) {
-        console.log("🕵️ QR claimed detected via polling:", json.data.UserName);
+        console.log("🕵️ QR claimed via polling:", json.data.UserName);
         clearInterval(pollingInterval);
-        onClaimReceived(id); // Your existing success handler
+        onClaimReceived(id, json.data.UserName); // Pass email to handler
       }
 
     } catch (err) {
-      console.warn("Polling error:", err);
+      console.warn("⚠️ Polling error:", err);
     }
   }, claimCheckInterval);
 }
+
 
 
 
