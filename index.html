@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">V-2.23</div>
+	  <div id="versionTag">V-2.24</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -340,13 +340,20 @@ function googleLogin() {
   const redirectBack = `https://process.qrtagall.com/popup-callback.html`;
   const claimUrl = `${webAppUrl}?initClaim=${encodeURIComponent(id)}&redirect=${encodeURIComponent(redirectBack)}&id=${encodeURIComponent(id)}`;
 
+	setTimeout(() => {
+    if (!window.claimReceived) {
+      console.warn("🕵️ No message received. Starting fallback polling...");
+      startClaimPolling(id);
+    }
+  }, 5000);
+	
   popupRef = window.open(claimUrl, "QRClaimPopup", "width=500,height=600");
 
   document.getElementById("spinner").style.display = "block";
   document.getElementById("result").textContent = "🔐 Waiting for Google login...";
 
   // Fallback to polling if nothing received within 5s
-  startClaimPolling(id);
+  //startClaimPolling(id);
 }
 
 // Main handler when claim is confirmed
