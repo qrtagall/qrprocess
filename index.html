@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">V-2.24</div>
+	  <div id="versionTag">V-2.25</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -341,7 +341,8 @@ function googleLogin() {
   const claimUrl = `${webAppUrl}?initClaim=${encodeURIComponent(id)}&redirect=${encodeURIComponent(redirectBack)}&id=${encodeURIComponent(id)}`;
 
 	setTimeout(() => {
-    if (!window.claimReceived) {
+    //if (!window.claimReceived) 
+    {
       console.warn("🕵️ No message received. Starting fallback polling...");
       startClaimPolling(id);
     }
@@ -440,7 +441,7 @@ function startClaimPolling(id) {
       clearInterval(pollingInterval);
       return;
     }
-
+	console.warn("Claim polling trigger");
     try {
       const trackerUrl = `https://script.google.com/macros/s/AKfycbzgrQ9JzTzDY57cxlWs-g4kbiCb4C5j9X54BzE2eniGp3LQYKSFqNr5-yai4ZJmfjO83Q/exec?id=${encodeURIComponent(id)}`;
       const res = await fetch(trackerUrl);
