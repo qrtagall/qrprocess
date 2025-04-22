@@ -249,7 +249,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">V-2.5</div>
+	  <div id="versionTag">V-2.6</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -294,143 +294,7 @@
       // TODO: Redirect or initiate claim form
     }
 
-/*
-    function googleLogin() {
-      //alert("🔐 Coming soon: It will Redirect to Google OAuth for permission and to link your G-Drive...");
-      
-	  // Example placeholder — replace with actual OAuth 2.0 redirect
-      // const clientId = 'YOUR_GOOGLE_CLIENT_ID';
-      // const redirectUri = 'https://your-site.com/oauth2callback';
-      // const scope = 'email profile';
-      // const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${encodeURIComponent(scope)}`;
-      // window.location.href = authUrl;
-    
-	const id = getQueryParam("id");
-	
-	const webAppUrl = "https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec";  // Replace with your actual Web App URL
 
-	const redirect = window.location.href;
-
-	// Redirects User C to Apps Script for OAuth + drive setup
-	window.location.href = `${webAppUrl}?initClaim=${encodeURIComponent(id)}&redirect=${encodeURIComponent(redirect)}`;
-
-  
-	}
-	*/
-	
-	
-	
-/*
-async function handleClaimedReturn() {
-  const id = getQueryParam("id");
-  const claimed = getQueryParam("claimed");
-
-  if (!id || !claimed) return;
-
-  const spinner = document.getElementById("spinner");
-  const result = document.getElementById("result");
-  const webAppUrl = "https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec";
-
-  spinner.style.display = "block";
-  result.style.display = "block";
-  result.style.color = "black";
-  result.innerHTML = "🔄 Finalizing your QR claim... Please wait.";
-
-  try {
-    const response = await fetch(`${webAppUrl}?initClaim=${encodeURIComponent(id)}`);
-
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-    const json = await response.json();
-    spinner.style.display = "none";
-
-    if (json.success) {
-      try {
-        await navigator.clipboard.writeText(json.spreadsheetUrl);
-      } catch (e) {
-        console.warn("Clipboard copy failed:", e);
-      }
-
-      result.innerHTML = `
-        <div style="text-align:left; padding:10px 20px; background:#e6ffe6; border:1px solid #00cc88; border-radius:10px;">
-          <p style="margin:5px 0;"><span style="font-size:20px;">✅</span> <b>QR Claimed Successfully!</b></p>
-          <p style="margin:5px 0;">📧 <b>User:</b> ${json.email}</p>
-          <p style="margin:5px 0;">🔗 <b>Spreadsheet:</b> <a href="${json.spreadsheetUrl}" target="_blank">${json.spreadsheetUrl}</a></p>
-          <p style="margin:5px 0; font-size:12px; color:#555;">(Link copied to clipboard)</p>
-        </div>
-      `;
-    } else {
-      result.style.color = "red";
-      result.innerHTML = `❌ Claim failed: ${json.error || json.details || "Unknown error"}`;
-    }
-
-  } catch (err) {
-    spinner.style.display = "none";
-    result.style.color = "blue";
-    //result.innerHTML = "❌ Network error while finalizing QR claim. Please try again.";
-	//result.innerHTML += `<br><code style="font-size:12px; color:gray;">${err.message || err}</code>`;
-
-    //console.error("Finalizing QR claim error:", err);
-  }
-
-  // Optional: clean up ?id=...&claimed=... from URL
-  setTimeout(cleanUpUrl, 2000);
-}
-*/
-
-
-function handleClaimedReturn() {
-  const spinner = document.getElementById("spinner");
-  const result = document.getElementById("result");
-  const webAppUrl = "https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec";
-
-  window.addEventListener("message", async (event) => {
-    const { claimed, id } = event.data || {};
-    if (!claimed || !id) return;
-
-    spinner.style.display = "block";
-    result.style.display = "block";
-    result.style.color = "black";
-    result.innerHTML = "🔄 Finalizing your QR claim... Please wait.";
-
-    try {
-      const response = await fetch(`${webAppUrl}?initClaim=${encodeURIComponent(id)}`);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const json = await response.json();
-
-      spinner.style.display = "none";
-
-      if (json.success) {
-        try {
-          await navigator.clipboard.writeText(json.spreadsheetUrl);
-        } catch (e) {
-          console.warn("📋 Clipboard copy failed:", e);
-        }
-
-        result.innerHTML = `
-          <div style="text-align:left; padding:10px 20px; background:#e6ffe6; border:1px solid #00cc88; border-radius:10px;">
-            <p style="margin:5px 0;"><span style="font-size:20px;">✅</span> <b>QR Claimed Successfully!</b></p>
-            <p style="margin:5px 0;">📧 <b>User:</b> ${json.email}</p>
-            <p style="margin:5px 0;">🔗 <b>Spreadsheet:</b> <a href="${json.spreadsheetUrl}" target="_blank">${json.spreadsheetUrl}</a></p>
-            <p style="margin:5px 0; font-size:12px; color:#555;">(Link copied to clipboard)</p>
-          </div>
-        `;
-      } else {
-        result.style.color = "red";
-        result.innerHTML = `❌ Claim failed: ${json.error || json.details || "Unknown error"}`;
-      }
-
-    } catch (err) {
-      spinner.style.display = "none";
-      result.style.color = "red";
-      result.innerHTML = `❌ Network error while finalizing QR claim.`;
-      console.error("Finalizing QR claim error:", err);
-    }
-
-    // Optional cleanup
-    setTimeout(cleanUpUrl, 2000);
-  });
-}
 
 
 
