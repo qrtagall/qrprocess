@@ -220,17 +220,15 @@
   </style>
 </head>
 <body>
-
+/*
 	<script>
-  window.addEventListener("message", async (event) => {
-    const { claimed, id } = event.data || {};
-    if (!claimed || !id) return;
 
-    console.log("📨 Message received from popup:", event.data);
-    await handleClaimedReturnFromPopup(id); // This already exists
-  });
+		window.addEventListener("message", (event) => {
+  console.log("📨 Message received from popup:", event.data);
+});
+		
 </script>
-
+*/
 	
 <!-- Spinner & Popup -->
 	<div id="popup">
@@ -307,8 +305,25 @@ function cleanUpUrl() {
 }
 
 	
-	
-	function googleLogin() {
+
+   window.addEventListener("message", async (event) => {
+    console.log("📨 Message received from popup:", event.data);
+
+    const { claimed, id } = event.data || {};
+    if (!claimed || !id) {
+      console.warn("⚠️ Incomplete postMessage — skipping");
+      return;
+    }
+
+    try {
+      await handleClaimedReturnFromPopup(id); // already defined
+    } catch (e) {
+      console.error("❌ Error in handleClaimedReturnFromPopup:", e);
+    }
+  });
+
+	  
+function googleLogin() {
   const id = getQueryParam("id");
   const webAppUrl = "https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec";
   //const redirectBack = 'file:///G:/QrTagAll/Code/process/popup-callback.html';//`https://process.qrtagall.com/popup-callback.html`;
@@ -316,7 +331,7 @@ function cleanUpUrl() {
 
   const claimUrl = `${webAppUrl}?initClaim=${encodeURIComponent(id)}&redirect=${encodeURIComponent(redirectBack)}&id=${encodeURIComponent(id)}`;
 
-  const popup = window.open(claimUrl, "QRClaimPopup", "width=500,height=600");
+  const popup = window.open(claimUrl, "QRClaimPopup", "width=500,height=600",noopener=false");
 
 // ✅ Watch for message + remove spinner after 10 sec fallback
 const timeout = setTimeout(() => {
