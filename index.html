@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">V-2.26</div>
+	  <div id="versionTag">V-2.27</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -470,55 +470,6 @@ function startClaimPolling(id) {
 
 console.log("🔄 Initiating Verification...");
 
-
-
-function googleLogin() {
-  const id = getQueryParam("id");
-  const webAppUrl = "https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec";
-  const redirectBack = `https://process.qrtagall.com/popup-callback.html`;
-  const claimUrl = `${webAppUrl}?initClaim=${encodeURIComponent(id)}&redirect=${encodeURIComponent(redirectBack)}&id=${encodeURIComponent(id)}`;
-
-  popupRef = window.open(claimUrl, "QRClaimPopup", "width=500,height=600");
-
-  document.getElementById("spinner").style.display = "block";
-  document.getElementById("result").textContent = "🔐 Waiting for Google login...";
-}
-
-
-	function googleLogin1() {
-  const id = getQueryParam("id");
-  const webAppUrl = "https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec";
-
-  const spinner = document.getElementById("spinner");
-  const result = document.getElementById("result");
-  const loginSection = document.getElementById("loginSection");
-
-  // Show spinner and status
-  spinner.style.display = "block";
-  result.style.display = "block";
-  result.style.color = "black";
-  result.textContent = "🚀 Initiating QR Claim. Please wait...";
-  loginSection.style.display = "none";
-
-	//CM EDIT
-	// Build redirect-back URL
-	//const redirectBack = `${window.location.origin}${window.location.pathname}?id=${encodeURIComponent(id)}&claimed=1`;
-	const redirectBack = "https://process.qrtagall.com/?id=" + encodeURIComponent(id) + "&claimed=1";
-
-  
-  
-
-  // Redirect to Apps Script with OAuth & return
-  setTimeout(() => {
-	//window.location.href = `https://process.qrtagall.com/?id=${id}&claimed=1`;
-
-    //window.location.href = `${webAppUrl}?initClaim=${encodeURIComponent(id)}&redirect=${encodeURIComponent(redirectBack)}`;
-	    window.location.replace(`${webAppUrl}?initClaim=${encodeURIComponent(id)}&redirect=${encodeURIComponent(redirectBack)}`);
-
-  }, 1000);
-}
-
-	
 
     async function verifyId() {
   const id = getQueryParam("id");
