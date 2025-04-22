@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">V-2.18</div>
+	  <div id="versionTag">V-2.19</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -298,25 +298,8 @@ function cleanUpUrl() {
 }
 
 
+
 /*
-const channel = new BroadcastChannel("qr_claim_channel");
-channel.addEventListener("message", async (event) => {
-  const { id, claimed } = event.data || {};
-  if (!id || !claimed) return;
-
-  console.log("📨 Claim confirmed via Broadcast:", event.data);
-  await handleClaimedReturnFromPopup(id);
-
-  // ✅ Close the popup if open
-  if (popupRef && !popupRef.closed) {
-    console.log("🔒 Closing popup...");
-    popupRef.close();
-  }
-
-	
-});
-*/
-
 	  const channel = new BroadcastChannel("qr_claim_channel");
 
 channel.addEventListener("message", async (event) => {
@@ -343,6 +326,53 @@ channel.addEventListener("message", async (event) => {
     window.location.reload();
   }, 100);
 });
+*/
+
+// ✅ Global popupRef (if used)
+let popupRef = null;
+
+// ✅ Listen via postMessage (cross-origin safe)
+window.addEventListener("message", async (event) => {
+  const { id, claimed } = event.data || {};
+  if (!id || !claimed) return;
+
+  console.log("📨 Received via postMessage:", event.data);
+  await onClaimReceived(id);
+});
+
+// ✅ Listen via BroadcastChannel (same-origin fallback)
+try {
+  const channel = new BroadcastChannel("qr_claim_channel");
+  channel.addEventListener("message", async (event) => {
+    const { id, claimed } = event.data || {};
+    if (!id || !claimed) return;
+
+    console.log("📢 Received via BroadcastChannel:", event.data);
+    await onClaimReceived(id);
+  });
+} catch (e) {
+  console.warn("⚠️ BroadcastChannel not supported:", e);
+}
+
+// ✅ Common handler
+async function onClaimReceived(id) {
+  try {
+    await handleClaimedReturnFromPopup(id);
+  } catch (e) {
+    console.error("❌ Claim finalization failed:", e);
+  }
+
+  if (popupRef && !popupRef.closed) {
+    console.log("🔒 Closing popup...");
+    popupRef.close();
+  }
+
+  // Optionally reload or refresh UI
+  setTimeout(() => {
+    console.log("🔄 Reloading main page...");
+    window.location.reload();
+  }, 500);
+}
 
 
 
