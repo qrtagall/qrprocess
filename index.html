@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">V-2.31</div>
+	  <div id="versionTag">Ver-2.32</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -298,35 +298,21 @@ function cleanUpUrl() {
 }
 
 
+window.addEventListener("load", () => {
+  const claimedEmail = localStorage.getItem("qr_claimed_email");
+  if (claimedEmail) {
+    const resultDiv = document.getElementById("result");
+    resultDiv.style.display = "block";
+    resultDiv.innerHTML = `🎉 Claimed by: <b>${claimedEmail}</b>`;
+    
+    // ✅ Log to console
+    console.log("📧 QR was claimed by:", claimedEmail);
 
-/*
-	  const channel = new BroadcastChannel("qr_claim_channel");
-
-channel.addEventListener("message", async (event) => {
-  const { id, claimed } = event.data || {};
-  if (!id || !claimed) return;
-
-  console.log("📨 Claim confirmed via Broadcast:", event.data);
-
-  try {
-    await handleClaimedReturnFromPopup(id);  // your existing function
-  } catch (e) {
-    console.error("❌ Error in handleClaimedReturnFromPopup:", e);
+    // Clear after showing
+    localStorage.removeItem("qr_claimed_email");
   }
-
-  // ✅ Close the popup if still open
-  if (typeof popupRef !== "undefined" && popupRef && !popupRef.closed) {
-    console.log("🔒 Closing popup...");
-    popupRef.close();
-  }
-
-  // ✅ Refresh main page after slight delay
-  setTimeout(() => {
-    console.log("🔄 Reloading main page...");
-    window.location.reload();
-  }, 100);
 });
-*/
+
 
 
 let popupRef = null;
@@ -509,9 +495,14 @@ function startClaimPolling(id) {
 
 
 
-	
+
+
 
 console.log("🔄 Initiating Verification...");
+	  
+const claimedEmail = localStorage.getItem("qr_claimed_email");	  
+console.log("📧 QR was claimed by:", claimedEmail);
+	  
 
 
     async function verifyId() {
@@ -820,20 +811,7 @@ function editAlert() {
   }
 }
 
-window.addEventListener("load", () => {
-  const claimedEmail = localStorage.getItem("qr_claimed_email");
-  if (claimedEmail) {
-    const resultDiv = document.getElementById("result");
-    resultDiv.style.display = "block";
-    resultDiv.innerHTML = `🎉 Claimed by: <b>${claimedEmail}</b>`;
-    
-    // ✅ Log to console
-    console.log("📧 QR was claimed by:", claimedEmail);
 
-    // Clear after showing
-    localStorage.removeItem("qr_claimed_email");
-  }
-});
 	  
   
 
