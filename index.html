@@ -10,6 +10,7 @@
       --valid: #00cc88;
       --error: #ff4444;
     }
+	  
 
     body {
 		margin: 0;
@@ -239,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">V-2.13</div>
+	  <div id="versionTag">V-2.15</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -304,29 +305,20 @@ channel.addEventListener("message", async (event) => {
   const { id, claimed } = event.data || {};
   if (!id || !claimed) return;
 
-  console.log("📨 Message from popup via channel:", event.data);
+  console.log("📨 Claim confirmed via Broadcast:", event.data);
   await handleClaimedReturnFromPopup(id);
+
+  // ✅ Close the popup if open
+  if (popupRef && !popupRef.closed) {
+    console.log("🔒 Closing popup...");
+    popupRef.close();
+  }
 });
 
-	  /*
-   window.addEventListener("message", async (event) => {
-    console.log("📨 Message received from popup:", event.data);
 
-    const { claimed, id } = event.data || {};
-    if (!claimed || !id) {
-      console.warn("⚠️ Incomplete postMessage — skipping");
-      return;
-    }
+	
 
-    try {
-      await handleClaimedReturnFromPopup(id); // already defined
-    } catch (e) {
-      console.error("❌ Error in handleClaimedReturnFromPopup:", e);
-    }
-  });
-	  */
-
-	  
+	/*  
 function googleLogin() {
   const id = getQueryParam("id");
   const webAppUrl = "https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec";
@@ -335,13 +327,7 @@ function googleLogin() {
 
   const claimUrl = `${webAppUrl}?initClaim=${encodeURIComponent(id)}&redirect=${encodeURIComponent(redirectBack)}&id=${encodeURIComponent(id)}`;
 
- /* 
- const popup = window.open(
-  claimUrl,
-  "QRClaimPopup",
-  "width=500,height=600,menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes"
-);
-*/
+ 
 	const popup = window.open(claimUrl, "QRClaimPopup", "popup,width=500,height=600");
 	
 if (!popup) {
@@ -354,7 +340,21 @@ const timeout = setTimeout(() => {
 }, 30000);
 		
 }
+*/
 
+let popupRef = null;
+
+function googleLogin() {
+  const id = getQueryParam("id");
+  const webAppUrl = "https://script.google.com/macros/s/..." // your script URL
+  const redirectBack = `https://process.qrtagall.com/popup-callback.html`;
+  const claimUrl = `${webAppUrl}?initClaim=${encodeURIComponent(id)}&redirect=${encodeURIComponent(redirectBack)}&id=${encodeURIComponent(id)}`;
+
+  popupRef = window.open(claimUrl, "QRClaimPopup", "width=500,height=600");
+
+  document.getElementById("spinner").style.display = "block";
+  document.getElementById("result").textContent = "🔐 Waiting for Google login...";
+}
 
 
 	function googleLogin1() {
