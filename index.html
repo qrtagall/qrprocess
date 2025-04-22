@@ -247,7 +247,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">V-2.11</div>
+	  <div id="versionTag">V-2.12</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -331,11 +331,14 @@ function googleLogin() {
 
   const claimUrl = `${webAppUrl}?initClaim=${encodeURIComponent(id)}&redirect=${encodeURIComponent(redirectBack)}&id=${encodeURIComponent(id)}`;
 
-  const popup = window.open(
+ /* 
+ const popup = window.open(
   claimUrl,
   "QRClaimPopup",
   "width=500,height=600,menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes"
 );
+*/
+	const popup = window.open(claimUrl, "QRClaimPopup", "popup,width=500,height=600");
 	
 if (!popup) {
   alert("Popup blocked. Please allow popups for this site.");
