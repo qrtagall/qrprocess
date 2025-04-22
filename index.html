@@ -221,6 +221,14 @@
 </head>
 <body>
 
+	window.addEventListener("message", async (event) => {
+    const { claimed, id } = event.data || {};
+    if (!claimed || !id) return;
+
+    console.log("📨 Message received from popup:", event.data);
+    await handleClaimedReturnFromPopup(id); // This already exists
+  });
+	
 <!-- Spinner & Popup -->
 	<div id="popup">
 	  <h2>🔍 Verifying QR ID</h2>
@@ -797,7 +805,7 @@ function editAlert() {
 
 
     verifyId();
-	handleClaimedReturn();
+//handleClaimedReturn();
   </script>
 </body>
 </html>
