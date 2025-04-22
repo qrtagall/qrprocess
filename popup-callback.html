@@ -1,57 +1,89 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>QRTagAll - Claim Finalized</title>
+  <meta charset="UTF-8">
+  <title>QRTagAll – Finalizing...</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f4f4;
+      text-align: center;
+      padding-top: 80px;
+      color: #333;
+    }
+    .spinner {
+      margin-top: 20px;
+      font-size: 22px;
+      animation: blink 1s infinite;
+    }
+    @keyframes blink {
+      0% { opacity: 0.2; }
+      50% { opacity: 1; }
+      100% { opacity: 0.2; }
+    }
+    .info {
+      font-size: 14px;
+      color: #777;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2>🔐 QR Claim Finalized</h2>
+  <p class="info">This window will close automatically...</p>
+  <div class="spinner">⏳</div>
 
   <script>
-  // Extract ID from URL
-  const params = new URLSearchParams(window.location.search);
-  const id = params.get("id");
-  const claimed = params.get("claimed");
+    // Extract ID from query
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+    const claimed = params.get("claimed");
 
-  console.log("🧾 ID parsed in popup:", id);
+    console.log("🧾 ID parsed in popup:", id);
 
-  if (id && claimed) {
-    // ✅ 1. Broadcast via channel
-    try {
-      const channel = new BroadcastChannel("qr_claim_channel");
-      channel.postMessage({ id, claimed: true });
-      console.log("📡 Broadcast sent");
-    } catch (e) {
-      console.warn("⚠️ BroadcastChannel not supported:", e);
-    }
-
-    // ✅ 2. Fallback: postMessage to opener
-    try {
-      if (window.opener) {
-        console.log("📤 Sending postMessage to parent");
-        window.opener.postMessage({ id, claimed: true }, "*");
+    if (id && claimed) {
+      // ✅ 1. BroadcastChannel (main route)
+      try {
+        const channel = new BroadcastChannel("qr_claim_channel");
+        channel.postMessage({ id, claimed: true });
+        console.log("📡 Broadcast sent to main window");
+      } catch (e) {
+        console.warn("⚠️ BroadcastChannel not supported:", e);
       }
-    } catch (e) {
-      console.warn("⚠️ postMessage failed:", e);
+
+      // ✅ 2. Fallback postMessage to opener
+      try {
+        if (window.opener && !window.opener.closed) {
+          console.log("📤 Sending postMessage to parent window");
+          window.opener.postMessage({ id, claimed: true }, "*");
+        } else {
+          console.warn("⚠️ window.opener is null or closed");
+        }
+      } catch (e) {
+        console.warn("⚠️ postMessage failed:", e);
+      }
+
+      // ✅ 3. Set localStorage as backup (in case same browser/tab checks)
+      try {
+        localStorage.setItem("qr_claimed", JSON.stringify({
+          id,
+          claimed: true,
+          timestamp: new Date().toISOString()
+        }));
+        console.log("📦 Stored in localStorage");
+      } catch (e) {
+        console.warn("⚠️ localStorage failed:", e);
+      }
+
+      // ✅ 4. Auto-close popup after short delay
+      setTimeout(() => {
+        console.log("🔒 Closing popup...");
+        window.close();
+      }, 1500);
+    } else {
+      document.querySelector(".info").textContent = "⚠️ Missing or invalid claim data.";
+      document.querySelector(".spinner").textContent = "";
     }
-
-    // ✅ 3. Set localStorage flag
-    try {
-      localStorage.setItem("qr_claimed", JSON.stringify({
-        id,
-        claimed: true,
-        timestamp: new Date().toISOString()
-      }));
-    } catch (e) {
-      console.warn("⚠️ localStorage sync failed:", e);
-    }
-
-    // ✅ 4. Auto-close after short delay
-    setTimeout(() => {
-      console.log("🔒 Closing popup...");
-      window.close();
-    }, 1000);
-  }
-</script>
-
-
-  
+  </script>
 </body>
-
 </html>
