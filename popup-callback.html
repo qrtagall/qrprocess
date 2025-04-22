@@ -3,24 +3,30 @@
 <head>
   <title>QRTagAll - Claim Finalized</title>
 <script>
-  const urlParams = new URLSearchParams(window.location.search);
-  const id = urlParams.get("id");
-  const claimed = urlParams.get("claimed");
-
+  const id = new URLSearchParams(window.location.search).get("id");
   console.log("🧾 ID parsed in popup:", id);
 
-  if (id && claimed) {
-    const channel = new BroadcastChannel("qr_claim_channel");
-    channel.postMessage({ claimed: true, id });
-    console.log("📤 Sent message to main page via channel");
+  // ✅ 1. Try postMessage (for parent window)
+  if (window.opener) {
+    console.log("📤 Sending message to opener via postMessage...");
+    window.opener.postMessage({ id, claimed: true }, "*");
   } else {
-    console.warn("❌ Missing ID or claim info in popup");
+    console.warn("⚠️ window.opener not available");
   }
 
-  setTimeout(() => {
-    window.close();
-  }, 800);
+  // ✅ 2. Also broadcast (fallback for same-origin setups)
+  try {
+    const channel = new BroadcastChannel("qr_claim_channel");
+    channel.postMessage({ id, claimed: true });
+    console.log("📢 Sent message via BroadcastChannel");
+  } catch (e) {
+    console.error("❌ BroadcastChannel failed:", e);
+  }
+
+  // ✅ Close popup after delay
+  setTimeout(() => window.close(), 700);
 </script>
+
 
 
 
