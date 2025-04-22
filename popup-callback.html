@@ -2,51 +2,56 @@
 <html>
 <head>
   <title>QRTagAll - Claim Finalized</title>
-<script>
-  const id = new URLSearchParams(window.location.search).get("id");
+
+  <script>
+  // Extract ID from URL
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get("id");
+  const claimed = params.get("claimed");
+
   console.log("🧾 ID parsed in popup:", id);
 
-  // ✅ 1. Try postMessage (for parent window)
-  if (window.opener) {
-    console.log("📤 Sending message to opener via postMessage...");
-    window.opener.postMessage({ id, claimed: true }, "*");
-  } else {
-    console.warn("⚠️ window.opener not available");
-  }
+  if (id && claimed) {
+    // ✅ 1. Broadcast via channel
+    try {
+      const channel = new BroadcastChannel("qr_claim_channel");
+      channel.postMessage({ id, claimed: true });
+      console.log("📡 Broadcast sent");
+    } catch (e) {
+      console.warn("⚠️ BroadcastChannel not supported:", e);
+    }
 
-  // ✅ 2. Also broadcast (fallback for same-origin setups)
-  try {
-    const channel = new BroadcastChannel("qr_claim_channel");
-    channel.postMessage({ id, claimed: true });
-    console.log("📢 Sent message via BroadcastChannel");
-  } catch (e) {
-    console.error("❌ BroadcastChannel failed:", e);
-  }
+    // ✅ 2. Fallback: postMessage to opener
+    try {
+      if (window.opener) {
+        console.log("📤 Sending postMessage to parent");
+        window.opener.postMessage({ id, claimed: true }, "*");
+      }
+    } catch (e) {
+      console.warn("⚠️ postMessage failed:", e);
+    }
 
-  // ✅ Close popup after delay
-  setTimeout(() => window.close(), 700);
+    // ✅ 3. Set localStorage flag
+    try {
+      localStorage.setItem("qr_claimed", JSON.stringify({
+        id,
+        claimed: true,
+        timestamp: new Date().toISOString()
+      }));
+    } catch (e) {
+      console.warn("⚠️ localStorage sync failed:", e);
+    }
+
+    // ✅ 4. Auto-close after short delay
+    setTimeout(() => {
+      console.log("🔒 Closing popup...");
+      window.close();
+    }, 1000);
+  }
 </script>
 
 
-
-
-    // Optionally close this window after short delay
-    setTimeout(() => window.close(), 1000);
-  </script>
-</head>
-<body>
-  <p>✅ QR Claimed. You can close this window.</p>
-  <script>
-    // auto-close in 1 second, fallback after 3 seconds
-    setTimeout(() => {
-      try {
-        window.close();
-      } catch (e) {}
-    }, 1000);
-    setTimeout(() => {
-      document.body.innerHTML += "<p style='font-size:12px; color:gray'>(If not closed, please close manually..)</p>";
-    }, 3000);
-  </script>
+  
 </body>
 
 </html>
