@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">V-2.20</div>
+	  <div id="versionTag">V-2.21</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -354,7 +354,26 @@ try {
   console.warn("⚠️ BroadcastChannel not supported:", e);
 }
 
+// ✅ Common handler
+async function onClaimReceived(id) {
+  try {
+    await handleClaimedReturnFromPopup(id);
+  } catch (e) {
+    console.error("❌ Claim finalization failed:", e);
+  }
 
+  if (popupRef && !popupRef.closed) {
+    console.log("🔒 Closing popup...");
+    popupRef.close();
+  }
+
+  // Optionally reload or refresh UI
+  setTimeout(() => {
+    console.log("🔄 Reloading main page...");
+    window.location.reload();
+  }, 500);
+}
+	
 
 
 
@@ -362,7 +381,7 @@ try {
 
 console.log("🔄 Initiating Verification...");
 
-let popupRef = null;
+
 
 function googleLogin() {
   const id = getQueryParam("id");
@@ -718,26 +737,7 @@ function editAlert() {
   }
 }
 
-// ✅ Common handler
-async function onClaimReceived(id) {
-  try {
-    await handleClaimedReturnFromPopup(id);
-  } catch (e) {
-    console.error("❌ Claim finalization failed:", e);
-  }
-
-  if (popupRef && !popupRef.closed) {
-    console.log("🔒 Closing popup...");
-    popupRef.close();
-  }
-
-  // Optionally reload or refresh UI
-  setTimeout(() => {
-    console.log("🔄 Reloading main page...");
-    window.location.reload();
-  }, 500);
-}
-	  
+  
 
 
 
