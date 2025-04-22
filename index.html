@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">V-2.22</div>
+	  <div id="versionTag">V-2.23</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -423,21 +423,34 @@ window.addEventListener("storage", (event) => {
 // As last resort: polling
 function startClaimPolling(id) {
   let attempts = 0;
-  pollingInterval = setInterval(async () => {
+  const claimCheckInterval = 5000; // 5 seconds
+  const maxAttempts = 6; // Total 30 seconds
+
+  const pollingInterval = setInterval(async () => {
     attempts++;
-    if (attempts > 6) return clearInterval(pollingInterval); // Max 30s
+    if (attempts > maxAttempts) {
+      console.warn("🕓 Claim polling timeout reached");
+      clearInterval(pollingInterval);
+      return;
+    }
 
     try {
-      const trackerUrl = `https://script.google.com/macros/s/YOUR_TRACKER_SCRIPT_ID/exec?checkClaim=${encodeURIComponent(id)}`;
+      const trackerUrl = `https://script.google.com/macros/s/AKfycbzgrQ9JzTzDY57cxlWs-g4kbiCb4C5j9X54BzE2eniGp3LQYKSFqNr5-yai4ZJmfjO83Q/exec?id=${encodeURIComponent(id)}`;
       const res = await fetch(trackerUrl);
       const json = await res.json();
-      if (json.claimed) {
-        console.log("🕵️ Found via polling:", id);
-        onClaimReceived(id);
+
+      if (json.found && json.data && json.data.UserName) {
+        console.log("🕵️ QR claimed detected via polling:", json.data.UserName);
+        clearInterval(pollingInterval);
+        onClaimReceived(id); // Your existing success handler
       }
-    } catch {}
+
+    } catch (err) {
+      console.warn("Polling error:", err);
+    }
   }, claimCheckInterval);
 }
+
 
 
 	  
