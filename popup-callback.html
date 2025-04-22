@@ -16,6 +16,18 @@
   </script>
 </head>
 <body>
-  <p>✅ QR Claim completed. You can close this window.</p>
+  <p>✅ QR Claimed. You can close this window.</p>
+  <script>
+    // auto-close in 1 second, fallback after 3 seconds
+    setTimeout(() => {
+      try {
+        window.close();
+      } catch (e) {}
+    }, 1000);
+    setTimeout(() => {
+      document.body.innerHTML += "<p style='font-size:12px; color:gray'>(If not closed, please close manually)</p>";
+    }, 3000);
+  </script>
 </body>
+
 </html>
