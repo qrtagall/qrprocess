@@ -8,10 +8,19 @@
     console.log("🧾 ID parsed in popup:", id);
     
     // Send result back to main window
-    if (window.opener) {
-      console.log("✅ Sending message to parent");
-      window.opener.postMessage({ claimed: true, id }, "*");
-    }
+   if (window.opener && id) {
+    console.log("✅ Sending message to parent");
+    window.opener.postMessage({ claimed: true, id }, "*");
+    setTimeout(() => window.close(), 500);
+  } else {
+    document.body.innerHTML = `
+      <p style="padding:30px; font-family:sans-serif;">
+        ❌ Cannot notify parent window.<br>
+        <code>window.opener</code> is ${window.opener ? 'available' : 'null'}<br>
+        <code>id</code> is ${id || 'null'}
+      </p>`;
+  }
+</script>
 
     // Optionally close this window after short delay
     setTimeout(() => window.close(), 1000);
