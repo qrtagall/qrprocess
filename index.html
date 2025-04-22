@@ -249,7 +249,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">V-2.6</div>
+	  <div id="versionTag">V-2.7</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -318,14 +318,11 @@ function cleanUpUrl() {
 
   const popup = window.open(claimUrl, "QRClaimPopup", "width=500,height=600");
 
-  const spinner = document.getElementById("spinner");
-  const result = document.getElementById("result");
-  const loginSection = document.getElementById("loginSection");
-
-  spinner.style.display = "block";
-  result.style.display = "block";
-  result.textContent = "🔐 Waiting for Google login...";
-  loginSection.style.display = "none";
+// ✅ Watch for message + remove spinner after 10 sec fallback
+const timeout = setTimeout(() => {
+  document.getElementById("result").textContent = "❌ Login timeout. Please try again.";
+}, 10000);
+		
 }
 
 
@@ -494,6 +491,8 @@ async function resolveAndRender(value, i, customTitle = `Link ${i}`) {
 async function handleClaimedReturnFromPopup(id) {
   const spinner = document.getElementById("spinner");
   const result = document.getElementById("result");
+
+  document.getElementById("result").textContent = "✅ Claimed successfully!";
 
   spinner.style.display = "block";
   result.style.display = "block";
