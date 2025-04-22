@@ -238,7 +238,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">V-2.1</div>
+	  <div id="versionTag">V-2.2</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -406,9 +406,10 @@ async function handleClaimedReturn() {
     spinner.style.display = "none";
     result.style.color = "red";
     //result.innerHTML = "❌ Network error while finalizing QR claim. Please try again.";
-	result.innerHTML += `<br><code style="font-size:12px; color:gray;">${err.message || err}</code>`;
+	//result.innerHTML += `<br><code style="font-size:12px; color:gray;">${err.message || err}</code>`;
+file:///G:/QrTagAll/Code/process/index.html/?id=20250419224327904_314764b8cc2b00e
 
-    console.error("Finalizing QR claim error:", err);
+    //console.error("Finalizing QR claim error:", err);
   }
 
   // Optional: clean up ?id=...&claimed=... from URL
