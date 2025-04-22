@@ -221,13 +221,7 @@
 </head>
 <body>
 
-	window.addEventListener("message", async (event) => {
-    const { claimed, id } = event.data || {};
-    if (!claimed || !id) return;
-
-    console.log("📨 Message received from popup:", event.data);
-    await handleClaimedReturnFromPopup(id); // This already exists
-  });
+	
 	
 <!-- Spinner & Popup -->
 	<div id="popup">
@@ -246,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">V-2.4</div>
+	  <div id="versionTag">V-2.5</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -271,6 +265,13 @@
 	
     
 	const SALT = "QRTagall@2025";
+  window.addEventListener("message", async (event) => {
+    const { claimed, id } = event.data || {};
+    if (!claimed || !id) return;
+
+    console.log("📨 Message received from popup:", event.data);
+    await handleClaimedReturnFromPopup(id); // This already exists
+  });
 	
     async function sha256(input) {
       const encoder = new TextEncoder();
