@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">V-2.30</div>
+	  <div id="versionTag">V-2.31</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -820,6 +820,21 @@ function editAlert() {
   }
 }
 
+window.addEventListener("load", () => {
+  const claimedEmail = localStorage.getItem("qr_claimed_email");
+  if (claimedEmail) {
+    const resultDiv = document.getElementById("result");
+    resultDiv.style.display = "block";
+    resultDiv.innerHTML = `🎉 Claimed by: <b>${claimedEmail}</b>`;
+    
+    // ✅ Log to console
+    console.log("📧 QR was claimed by:", claimedEmail);
+
+    // Clear after showing
+    localStorage.removeItem("qr_claimed_email");
+  }
+});
+	  
   
 
 
