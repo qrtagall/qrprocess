@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">V-2.28</div>
+	  <div id="versionTag">V-2.29</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -387,9 +387,9 @@ async function onClaimReceived(id) {
       result.innerHTML = `❌ Claim failed: ${json.details || "Unknown error"}`;
     }
   } catch (err) {
-    spinner.style.display = "none";
-    result.style.color = "red";
-    result.textContent = "❌ Network error while finalizing QR claim.";
+    //spinner.style.display = "none";
+    //result.style.color = "red";
+    //result.textContent = "❌ Network error while finalizing QR claim.";
 	console.error("🛑 Finalize Claim Error:", err);
   }
 
