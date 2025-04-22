@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">Ver-2.35</div>
+	  <div id="versionTag">Ver-2.36</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -365,7 +365,9 @@ async function onClaimReceived(id, emailFromPopup = null) {
 
     const email = json.email || emailFromPopup || "Unknown";
 
-	localStorage.setItem("qr_claimed_email", finalEmail);	  
+	  
+	localStorage.setItem("qr_claimed_email", email);	
+	  console.log("email Written to Local Storage", email);
     if (json.success) {
       try { await navigator.clipboard.writeText(json.spreadsheetUrl); } catch {}
 
