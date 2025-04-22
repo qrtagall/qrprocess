@@ -8,17 +8,17 @@
   const claimed = urlParams.get("claimed");
 
   console.log("🧾 ID parsed in popup:", id);
-  console.log("🔍 opener exists?", !!window.opener);
 
-  if (id && claimed && window.opener) {
-    window.opener.postMessage({ claimed: true, id }, "*");
-    console.log("📤 postMessage sent to parent");
+  if (id && claimed) {
+    const channel = new BroadcastChannel("qr_claim_channel");
+    channel.postMessage({ claimed: true, id });
+    console.log("📤 Sent message to main page via channel");
   } else {
-    console.warn("❌ Cannot post message. Either ID missing or opener unavailable.");
+    console.warn("❌ Missing ID or claim info in popup");
   }
 
   setTimeout(() => {
-    window.close(); // Close popup after message
+    window.close();
   }, 800);
 </script>
 
