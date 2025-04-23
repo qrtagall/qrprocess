@@ -29,7 +29,7 @@
   </style>
 </head>
 <body>
-  <h2>🔐 Finalizing QR Claim (v7.0)</h2>
+  <h2>🔐 Finalizing QR Claim (v8.0)</h2>
   <p class="info" id="status">Just a moment while we complete the process...</p>
   <div class="spinner">⏳</div>
 
@@ -57,15 +57,11 @@
         if (!email) throw new Error("No email received from Google.");
 
         console.log("📧 Email fetched:", email);
-         
-        // Store email
-        localStorage.setItem("qr_claimed_email", email);
 
         // ✅ Redirect to backend with claim info
-        //const backendUrl = https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec;
-        //const redirectUrl = ${backendUrl}?initClaim=${encodeURIComponent(id)}&email=${encodeURIComponent(email)}&oauthClaim=1&redirect=${encodeURIComponent(window.location.origin + "/?id=" + id + "&claimed=1")};
-
-        const redirectUrl = `https://process.qrtagall.com/?id=${encodeURIComponent(id)}&claimed=1`;
+        const backendUrl = https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec;
+        const redirectUrl = ${backendUrl}?initClaim=${encodeURIComponent(id)}&email=${encodeURIComponent(email)}&oauthClaim=1&redirect=${encodeURIComponent(window.location.origin + "/?id=" + id + "&claimed=1")};
+        
         console.log("🚀 Redirecting to backend:", redirectUrl);
         window.location.href = redirectUrl;
 
