@@ -39,7 +39,11 @@
       const accessToken = hashParams.get("access_token");
 
       const urlParams = new URLSearchParams(window.location.search);
-      const id = urlParams.get("id");
+      
+
+      const stateParams = new URLSearchParams(window.location.hash.slice(1));
+      const rawState = stateParams.get("state"); // Contains "id=..."
+      const id = new URLSearchParams(rawState).get("id");
 
       const statusEl = document.getElementById("status");
 
