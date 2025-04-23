@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">Ver-2.50</div>
+	  <div id="versionTag">Ver-2.51</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -888,7 +888,7 @@ document.getElementById("ownerLoginYes").onclick = () => {
 
   } else {
     // ✅ Direct login for first time
-    googleLoginForEdit();
+    googleLoginForEdit(id);
   }
 };
 
@@ -897,8 +897,8 @@ document.getElementById("ownerLoginYes").onclick = () => {
 	  
   
 
-function googleLoginForEdit() {
-  const id = getQueryParam("id");
+function googleLoginForEdit(id) {
+ // const id = getQueryParam("id");
   const webAppUrl = "https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec";
   
   // ✅ This callback tells the popup we are only verifying identity (not claiming)
@@ -907,6 +907,9 @@ function googleLoginForEdit() {
   // ✅ This hits your App Script that should ONLY perform identity verification
   const loginUrl = `${webAppUrl}?verifyOnly=1&redirect=${encodeURIComponent(redirectBack)}&id=${encodeURIComponent(id)}`;
 
+	//console.log("🛑 Finalize Claim Error:", err);
+	console.log("Qrery to popup:", loginUrl);
+	
   // Open the popup
   popupRef = window.open(loginUrl, "QRVerifyPopup", "width=500,height=600");
 
