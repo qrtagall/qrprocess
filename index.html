@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">Ver-2.44</div>
+	  <div id="versionTag">Ver-2.45</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -520,6 +520,7 @@ console.log("🔄 Initiating Verification...");
 	  
 const sessionEmail = localStorage.getItem("qr_claimed_email");	  
 console.log("📧 QR was last claimed by:", sessionEmail);
+let isOwner=false;
 
 	  
 
@@ -756,15 +757,22 @@ async function fetchAssetData(id) {
 	
 
 		if (sessionEmail && sessionEmail === ownerEmail) {
+			isOwner=true;
+			updatePanelBackground("#e6ffe6"); // light green for owners
 		  editBtn.innerHTML = "✏️ Edit Details";
 		  editBtn.disabled = false;
 		  editBtn.classList.remove("disabled-button");
 		  editBtn.classList.add("enabled");
 		} else {
+			isOwner=false;
+			updatePanelBackground("#fffbe6"); // neutral background
 		  editBtn.innerHTML = "🔐 Log-in to Edit Details";
-		  editBtn.disabled = true;
-		  editBtn.classList.remove("enabled");
-		  editBtn.classList.add("disabled-button");
+		  //editBtn.disabled = true;
+		  //editBtn.classList.remove("enabled");
+		  //editBtn.classList.add("disabled-button");
+		  editBtn.disabled = false;
+		  editBtn.classList.remove("disabled-button");
+		  editBtn.classList.add("enabled");	
 		}
 		
 		
@@ -783,11 +791,21 @@ function editAlert() {
   if (document.getElementById("editBtn").disabled) {
     alert("🔐 Please log in first to edit this asset.");
   } else {
-    alert("✅ Edit mode coming soon...");
+	  if(isOwner==false)
+		  alert("❌ Only QR owner can Edit");
+	   else
+    		alert("✅ Edit mode coming soon...");
     // TODO: Redirect to edit form or open modal
   }
 }
 
+function updatePanelBackground(colorCode) {
+  const panel = document.getElementById("mainContent");
+  if (panel) {
+    panel.style.backgroundColor = colorCode;
+    //console.log("🎨 Panel background updated to:", colorCode);
+  }
+}
 
 	  
   
