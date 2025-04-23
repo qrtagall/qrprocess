@@ -29,77 +29,49 @@
   </style>
 </head>
 <body>
-  <h2>🔐 Finalizing QR Claim >V-3.0 </h2>
+  <h2>🔐 Finalizing QR Claim (v4.0)</h2>
   <p class="info" id="status">Just a moment while we complete the process...</p>
   <div class="spinner">⏳</div>
 
- <script>
-  async function finalizeQRClaim() {
-    const hashParams = new URLSearchParams(window.location.hash.slice(1));
-    const accessToken = hashParams.get("access_token");
-    const rawState = hashParams.get("state"); // Correct: state is part of hash, not search
-    //const id = rawState ? new URLSearchParams(rawState).get("id") : null;
+  <script>
+    async function finalizeQRClaim() {
+      const hashParams = new URLSearchParams(window.location.hash.slice(1));
+      const accessToken = hashParams.get("access_token");
+      const id = hashParams.get("state");
 
-    const statusEl = document.getElementById("status");
+      const statusEl = document.getElementById("status");
 
-    
-    // Parse access_token from URL fragment
-    //const hash = new URLSearchParams(window.location.hash.slice(1));
-    //const token = hash.get("access_token");
-    const id = hashParams.get("state"); // this is your ID
-    
-
-    if (!accessToken || !id) {
-      statusEl.textContent = "❌ Missing access token or QR ID.";
-      return;
-    }
-
-    try {
-      // 🔐 Fetch email using access token
-      const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
-      const userInfo = await userInfoRes.json();
-      const email = userInfo.email;
-
-      if (!email) {
-        throw new Error("No email received from Google.");
+      if (!accessToken || !id) {
+        statusEl.textContent = "❌ Missing access token or QR ID.";
+        return;
       }
 
-      console.log("📧 Email fetched:", email);
+      try {
+        // ✅ Get user's email
+        const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        const userInfo = await userInfoRes.json();
+        const email = userInfo.email;
 
-      // ✅ Send to Apps Script backend
-      const backendUrl = `https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec`;
-      const claimUrl = `${backendUrl}?initClaim=${encodeURIComponent(id)}&email=${encodeURIComponent(email)}&oauthClaim=1`;
+        if (!email) throw new Error("No email received from Google.");
 
-      //const response = await fetch(claimUrl);
-      //const result = await response.json();
+        console.log("📧 Email fetched:", email);
 
-      const redirectUrl = `${backendUrl}?initClaim=${encodeURIComponent(id)}&email=${encodeURIComponent(email)}&oauthClaim=1&redirect=${encodeURIComponent(window.location.origin + "/?id=" + id + "&claimed=1")}`;
-      console.log("🚀 Redirecting to backend:", redirectUrl);
-      window.location.href = redirectUrl;
-      
-      if (result.success) {
-        localStorage.setItem("qr_claimed_email", email);
-      
-        const redirectUrl = result.redirect || `${window.location.origin}/?id=${encodeURIComponent(id)}&claimed=1`;
-        statusEl.textContent = "✅ QR successfully claimed. Redirecting...";
-      
-        setTimeout(() => {
-          window.location.href = redirectUrl;
-        }, 1500);
-      } else {
-        statusEl.textContent = `❌ Claim failed: ${result.details || "Unknown error"}`;
+        // ✅ Redirect to backend with claim info
+        const backendUrl = `https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec`;
+        const redirectUrl = `${backendUrl}?initClaim=${encodeURIComponent(id)}&email=${encodeURIComponent(email)}&oauthClaim=1&redirect=${encodeURIComponent(window.location.origin + "/?id=" + id + "&claimed=1")}`;
+        
+        console.log("🚀 Redirecting to backend:", redirectUrl);
+        window.location.href = redirectUrl;
+
+      } catch (err) {
+        console.error("❌ Error:", err);
+        statusEl.textContent = `❌ Error: ${err.message}`;
       }
-
-    } catch (err) {
-      console.error("❌ Error:", err);
-      statusEl.textContent = `❌ Error: ${err.message}`;
     }
-  }
 
-  finalizeQRClaim();
-</script>
-
+    finalizeQRClaim();
+  </script>
 </body>
 </html>
