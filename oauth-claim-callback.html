@@ -29,7 +29,7 @@
   </style>
 </head>
 <body>
-  <h2>🔐 Finalizing QR Claim >V-2.0 </h2>
+  <h2>🔐 Finalizing QR Claim >V-3.0 </h2>
   <p class="info" id="status">Just a moment while we complete the process...</p>
   <div class="spinner">⏳</div>
 
@@ -72,9 +72,13 @@
       const backendUrl = `https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec`;
       const claimUrl = `${backendUrl}?initClaim=${encodeURIComponent(id)}&email=${encodeURIComponent(email)}&oauthClaim=1`;
 
-      const response = await fetch(claimUrl);
-      const result = await response.json();
+      //const response = await fetch(claimUrl);
+      //const result = await response.json();
 
+      const redirectUrl = `${backendUrl}?initClaim=${encodeURIComponent(id)}&email=${encodeURIComponent(email)}&oauthClaim=1&redirect=${encodeURIComponent(window.location.origin + "/?id=" + id + "&claimed=1")}`;
+      console.log("🚀 Redirecting to backend:", redirectUrl);
+      window.location.href = redirectUrl;
+      
       if (result.success) {
         localStorage.setItem("qr_claimed_email", email);
       
