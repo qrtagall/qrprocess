@@ -37,48 +37,18 @@
     const params = new URLSearchParams(window.location.search);
     const id = params.get("id");
     const claimed = params.get("claimed");
-    const email = params.get("email");
-    const action = params.get("action"); // could be 'verify'
+    //const email = params.get("email");
+    //const action = params.get("action"); // could be 'verify'
 
     console.log("🧾 ID parsed in popup:", id);
-    console.log("📨 Action:", action);
-	console.log("📨 Email:", email);
+    //console.log("📨 Action:", action);
+	//console.log("📨 Email:", email);
 
     // Shared payload
     const payload = { id, email: email || "", timestamp: new Date().toISOString() };
 	
 	
-	window.addEventListener("message", (event) => {
-		  if (event.data.request === "verify-status" && email) {
-			console.log("📤 Responding to verify-status request");
-			window.opener?.postMessage({ verified: true, email, id }, "*");
-		  }
-		});
-
-    if (action === "verify" && id && email) {
-      // 🔁 1. Verification-only login
-      try {
-        const verifyChannel = new BroadcastChannel("qr_verify_channel");
-        verifyChannel.postMessage({ ...payload, verified: true });
-        console.log("📡 Broadcast sent (verify)");
-      } catch (e) {
-        console.warn("⚠️ BroadcastChannel failed (verify):", e);
-      }
-
-      // Fallback
-      try {
-        if (window.opener && !window.opener.closed) {
-          window.opener.postMessage({ ...payload, verified: true }, "*");
-          console.log("📤 postMessage sent to parent (verify)");
-        }
-      } catch (e) {
-        console.warn("⚠️ postMessage failed:", e);
-      }
-
-      localStorage.setItem("qr_verified", JSON.stringify({ ...payload, verified: true }));
-    }
-
-    else if (id && claimed) {
+    if (id && claimed) {
       // 🔁 2. Claim flow
       try {
         const channel = new BroadcastChannel("qr_claim_channel");
