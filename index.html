@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">Ver-2.39</div>
+	  <div id="versionTag">Ver-2.40</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -358,10 +358,10 @@ async function onClaimReceived(id, emailFromPopup = null) {
 
    //Store a copy of OAuth email of User
    try {
-	  localStorage.setItem("qr_claimed_email", email);
-	  console.log("✅ Email stored in localStorage");
+	  localStorage.setItem("qr_claimed_email", emailFromPopup);
+	  console.log("✅ Email stored in localStorage at step-2");
 	} catch (e) {
-	  console.warn("⚠️ localStorage write failed:", e);
+	  console.warn("⚠️ localStorage write failed at step-2 :", e);
 	}
 
   try {
@@ -486,6 +486,14 @@ function startClaimPolling(id) {
 
       if (json.found && json.data && json.data.UserName) {
         console.log("🕵️ QR claimed via polling:", json.data.UserName);
+
+	        try {
+	  localStorage.setItem("qr_claimed_email", json.data.UserName);
+	  console.log("✅ Email stored in localStorage");
+	} catch (e) {
+	  console.warn("⚠️ localStorage write failed:", e);
+	}
+	      
         clearInterval(pollingInterval);
         onClaimReceived(id, json.data.UserName); // Pass email to handler
       }
