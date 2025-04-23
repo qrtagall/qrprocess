@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">Ver-2.41</div>
+	  <div id="versionTag">Ver-2.42</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -298,6 +298,7 @@ function cleanUpUrl() {
 }
 
 
+/*	  
 window.addEventListener("load", () => {
   const claimedEmail = localStorage.getItem("qr_claimed_email");
   if (claimedEmail) {
@@ -312,7 +313,7 @@ window.addEventListener("load", () => {
     //localStorage.removeItem("qr_claimed_email");
   }
 });
-
+*/
 
 
 let popupRef = null;
@@ -400,7 +401,7 @@ async function onClaimReceived(id, emailFromPopup = null) {
   }
 
   // 🔄 Auto-refresh page after short delay
-  //setTimeout(() => window.location.reload(), 2000);
+  setTimeout(() => window.location.reload(), 2000);
 	
 }
 
@@ -517,8 +518,8 @@ function startClaimPolling(id) {
 
 console.log("🔄 Initiating Verification...");
 	  
-const claimedEmailx = localStorage.getItem("qr_claimed_email");	  
-console.log("📧 QR was claimed by:", claimedEmailx);
+const LastclaimedEmail = localStorage.getItem("qr_claimed_email");	  
+console.log("📧 QR was last claimed by:", LastclaimedEmail);
 
 	  
 
