@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">Ver-2.40</div>
+	  <div id="versionTag">Ver-2.41</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -361,7 +361,7 @@ async function onClaimReceived(id, emailFromPopup = null) {
 	  localStorage.setItem("qr_claimed_email", emailFromPopup);
 	  console.log("✅ Email stored in localStorage at step-2");
 	} catch (e) {
-	  console.warn("⚠️ localStorage write failed at step-2 :", e);
+	  console.log("⚠️ localStorage write failed at step-2 :", e);
 	}
 
   try {
@@ -391,7 +391,7 @@ async function onClaimReceived(id, emailFromPopup = null) {
     spinner.style.display = "none";
     result.style.color = "red";
     result.textContent = "❌ Network error while finalizing QR claim.";
-    console.error("🛑 Finalize Claim Error:", err);
+    console.log("🛑 Finalize Claim Error:", err);
   }
 
   // ✅ Close popup if still open
@@ -400,7 +400,8 @@ async function onClaimReceived(id, emailFromPopup = null) {
   }
 
   // 🔄 Auto-refresh page after short delay
-  setTimeout(() => window.location.reload(), 2000);
+  //setTimeout(() => window.location.reload(), 2000);
+	
 }
 
 	  
