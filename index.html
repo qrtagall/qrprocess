@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">Ver-2.61</div>
+	  <div id="versionTag">Ver-2.62</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -864,34 +864,36 @@ window.addEventListener("load", () => {
   const params = new URLSearchParams(window.location.search);
   const verified = params.get("verified");
   const email = params.get("email");
-  const id = params.get("id");
 
   if (verified === "1" && email) {
     try {
       localStorage.setItem("qr_claimed_email", email);
-      console.log("✅ Identity verified. ID:", id);
-     console.log("✅ Identity verified. Email stored:", email);
+      console.log("✅ Identity verified. Email stored:", email);
     } catch (e) {
       console.warn("⚠️ Failed to store email in localStorage:", e);
     }
 
-    // Clean URL and redirect back to ?id=...
+    // Clean up URL (remove email & verified params)
     setTimeout(() => {
-      if (id) {
-        const cleanUrl = `${window.location.origin}${window.location.pathname}?id=${encodeURIComponent(id)}`;
-	      console.log("🔁 Redirecting to clean URL:", cleanUrl);
-        window.location.href = cleanUrl;
-      }
-    }, 1200);
+      const url = new URL(window.location.href);
+      url.searchParams.delete("email");
+      url.searchParams.delete("verified");
+      window.history.replaceState({}, document.title, url.toString());
+    }, 1000);
   }
 });
 
 
 
 function googleLoginForEdit(id) {
+
+
  //alert("🚀 Login option will be coming....");
-   
-const webAppUrl = "https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec";
+
+//const id = getQueryParam("id");
+  startOAuthLogin(id);
+  
+/*const webAppUrl = "https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec";
 
   // This URL will be redirected back to after successful login
   const redirectBack = `https://process.qrtagall.com/?id=${encodeURIComponent(id)}&verified=1`;
@@ -901,10 +903,23 @@ const webAppUrl = "https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-
 
   // 🔁 Full-page redirect (no popup)
   window.location.href = url;
+  */
   
 }
 
+function startOAuthLogin(id) {
+  const clientId = "121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com";
+  const redirectUri = `https://process.qrtagall.com/oauth-callback.html?id=${encodeURIComponent(id)}`;
+  const scope = "https://www.googleapis.com/auth/userinfo.email";
 
+  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=token&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}`;
+
+  window.location.href = authUrl;
+}
+
+function getQueryParam(param) {
+  return new URLSearchParams(window.location.search).get(param);
+}
 
 
 
