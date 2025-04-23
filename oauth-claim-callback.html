@@ -38,12 +38,19 @@
     const hashParams = new URLSearchParams(window.location.hash.slice(1));
     const accessToken = hashParams.get("access_token");
     const rawState = hashParams.get("state"); // Correct: state is part of hash, not search
-    const id = rawState ? new URLSearchParams(rawState).get("id") : null;
+    //const id = rawState ? new URLSearchParams(rawState).get("id") : null;
 
     const statusEl = document.getElementById("status");
 
+    
+    // Parse access_token from URL fragment
+    //const hash = new URLSearchParams(window.location.hash.slice(1));
+    //const token = hash.get("access_token");
+    const id = hashParams.get("state"); // this is your ID
+    
+
     if (!accessToken || !id) {
-      statusEl.textContent = "❌ Missing access token or QR ID.";
+      statusEl.textContent = "❌ Missing access token or QR ID. >V1.0";
       return;
     }
 
