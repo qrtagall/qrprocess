@@ -231,7 +231,7 @@
 	  <div id="result" style="display:none;"></div>
 
 	  <div id="loginSection" class="login-options" style="display:none;">
-		<p>Login to Claim as Owner of this QR</p>
+		<p>Login to Claim this QR</p>
 		<div class="auth-buttons-vertical">
 		  <button class="auth-button-box enabled" onclick="googleLogin()">
 			<img class="auth-logo" src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo">
@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">Ver-2.43</div>
+	  <div id="versionTag">Ver-2.44</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -723,7 +723,8 @@ async function fetchAssetData(id) {
 
     if (!json.found) {
       resultDiv.style.display = "block";
-      resultDiv.innerHTML = "🔎 This ID is unclaimed or missing in records.";
+      resultDiv.style.color = "orange";
+      resultDiv.innerHTML = "This ID is unclaimed or missing in records.";
       loginSection.style.display = "block";
       return;
     }
