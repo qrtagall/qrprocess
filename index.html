@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">Ver-2.58</div>
+	  <div id="versionTag">Ver-2.59</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -873,13 +873,13 @@ window.addEventListener("load", () => {
       console.warn("⚠️ Failed to store email in localStorage:", e);
     }
 
-    // Clean up URL (remove email & verified params)
+    // Clean URL and redirect back to ?id=...
     setTimeout(() => {
-      const url = new URL(window.location.href);
-      url.searchParams.delete("email");
-      url.searchParams.delete("verified");
-      window.history.replaceState({}, document.title, url.toString());
-    }, 1000);
+      if (id) {
+        const cleanUrl = `${window.location.origin}${window.location.pathname}?id=${encodeURIComponent(id)}`;
+        window.location.href = cleanUrl;
+      }
+    }, 1200);
   }
 });
 
