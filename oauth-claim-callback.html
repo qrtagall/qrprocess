@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>QRTagAll – Claiming QR...</title>
   <style>
     body {
@@ -30,7 +30,7 @@
 </head>
 <body>
   <h2>🔐 Finalizing QR Claim</h2>
-  <p class="info">Just a moment while we complete the process...</p>
+  <p class="info" id="status">Just a moment while we complete the process...</p>
   <div class="spinner">⏳</div>
 
   <script>
@@ -41,40 +41,49 @@
       const urlParams = new URLSearchParams(window.location.search);
       const id = urlParams.get("id");
 
+      const statusEl = document.getElementById("status");
+
       if (!accessToken || !id) {
-        document.querySelector(".info").textContent = "❌ Missing access token or QR ID.";
+        statusEl.textContent = "❌ Missing access token or QR ID.";
         return;
       }
 
       try {
-        // ✅ Get user's email using the access token
+        // 🧠 Fetch user's email from Google API
         const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
         const userInfo = await userInfoRes.json();
-        const email = userInfo.email || "";
-        console.log("📧 Fetched email:", email);
+        const email = userInfo.email;
 
-        // ✅ Send to your Apps Script to finalize claim
+        if (!email) {
+          throw new Error("No email returned from Google");
+        }
+
+        console.log("📧 Email fetched:", email);
+
+        // 🔄 Send to your backend Apps Script to finalize claim
         const backendUrl = `https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec`;
         const claimUrl = `${backendUrl}?initClaim=${encodeURIComponent(id)}&email=${encodeURIComponent(email)}&oauthClaim=1`;
+
         const response = await fetch(claimUrl);
         const result = await response.json();
 
         if (result.success) {
-          // ✅ Save email to localStorage for session use
           localStorage.setItem("qr_claimed_email", email);
 
-          // ✅ Redirect to clean URL
-          const cleanUrl = `${window.location.origin}/?id=${encodeURIComponent(id)}&claimed=1`;
-          window.location.href = cleanUrl;
+          statusEl.textContent = "✅ QR successfully claimed. Redirecting...";
+          setTimeout(() => {
+            const cleanUrl = `${window.location.origin}/?id=${encodeURIComponent(id)}&claimed=1`;
+            window.location.href = cleanUrl;
+          }, 1500);
         } else {
-          document.querySelector(".info").textContent = "❌ Claim failed: " + (result.details || "Unknown error");
+          statusEl.textContent = `❌ Claim failed: ${result.details || "Unknown error"}`;
         }
 
       } catch (err) {
-        console.error("❌ Error finalizing claim:", err);
-        document.querySelector(".info").textContent = "❌ Network error. Please try again.";
+        console.error("❌ Error:", err);
+        statusEl.textContent = `❌ Error: ${err.message}`;
       }
     }
 
