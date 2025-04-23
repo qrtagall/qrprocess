@@ -29,7 +29,7 @@
   </style>
 </head>
 <body>
-  <h2>🔐 Finalizing QR Claim (v-10)</h2>
+  <h2>🔐 Finalizing QR Claim (v-11)</h2>
   <p class="info" id="status">Just a moment while we complete the process...</p>
   <div class="spinner">⏳</div>
 
@@ -68,13 +68,18 @@
         console.log("🚀 Redirecting to backend:", claimUrl);
         //window.location.href = claimUrl;
 
-        const response = await fetch(claimUrl);
+       const response = await fetch(claimUrl);
         const result = await response.json();
         
-        if (result.success && result.redirect) {
-          console.log("✅ Redirecting to:", result.redirect);
-          window.location.href = result.redirect;
+        if (result.success) {
+          localStorage.setItem("qr_claimed_email", email);
+          const redirectTo = result.redirect || `${window.location.origin}/?id=${id}&claimed=1`;
+          console.log("✅ Redirecting to:", redirectTo);
+          window.location.href = redirectTo;
+        } else {
+          statusEl.textContent = `❌ Claim failed: ${result.details || "Unknown error"}`;
         }
+
 
 
       } catch (err) {
