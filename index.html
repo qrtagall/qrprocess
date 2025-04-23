@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">Ver-2.55</div>
+	  <div id="versionTag">Ver-2.56</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -387,8 +387,8 @@ async function onClaimReceived(id, emailFromPopup = null) {
 
   } catch (err) {
     spinner.style.display = "none";
-    result.style.color = "red";
-    result.textContent = "❌ Network error while finalizing QR claim.";
+    //result.style.color = "red";
+    //result.textContent = "❌ Network error while finalizing QR claim.";
     console.log("🛑 Finalize Claim Error:", err);
   }
 
