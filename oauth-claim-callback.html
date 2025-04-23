@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>QRTagAll – Claiming QR...</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f4f4;
+      text-align: center;
+      padding-top: 80px;
+      color: #333;
+    }
+    .spinner {
+      margin-top: 20px;
+      font-size: 22px;
+      animation: blink 1s infinite;
+    }
+    @keyframes blink {
+      0% { opacity: 0.2; }
+      50% { opacity: 1; }
+      100% { opacity: 0.2; }
+    }
+    .info {
+      font-size: 14px;
+      color: #777;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2>🔐 Finalizing QR Claim</h2>
+  <p class="info">Just a moment while we complete the process...</p>
+  <div class="spinner">⏳</div>
+
+  <script>
+    async function finalizeQRClaim() {
+      const hashParams = new URLSearchParams(window.location.hash.slice(1));
+      const accessToken = hashParams.get("access_token");
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const id = urlParams.get("id");
+
+      if (!accessToken || !id) {
+        document.querySelector(".info").textContent = "❌ Missing access token or QR ID.";
+        return;
+      }
+
+      try {
+        // ✅ Get user's email using the access token
+        const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        const userInfo = await userInfoRes.json();
+        const email = userInfo.email || "";
+        console.log("📧 Fetched email:", email);
+
+        // ✅ Send to your Apps Script to finalize claim
+        const backendUrl = `https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec`;
+        const claimUrl = `${backendUrl}?initClaim=${encodeURIComponent(id)}&email=${encodeURIComponent(email)}&oauthClaim=1`;
+        const response = await fetch(claimUrl);
+        const result = await response.json();
+
+        if (result.success) {
+          // ✅ Save email to localStorage for session use
+          localStorage.setItem("qr_claimed_email", email);
+
+          // ✅ Redirect to clean URL
+          const cleanUrl = `${window.location.origin}/?id=${encodeURIComponent(id)}&claimed=1`;
+          window.location.href = cleanUrl;
+        } else {
+          document.querySelector(".info").textContent = "❌ Claim failed: " + (result.details || "Unknown error");
+        }
+
+      } catch (err) {
+        console.error("❌ Error finalizing claim:", err);
+        document.querySelector(".info").textContent = "❌ Network error. Please try again.";
+      }
+    }
+
+    finalizeQRClaim();
+  </script>
+</body>
+</html>
