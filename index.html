@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">Ver-2.65</div>
+	  <div id="versionTag">Ver-2.66</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -278,7 +278,37 @@
     
 	const SALT = "QRTagall@2025";
  
-	
+(function() {
+    const params = new URLSearchParams(window.location.search);
+    const verified = params.get("verified");
+    const email = params.get("email");
+    const redirect = params.get("redirect");
+
+    if (verified === "1" && email) {
+      try {
+        localStorage.setItem("qr_claimed_email", email);
+        console.log("✅ Identity verified. Email stored:", email);
+      } catch (e) {
+        console.warn("⚠️ Failed to store email in localStorage:", e);
+      }
+
+      setTimeout(() => {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("email");
+        url.searchParams.delete("verified");
+        window.history.replaceState({}, document.title, url.toString());
+      }, 1000);
+    }
+
+    if (redirect) {
+      const decoded = decodeURIComponent(redirect);
+      console.warn("⏩ >> Force redirecting to:", decoded);
+      window.location.replace(decoded);
+    }
+  })();
+
+	  
+	  
     async function sha256(input) {
       const encoder = new TextEncoder();
       const data = encoder.encode(input);
@@ -910,7 +940,7 @@ document.getElementById("ownerLoginYes").onclick = () => {
 }
 
 
-
+/*
 window.addEventListener("load", () => {
   const params = new URLSearchParams(window.location.search);
   const verified = params.get("verified");
@@ -937,13 +967,14 @@ window.addEventListener("load", () => {
 
   // ✅ Force redirect if "redirect" param exists
   if (redirect) {
+	localStorage.setItem("qr_claimed_email", email);
     const decoded = decodeURIComponent(redirect);
     console.warn("⏩ Force redirecting to:", decoded);
     window.location.replace(decoded);
   }
 });
 
-
+*/
 
 
 function googleLoginForEdit(id) {
