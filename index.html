@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">Ver-2.46</div>
+	  <div id="versionTag">Ver-2.47</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -259,6 +259,16 @@
 		</div>
 
 	</div>
+	
+	<div id="ownerConfirmModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:9999; align-items:center; justify-content:center;">
+	  <div style="background:white; padding:30px 25px; border-radius:12px; width:90%; max-width:360px; text-align:center; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+		<h3 style="margin-top:0; font-size:18px; color:#e67e22;">⚠️ Only QR owner can edit !</h3>
+		<p style="margin-bottom:25px; font-size:15px;">Are you the owner - would you like to log in?</p>
+		<button id="ownerLoginYes" style="background-color:#005aab; color:white; padding:10px 20px; border:none; border-radius:6px; font-weight:bold; margin-right:10px; cursor:pointer;">Yes, Login</button>
+		<button id="ownerLoginCancel" style="background-color:#ccc; color:#333; padding:10px 20px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Cancel</button>
+	  </div>
+	</div>
+
 
 
   <script>
@@ -788,16 +798,20 @@ async function fetchAssetData(id) {
 
 
 function editAlert() {
-  if (document.getElementById("editBtn").disabled) {
+  const editBtn = document.getElementById("editBtn");
+
+  if (editBtn.disabled) {
     alert("🔐 Please log in first to edit this asset.");
   } else {
-	  if(isOwner==false)
-		  alert("❌ Only QR owner can Edit");
-	   else
-    		alert("✅ Edit mode coming soon...");
-    // TODO: Redirect to edit form or open modal
+    if (!isOwner) {
+     showOwnerConfirmModal();
+    } else {
+      alert("✅ Edit mode coming soon...");
+      // TODO: Redirect to edit form or modal
+    }
   }
 }
+
 
 function updatePanelBackground(colorCode) {
   const panel = document.getElementById("mainContent");
@@ -807,8 +821,35 @@ function updatePanelBackground(colorCode) {
   }
 }
 
+
+function showOwnerConfirmModal() {
+  const modal = document.getElementById("ownerConfirmModal");
+  modal.style.display = "flex";
+
+  document.getElementById("ownerLoginYes").onclick = () => {
+    modal.style.display = "none";
+	//alert("🔐 will be added...");
+	googleLoginForEdit();
+  };
+
+  document.getElementById("ownerLoginCancel").onclick = () => {
+    modal.style.display = "none";
+  };
+}
 	  
   
+
+function googleLoginForEdit() {
+  const id = getQueryParam("id");
+  const redirectBack = `https://process.qrtagall.com/popup-callback.html?action=verify&from=edit&id=${encodeURIComponent(id)}`;
+  const webAppUrl = "https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec";
+  const loginUrl = `${webAppUrl}?verifyOnly=1&redirect=${encodeURIComponent(redirectBack)}&id=${encodeURIComponent(id)}`;
+
+  popupRef = window.open(loginUrl, "QRVerifyPopup", "width=500,height=600");
+
+  document.getElementById("spinner").style.display = "block";
+  document.getElementById("result").textContent = "🔐 Verifying your identity...";
+}
 
 
 
