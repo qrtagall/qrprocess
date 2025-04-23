@@ -1,49 +1,39 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Verifying...</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      margin-top: 80px;
-      color: #444;
-    }
-  </style>
+  <title>OAuth Callback</title>
 </head>
 <body>
-  <h2>🔐 Verifying identity...</h2>
-  <p>Please wait...</p>
-
+  <h3>⏳ Verifying your login...</h3>
   <script>
-    const params = new URLSearchParams(window.location.hash.substring(1));
-    const token = params.get("access_token");
-    const id = new URLSearchParams(window.location.search).get("id");
+    // Parse access_token from URL fragment
+    const hash = new URLSearchParams(window.location.hash.slice(1));
+    const token = hash.get("access_token");
+    const state = hash.get("state"); // this is your ID
 
-    if (token && id) {
-      fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-        headers: { Authorization: `Bearer ${token}` }
+    if (token) {
+      // Fetch user's email using token
+      fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+        headers: { Authorization: "Bearer " + token }
       })
       .then(res => res.json())
-      .then(user => {
-        if (user.email) {
-          localStorage.setItem("qr_claimed_email", user.email);
-          console.log("✅ Email stored:", user.email);
+      .then(profile => {
+        const email = profile.email;
+        console.log("✅ Logged in as:", email);
 
-          // 🔁 Redirect back to main page without token in URL
-          const returnUrl = `${window.location.origin}${window.location.pathname.replace("oauth-callback.html", "")}?id=${encodeURIComponent(id)}&verified=1`;
-          window.location.href = returnUrl;
-        } else {
-          alert("❌ Failed to fetch email");
-        }
+        // Store email
+        localStorage.setItem("qr_claimed_email", email);
+
+        // Redirect back to main page
+        const redirectUrl = `https://process.qrtagall.com/?id=${encodeURIComponent(state)}&verified=1`;
+        window.location.href = redirectUrl;
       })
       .catch(err => {
-        console.error("❌ Error fetching email:", err);
-        alert("Login failed");
+        console.error("❌ Failed to fetch email:", err);
+        document.body.innerHTML = "<p>⚠️ Login failed. Please try again.</p>";
       });
     } else {
-      alert("Invalid token or ID.");
+      document.body.innerHTML = "<p>⚠️ Login token missing.</p>";
     }
   </script>
 </body>
