@@ -29,7 +29,7 @@
   </style>
 </head>
 <body>
-  <h2>🔐 Finalizing QR Claim (v-12)</h2>
+  <h2>🔐 Finalizing QR Claim (v-13)</h2>
   <p class="info" id="status">Just a moment while we complete the process...</p>
   <div class="spinner">⏳</div>
 
@@ -66,7 +66,8 @@
         const claimUrl = `${backendUrl}?initClaim=${encodeURIComponent(id)}&email=${encodeURIComponent(email)}&oauthClaim=1&redirect=${encodeURIComponent(redirectBackUrl)}`;
 
         console.log("🚀 Redirecting to backend:", claimUrl);
-        window.location.href = claimUrl;
+        //window.location.href = claimUrl;
+        window.location.replace(claimUrl);
 
         /*
        const response = await fetch(claimUrl);
