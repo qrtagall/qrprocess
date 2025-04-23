@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">Ver-2.45</div>
+	  <div id="versionTag">Ver-2.46</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -735,9 +735,9 @@ async function fetchAssetData(id) {
     mainContent.style.display = "block";
 	
 	
-    assetTitle.textContent = data.Description || "Verified Asset";
-    //assetLinks.innerHTML = await renderInfoBlock(data);
-	
+    //assetTitle.textContent = data.Description || "Verified Asset";
+    assetTitle.innerHTML = `${data.Description || "Verified Asset"}<br><span style="font-size: 13px; color: gray;">(${id})</span>`;
+
 	try {
 	  assetLinks.innerHTML = await renderInfoBlock(data);
 	} catch (e) {
