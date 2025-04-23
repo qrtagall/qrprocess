@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">Ver-2.48</div>
+	  <div id="versionTag">Ver-2.49</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -268,6 +268,8 @@
 		<button id="ownerLoginCancel" style="background-color:#ccc; color:#333; padding:10px 20px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Cancel</button>
 	  </div>
 	</div>
+
+	
 
 
 
@@ -849,18 +851,48 @@ function updatePanelBackground(colorCode) {
 
 function showOwnerConfirmModal() {
   const modal = document.getElementById("ownerConfirmModal");
+  const heading = modal.querySelector("h3");
+  const subtext = modal.querySelector("p");
+
+  const sessionEmail = localStorage.getItem("qr_claimed_email");
+
+  if (sessionEmail) {
+    heading.innerHTML = `⚠️ This QR is owned by a different user.`;
+    subtext.innerHTML = `You are logged in as <b>${sessionEmail}</b>.<br>Would you like to switch account to edit this QR?`;
+  } else {
+    heading.innerHTML = `⚠️ Only QR owner can edit!`;
+    subtext.innerHTML = `Are you the owner – would you like to log in?`;
+  }
+
   modal.style.display = "flex";
 
   document.getElementById("ownerLoginYes").onclick = () => {
     modal.style.display = "none";
-	//alert("🔐 will be added...");
-	googleLoginForEdit();
+    googleLoginForEdit();  // 👈 Trigger alternate login flow
   };
 
-  document.getElementById("ownerLoginCancel").onclick = () => {
+  /*document.getElementById("ownerLoginCancel").onclick = () => {
     modal.style.display = "none";
   };
+  */
+
+document.getElementById("ownerLoginYes").onclick = () => {
+  modal.style.display = "none";
+
+  const id = getQueryParam("id");
+
+  if (sessionEmail) {
+    // ⚠️ Logout flow for switching account
+    const redirectAfterLogout = `https://process.qrtagall.com/force-relogin.html?id=${encodeURIComponent(id)}`;
+    window.location.href = `https://accounts.google.com/Logout?continue=${encodeURIComponent(redirectAfterLogout)}`;
+  } else {
+    // ✅ Direct login for first time
+    googleLoginForEdit();
+  }
+};
+
 }
+
 	  
   
 
