@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">Ver-2.49</div>
+	  <div id="versionTag">Ver-2.50</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -884,7 +884,8 @@ document.getElementById("ownerLoginYes").onclick = () => {
   if (sessionEmail) {
     // ⚠️ Logout flow for switching account
     const redirectAfterLogout = `https://process.qrtagall.com/force-relogin.html?id=${encodeURIComponent(id)}`;
-    window.location.href = `https://accounts.google.com/Logout?continue=${encodeURIComponent(redirectAfterLogout)}`;
+    window.location.href = `https://accounts.google.com/Logout?continue=https://process.qrtagall.com/force-relogin.html?id=${encodeURIComponent(id)}`;
+
   } else {
     // ✅ Direct login for first time
     googleLoginForEdit();
