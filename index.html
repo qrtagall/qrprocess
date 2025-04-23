@@ -441,6 +441,7 @@ if (email) {
   }
 });
 
+
 // localStorage signal fallback
 window.addEventListener("storage", (event) => {
   if (event.key === "qr_claimed_data" && event.newValue) {
@@ -503,7 +504,19 @@ function startClaimPolling(id) {
   }, claimCheckInterval);
 }
 
+
 	  //Login verify callbacks
+	  
+	  
+	  function saveandClose(semail)
+	  {
+		sessionStorage.setItem("qr_claimed_email", email);
+	  
+	    if (typeof popupRef !== "undefined" && popupRef && !popupRef.closed) {
+			popupRef.close();}
+			
+			
+	  }
 
 	  // 📡 BroadcastChannel: Verification-only flow (for edit access)
 try {
@@ -526,7 +539,7 @@ window.addEventListener("message", (event) => {
 
   if (verified && email) {
     console.log("✅ Verified user via postMessage:", email);
-    sessionStorage.setItem("qr_claimed_email", email);
+    saveandClose(email);
   }
 });
 
@@ -535,8 +548,9 @@ window.addEventListener("storage", (event) => {
   if (event.key === "qr_verified_email" && event.newValue) {
     const email = event.newValue;
     console.log("📦 Verified user via localStorage:", email);
-    sessionStorage.setItem("qr_claimed_email", email);
+    //sessionStorage.setItem("qr_claimed_email", email);
     //localStorage.removeItem("qr_verified_email");
+	saveandClose(email);
   }
 });
 
@@ -894,8 +908,28 @@ document.getElementById("ownerLoginYes").onclick = () => {
 
 }
 
-	  
+
+
+let verifyPollingInterval = null;
   
+  
+  
+  // Function to start polling the popup
+function startVerifyPolling(id) {
+  let attempts = 0;
+  verifyPollingInterval = setInterval(() => {
+    if (!popupRef || popupRef.closed || attempts > 6) {
+      clearInterval(verifyPollingInterval);
+      console.warn("🕓 Verification polling ended");
+      return;
+    }
+
+    console.log("🔁 Asking popup for verification status");
+    popupRef.postMessage({ request: "verify-status", id }, "*");
+    attempts++;
+  }, 3000);
+}
+
 
 function googleLoginForEdit(id) {
  // const id = getQueryParam("id");
@@ -910,6 +944,15 @@ function googleLoginForEdit(id) {
 	//console.log("🛑 Finalize Claim Error:", err);
 	console.log("Qrery to popup:", loginUrl);
 	
+	setTimeout(() => {
+    //if (!window.claimReceived) 
+    {
+      console.warn("🕵️ No message received. Starting fallback polling for verify ...");
+      startVerifyPolling(id);
+    }
+  }, 5000);
+  
+	
   // Open the popup
   popupRef = window.open(loginUrl, "QRVerifyPopup", "width=500,height=600");
 
@@ -917,6 +960,20 @@ function googleLoginForEdit(id) {
   document.getElementById("spinner").style.display = "block";
   document.getElementById("result").textContent = "🔐 Verifying your identity...";
 }
+
+
+// Main page listener for popup response
+window.addEventListener("message", (event) => {
+  const { verified, email, id } = event.data || {};
+  if (verified && email) {
+    console.log("✅ Verification success:", email);
+    clearInterval(verifyPollingInterval);
+    document.getElementById("spinner").style.display = "none";
+    document.getElementById("result").innerHTML = `✅ Verified as <b>${email}</b>`;
+    
+	saveandClose(email);
+  }
+});
 
 
 
