@@ -29,7 +29,7 @@
   </style>
 </head>
 <body>
-  <h2>🔐 Finalizing QR Claim (v5.0)</h2>
+  <h2>🔐 Finalizing QR Claim (v-6.0)</h2>
   <p class="info" id="status">Just a moment while we complete the process...</p>
   <div class="spinner">⏳</div>
 
@@ -66,16 +66,27 @@
 
       if (!result.success) throw new Error(result.details || "Claim failed");
 
+      /*
       // 3️⃣ Save email to localStorage
       localStorage.setItem("qr_claimed_email", email);
 
+      
       // 4️⃣ Redirect to clean URL
       const finalUrl = `${window.location.origin}/?id=${encodeURIComponent(id)}&claimed=1`;
       statusEl.textContent = "✅ Claim completed. Redirecting...";
       setTimeout(() => {
         window.location.href = finalUrl;
       }, 1500);
+      */
 
+       // Store email
+        localStorage.setItem("qr_claimed_email", email);
+
+        // Redirect back to main page
+        const redirectUrl = `https://process.qrtagall.com/?id=${encodeURIComponent(state)}&claimed=1;
+        window.location.href = redirectUrl;
+
+      
     } catch (err) {
       console.error("❌ Error:", err);
       statusEl.textContent = `❌ ${err.message}`;
