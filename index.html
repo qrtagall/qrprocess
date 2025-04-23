@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">Ver-2.59</div>
+	  <div id="versionTag">Ver-2.60</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -864,11 +864,13 @@ window.addEventListener("load", () => {
   const params = new URLSearchParams(window.location.search);
   const verified = params.get("verified");
   const email = params.get("email");
+  const id = params.get("id");
 
   if (verified === "1" && email) {
     try {
       localStorage.setItem("qr_claimed_email", email);
-      console.log("✅ Identity verified. Email stored:", email);
+      console.log("✅ Identity verified. ID:", id);
+     console.log("✅ Identity verified. Email stored:", email);
     } catch (e) {
       console.warn("⚠️ Failed to store email in localStorage:", e);
     }
@@ -877,6 +879,7 @@ window.addEventListener("load", () => {
     setTimeout(() => {
       if (id) {
         const cleanUrl = `${window.location.origin}${window.location.pathname}?id=${encodeURIComponent(id)}`;
+	      console.log("🔁 Redirecting to clean URL:", cleanUrl);
         window.location.href = cleanUrl;
       }
     }, 1200);
