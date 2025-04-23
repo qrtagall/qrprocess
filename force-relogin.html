@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>QRTagAll - Switching Account</title>
+  <script>
+    // Wait a moment and then redirect to initiate new login
+    setTimeout(() => {
+      const id = new URLSearchParams(window.location.search).get("id") || "";
+      const redirect = `https://process.qrtagall.com/popup-callback.html?action=verify&from=edit&id=${encodeURIComponent(id)}`;
+      const loginUrl = `https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec?verifyOnly=1&redirect=${encodeURIComponent(redirect)}&id=${encodeURIComponent(id)}`;
+
+      window.open(loginUrl, "QRVerifyPopup", "width=500,height=600");
+      window.close(); // optional
+    }, 1000);
+  </script>
+</head>
+<body>
+  <h3>🔁 Signing you out and switching account...</h3>
+</body>
+</html>
