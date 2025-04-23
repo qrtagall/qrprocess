@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">Ver-2.37</div>
+	  <div id="versionTag">Ver-2.38</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -356,6 +356,10 @@ async function onClaimReceived(id, emailFromPopup = null) {
   spinner.style.display = "block";
   result.textContent = "🔄 Finalizing your QR claim...";
 
+   //Store a copy of OAuth email of User
+   localStorage.setItem("qr_claimed_email", email);	
+   console.log("email Written to Local Storage", email);
+
   try {
     const webAppUrl = "https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec";
     const response = await fetch(`${webAppUrl}?initClaim=${encodeURIComponent(id)}`);
@@ -365,9 +369,6 @@ async function onClaimReceived(id, emailFromPopup = null) {
 
     const email = json.email || emailFromPopup || "Unknown";
 
-	  
-	localStorage.setItem("qr_claimed_email", email);	
-	  console.log("email Written to Local Storage", email);
     if (json.success) {
       try { await navigator.clipboard.writeText(json.spreadsheetUrl); } catch {}
 
