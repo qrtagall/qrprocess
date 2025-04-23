@@ -42,9 +42,18 @@
 
     console.log("🧾 ID parsed in popup:", id);
     console.log("📨 Action:", action);
+	console.log("📨 Email:", email);
 
     // Shared payload
     const payload = { id, email: email || "", timestamp: new Date().toISOString() };
+	
+	
+	window.addEventListener("message", (event) => {
+		  if (event.data.request === "verify-status" && email) {
+			console.log("📤 Responding to verify-status request");
+			window.opener?.postMessage({ verified: true, email, id }, "*");
+		  }
+		});
 
     if (action === "verify" && id && email) {
       // 🔁 1. Verification-only login
