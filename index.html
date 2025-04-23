@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">Ver-2.38</div>
+	  <div id="versionTag">Ver-2.39</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -357,8 +357,12 @@ async function onClaimReceived(id, emailFromPopup = null) {
   result.textContent = "🔄 Finalizing your QR claim...";
 
    //Store a copy of OAuth email of User
-   localStorage.setItem("qr_claimed_email", email);	
-   console.log("email Written to Local Storage", email);
+   try {
+	  localStorage.setItem("qr_claimed_email", email);
+	  console.log("✅ Email stored in localStorage");
+	} catch (e) {
+	  console.warn("⚠️ localStorage write failed:", e);
+	}
 
   try {
     const webAppUrl = "https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec";
@@ -634,44 +638,6 @@ async function resolveAndRender(value, i, customTitle = `Link ${i}`) {
   }
 }
 
-
-
-async function handleClaimedReturnFromPopup(id) {
-  const spinner = document.getElementById("spinner");
-  const result = document.getElementById("result");
-
-  document.getElementById("result").textContent = "✅ Claimed successfully!";
-
-  spinner.style.display = "block";
-  result.style.display = "block";
-  result.style.color = "black";
-  result.innerHTML = "🔄 Finalizing your QR claim...";
-
-  try {
-    const webAppUrl = "https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec";
-    const response = await fetch(`${webAppUrl}?initClaim=${encodeURIComponent(id)}`);
-    const json = await response.json();
-
-    spinner.style.display = "none";
-
-    if (json.success) {
-      result.innerHTML = `
-        ✅ QR Claimed<br>
-        📧 ${json.email}<br>
-        🔗 <a href="${json.spreadsheetUrl}" target="_blank">${json.spreadsheetUrl}</a>
-      `;
-    } else {
-      result.style.color = "red";
-      result.innerHTML = "❌ Claim failed: " + (json.details || "Unknown error");
-    }
-
-  } catch (err) {
-    spinner.style.display = "none";
-    result.style.color = "red";
-    result.innerHTML = "❌ Network error while finalizing QR claim.";
-    console.error(err);
-  }
-}
 
 
 
