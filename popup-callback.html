@@ -29,63 +29,77 @@
   </style>
 </head>
 <body>
-  <h2>🔐 QR Claim Finalized</h2>
+  <h2>🔐 Processing...</h2>
   <p class="info">This window will close automatically...</p>
   <div class="spinner">⏳</div>
 
   <script>
-    // Extract ID from query
     const params = new URLSearchParams(window.location.search);
     const id = params.get("id");
     const claimed = params.get("claimed");
     const email = params.get("email");
+    const action = params.get("action"); // could be 'verify'
 
     console.log("🧾 ID parsed in popup:", id);
+    console.log("📨 Action:", action);
 
-    if (id && claimed) {
-      // ✅ 1. BroadcastChannel (main route)
+    // Shared payload
+    const payload = { id, email: email || "", timestamp: new Date().toISOString() };
+
+    if (action === "verify" && id && email) {
+      // 🔁 1. Verification-only login
       try {
-        const channel = new BroadcastChannel("qr_claim_channel");
-        channel.postMessage({ id, claimed: true,email });
-        console.log("📡 Broadcast sent to main window");
+        const verifyChannel = new BroadcastChannel("qr_verify_channel");
+        verifyChannel.postMessage({ ...payload, verified: true });
+        console.log("📡 Broadcast sent (verify)");
       } catch (e) {
-        console.warn("⚠️ BroadcastChannel not supported:", e);
+        console.warn("⚠️ BroadcastChannel failed (verify):", e);
       }
 
-      // ✅ 2. Fallback postMessage to opener
+      // Fallback
       try {
         if (window.opener && !window.opener.closed) {
-          console.log("📤 Sending postMessage to parent window");
-          window.opener.postMessage({ id, claimed: true,email }, "*");
-        } else {
-          console.warn("⚠️ window.opener is null or closed");
+          window.opener.postMessage({ ...payload, verified: true }, "*");
+          console.log("📤 postMessage sent to parent (verify)");
         }
       } catch (e) {
         console.warn("⚠️ postMessage failed:", e);
       }
 
-      // ✅ 3. Set localStorage as backup (in case same browser/tab checks)
+      localStorage.setItem("qr_verified", JSON.stringify({ ...payload, verified: true }));
+    }
+
+    else if (id && claimed) {
+      // 🔁 2. Claim flow
       try {
-        localStorage.setItem("qr_claimed", JSON.stringify({
-          id,
-          claimed: true,
-          email,
-          timestamp: new Date().toISOString()
-        }));
-        console.log("📦 Stored in localStorage");
+        const channel = new BroadcastChannel("qr_claim_channel");
+        channel.postMessage({ ...payload, claimed: true });
+        console.log("📡 Broadcast sent (claim)");
       } catch (e) {
-        console.warn("⚠️ localStorage failed:", e);
+        console.warn("⚠️ BroadcastChannel failed (claim):", e);
       }
 
-      // ✅ 4. Auto-close popup after short delay
-      setTimeout(() => {
-        console.log("🔒 Closing popup...");
-        window.close();
-      }, 1500);
-    } else {
-      document.querySelector(".info").textContent = "⚠️ Missing or invalid claim data.";
+      try {
+        if (window.opener && !window.opener.closed) {
+          window.opener.postMessage({ ...payload, claimed: true }, "*");
+          console.log("📤 postMessage sent to parent (claim)");
+        }
+      } catch (e) {
+        console.warn("⚠️ postMessage failed:", e);
+      }
+
+      localStorage.setItem("qr_claimed", JSON.stringify({ ...payload, claimed: true }));
+    }
+
+    else {
+      document.querySelector(".info").textContent = "⚠️ Missing or invalid claim/verify data.";
       document.querySelector(".spinner").textContent = "";
     }
+
+    setTimeout(() => {
+      console.log("🔒 Closing popup...");
+      window.close();
+    }, 1500);
   </script>
 </body>
 </html>
