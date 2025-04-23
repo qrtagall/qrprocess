@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">Ver-2.62</div>
+	  <div id="versionTag">Ver-2.63</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -909,10 +909,15 @@ function googleLoginForEdit(id) {
 
 function startOAuthLogin(id) {
   const clientId = "121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com";
-  const redirectUri = `https://process.qrtagall.com/oauth-callback.html?id=${encodeURIComponent(id)}`;
+  const redirectUri = "https://process.qrtagall.com/oauth-callback.html";
   const scope = "https://www.googleapis.com/auth/userinfo.email";
 
-  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=token&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}`;
+  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
+    `?response_type=token` +
+    `&client_id=${encodeURIComponent(clientId)}` +
+    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+    `&scope=${encodeURIComponent(scope)}` +
+    `&state=${encodeURIComponent(id)}`;
 
   window.location.href = authUrl;
 }
