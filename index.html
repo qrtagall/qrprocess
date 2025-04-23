@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">Ver-2.56</div>
+	  <div id="versionTag">Ver-2.58</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -860,11 +860,45 @@ document.getElementById("ownerLoginYes").onclick = () => {
 
 
 
+window.addEventListener("load", () => {
+  const params = new URLSearchParams(window.location.search);
+  const verified = params.get("verified");
+  const email = params.get("email");
+
+  if (verified === "1" && email) {
+    try {
+      localStorage.setItem("qr_claimed_email", email);
+      console.log("✅ Identity verified. Email stored:", email);
+    } catch (e) {
+      console.warn("⚠️ Failed to store email in localStorage:", e);
+    }
+
+    // Clean up URL (remove email & verified params)
+    setTimeout(() => {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("email");
+      url.searchParams.delete("verified");
+      window.history.replaceState({}, document.title, url.toString());
+    }, 1000);
+  }
+});
+
 
 
 function googleLoginForEdit(id) {
- alert("🚀 Login option will be coming....");
-      
+ //alert("🚀 Login option will be coming....");
+   
+const webAppUrl = "https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec";
+
+  // This URL will be redirected back to after successful login
+  const redirectBack = `https://process.qrtagall.com/?id=${encodeURIComponent(id)}&verified=1`;
+
+  // Call Apps Script with a flag like `verifyOnly=1`
+  const url = `${webAppUrl}?verifyOnly=1&redirect=${encodeURIComponent(redirectBack)}&id=${encodeURIComponent(id)}`;
+
+  // 🔁 Full-page redirect (no popup)
+  window.location.href = url;
+  
 }
 
 
