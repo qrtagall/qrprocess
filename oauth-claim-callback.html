@@ -50,7 +50,7 @@
     
 
     if (!accessToken || !id) {
-      statusEl.textContent = "❌ Missing access token or QR ID. >V1.0";
+      statusEl.textContent = "❌ Missing access token or QR ID. >V-2.0";
       return;
     }
 
@@ -77,11 +77,12 @@
 
       if (result.success) {
         localStorage.setItem("qr_claimed_email", email);
-
+      
+        const redirectUrl = result.redirect || `${window.location.origin}/?id=${encodeURIComponent(id)}&claimed=1`;
         statusEl.textContent = "✅ QR successfully claimed. Redirecting...";
+      
         setTimeout(() => {
-          const cleanUrl = `${window.location.origin}/?id=${encodeURIComponent(id)}&claimed=1`;
-          window.location.href = cleanUrl;
+          window.location.href = redirectUrl;
         }, 1500);
       } else {
         statusEl.textContent = `❌ Claim failed: ${result.details || "Unknown error"}`;
