@@ -246,7 +246,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-4.8</div>
+	  <div id="versionTag">Ver-4.9</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -796,8 +796,14 @@ document.getElementById("ownerLoginYes").onclick = () => {
 
   if (sessionEmail) {
     // ⚠️ Logout flow for switching account
-    const redirectAfterLogout = `https://process.qrtagall.com/force-relogin.html?id=${encodeURIComponent(id)}`;
-    window.location.href = `https://accounts.google.com/Logout?continue=https://process.qrtagall.com/force-relogin.html?id=${encodeURIComponent(id)}`;
+    //const redirectAfterLogout = `https://process.qrtagall.com/force-relogin.html?id=${encodeURIComponent(id)}`;
+    //window.location.href = `https://accounts.google.com/Logout?continue=https://process.qrtagall.com/force-relogin.html?id=${encodeURIComponent(id)}`;
+	// Clear stored session
+  localStorage.removeItem("qr_claimed_email");
+  sessionStorage.removeItem("qr_claimed_email");
+
+  // Re-initiate login (skip logout URL)
+  googleLoginForEdit(id);
 
   } else {
     // ✅ Direct login for first time
