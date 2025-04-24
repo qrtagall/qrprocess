@@ -35,12 +35,29 @@
 
   <script>
     async function finalizeQRClaim() {
+      //const hashParams = new URLSearchParams(window.location.hash.slice(1));
+      //const accessToken = hashParams.get("access_token");
+      //const id = hashParams.get("state");
+      //const asset = hashParams.get("asset");
+      //const statusEl = document.getElementById("status");
+
       const hashParams = new URLSearchParams(window.location.hash.slice(1));
       const accessToken = hashParams.get("access_token");
-      const id = hashParams.get("state");
-      const asset = hashParams.get("asset");
+      const rawState = hashParams.get("state");  // This is a JSON string
+      
+      let id = null;
+      let asset = null;
+      
+      try {
+        const stateObj = JSON.parse(rawState);
+        id = stateObj.id;
+        asset = stateObj.asset;
+      } catch (err) {
+        console.error("❌ Failed to parse state:", err);
+      }
+      
       const statusEl = document.getElementById("status");
-
+            
       if (!accessToken || !id) {
         statusEl.textContent = "❌ Missing access token or QR ID.";
         return;
