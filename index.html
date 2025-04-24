@@ -246,7 +246,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-4.7</div>
+	  <div id="versionTag">Ver-4.8</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -761,18 +761,28 @@ function showOwnerConfirmModal() {
 
   if (sessionEmail) {
     heading.innerHTML = `⚠️ This QR is owned by a different user.`;
-    subtext.innerHTML = `You are logged in as <b>${sessionEmail}</b>.<br>Would you like to switch account to edit this QR?`;
+    subtext.innerHTML = `You are logged in as <b>${sessionEmail}</b>.<br>Would you like to switch User Account?`;
   } else {
     heading.innerHTML = `⚠️ Only QR owner can edit!`;
     subtext.innerHTML = `Are you the owner – would you like to log in?`;
   }
 
   modal.style.display = "flex";
-
-  document.getElementById("ownerLoginYes").onclick = () => {
-    modal.style.display = "none";
-    googleLoginForEdit();  // 👈 Trigger alternate login flow
-  };
+/*
+  document.getElementById("ownerLoginYes").onclick = () => 
+{
+	 modal.style.display = "none";
+	if(sessionEmail && !isOwner)
+	{
+		handleLogout();
+	}
+	else
+	{
+	 googleLoginForEdit();  // 👈 Trigger alternate login flow
+	}
+   
+   
+  };*/
 
   document.getElementById("ownerLoginCancel").onclick = () => {
     modal.style.display = "none";
@@ -794,6 +804,8 @@ document.getElementById("ownerLoginYes").onclick = () => {
     googleLoginForEdit(id);
   }
 };
+
+	
 
 }
 
