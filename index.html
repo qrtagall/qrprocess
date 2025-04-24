@@ -246,7 +246,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-4.1</div>
+	  <div id="versionTag">Ver-4.3</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -710,7 +710,7 @@ async function fetchAssetData(id) {
       </div>`;
     }
 
-    //assetLinks.innerHTML = await renderInfoBlock(data);
+    assetLinks.innerHTML = await renderInfoBlock(data);
 //html || "<p style='color:gray;'>No asset information available.</p>";
 	  
 
@@ -738,7 +738,7 @@ async function fetchAssetData(id) {
   }
 }
 
-assetLinks.innerHTML = await renderInfoBlock(data);
+//assetLinks.innerHTML = await renderInfoBlock(data);
 
 
 /***************************************************************/
