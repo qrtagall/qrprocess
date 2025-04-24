@@ -84,25 +84,30 @@
         // Log the backend request
         console.log("📡 Sending claim info to backend:", claimUrl);
         
-        try {
+       
          // await fetch(claimUrl);
            window.location.href = claimUrl;
-        } catch (err) {
-          console.warn("⚠️ Backend claim failed:", err);
-        }
-        
-        // ✅ Trigger second OAuth to escape Apps Script sandbox
-        const secondOAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
-          `?response_type=token` +
-          `&client_id=121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com` +
-          `&redirect_uri=${encodeURIComponent('https://process.qrtagall.com/oauth-redirect-final.html')}` +
-          `&scope=${encodeURIComponent('https://www.googleapis.com/auth/userinfo.email')}` +
-          `&state=${encodeURIComponent(finalRedirectUrl)}`;
-        
-        console.log("🔁 Redirecting to second OAuth flow:", secondOAuthUrl);
-        window.location.href = secondOAuthUrl;
-      
 
+
+        setTimeout(() => {
+          {
+           // ✅ Trigger second OAuth to escape Apps Script sandbox
+              const secondOAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
+                `?response_type=token` +
+                `&client_id=121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com` +
+                `&redirect_uri=${encodeURIComponent('https://process.qrtagall.com/oauth-redirect-final.html')}` +
+                `&scope=${encodeURIComponent('https://www.googleapis.com/auth/userinfo.email')}` +
+                `&state=${encodeURIComponent(finalRedirectUrl)}`;
+              
+              console.log("🔁 Redirecting to second OAuth flow:", secondOAuthUrl);
+              window.location.href = secondOAuthUrl;
+            
+      
+          }
+        }, 5000);
+
+        
+        
 
       } catch (err) {
         console.error("❌ Error:", err);
