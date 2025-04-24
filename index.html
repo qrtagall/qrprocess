@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">Ver-2.77</div>
+	  <div id="versionTag">Ver-2.78</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -606,16 +606,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchParams = new URLSearchParams(window.location.search);
   const hashParams = new URLSearchParams(window.location.hash.slice(1));  // Handle OAuth fragment
 
-	console.log("Search Params:",searchParams);
+  console.log("Search Params:",searchParams);
   console.log("Hash Params:",hashParams);
   
   const verified = searchParams.get("verified");
-  const emailx = searchParams.get("email") || hashParams.get("email");
+  const emailx = searchParams.get("email");// || hashParams.get("email");
   const redirect = searchParams.get("redirect") || hashParams.get("redirect");
   const authclaim = searchParams.get("oauthClaim") || hashParams.get("oauthClaim");
-  const lid1 = searchParams.get("id") || hashParams.get("id") || hashParams.get("state");
+  const lid1 = searchParams.get("id") ;//|| hashParams.get("id") || hashParams.get("state");
   const lid2 = searchParams.get("initClaim") || hashParams.get("initClaim");
-  const lclaim = searchParams.get("claim") || hashParams.get("claim");
+  const lclaimed = searchParams.get("claimed") ;//|| hashParams.get("claimed");
 
   console.log("🧩 Combined Parsed Params:");
   console.log("verified:", verified);
@@ -624,7 +624,7 @@ document.addEventListener("DOMContentLoaded", () => {
   console.log("authclaim:", authclaim);
   console.log("id / state:", lid1);
   console.log("initClaim:", lid2);
-  console.log("Claimed:", lclaim);
+  console.log("Claimed:", lclaimed);
 
   // ✅ Store email if present
   if (emailx) {
@@ -637,9 +637,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ✅ Redirect if "redirect" param exists
-  if (redirect) {
+  if (emailx && lclaimed=== "1") {
     try {
-      const decodedRedirect = decodeURIComponent(redirect);
+	    const decodedRedirect = `https://process.qrtagall.com/?id=${id}`;
+      //const decodedRedirect = decodeURIComponent(redirect);
       console.warn("⏩ Forcing redirect to:", decodedRedirect);
       window.location.replace(decodedRedirect);
     } catch (err) {
