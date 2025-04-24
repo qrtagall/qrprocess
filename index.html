@@ -246,7 +246,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-4.0</div>
+	  <div id="versionTag">Ver-4.1</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -497,57 +497,10 @@ async function resolveAndRender(value, i, customTitle = `Link ${i}`) {
 
 
 
-/* Old block
-async function renderInfoBlock(data) {
-  let html = "";
 
-  for (let i = 1; i <= 10; i++) {
-    let raw = data[`info${i}`];
-    if (!raw) continue;
-
-    // Extract title (in [Title]) if present
-    const titleMatch = raw.match(/^\[(.*?)\]/);
-    const title = titleMatch ? titleMatch[1].trim() : `Note ${i}`;
-    const value = titleMatch ? raw.replace(/^\[.*?\]/, '').trim() : raw;
-
-    if (value.startsWith("http")) {
-      // ✅ Google Drive preview
-      if (/drive\.google\.com/.test(value)) {
-        const match = value.match(/\/d\/([^/]+)/);
-        const fileId = match ? match[1] : null;
-
-        if (fileId) {
-          const iframePreview = `https://drive.google.com/file/d/${fileId}/preview`;
-		  const icon = getIconFromTitle(title);
-          html += `
-			  <div style="margin-bottom:20px;">
-				<b>${icon} ${title}</b><br>
-				<iframe src="${iframePreview}" width="100%" height="400" frameborder="0"
-				  allow="autoplay; encrypted-media" 
-				  sandbox="allow-scripts allow-same-origin allow-presentation">
-				</iframe>
-			  </div>`;
-        } else {
-          html += `<p>🔗 <b>${title}:</b> <a href="${value}" target="_blank">${value}</a></p>`;
-        }
-
-      } else {
-        // 🌐 Other URLs → Resolve with custom title
-        html += await resolveAndRender(value, i, title);
-      }
-
-    } else {
-      // 📝 Plain text content
-      html += `<p>📝 <b>${title}:</b> ${value}</p>`;
-    }
-  }
-
-  return html;
-}
-	  */
 	  
 
-
+/*
 	  async function renderInfoBlock(data) {
   const assets = data.assets || [];
   let html = "";
@@ -597,7 +550,69 @@ async function renderInfoBlock(data) {
 
   return html;
 }
+	  */
 
+async function renderInfoBlock(data) {
+  let html = "";
+
+  const assets = data.assets || [];
+  for (let i = 0; i < assets.length; i++) {
+    const item = assets[i];
+    const title = item.title || `Asset ${i + 1}`;
+    const type = (item.type || "").toUpperCase();
+    const visibility = (item.visibility || "").toUpperCase();
+    const url = item.url || "";
+
+    const icon = getIconFromTitle(title);
+
+    if (visibility === "NOVIEW" && !isOwner) {
+      html += `<p>${icon} <b>${title}</b> <span style="color:gray;">(🔒 No view permission)</span></p>`;
+      continue;
+    }
+
+    if (!url || url.trim() === "" || url.toLowerCase() === "not available") {
+      html += `<p>${icon} <b>${title}</b> <span style="color:gray;">(🔗 Link not available)</span></p>`;
+      continue;
+    }
+
+    // TEXT content
+    if (type === "TEXT") {
+      html += `<p>${icon} <b>${title}:</b> ${url}</p>`;
+    }
+
+    // PDF and file types handled with Drive links or file preview
+    else if (type.includes("FILE") && /drive\.google\.com/.test(url)) {
+      const match = url.match(/\/d\/([^/]+)/);
+      const fileId = match ? match[1] : null;
+
+      if (fileId) {
+        const iframePreview = `https://drive.google.com/file/d/${fileId}/preview`;
+        html += `
+          <div style="margin-bottom:20px;">
+            <b>${icon} ${title}</b><br>
+            <iframe src="${iframePreview}" width="100%" height="400" frameborder="0"
+              allow="autoplay; encrypted-media" 
+              sandbox="allow-scripts allow-same-origin allow-presentation">
+            </iframe>
+          </div>`;
+      } else {
+        html += `<p>${icon} <b>${title}:</b> <a href="${url}" target="_blank">${url}</a></p>`;
+      }
+    }
+
+    // Other URLs
+    else if (url.startsWith("http")) {
+      html += await resolveAndRender(url, i + 1, title);
+    }
+
+    // Fallback plain text
+    else {
+      html += `<p>${icon} <b>${title}:</b> ${url}</p>`;
+    }
+  }
+
+  return html || "<p style='color:gray;'>No asset information available.</p>";
+}
 
 
 /******************* Parsing info *******************/
@@ -695,7 +710,7 @@ async function fetchAssetData(id) {
       </div>`;
     }
 
-    assetLinks.innerHTML = await renderInfoBlock(data);
+    //assetLinks.innerHTML = await renderInfoBlock(data);
 //html || "<p style='color:gray;'>No asset information available.</p>";
 	  
 
@@ -723,7 +738,7 @@ async function fetchAssetData(id) {
   }
 }
 
-
+assetLinks.innerHTML = await renderInfoBlock(data);
 
 
 /***************************************************************/
