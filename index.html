@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">Ver-2.76</div>
+	  <div id="versionTag">Ver-2.77</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -615,6 +615,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const authclaim = searchParams.get("oauthClaim") || hashParams.get("oauthClaim");
   const lid1 = searchParams.get("id") || hashParams.get("id") || hashParams.get("state");
   const lid2 = searchParams.get("initClaim") || hashParams.get("initClaim");
+  const lclaim = searchParams.get("claim") || hashParams.get("claim");
 
   console.log("🧩 Combined Parsed Params:");
   console.log("verified:", verified);
@@ -623,6 +624,7 @@ document.addEventListener("DOMContentLoaded", () => {
   console.log("authclaim:", authclaim);
   console.log("id / state:", lid1);
   console.log("initClaim:", lid2);
+  console.log("Claimed:", lclaim);
 
   // ✅ Store email if present
   if (emailx) {
