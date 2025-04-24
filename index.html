@@ -246,7 +246,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-4.6</div>
+	  <div id="versionTag">Ver-4.7</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -274,6 +274,22 @@
 		<button id="ownerLoginCancel" style="background-color:#ccc; color:#333; padding:10px 20px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Cancel</button>
 	  </div>
 	</div>
+
+
+	<button id="logoutBtn" onclick="handleLogout()" style="
+	  position: fixed;
+	  bottom: 20px;
+	  right: 20px;
+	  background: #f44336;
+	  color: white;
+	  border: none;
+	  border-radius: 6px;
+	  padding: 10px 16px;
+	  font-size: 14px;
+	  cursor: pointer;
+	  display: none; /* Initially hidden */
+	  z-index: 999;
+	">🔓 Log Out</button>
 
 	
 
@@ -317,9 +333,21 @@ function cleanUpUrl() {
 
 const sessionEmail = localStorage.getItem("qr_claimed_email");	  
 console.log("📧 QR was last claimed/verified by:", sessionEmail);
+if (sessionEmail)
+{
+  document.getElementById("logoutBtn").style.display = "block";
+}
 
 
+/*********************LogOut *********************/
+  function handleLogout() {
+  localStorage.removeItem("qr_claimed_email");
+  // Optional: clear sessionStorage too
+  sessionStorage.removeItem("qr_claimed_email");
 
+  alert("🔓 You have been logged out.");
+  window.location.reload();
+}
 
 /************** New Google Auth and QR Claim *********************/
 
