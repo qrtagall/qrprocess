@@ -82,7 +82,8 @@
         console.log("📡 Sending claim info to backend:", claimUrl);
         
         try {
-          await fetch(claimUrl);
+         // await fetch(claimUrl);
+           window.location.replace(claimUrl);
         } catch (err) {
           console.warn("⚠️ Backend claim failed:", err);
         }
