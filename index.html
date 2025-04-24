@@ -280,6 +280,11 @@
   </div>
 </div>
 
+<div style="margin-bottom: 10px;">
+  <input type="text" id="assetNameInput" placeholder="Give QR Linked Asset Name" 
+         style="width: 100%; padding: 10px; font-size: 14px; border-radius: 6px; border: 1px solid #ccc;">
+</div>
+
 	
 
 
@@ -352,6 +357,7 @@ function googleLoginNew() {
 function googleLoginNew() {
   const id = getQueryParam("id");
   const assetName = document.getElementById("assetNameInput").value.trim();
+
 
   if (!assetName) {
     alert("⚠️ Please enter an asset name before continuing.");
