@@ -602,20 +602,22 @@ function startClaimPolling(id) {
 */
 	  
 document.addEventListener("DOMContentLoaded", () => {
-  const params = new URLSearchParams(window.location.search);
-  const verified = params.get("verified");
-  const emailx = params.get("email");
-  const redirect = params.get("redirect");
- const authclaim = params.get("oauthClaim");
-	const lid1= params.get("id");
-	const lid2= params.get("initClaim");
-		
-  console.log("✅ 2. DOMContentLoaded Triggered:", emailx, redirect,authclaim, lid1, lid2);
+  const searchParams = new URLSearchParams(window.location.search);
+  const hashParams = new URLSearchParams(window.location.hash.slice(1));  // Remove '#' at front
 
-  if (verified === "1" && email) {
+  const verified = searchParams.get("verified");
+  const emailx = searchParams.get("email") || hashParams.get("email"); // in case
+  const redirect = searchParams.get("redirect");
+  const authclaim = searchParams.get("oauthClaim") || hashParams.get("oauthClaim");
+  const lid1 = searchParams.get("id") || hashParams.get("id") || hashParams.get("state"); // fallback to state
+  const lid2 = searchParams.get("initClaim") || hashParams.get("initClaim");
+
+  console.log("✅ 2. DOMContentLoaded Triggered:", emailx, redirect, authclaim, lid1, lid2);
+
+  if (verified === "1" && emailx) {
     try {
-      localStorage.setItem("qr_claimed_email", email);
-      console.log("✅ Identity verified. Email stored:", email);
+      localStorage.setItem("qr_claimed_email", emailx);
+      console.log("✅ Identity verified. Email stored:", emailx);
     } catch (e) {
       console.warn("⚠️ Failed to store email in localStorage:", e);
     }
@@ -630,14 +632,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (redirect) {
     try {
-      localStorage.setItem("qr_claimed_email", email || ""); // Optional fallback
+      localStorage.setItem("qr_claimed_email", emailx || ""); // fallback
     } catch {}
-    
+
     const decoded = decodeURIComponent(redirect);
     console.warn("⏩ Force redirecting to:", decoded);
     window.location.replace(decoded);
   }
 });
+
 	  
 
 
