@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">Ver-2.71</div>
+	  <div id="versionTag">Ver-2.72</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -602,17 +602,33 @@ function startClaimPolling(id) {
 */
 	  
 document.addEventListener("DOMContentLoaded", () => {
-  const searchParams = new URLSearchParams(window.location.search);
-  const hashParams = new URLSearchParams(window.location.hash.slice(1));  // Remove '#' at front
+  const allParams = new URLSearchParams(window.location.search);
 
-  const verified = searchParams.get("verified");
-  const emailx = searchParams.get("email") || hashParams.get("email"); // in case
-  const redirect = searchParams.get("redirect");
-  const authclaim = searchParams.get("oauthClaim") || hashParams.get("oauthClaim");
-  const lid1 = searchParams.get("id") || hashParams.get("id") || hashParams.get("state"); // fallback to state
-  const lid2 = searchParams.get("initClaim") || hashParams.get("initClaim");
+const initClaim = allParams.get("initClaim");  // ➜ "20250420152457832_ef56270c9ca22a7"
+const email = allParams.get("email");          // ➜ "dev.chandan2002x@gmail.com"
+const oauthClaim = allParams.get("oauthClaim"); // ➜ "1"
+const redirect = allParams.get("redirect");    // ➜ "https://process.qrtagall.com/?id=20250420152457832_ef56270c9ca22a7&claimed=1"
 
-  console.log("✅ 2. DOMContentLoaded Triggered:", emailx, redirect, authclaim, lid1, lid2);
+
+	console.log("🧩 All Parsed Parameters:");
+console.log("initClaim:", initClaim);
+console.log("email:", email);
+console.log("oauthClaim:", oauthClaim);
+console.log("redirect (decoded):", decodeURIComponent(redirect));
+
+const redirectUrl = new URL(decodeURIComponent(redirect));
+const innerParams = new URLSearchParams(redirectUrl.search);
+
+const innerId = innerParams.get("id");        // ➜ "20250420152457832_ef56270c9ca22a7"
+const claimed = innerParams.get("claimed");   // ➜ "1"
+
+console.log("🔁 Inside Redirect Params:");
+console.log("  id:", innerId);
+console.log("  claimed:", claimed);
+
+	
+	
+  //console.log("✅ 2. DOMContentLoaded Triggered:", emailx, redirect, authclaim, lid1, lid2);
 
   if (verified === "1" && emailx) {
     try {
@@ -636,7 +652,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch {}
 
     const decoded = decodeURIComponent(redirect);
-    console.warn("⏩ Force redirecting to:", decoded);
+    console.log("⏩ Force redirecting to:", decoded);
     window.location.replace(decoded);
   }
 });
