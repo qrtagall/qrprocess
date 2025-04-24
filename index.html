@@ -932,6 +932,7 @@ async function fetchAssetData(id) {
     resultDiv.style.display = "block";
     resultDiv.innerHTML = "❌ Error retrieving data. " + err;
 	  console.log("❌ Error retrieving data. ", eee);
+	  await new Promise(r => setTimeout(r, 10000)); 
   }
 }
 
