@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">Ver-2.69</div>
+	  <div id="versionTag">Ver-2.70</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -604,11 +604,13 @@ function startClaimPolling(id) {
 document.addEventListener("DOMContentLoaded", () => {
   const params = new URLSearchParams(window.location.search);
   const verified = params.get("verified");
-  const email = params.get("email");
+  const emailx = params.get("email");
   const redirect = params.get("redirect");
  const authclaim = params.get("oauthClaim");
+	const lid1= params.get("id");
+	const lid2= params.get("initClaim");
 		
-  console.log("✅ 2. DOMContentLoaded Triggered:", email, redirect,authclaim);
+  console.log("✅ 2. DOMContentLoaded Triggered:", emailx, redirect,authclaim, lid1, lid2);
 
   if (verified === "1" && email) {
     try {
