@@ -246,7 +246,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-4.4</div>
+	  <div id="versionTag">Ver-4.6</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -315,7 +315,8 @@ function cleanUpUrl() {
   window.history.replaceState({}, document.title, url.toString());
 }
 
-
+const sessionEmail = localStorage.getItem("qr_claimed_email");	  
+console.log("📧 QR was last claimed/verified by:", sessionEmail);
 
 
 
@@ -360,8 +361,7 @@ function googleLoginNew() {
 
 console.log("🔄 Initiating Verification...");
 	  
-const sessionEmail = localStorage.getItem("qr_claimed_email");	  
-console.log("📧 QR was last claimed/verified by:", sessionEmail);
+
 
 
 	  
@@ -662,6 +662,9 @@ async function fetchAssetData(id) {
 
 
    const ownerEmail = (data.UserName || "").trim().toLowerCase();
+  console.log("Owner Email>>>: ", ownerEmail);
+
+	  
 
     if (sessionEmail && sessionEmail === ownerEmail) {
       isOwner = true;
@@ -726,7 +729,7 @@ function showOwnerConfirmModal() {
   const heading = modal.querySelector("h3");
   const subtext = modal.querySelector("p");
 
-  const sessionEmail = localStorage.getItem("qr_claimed_email");
+  //const sessionEmail = localStorage.getItem("qr_claimed_email");
 
   if (sessionEmail) {
     heading.innerHTML = `⚠️ This QR is owned by a different user.`;
