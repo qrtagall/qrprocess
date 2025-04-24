@@ -246,7 +246,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-3.2</div>
+	  <div id="versionTag">Ver-4.0</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -695,7 +695,9 @@ async function fetchAssetData(id) {
       </div>`;
     }
 
-    assetLinks.innerHTML = html || "<p style='color:gray;'>No asset information available.</p>";
+    assetLinks.innerHTML = await renderInfoBlock(data);
+//html || "<p style='color:gray;'>No asset information available.</p>";
+	  
 
     const ownerEmail = (data.UserName || "").trim().toLowerCase();
 
