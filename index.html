@@ -231,16 +231,22 @@
 	  <div id="result" style="display:none;"></div>
 
 	  <div id="loginSection" class="login-options" style="display:none;">
-		<p>Login to Claim this QR</p>
-		<div class="auth-buttons-vertical">
-		  <button class="auth-button-box enabled" onclick="googleLoginNew()">
-			<img class="auth-logo" src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo">
-			<span>Continue with Google</span>
-		  </button>
+		  <p>Login to Claim this QR</p>
+		
+		  <!-- 👇 Asset Name Input Box -->
+		  <input id="assetNameInput" type="text" placeholder="Enter Asset Name"
+		         style="margin-bottom:10px; padding:8px; width:80%; border-radius:6px; border:1px solid #ccc;" />
+		
+		  <div class="auth-buttons-vertical">
+		    <button class="auth-button-box enabled" onclick="googleLoginNew()">
+		      <img class="auth-logo" src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo">
+		      <span>Continue with Google</span>
+		    </button>
+		  </div>
 		</div>
-	  </div>
 
-	  <div id="versionTag">Ver-2.84</div>
+
+	  <div id="versionTag">Ver-2.85</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -268,22 +274,6 @@
 		<button id="ownerLoginCancel" style="background-color:#ccc; color:#333; padding:10px 20px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Cancel</button>
 	  </div>
 	</div>
-
-<div id="loginSection" class="login-options" style="display:none;">
-  <p>Login to Claim this QR</p>
-  <input id="assetNameInput" type="text" placeholder="Enter Asset Name" style="margin-bottom:10px; padding:8px; width:80%; border-radius:6px; border:1px solid #ccc;" />
-  <div class="auth-buttons-vertical">
-    <button class="auth-button-box enabled" onclick="googleLoginNew()">
-      <img class="auth-logo" src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo">
-      <span>Continue with Google</span>
-    </button>
-  </div>
-</div>
-
-<div style="margin-bottom: 10px;">
-  <input type="text" id="assetNameInput" placeholder="Give QR Linked Asset Name" 
-         style="width: 100%; padding: 10px; font-size: 14px; border-radius: 6px; border: 1px solid #ccc;">
-</div>
 
 	
 
