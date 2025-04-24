@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">Ver-2.80</div>
+	  <div id="versionTag">Ver-2.81</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -371,6 +371,7 @@ const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
 
 
 /******************** Old LogIn ****************/
+/*
 let popupRef = null;
 const claimCheckInterval = 5000;
 let pollingInterval = null;
@@ -399,7 +400,7 @@ function googleLogin() {
   // Fallback to polling if nothing received within 5s
   //startClaimPolling(id);
 }
-
+*/
 
 	  
 // ✅ Main handler when claim is confirmed
@@ -463,7 +464,7 @@ async function onClaimReceived(id, emailFromPopup = null) {
 	  
 
 
-	  
+/*	  
 // BroadcastChannel support
 try {
   const channel = new BroadcastChannel("qr_claim_channel");
@@ -562,46 +563,15 @@ function startClaimPolling(id) {
   }, claimCheckInterval);
 }
 
-
-
-
-
-
-
-
-/*
-	    (function() {
-    const params = new URLSearchParams(window.location.search);
-    const verified = params.get("verified");
-    const email = params.get("email");
-    const redirect = params.get("redirect");
-    console.log("✅ 1. Bare Function Triggered");
-
-    if (verified === "1" && email) {
-      try {
-        localStorage.setItem("qr_claimed_email", email);
-        console.log("✅ Identity verified. Email stored:", email);
-      } catch (e) {
-        console.warn("⚠️ Failed to store email in localStorage:", e);
-      }
-
-      setTimeout(() => {
-        const url = new URL(window.location.href);
-        url.searchParams.delete("email");
-        url.searchParams.delete("verified");
-        window.history.replaceState({}, document.title, url.toString());
-      }, 1000);
-    }
-
-    if (redirect) {
-      const decoded = decodeURIComponent(redirect);
-      console.warn("⏩ >> Force redirecting to:", decoded);
-      window.location.replace(decoded);
-    }
-  })();
 */
-	  
 
+
+
+
+
+
+  
+/*
 document.addEventListener("DOMContentLoaded", () => {
   const searchParams = new URLSearchParams(window.location.search);
   const hashParams = new URLSearchParams(window.location.hash.slice(1));  // Handle OAuth fragment
@@ -653,7 +623,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 }
 });
-
+*/
   
 
 
