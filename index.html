@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">Ver-2.83</div>
+	  <div id="versionTag">Ver-2.84</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -268,6 +268,17 @@
 		<button id="ownerLoginCancel" style="background-color:#ccc; color:#333; padding:10px 20px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Cancel</button>
 	  </div>
 	</div>
+
+<div id="loginSection" class="login-options" style="display:none;">
+  <p>Login to Claim this QR</p>
+  <input id="assetNameInput" type="text" placeholder="Enter Asset Name" style="margin-bottom:10px; padding:8px; width:80%; border-radius:6px; border:1px solid #ccc;" />
+  <div class="auth-buttons-vertical">
+    <button class="auth-button-box enabled" onclick="googleLoginNew()">
+      <img class="auth-logo" src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo">
+      <span>Continue with Google</span>
+    </button>
+  </div>
+</div>
 
 	
 
@@ -314,8 +325,8 @@ function cleanUpUrl() {
 
 
 
-/************** New Login *********************/
-
+/************** New Google Auth and QR Claim *********************/
+/*
 function googleLoginNew() {
   const id = getQueryParam("id");
 
@@ -333,6 +344,38 @@ function googleLoginNew() {
     `&scope=${encodeURIComponent(scope)}` +
     `&state=${encodeURIComponent(id)}`;
   
+  console.log("🔐 Redirecting to Google OAuth:", authUrl);
+  window.location.href = authUrl;
+}
+*/
+
+function googleLoginNew() {
+  const id = getQueryParam("id");
+  const assetName = document.getElementById("assetNameInput").value.trim();
+
+  if (!assetName) {
+    alert("⚠️ Please enter an asset name before continuing.");
+    return;
+  }
+
+  const clientId = "121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com";
+  const redirectUri = "https://process.qrtagall.com/oauth-claim-callback.html";
+  const scope = "https://www.googleapis.com/auth/userinfo.email";
+
+  // Encode both ID and assetName in a stringified JSON
+  const stateObj = {
+    id: id,
+    asset: assetName
+  };
+  const state = encodeURIComponent(JSON.stringify(stateObj));
+
+  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
+    `?response_type=token` +
+    `&client_id=${encodeURIComponent(clientId)}` +
+    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+    `&scope=${encodeURIComponent(scope)}` +
+    `&state=${state}`;
+
   console.log("🔐 Redirecting to Google OAuth:", authUrl);
   window.location.href = authUrl;
 }
