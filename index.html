@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">Ver-2.81</div>
+	  <div id="versionTag">Ver-2.82</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -303,13 +303,6 @@
     }
 
 
-	
-
-
-
-
-	
-
 function cleanUpUrl() {
   const url = new URL(window.location.href);
   url.searchParams.delete("claimed");
@@ -333,15 +326,6 @@ function googleLoginNew() {
   // Optionally pass ID via state to callback
   const state = encodeURIComponent(`id=${id}`);
 
-
-/*
-const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-  `response_type=token` +
-  `&client_id=121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com` +
-  `&redirect_uri=https://process.qrtagall.com/oauth-claim-callback.html` +
-  `&scope=https://www.googleapis.com/auth/userinfo.email` +
-  `&state=${encodeURIComponent(state)}`;
-  */
   const authUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
     `?response_type=token` +
     `&client_id=${encodeURIComponent(clientId)}` +
@@ -353,21 +337,6 @@ const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
   window.location.href = authUrl;
 }
 
-
-/*
-  const clientId = "121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com";
-  const redirectUri = "https://process.qrtagall.com/oauth-callback.html";
-  const scope = "https://www.googleapis.com/auth/userinfo.email";
-
-  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
-    `?response_type=token` +
-    `&client_id=${encodeURIComponent(clientId)}` +
-    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-    `&scope=${encodeURIComponent(scope)}` +
-    `&state=${encodeURIComponent(id)}`;
-
-  window.location.href = authUrl;
-*/
 
 
 /******************** Old LogIn ****************/
@@ -402,7 +371,7 @@ function googleLogin() {
 }
 */
 
-	  
+/*	  
 // ✅ Main handler when claim is confirmed
 async function onClaimReceived(id, emailFromPopup = null) {
   clearInterval(pollingInterval);
@@ -460,7 +429,7 @@ async function onClaimReceived(id, emailFromPopup = null) {
   setTimeout(() => window.location.reload(), 2000);
 	
 }
-
+*/
 	  
 
 
@@ -979,66 +948,12 @@ document.getElementById("ownerLoginYes").onclick = () => {
 }
 
 
-/*
-window.addEventListener("load", () => {
-  const params = new URLSearchParams(window.location.search);
-  const verified = params.get("verified");
-  const email = params.get("email");
-  const redirect = params.get("redirect");
 
-  // ✅ If email is returned via verification, store it
-  if (verified === "1" && email) {
-    try {
-      localStorage.setItem("qr_claimed_email", email);
-      console.log("✅ Identity verified. Email stored:", email);
-    } catch (e) {
-      console.warn("⚠️ Failed to store email in localStorage:", e);
-    }
 
-    // Clean up URL
-    setTimeout(() => {
-      const url = new URL(window.location.href);
-      url.searchParams.delete("email");
-      url.searchParams.delete("verified");
-      window.history.replaceState({}, document.title, url.toString());
-    }, 1000);
-  }
 
-  // ✅ Force redirect if "redirect" param exists
-  if (redirect) {
-	localStorage.setItem("qr_claimed_email", email);
-    const decoded = decodeURIComponent(redirect);
-    console.warn("⏩ Force redirecting to:", decoded);
-    window.location.replace(decoded);
-  }
-});
-
-*/
 
 
 function googleLoginForEdit(id) {
-
-
- //alert("🚀 Login option will be coming....");
-
-//const id = getQueryParam("id");
-  startOAuthLogin(id);
-  
-/*const webAppUrl = "https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec";
-
-  // This URL will be redirected back to after successful login
-  const redirectBack = `https://process.qrtagall.com/?id=${encodeURIComponent(id)}&verified=1`;
-
-  // Call Apps Script with a flag like `verifyOnly=1`
-  const url = `${webAppUrl}?verifyOnly=1&redirect=${encodeURIComponent(redirectBack)}&id=${encodeURIComponent(id)}`;
-
-  // 🔁 Full-page redirect (no popup)
-  window.location.href = url;
-  */
-  
-}
-
-function startOAuthLogin(id) {
   const clientId = "121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com";
   const redirectUri = "https://process.qrtagall.com/oauth-callback.html";
   const scope = "https://www.googleapis.com/auth/userinfo.email";
@@ -1051,10 +966,6 @@ function startOAuthLogin(id) {
     `&state=${encodeURIComponent(id)}`;
 
   window.location.href = authUrl;
-}
-
-function getQueryParam(param) {
-  return new URLSearchParams(window.location.search).get(param);
 }
 
 
