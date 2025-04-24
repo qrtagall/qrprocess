@@ -38,6 +38,7 @@
       const hashParams = new URLSearchParams(window.location.hash.slice(1));
       const accessToken = hashParams.get("access_token");
       const id = hashParams.get("state");
+      const asset = hashParams.get("asset");
       const statusEl = document.getElementById("status");
 
       if (!accessToken || !id) {
@@ -77,7 +78,7 @@
         const finalRedirectUrl = `${window.location.origin}/?id=${encodeURIComponent(id)}&claimed=1&email=${encodeURIComponent(email)}`;
 
 
-        const claimUrl = `${backendUrl}?initClaim=${encodeURIComponent(id)}`;
+        const claimUrl = `${backendUrl}?initClaim=${encodeURIComponent(id)}&asset=${encodeURIComponent(asset)}`;
         
         // &email=${encodeURIComponent(email)}&oauthClaim=1  <-- commented separately
         
