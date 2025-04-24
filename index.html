@@ -246,7 +246,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-3.0</div>
+	  <div id="versionTag">Ver-3.1</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -321,28 +321,6 @@ function cleanUpUrl() {
 
 
 /************** New Google Auth and QR Claim *********************/
-/*
-function googleLoginNew() {
-  const id = getQueryParam("id");
-
-  const clientId = "121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com"; // ✅ your working client ID
-  const redirectUri = "https://process.qrtagall.com/oauth-claim-callback.html";
-  const scope = "https://www.googleapis.com/auth/userinfo.email";
-
-  // Optionally pass ID via state to callback
-  const state = encodeURIComponent(`id=${id}`);
-
-  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
-    `?response_type=token` +
-    `&client_id=${encodeURIComponent(clientId)}` +
-    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-    `&scope=${encodeURIComponent(scope)}` +
-    `&state=${encodeURIComponent(id)}`;
-  
-  console.log("🔐 Redirecting to Google OAuth:", authUrl);
-  window.location.href = authUrl;
-}
-*/
 
 function googleLoginNew() {
   const id = getQueryParam("id");
@@ -390,7 +368,7 @@ console.log("📧 QR was last claimed/verified by:", sessionEmail);
 	  
 let isOwner=false;
 
-	  
+/*********************** ID Verification **************************/  
 
 
     async function verifyId() {
@@ -570,8 +548,19 @@ async function renderInfoBlock(data) {
 
 
 
+/******************* Parsing info *******************/
 
-    
+function getIconFromFileType(fileType = "") {
+  switch (fileType.toUpperCase()) {
+    case "IMAGEFILE": return "🖼️";
+    case "PDFFILE": return "📄";
+    case "TEXTFILE": return "📝";
+    case "AUDIOFILE": return "🎧";
+    case "VIDEOFILE": return "🎥";
+    default: return "🔗";
+  }
+}
+
 
 async function fetchAssetData(id) {
   const popup = document.getElementById("popup");
@@ -598,64 +587,91 @@ async function fetchAssetData(id) {
       return;
     }
 
-	const data = json.data;
+    const data = json.data;
     popup.style.display = "none";
     mainContent.style.display = "block";
-	
-	
-    //assetTitle.textContent = data.Description || "Verified Asset";
+
     assetTitle.innerHTML = `${data.Description || "Verified Asset"}<br><span style="font-size: 13px; color: gray;">(${id})</span>`;
 
-	try {
-	  assetLinks.innerHTML = await renderInfoBlock(data);
-	} catch (e) {
-	  console.error("❌ renderInfoBlock failed:", e);
-	  assetLinks.innerHTML = "<p>⚠️ Unable to render asset data.</p>";
-	}
-	
-	
-	const ownerEmail = (data.UserName || "").trim().toLowerCase();
+    // 🧠 Render each row (from row 6 onward)
+    let html = "";
+    let blankRowCount = 0;
 
-	console.log("Session:", sessionEmail, " | Owner:", ownerEmail);
-	
-	
-	//const userRes = await fetch("https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec?getEmail=1");
-	//const userJson = await userRes.json();
-	//const sessionEmail = "xxx";//userJson.email || "";
-	
+    for (let i = 6; i <= 100; i++) {  // Assuming upper bound for safety
+      const basicInfo = data[`R${i}C1`] || "";
+      const fileType = (data[`R${i}C2`] || "").toUpperCase();
+      const options = (data[`R${i}C3`] || "").toUpperCase();
+      const localLink = (data[`R${i}C4`] || "").trim();
 
-		if (sessionEmail && sessionEmail === ownerEmail) {
-			isOwner=true;
-			updatePanelBackground("#e6ffe6"); // light green for owners
-		  editBtn.innerHTML = "✏️ Edit Details";
-		  editBtn.disabled = false;
-		  editBtn.classList.remove("disabled-button");
-		  editBtn.classList.add("enabled");
-		} else {
-			isOwner=false;
-			updatePanelBackground("#fffbe6"); // neutral background
-		  editBtn.innerHTML = "🔐 Log-in to Edit Details";
-		  //editBtn.disabled = true;
-		  //editBtn.classList.remove("enabled");
-		  //editBtn.classList.add("disabled-button");
-		  editBtn.disabled = false;
-		  editBtn.classList.remove("disabled-button");
-		  editBtn.classList.add("enabled");	
-		}
-		
-		
-		
+      if (!basicInfo && !fileType && !options && !localLink) {
+        blankRowCount++;
+        if (blankRowCount >= 2) break;  // Stop after 2 consecutive blank rows
+        continue;
+      } else {
+        blankRowCount = 0;
+      }
+
+      let displayLink = "";
+
+      if (!localLink) {
+        displayLink = "<p style='color:gray;'>🔗 Link not available</p>";
+      } else if (!localLink.startsWith("http")) {
+        displayLink = `<p style='color:gray;'>${localLink}</p>`;
+      } else {
+        const icon = getIconFromFileType(fileType);
+        const drivePreview = localLink.includes("drive.google.com")
+          ? localLink.replace("/view?usp=sharing", "/preview")
+          : localLink;
+
+        if (fileType === "IMAGEFILE") {
+          displayLink = `<img src="${drivePreview}" style="max-width:100%; margin-top:5px;">`;
+        } else if (fileType === "PDFFILE" || fileType === "TEXTFILE") {
+          displayLink = `<iframe src="${drivePreview}" width="100%" height="400" style="border:0; margin-top:5px;"></iframe>`;
+        } else if (fileType === "AUDIOFILE") {
+          displayLink = `<audio controls src="${localLink}" style="width:100%; margin-top:5px;"></audio>`;
+        } else if (fileType === "VIDEOFILE") {
+          displayLink = `<video controls width="100%" style="margin-top:5px;"><source src="${localLink}"></video>`;
+        } else {
+          displayLink = `<a href="${localLink}" target="_blank">🔗 Open Link</a>`;
+        }
+      }
+
+      html += `<div style="margin-bottom:20px;">
+        <b>${basicInfo}</b><br>
+        ${displayLink}
+      </div>`;
+    }
+
+    assetLinks.innerHTML = html || "<p style='color:gray;'>No asset information available.</p>";
+
+    const ownerEmail = (data.UserName || "").trim().toLowerCase();
+
+    if (sessionEmail && sessionEmail === ownerEmail) {
+      isOwner = true;
+      updatePanelBackground("#e6ffe6"); // light green
+      editBtn.innerHTML = "✏️ Edit Details";
+    } else {
+      isOwner = false;
+      updatePanelBackground("#fffbe6"); // neutral
+      editBtn.innerHTML = "🔐 Log-in to Edit Details";
+    }
+
+    editBtn.disabled = false;
+    editBtn.classList.remove("disabled-button");
+    editBtn.classList.add("enabled");
 
   } catch (err) {
     spinner.style.display = "none";
     resultDiv.style.display = "block";
     resultDiv.innerHTML = "❌ Error retrieving data. " + err;
-	  console.log("❌ Error retrieving data. ", eee);
-	  await new Promise(r => setTimeout(r, 10000)); 
+    console.error("❌ Error retrieving data:", err);
   }
 }
 
 
+
+
+/***************************************************************/
 
 function editAlert() {
   const editBtn = document.getElementById("editBtn");
