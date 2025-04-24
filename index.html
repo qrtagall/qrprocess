@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">Ver-2.78</div>
+	  <div id="versionTag">Ver-2.79</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -639,9 +639,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // ✅ Redirect if "redirect" param exists
   if (emailx && lclaimed=== "1") {
     try {
-	    const decodedRedirect = `https://process.qrtagall.com/?id=${id}`;
+	    const decodedRedirect = `https://process.qrtagall.com/?id=${lid1}`;
       //const decodedRedirect = decodeURIComponent(redirect);
-      console.warn("⏩ Forcing redirect to:", decodedRedirect);
+      console.log("⏩ Forcing redirect to:", decodedRedirect);
       window.location.replace(decodedRedirect);
     } catch (err) {
       console.error("❌ Redirect decoding error:", err);
