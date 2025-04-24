@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">Ver-2.73</div>
+	  <div id="versionTag">Ver-2.74</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -601,51 +601,49 @@ function startClaimPolling(id) {
   })();
 */
 	  
+<script>
 document.addEventListener("DOMContentLoaded", () => {
-  const allParams = new URLSearchParams(window.location.search);
+  const searchParams = new URLSearchParams(window.location.search);
+  const hashParams = new URLSearchParams(window.location.hash.slice(1));  // Handle OAuth fragment
 
-  const initClaim = allParams.get("initClaim");
-  const email = allParams.get("email");
-  const oauthClaim = allParams.get("oauthClaim");
-  const redirect = allParams.get("redirect");
+  const verified = searchParams.get("verified");
+  const emailx = searchParams.get("email") || hashParams.get("email");
+  const redirect = searchParams.get("redirect") || hashParams.get("redirect");
+  const authclaim = searchParams.get("oauthClaim") || hashParams.get("oauthClaim");
+  const lid1 = searchParams.get("id") || hashParams.get("id") || hashParams.get("state");
+  const lid2 = searchParams.get("initClaim") || hashParams.get("initClaim");
 
-  console.log("🧩 All Parsed Parameters:");
-  console.log("initClaim:", initClaim);
-  console.log("email:", email);
-  console.log("oauthClaim:", oauthClaim);
-  console.log("redirect (decoded):", redirect ? decodeURIComponent(redirect) : "null");
+  console.log("🧩 Combined Parsed Params:");
+  console.log("verified:", verified);
+  console.log("emailx:", emailx);
+  console.log("redirect (raw):", redirect);
+  console.log("authclaim:", authclaim);
+  console.log("id / state:", lid1);
+  console.log("initClaim:", lid2);
 
+  // ✅ Store email if present
+  if (emailx) {
+    try {
+      localStorage.setItem("qr_claimed_email", emailx);
+      console.log("✅ Email stored in localStorage:", emailx);
+    } catch (e) {
+      console.warn("⚠️ Failed to store email:", e);
+    }
+  }
+
+  // ✅ Redirect if "redirect" param exists
   if (redirect) {
     try {
-      // ✅ Store email locally if available
-      if (email) {
-        localStorage.setItem("qr_claimed_email", email);
-        console.log("✅ Stored email:", email);
-      }
-
-      // ✅ Parse nested parameters
-      const decoded = decodeURIComponent(redirect);
-      const redirectUrl = new URL(decoded);
-      const innerParams = new URLSearchParams(redirectUrl.search);
-      const innerId = innerParams.get("id");
-      const claimed = innerParams.get("claimed");
-
-      console.log("🔁 Inside Redirect Params:");
-      console.log("  id:", innerId);
-      console.log("  claimed:", claimed);
-
-      // ✅ Now trigger redirect
-      setTimeout(() => {
-        console.log("⏩ Redirecting to:", decoded);
-        window.location.replace(decoded);
-      }, 800);
-
-    } catch (e) {
-      console.error("❌ Redirect parsing error:", e);
+      const decodedRedirect = decodeURIComponent(redirect);
+      console.warn("⏩ Forcing redirect to:", decodedRedirect);
+      window.location.replace(decodedRedirect);
+    } catch (err) {
+      console.error("❌ Redirect decoding error:", err);
     }
   }
 });
-	  
+</script>
+  
 
 
 
