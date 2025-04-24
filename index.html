@@ -240,7 +240,7 @@
 		</div>
 	  </div>
 
-	  <div id="versionTag">Ver-2.66</div>
+	  <div id="versionTag">Ver-2.67</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -283,6 +283,7 @@
     const verified = params.get("verified");
     const email = params.get("email");
     const redirect = params.get("redirect");
+    console.log("✅ Bare Function Triggered");
 
     if (verified === "1" && email) {
       try {
@@ -327,6 +328,40 @@
       // TODO: Redirect or initiate claim form
     }
 
+
+document.addEventListener("DOMContentLoaded", () => {
+  const params = new URLSearchParams(window.location.search);
+  const verified = params.get("verified");
+  const email = params.get("email");
+  const redirect = params.get("redirect");
+  console.log("✅ DOMContentLoaded Triggered stored:");
+
+  if (verified === "1" && email) {
+    try {
+      localStorage.setItem("qr_claimed_email", email);
+      console.log("✅ Identity verified. Email stored:", email);
+    } catch (e) {
+      console.warn("⚠️ Failed to store email in localStorage:", e);
+    }
+
+    setTimeout(() => {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("email");
+      url.searchParams.delete("verified");
+      window.history.replaceState({}, document.title, url.toString());
+    }, 1000);
+  }
+
+  if (redirect) {
+    try {
+      localStorage.setItem("qr_claimed_email", email || ""); // Optional fallback
+    } catch {}
+    
+    const decoded = decodeURIComponent(redirect);
+    console.warn("⏩ Force redirecting to:", decoded);
+    window.location.replace(decoded);
+  }
+});
 
 
 
