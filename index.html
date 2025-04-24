@@ -246,7 +246,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-3.1</div>
+	  <div id="versionTag">Ver-3.2</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -497,7 +497,7 @@ async function resolveAndRender(value, i, customTitle = `Link ${i}`) {
 
 
 
-
+/* Old block
 async function renderInfoBlock(data) {
   let html = "";
 
@@ -544,7 +544,59 @@ async function renderInfoBlock(data) {
 
   return html;
 }
+	  */
+	  
 
+
+	  async function renderInfoBlock(data) {
+  const assets = data.assets || [];
+  let html = "";
+
+  for (let i = 0; i < assets.length; i++) {
+    const asset = assets[i];
+    const title = asset.title || `Item ${i + 1}`;
+    const type = (asset.type || "").toUpperCase();
+    const visibility = (asset.visibility || "").toUpperCase();
+    const url = asset.url || "";
+
+    // 🚫 Skip items marked as NOVIEW
+    if (visibility === "NOVIEW" || visibility === "NVIEW") {
+      continue;
+    }
+
+    // 🧠 Emoji or icon based on title/type
+    const icon = getIconFromTitle(title);
+
+    if (!url || url.trim() === "") {
+      html += `<p>${icon} <b>${title}</b>: <i>🔗 Link not available</i></p>`;
+    } else if (!url.includes("http")) {
+      html += `<p>${icon} <b>${title}</b>: ${url}</p>`;
+    } else if (/drive\.google\.com/.test(url)) {
+      // 📄 Google Drive direct preview
+      const match = url.match(/\/d\/([^/]+)/);
+      const fileId = match ? match[1] : null;
+
+      if (fileId) {
+        const iframePreview = `https://drive.google.com/file/d/${fileId}/preview`;
+        html += `
+          <div style="margin-bottom:20px;">
+            <b>${icon} ${title}</b><br>
+            <iframe src="${iframePreview}" width="100%" height="400" frameborder="0"
+              allow="autoplay; encrypted-media" 
+              sandbox="allow-scripts allow-same-origin allow-presentation">
+            </iframe>
+          </div>`;
+      } else {
+        html += `<p>${icon} <b>${title}</b>: <a href="${url}" target="_blank">${url}</a></p>`;
+      }
+    } else {
+      // 🌐 Other URL types
+      html += await resolveAndRender(url, i + 1, title);
+    }
+  }
+
+  return html;
+}
 
 
 
@@ -577,6 +629,7 @@ async function fetchAssetData(id) {
     const res = await fetch(apiUrl);
     const json = await res.json();
 
+	//CMEDIT	  
     spinner.style.display = "none";
 
     if (!json.found) {
