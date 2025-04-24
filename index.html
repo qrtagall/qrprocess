@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+r a <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -231,7 +231,7 @@
 	  <div id="result" style="display:none;"></div>
 
 	  <div id="loginSection" class="login-options" style="display:none;">
-		  <p>Login to Claim this QR</p>
+		  <p>"Enter Asset Name and Login" to Own this QR</p>
 		
 		  <!-- 👇 Asset Name Input Box -->
 		  <input id="assetNameInput" type="text" placeholder="Enter Asset Name"
@@ -246,7 +246,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-2.85</div>
+	  <div id="versionTag">Ver-2.86</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -346,12 +346,13 @@ function googleLoginNew() {
 
 function googleLoginNew() {
   const id = getQueryParam("id");
-  const assetName = document.getElementById("assetNameInput").value.trim();
+  let assetName = document.getElementById("assetNameInput").value.trim();
 
 
   if (!assetName) {
-    alert("⚠️ Please enter an asset name before continuing.");
-    return;
+   // alert("⚠️ Please enter an asset name before continuing.");
+   // return;
+	  assetName = "Unnamed Asset";
   }
 
   const clientId = "121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com";
