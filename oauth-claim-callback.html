@@ -59,6 +59,7 @@
         // ✅ Store email locally
         localStorage.setItem("qr_claimed_email", email);
 
+        /*
         // ✅ Redirect to backend to claim
         const backendUrl = `https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec`;
         const redirectBackUrl = `${window.location.origin}/?id=${encodeURIComponent(id)}&claimed=1`;
@@ -68,20 +69,35 @@
         console.log("🚀 Redirecting to backend:", claimUrl);
         //window.location.href = claimUrl;
         window.location.replace(claimUrl);
+        */
 
-        /*
-       const response = await fetch(claimUrl);
-        const result = await response.json();
+
+        // ✅ Call backend to register the claim
+        const backendUrl = `https://script.google.com/macros/s/AKfycbxOLiYTTGbzzitpPX6Ht-RVsqQGRNPWbpmJrncxHadVBy33Mst9w6yqJt5v8A3YcpUO/exec`;
+        const finalRedirectUrl = `${window.location.origin}/?id=${encodeURIComponent(id)}&claimed=1`;
         
-        if (result.success) {
-          localStorage.setItem("qr_claimed_email", email);
-          const redirectTo = result.redirect || `${window.location.origin}/?id=${id}&claimed=1`;
-          console.log("✅ Redirecting to:", redirectTo);
-          window.location.href = redirectTo;
-        } else {
-          statusEl.textContent = `❌ Claim failed: ${result.details || "Unknown error"}`;
+        const claimUrl = `${backendUrl}?initClaim=${encodeURIComponent(id)}&email=${encodeURIComponent(email)}&oauthClaim=1`;
+        
+        // Log the backend request
+        console.log("📡 Sending claim info to backend:", claimUrl);
+        
+        try {
+          await fetch(claimUrl);
+        } catch (err) {
+          console.warn("⚠️ Backend claim failed:", err);
         }
-      */
+        
+        // ✅ Trigger second OAuth to escape Apps Script sandbox
+        const secondOAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
+          `?response_type=token` +
+          `&client_id=121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com` +
+          `&redirect_uri=${encodeURIComponent('https://process.qrtagall.com/oauth-redirect-final.html')}` +
+          `&scope=${encodeURIComponent('https://www.googleapis.com/auth/userinfo.email')}` +
+          `&state=${encodeURIComponent(finalRedirectUrl)}`;
+        
+        console.log("🔁 Redirecting to second OAuth flow:", secondOAuthUrl);
+        window.location.href = secondOAuthUrl;
+      
 
 
       } catch (err) {
