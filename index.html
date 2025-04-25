@@ -217,6 +217,10 @@
   font-size: 19px;
 }
 
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
 
 
 
@@ -248,7 +252,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-5.6</div>
+	  <div id="versionTag">Ver-6.0</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -268,6 +272,8 @@
 
 	</div>
 	
+	
+	
 	<div id="ownerConfirmModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:9999; align-items:center; justify-content:center;">
 	  <div style="background:white; padding:30px 25px; border-radius:12px; width:90%; max-width:360px; text-align:center; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
 		<h3 style="margin-top:0; font-size:18px; color:#e67e22;">⚠️ Only QR owner can edit !</h3>
@@ -276,6 +282,27 @@
 		<button id="ownerLoginCancel" style="background-color:#ccc; color:#333; padding:10px 20px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Cancel</button>
 	  </div>
 	</div>
+	
+		
+		<div id="fullScreenSpinner" style="
+	  display: none;
+	  position: fixed;
+	  top: 0; left: 0; right: 0; bottom: 0;
+	  background: rgba(255, 255, 255, 0.7);
+	  z-index: 9999;
+	  justify-content: center;
+	  align-items: center;
+	">
+	  <div class="spinner" style="
+		border: 8px solid #f3f3f3;
+		border-top: 8px solid #3498db;
+		border-radius: 50%;
+		width: 60px;
+		height: 60px;
+		animation: spin 1s linear infinite;
+	  "></div>
+	</div>
+
 
 
 	<button id="logoutBtn" onclick="handleLogout()" style="
@@ -294,6 +321,71 @@
 	">🔓 Log Out</button>
 
 	
+	
+	
+	<!-- 🔲 Modal for Adding Artifact -->
+<div id="addArtifactModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:#00000055; z-index:10000; justify-content:center; align-items:center;">
+  <div style="background:white; padding:20px; border-radius:10px; max-width:500px; width:90%; box-shadow:0 0 10px rgba(0,0,0,0.2); position:relative;">
+    <h3>➕ Add Artifact Info</h3>
+
+    <label>Basic Info:</label><br>
+    <input type="text" id="artifactBasicInfo" style="width:100%; margin-bottom:10px;"><br>
+
+    <label>File Type:</label><br>
+    <select id="artifactFileType" style="width:100%; margin-bottom:10px;" onchange="onFileTypeChange()">
+      <option value="TEXT">TEXT</option>
+      <option value="IMAGEFILE">IMAGEFILE</option>
+      <option value="PDFFILE">PDFFILE</option>
+      <option value="AUDIOFILE">AUDIOFILE</option>
+      <option value="VIDEOFILE">VIDEOFILE</option>
+    </select><br>
+
+    <label>Visibility:</label><br>
+    <select id="artifactOption" style="width:100%; margin-bottom:10px;">
+      <option value="VIEW">VIEW</option>
+      <option value="NOVIEW">NOVIEW</option>
+    </select><br>
+
+    <div id="textInputSection">
+      <label>Text Info:</label><br>
+      <textarea id="artifactTextInfo" style="width:100%; height:80px;"></textarea>
+    </div>
+
+    <div id="fileUploadSection" style="display:none;">
+      <button onclick="openUploadModal()" style="margin-bottom:10px;">📁 Select/Upload File</button>
+      <p id="uploadedFileLink" style="font-size:14px; color:gray;"></p>
+    </div>
+
+    <div style="text-align:right; margin-top:15px;">
+      <button onclick="closeAddModal()">Cancel</button>
+      <button onclick="saveArtifact()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- 📂 Sub-modal for Uploading File -->
+<div id="uploadModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:#00000055; z-index:11000; justify-content:center; align-items:center;">
+  <div style="background:white; padding:20px; border-radius:10px; max-width:400px; width:90%; box-shadow:0 0 10px rgba(0,0,0,0.2); position:relative;">
+    <h4>📤 Upload / Select File</h4>
+    <input type="file" id="filePicker" style="margin-bottom:10px;"><br>
+    <button onclick="simulateUseFile()">✅ Use this file</button>
+    <button onclick="closeUploadModal()">Cancel</button>
+    <p id="filePreview" style="font-size:13px; color:gray; margin-top:10px;"></p>
+  </div>
+</div>
+
+<!-- ✏️ Modal to Edit Description -->
+<div id="editDescriptionModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:#00000055; z-index:10000; justify-content:center; align-items:center;">
+  <div style="background:white; padding:20px; border-radius:10px; max-width:400px; width:90%; box-shadow:0 0 10px rgba(0,0,0,0.2); position:relative;">
+    <h4>📝 Edit Description</h4>
+    <textarea id="newDescription" style="width:100%; height:80px; margin-bottom:10px;"></textarea>
+    <div style="text-align:right;">
+      <button onclick="closeDescriptionModal()">Cancel</button>
+      <button onclick="saveDescription()">Save</button>
+    </div>
+  </div>
+</div>
+
 
 
 
@@ -302,6 +394,9 @@
     
 	const SALT = "QRTagall@2025";
 	let editMode = false;
+	let insertAfterRow = null;
+	let selectedUploadedFileLink = "";
+	let sheetID="";
 
 	  console.log("🚀 Script block reached!");
  
@@ -334,12 +429,14 @@ function cleanUpUrl() {
   window.history.replaceState({}, document.title, url.toString());
 }
 
-const sessionEmail = localStorage.getItem("qr_claimed_email");	  
-console.log("📧 QR was last claimed/verified by:", sessionEmail);
-if (sessionEmail)
-{
-  document.getElementById("logoutBtn").style.display = "block";
-}
+	const sessionEmail = localStorage.getItem("qr_claimed_email");	  
+	//const sessionEmail = "dev.chandan2002x@gmail.com";//localStorage.getItem("qr_claimed_email");	  
+
+	console.log("📧 QR was last claimed/verified by:", sessionEmail);
+	if (sessionEmail)
+	{
+	  document.getElementById("logoutBtn").style.display = "block";
+	}
 
 
 /*********************LogOut *********************/
@@ -442,7 +539,9 @@ let isOwner=false;
   const isValid = expectedHash.startsWith(hashPart);
 
   if (isValid) {
-    await fetchAssetData(id);
+    //document.getElementById("fullScreenSpinner").style.display = "none";
+	await fetchAssetData(id);
+	
   } else {
     spinner.style.display = "none";
     resultDiv.style.display = "block";
@@ -579,7 +678,6 @@ async function renderInfoBlock(data) {
     if (editMode) {
       html += `
         <div style="margin-top: 10px; display: flex; gap: 10px;">
-          <button onclick="openEditModal(${i})">✏️ Update</button>
           <button onclick="deleteArtifact(${i})">🗑️ Delete</button>
           <button onclick="openAddModal(${i})">➕ Add Below</button>
         </div>
@@ -655,6 +753,7 @@ async function fetchAssetData(id) {
 
     /*** QR Code Block ***/
     const qrDiv = document.createElement("div");
+	qrDiv.id = "qrWrapper";  
     qrDiv.style.textAlign = "center";
     qrDiv.style.marginBottom = "20px";
 
@@ -690,15 +789,28 @@ async function fetchAssetData(id) {
     qrDiv.appendChild(qrCanvas);
     qrDiv.appendChild(qrLabel);
     qrDiv.appendChild(qrActions);
-    mainContent.insertBefore(qrDiv, assetTitle);
+	
+	const existingQRDiv = document.getElementById("qrWrapper");
+	if (existingQRDiv) existingQRDiv.remove();
+    
+	mainContent.insertBefore(qrDiv, assetTitle);
+	
+	
 
     /*** Asset Title & Edit Option ***/
-    assetTitle.innerHTML = `${data.Description || "Verified Asset"}<br><span style="font-size: 13px; color: gray;">(${id})</span>`;
-    if (editMode) {
-      assetTitle.innerHTML += `<button onclick="editDescription()" style="margin-left: 10px; font-size: 13px;">✏️ Edit</button>`;
-    }
+	   assetTitle.innerHTML = `
+	  <div style="display: flex; justify-content: space-between; align-items: center;">
+		<div>
+		  ${data.Description || "Verified Asset"}<br>
+		  <span style="font-size: 13px; color: gray;">(${id})</span>
+		</div>
+		${editMode ? `<button onclick="editDescription()" style="font-size: 13px;">✏️ Edit</button>` : ""}
+	  </div>
+	`;
+
 
     /*** Owner Detection ***/
+	sheetID=(data.SheetID || "").trim().toLowerCase();
     const ownerEmail = (data.UserName || "").trim().toLowerCase();
     if (sessionEmail && sessionEmail === ownerEmail) {
       isOwner = true;
@@ -750,7 +862,6 @@ async function fetchAssetData(id) {
       if (editMode) {
         html += `
           <div style="margin-top: 10px; display: flex; gap: 10px;">
-            <button onclick="openEditModal(${index})">✏️ Update</button>
             <button onclick="deleteArtifact(${index})">🗑️ Delete</button>
             <button onclick="openAddModal(${index})">➕ Add Below</button>
           </div>`;
@@ -760,8 +871,8 @@ async function fetchAssetData(id) {
     });
 
     //assetLinks.innerHTML = html || "<p style='color:gray;'>No asset information available.</p>";
-assetLinks.innerHTML = await renderInfoBlock(data);    
-editBtn.disabled = false;
+	assetLinks.innerHTML = await renderInfoBlock(data);    
+	editBtn.disabled = false;
     editBtn.classList.remove("disabled-button");
     editBtn.classList.add("enabled");
 
@@ -771,6 +882,14 @@ editBtn.disabled = false;
     resultDiv.innerHTML = "❌ Error retrieving data. " + err;
     console.error("❌ Error retrieving data:", err);
   }
+  finally
+  {
+  
+  document.getElementById("fullScreenSpinner").style.display = "none";
+
+  }
+  
+  //spinnerOverlay.style.display = "none";
 }
 
   
@@ -778,21 +897,7 @@ editBtn.disabled = false;
 
 
 /***************************************************************/
-/*
-function editAlert() {
-  const editBtn = document.getElementById("editBtn");
 
-  if (editBtn.disabled) {
-    alert("🔐 Please log in first to edit this asset.");
-  } else {
-    if (!isOwner) {
-     showOwnerConfirmModal();
-    } else {
-      alert("✅ Edit mode coming soon...");
-      // TODO: Redirect to edit form or modal
-    }
-  }
-}*/
 
 
 function updatePanelBackground(colorCode) {
@@ -901,19 +1006,65 @@ function editAlert() {
     if (!isOwner) {
       showOwnerConfirmModal();
     } else {
+	
+		document.getElementById("fullScreenSpinner").style.display = "flex";
+		
       editMode = true;
       fetchAssetData(getQueryParam("id"));  // Reload in edit mode
     }
   }
 }
 
-function openEditModal(rowNum) {
-  alert("🛠️ Edit modal for row " + rowNum + " will open here.");
-}
 
 function openAddModal(afterRowNum) {
-  alert("➕ Add modal after row " + afterRowNum + " will open here.");
+  insertAfterRow = afterRowNum;
+  selectedUploadedFileLink = "";
+
+  document.getElementById("artifactBasicInfo").value = `New Artifact ${afterRowNum + 1}`;
+  document.getElementById("artifactTextInfo").value = "Enter your text here...";
+  document.getElementById("artifactFileType").value = "TEXT";
+  document.getElementById("artifactOption").value = "VIEW";
+  document.getElementById("uploadedFileLink").textContent = "";
+  onFileTypeChange();
+
+  document.getElementById("addArtifactModal").style.display = "flex";
 }
+
+
+function closeAddModal() {
+  document.getElementById("addArtifactModal").style.display = "none";
+  insertAfterRow = null;
+  selectedUploadedFileLink = "";
+}
+
+function saveArtifact() {
+  const info = document.getElementById("artifactBasicInfo").value.trim();
+  const fileType = document.getElementById("artifactFileType").value;
+  const visibility = document.getElementById("artifactOption").value;
+  const isText = fileType === "TEXT";
+  const url = isText
+    ? document.getElementById("artifactTextInfo").value.trim()
+    : selectedUploadedFileLink;
+
+  if (!info || !fileType || !visibility || (!isText && !url)) {
+    alert("⚠️ Please complete all fields.");
+    return;
+  }
+
+  const payload = {
+    afterRow: insertAfterRow,
+    basicInfo: info,
+    fileType,
+    options: visibility,
+    localUrl: url
+  };
+
+  alert(`➕ New artifact to be inserted after row ${insertAfterRow}:\n\n${JSON.stringify(payload, null, 2)}`);
+  // TODO: insertArtifactInSheet(payload);
+
+  closeAddModal();
+}
+
 
 function deleteArtifact(rowNum) {
   const confirmed = confirm(`Are you sure you want to delete item at row ${rowNum}?`);
@@ -923,15 +1074,138 @@ function deleteArtifact(rowNum) {
   }
 }
 
+
+
+
+/************************ Edit Description *************/
 function editDescription() {
-  alert("📝 Modal to edit Description will be added here.");
+  //alert("📝 Modal to edit Description will be added here.");
+  const current = document.getElementById("assetTitle").innerText.split("\n")[0];
+  document.getElementById("newDescription").value = current;
+  document.getElementById("editDescriptionModal").style.display = "flex";
 }
 
+function closeDescriptionModal() {
+  document.getElementById("editDescriptionModal").style.display = "none";
+}
+
+function saveDescription() {
+  const updatedDesc = document.getElementById("newDescription").value.trim();
+  const id = getQueryParam("id");
+
+	console.log(">>Editor >>>>");
+  if (!updatedDesc) {
+    alert("⚠️ Description cannot be empty.");
+    return;
+  }
+
+	const flink=`https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?mode=updateDescription&id=${encodeURIComponent(id)}&desc=${encodeURIComponent(updatedDesc)}&sheetId=${encodeURIComponent(sheetID)}`;
+  
+   console.log(">>Final Link", flink);
+    
+	
+fetch(flink)
+  .then(res => res.json())
+  .then(data => {
+    document.getElementById("fullScreenSpinner").style.display = "none";
+    closeDescriptionModal();
+
+    if (data.success) {
+      alert("✅ Description updated!");
+      location.reload();
+    } else {
+      alert("❌ Update failed.");
+    }
+  })
+  .catch(err => {
+    console.error("Fetch failed:", err);
+    alert("❌ Network error while updating description.");
+    document.getElementById("fullScreenSpinner").style.display = "none";
+    closeDescriptionModal();
+  });
+
+
+	
+
+
+     /*
+	 setTimeout(() => {
+          {
+      
+          }
+        }, 5000);
+		*/
+
+  
+}
+
+
+
+/**************************** Modal: Add ****************************/
+
+function onFileTypeChange() {
+  const type = document.getElementById("artifactFileType").value;
+  if (type === "TEXT") {
+    document.getElementById("textInputSection").style.display = "block";
+    document.getElementById("fileUploadSection").style.display = "none";
+  } else {
+    document.getElementById("textInputSection").style.display = "none";
+    document.getElementById("fileUploadSection").style.display = "block";
+  }
+}
+
+function openUploadModal() {
+  document.getElementById("uploadModal").style.display = "flex";
+  document.getElementById("filePicker").value = "";
+  document.getElementById("filePreview").textContent = "";
+}
+
+function closeUploadModal() {
+  document.getElementById("uploadModal").style.display = "none";
+}
+
+function simulateUseFile() {
+  const fileInput = document.getElementById("filePicker");
+  if (fileInput.files.length > 0) {
+    const fileName = fileInput.files[0].name;
+    document.getElementById("uploadedFileLink").textContent = `🆗 Selected file: ${fileName}`;
+    // TODO: Upload to Drive and get sharable link
+  } else {
+    document.getElementById("uploadedFileLink").textContent = `❌ No file selected`;
+  }
+  closeUploadModal();
+}
+
+
+
+
+
+
+
+function saveNewArtifact() {
+  const basic = document.getElementById("newBasicInfo").value.trim();
+  const filetype = document.getElementById("newFileType").value.trim().toUpperCase();
+  const option = document.getElementById("newOptions").value.trim().toUpperCase();
+  const link = document.getElementById("newLocalLink").value.trim();
+
+  if (!basic || !filetype || !option) {
+    alert("⚠️ Please fill all required fields.");
+    return;
+  }
+
+  alert(`✅ New artifact to be inserted after row ${insertAfterRow}:\n\nTitle: ${basic}\nType: ${filetype}\nOption: ${option}\nLink: ${link}`);
+
+  // 🧠 Here you can later call Apps Script API to insert into sheet.
+
+  closeAddModal();
+}
 
 
 
     verifyId();
 //handleClaimedReturn();
   </script>
+  
+  
 </body>
 </html>
