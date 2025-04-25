@@ -248,7 +248,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-5.5</div>
+	  <div id="versionTag">Ver-5.6</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -546,47 +546,47 @@ async function renderInfoBlock(data) {
 
     const icon = getIconFromTitle(title);
 
-    let block = `<div style="margin-bottom:20px; position:relative; border:1px solid #ccc; padding:10px; border-radius:8px; background:#fafafa;">`;
+    html += `<div style="margin-bottom:20px; border:1px solid #ccc; padding:10px; border-radius:8px; background:#fafafa;">`;
 
-    // Info title and visibility logic
+    // Visibility logic
     if (visibility === "NOVIEW" && !isOwner) {
-      block += `<p>${icon} <b>${title}</b> <span style="color:gray;">(🔒 No view permission)</span></p>`;
+      html += `<p>${icon} <b>${title}</b> <span style="color:gray;">(🔒 No view permission)</span></p>`;
     } else if (!url || url.trim() === "" || url.toLowerCase() === "not available") {
-      block += `<p>${icon} <b>${title}</b> <span style="color:gray;">(🔗 Link not available)</span></p>`;
+      html += `<p>${icon} <b>${title}</b> <span style="color:gray;">(🔗 Link not available)</span></p>`;
     } else if (type === "TEXT") {
-      block += `<p>${icon} <b>${title}:</b> ${url}</p>`;
+      html += `<p>${icon} <b>${title}:</b> ${url}</p>`;
     } else if (type.includes("FILE") && /drive\.google\.com/.test(url)) {
       const match = url.match(/\/d\/([^/]+)/);
       const fileId = match ? match[1] : null;
       if (fileId) {
         const iframePreview = `https://drive.google.com/file/d/${fileId}/preview`;
-        block += `
+        html += `
           <b>${icon} ${title}</b><br>
           <iframe src="${iframePreview}" width="100%" height="400" frameborder="0"
-            allow="autoplay; encrypted-media" 
+            allow="autoplay; encrypted-media"
             sandbox="allow-scripts allow-same-origin allow-presentation">
           </iframe>`;
       } else {
-        block += `<p>${icon} <b>${title}:</b> <a href="${url}" target="_blank">${url}</a></p>`;
+        html += `<p>${icon} <b>${title}:</b> <a href="${url}" target="_blank">${url}</a></p>`;
       }
     } else if (url.startsWith("http")) {
-      block += await resolveAndRender(url, i + 1, title);
+      html += await resolveAndRender(url, i + 1, title);
     } else {
-      block += `<p>${icon} <b>${title}:</b> ${url}</p>`;
+      html += `<p>${icon} <b>${title}:</b> ${url}</p>`;
     }
 
-    // ✅ Edit mode controls
+    // 👇 Add edit buttons if in edit mode
     if (editMode) {
-      block += `
+      html += `
         <div style="margin-top: 10px; display: flex; gap: 10px;">
-          <button onclick="openEditModal(${i})" style="font-size: 13px;">✏️ Update</button>
-          <button onclick="deleteArtifact(${i})" style="font-size: 13px;">🗑️ Delete</button>
-          <button onclick="openAddModal(${i})" style="font-size: 13px;">➕ Add Below</button>
-        </div>`;
+          <button onclick="openEditModal(${i})">✏️ Update</button>
+          <button onclick="deleteArtifact(${i})">🗑️ Delete</button>
+          <button onclick="openAddModal(${i})">➕ Add Below</button>
+        </div>
+      `;
     }
 
-    block += `</div>`;
-    html += block;
+    html += `</div>`;
   }
 
   return html || "<p style='color:gray;'>No asset information available.</p>";
