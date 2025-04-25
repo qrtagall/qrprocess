@@ -248,7 +248,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-5.4</div>
+	  <div id="versionTag">Ver-5.5</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -535,8 +535,8 @@ async function resolveAndRender(value, i, customTitle = `Link ${i}`) {
 
 async function renderInfoBlock(data) {
   let html = "";
-
   const assets = data.assets || [];
+
   for (let i = 0; i < assets.length; i++) {
     const item = assets[i];
     const title = item.title || `Asset ${i + 1}`;
@@ -546,54 +546,56 @@ async function renderInfoBlock(data) {
 
     const icon = getIconFromTitle(title);
 
+    let block = `<div style="margin-bottom:20px; position:relative; border:1px solid #ccc; padding:10px; border-radius:8px; background:#fafafa;">`;
+
+    // Info title and visibility logic
     if (visibility === "NOVIEW" && !isOwner) {
-      html += `<p>${icon} <b>${title}</b> <span style="color:gray;">(🔒 No view permission)</span></p>`;
-      continue;
-    }
-
-    if (!url || url.trim() === "" || url.toLowerCase() === "not available") {
-      html += `<p>${icon} <b>${title}</b> <span style="color:gray;">(🔗 Link not available)</span></p>`;
-      continue;
-    }
-
-    // TEXT content
-    if (type === "TEXT") {
-      html += `<p>${icon} <b>${title}:</b> ${url}</p>`;
-    }
-
-    // PDF and file types handled with Drive links or file preview
-    else if (type.includes("FILE") && /drive\.google\.com/.test(url)) {
+      block += `<p>${icon} <b>${title}</b> <span style="color:gray;">(🔒 No view permission)</span></p>`;
+    } else if (!url || url.trim() === "" || url.toLowerCase() === "not available") {
+      block += `<p>${icon} <b>${title}</b> <span style="color:gray;">(🔗 Link not available)</span></p>`;
+    } else if (type === "TEXT") {
+      block += `<p>${icon} <b>${title}:</b> ${url}</p>`;
+    } else if (type.includes("FILE") && /drive\.google\.com/.test(url)) {
       const match = url.match(/\/d\/([^/]+)/);
       const fileId = match ? match[1] : null;
-
       if (fileId) {
         const iframePreview = `https://drive.google.com/file/d/${fileId}/preview`;
-        html += `
-          <div style="margin-bottom:20px;">
-            <b>${icon} ${title}</b><br>
-            <iframe src="${iframePreview}" width="100%" height="400" frameborder="0"
-              allow="autoplay; encrypted-media" 
-              sandbox="allow-scripts allow-same-origin allow-presentation">
-            </iframe>
-          </div>`;
+        block += `
+          <b>${icon} ${title}</b><br>
+          <iframe src="${iframePreview}" width="100%" height="400" frameborder="0"
+            allow="autoplay; encrypted-media" 
+            sandbox="allow-scripts allow-same-origin allow-presentation">
+          </iframe>`;
       } else {
-        html += `<p>${icon} <b>${title}:</b> <a href="${url}" target="_blank">${url}</a></p>`;
+        block += `<p>${icon} <b>${title}:</b> <a href="${url}" target="_blank">${url}</a></p>`;
       }
+    } else if (url.startsWith("http")) {
+      block += await resolveAndRender(url, i + 1, title);
+    } else {
+      block += `<p>${icon} <b>${title}:</b> ${url}</p>`;
     }
 
-    // Other URLs
-    else if (url.startsWith("http")) {
-      html += await resolveAndRender(url, i + 1, title);
+    // ✅ Edit mode controls
+    if (editMode) {
+      block += `
+        <div style="margin-top: 10px; display: flex; gap: 10px;">
+          <button onclick="openEditModal(${i})" style="font-size: 13px;">✏️ Update</button>
+          <button onclick="deleteArtifact(${i})" style="font-size: 13px;">🗑️ Delete</button>
+          <button onclick="openAddModal(${i})" style="font-size: 13px;">➕ Add Below</button>
+        </div>`;
     }
 
-    // Fallback plain text
-    else {
-      html += `<p>${icon} <b>${title}:</b> ${url}</p>`;
-    }
+    block += `</div>`;
+    html += block;
   }
 
   return html || "<p style='color:gray;'>No asset information available.</p>";
 }
+
+
+
+
+
 
 
 /******************* Parsing info *******************/
