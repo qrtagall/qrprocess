@@ -248,7 +248,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-4.18</div>
+	  <div id="versionTag">Ver-4.19</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -719,11 +719,10 @@ async function fetchAssetData(id) {
 	  <button onclick="printQR()" title="Print QR" style="font-size:14px; margin-right:10px;">🖨️</button>
 	  <button onclick="copyQRLink()" title="Copy Link" style="font-size:14px; margin-right:10px;">📋</button>
 	  <a href="https://wa.me/?text=${encodeURIComponent(`Check this Asset via QRTagAll:\nhttps://process.qrtagall.com/?id=${id}`)}" 
-   		target="_blank" 
-   		title="Share on WhatsApp" 
-   		style="font-size:14px; text-decoration:none;">📱</a>
-
-
+	     target="_blank" 
+	     title="Share on WhatsApp" 
+	     style="font-size:14px; text-decoration:none;">📱</a>
+	`;
 	
 	// 🧩 Assemble
 	qrDiv.appendChild(qrCanvas);
@@ -732,6 +731,7 @@ async function fetchAssetData(id) {
 	
 	// 👆 Insert above assetTitle
 	mainContent.insertBefore(qrDiv, assetTitle);
+
 
 
 	  /*************** Main heading **************/
