@@ -252,7 +252,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-6.3</div>
+	  <div id="versionTag">Ver-6.4</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -798,19 +798,25 @@ async function fetchAssetData(id) {
 	
 
     /*** Asset Title & Edit Option ***/
-	   assetTitle.innerHTML = `
-  <div style="position: relative; display: flex; justify-content: center; align-items: center;">
+      /*** Asset Title & Edit Option ***/
+      assetTitle.innerHTML = `
+  <div style="position: relative; display: flex; justify-content: center; align-items: center; margin-bottom: 10px;">
     <div style="text-align: center;">
       ${data.Description || "Verified Asset"}<br>
       <span style="font-size: 13px; color: gray;">(${id})</span>
     </div>
     ${editMode ? `
-      <button onclick="editDescription()" 
+      <button onclick="editDescription()"
         style="position: absolute; right: 0; font-size: 13px; margin-right: 10px;">
         ✏️ Edit
       </button>` : ""}
   </div>
-  `;
+
+  ${editMode ? `
+    <div style="text-align: center; margin-top: 5px;">
+      <button onclick="openAddModal(0)" style="font-size: 13px;">➕ Add Artifact</button>
+    </div>` : ""}
+`;
 
 
     /*** Owner Detection ***/
@@ -1154,10 +1160,8 @@ async function saveArtifactWithOAuth() {
 
 
 function saveDescription() {
+const updatedDesc = document.getElementById("newDescription").value.trim();
 
-	
-		const updatedDesc = document.getElementById("newDescription").value.trim();
-		
 	saveArtifactInfo({
   startCell: "B2",
   basicInfo: updatedDesc,
@@ -1165,39 +1169,21 @@ function saveDescription() {
   visibility: "",
   linkOrText: "",
   modalId: "editDescriptionModal" 
-});
+    });
 
-
-     /*
-	 setTimeout(() => {
-          {
-      
-          }
-        }, 5000);
-		*/
 
   
 }
 
 
-function saveArtifactInfo({
-  
-  startCell,
-  basicInfo,
-  fileType,
-  visibility,
-  linkOrText,
-   modalId = null
-  
-}) 
-
+function saveArtifactInfo({startCell, basicInfo,  fileType,  visibility,  linkOrText,  modalId = null})
 {
 	id= getQueryParam("id");
-	sheetId=sheetID;//: "1K3P8CSrLUmVRzEq6hAKUaWcBrsAdon1AdOguwLMPD4Y",
+	sheetId=sheetID;
 	secretKey = "optional_static_key";
-  const values = `${basicInfo}||${fileType}||${visibility}||${linkOrText}`;
+    const values = `${basicInfo}||${fileType}||${visibility}||${linkOrText}`;
 
-  const query = new URLSearchParams({
+    const query = new URLSearchParams({
     mode: "updateCells",
     id,
     sheetId,
@@ -1206,9 +1192,9 @@ function saveArtifactInfo({
     secret_key: secretKey
   });
 
-  const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?${query.toString()}`;
+const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?${query.toString()}`;
 
-	console.log("✅ Final target  URL:", targetUrl);
+console.log("✅ Final target  URL:", targetUrl);
 
  const popup = window.open(
   targetUrl,
