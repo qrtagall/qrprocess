@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>QRTagall | ID Verifier</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     :root {
@@ -246,7 +247,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-4.10</div>
+	  <div id="versionTag">Ver-4.11</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -607,27 +608,30 @@ function getIconFromFileType(fileType = "") {
 }
 
 function downloadQR() {
-  const qrImage = document.getElementById("qrImage");
+  const canvas = document.getElementById("qrCanvas");
   const link = document.createElement("a");
-  link.href = qrImage.src;
-  link.download = "qr-qrtagall.png";
+  link.href = canvas.toDataURL("image/png");
+  link.download = "qrtagall-qr.png";
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
 }
 
 function printQR() {
+  const canvas = document.getElementById("qrCanvas");
+  const dataUrl = canvas.toDataURL();
   const printWindow = window.open("", "_blank");
   printWindow.document.write(`
     <html><head><title>Print QR</title></head><body style="text-align:center; font-family:sans-serif;">
     <h3>QR Code</h3>
-    <img src="${document.getElementById("qrImage").src}" style="width:200px; height:200px; border:1px solid #ccc; padding:10px;"/>
+    <img src="${dataUrl}" style="width:200px; height:200px; border:1px solid #ccc; padding:10px;"/>
     </body></html>`);
   printWindow.document.close();
   printWindow.focus();
   printWindow.print();
   printWindow.close();
 }
+
 	  
 
 async function fetchAssetData(id) {
@@ -666,10 +670,17 @@ async function fetchAssetData(id) {
 	qrDiv.style.textAlign = "center";
 	qrDiv.style.marginBottom = "20px";
 	
-	const qrImg = document.createElement("img");
-	qrImg.src = `https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=https://process.qrtagall.com/?id=${id}`;
-	qrImg.alt = "QR Code";
-	qrImg.id = "qrImage";
+	const qrCanvas = document.createElement("canvas");
+	qrCanvas.id = "qrCanvas";
+	qrCanvas.style.border = "1px solid #ccc";
+	qrCanvas.style.padding = "6px";
+	qrCanvas.style.borderRadius = "8px";
+	qrCanvas.style.background = "#fff";
+	
+	QRCode.toCanvas(qrCanvas, `https://process.qrtagall.com/?id=${id}`, { width: 200 }, err => {
+	  if (err) console.error("QR generation error:", err);
+	});
+
 	qrImg.style.width = "150px";
 	qrImg.style.height = "150px";
 	qrImg.style.border = "1px solid #ccc";
