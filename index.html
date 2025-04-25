@@ -248,7 +248,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-4.20</div>
+	  <div id="versionTag">Ver-5</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -825,7 +825,7 @@ async function fetchAssetData(id) {
 
 
 /***************************************************************/
-
+/*
 function editAlert() {
   const editBtn = document.getElementById("editBtn");
 
@@ -839,7 +839,7 @@ function editAlert() {
       // TODO: Redirect to edit form or modal
     }
   }
-}
+}*/
 
 
 function updatePanelBackground(colorCode) {
@@ -933,6 +933,60 @@ function googleLoginForEdit(id) {
     `&state=${encodeURIComponent(id)}`;
 
   window.location.href = authUrl;
+}
+
+	/***************************************** EDIT *************************/
+
+function editAlert() {
+  const editBtn = document.getElementById("editBtn");
+
+  if (editBtn.disabled) {
+    alert("🔐 Please log in first to edit this asset.");
+    return;
+  }
+
+  if (!isOwner) {
+    showOwnerConfirmModal();
+    return;
+  }
+
+  // ✅ Enable edit mode
+  alert("✅ Edit mode enabled. Layout updated.");
+
+  const assetLinks = document.getElementById("assetLinks");
+  const blocks = assetLinks.querySelectorAll("div");
+
+  blocks.forEach((block, index) => {
+    // Avoid duplicate edit/add buttons if already added
+    if (block.querySelector(".edit-btn")) return;
+
+    // 📝 Edit Button
+    const editButton = document.createElement("button");
+    editButton.className = "edit-btn";
+    editButton.textContent = "✏️ Update";
+    editButton.style.marginTop = "10px";
+    editButton.onclick = () => {
+      alert(`🛠️ Edit clicked for item ${index + 1}`);
+      // TODO: Launch edit popup
+    };
+    block.appendChild(editButton);
+
+    // ➕ Add Button (AFTER current block)
+    const addButton = document.createElement("button");
+    addButton.className = "add-btn";
+    addButton.textContent = "➕ Add Below";
+    addButton.style.margin = "10px 0";
+    addButton.onclick = () => {
+      alert(`➕ Add clicked after item ${index + 1}`);
+      // TODO: Launch add popup
+    };
+
+    // Wrap the add button in a new div to insert after
+    const addWrapper = document.createElement("div");
+    addWrapper.appendChild(addButton);
+
+    block.insertAdjacentElement("afterend", addWrapper);
+  });
 }
 
 
