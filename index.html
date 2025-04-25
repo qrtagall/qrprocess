@@ -252,7 +252,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-6.0</div>
+	  <div id="versionTag">Ver-6.1</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -1089,7 +1089,73 @@ function closeDescriptionModal() {
   document.getElementById("editDescriptionModal").style.display = "none";
 }
 
+
+
+
+
+
+
+async function saveArtifactWithOAuth() {
+  const accessToken = localStorage.getItem("qr_access_token");
+  if (!accessToken) {
+    alert("🔒 Please login first.");
+    return;
+  }
+
+  const id = getQueryParam("id");
+  const sheetId = "1K3P8CSrLUmVRzEq6hAKUaWcBrsAdon1AdOguwLMPD4Y";
+  const startCell = "C14";
+
+  const basic = "TestImage";
+  const fileType = "IMAGEFILE";
+  const option = "VIEW";
+  const url = "https://drive.google.com/file/d/123abc/view?usp=sharing";
+
+  const values = `${basic}||${fileType}||${option}||${url}`;
+
+  const query = new URLSearchParams({
+    mode: "updateCells",
+    id,
+    sheetId,
+    range: startCell,
+    values
+  });
+
+  const targetUrl = `https://script.google.com/macros/s/YOUR_SCRIPT_C_ID/exec?${query.toString()}`;
+
+  try {
+    const response = await fetch(targetUrl, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      }
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      alert("✅ OAuth-authenticated write successful!");
+    } else {
+      alert("❌ Write failed: " + data.message);
+    }
+  } catch (err) {
+    console.error("OAuth Fetch Error:", err);
+    alert("❌ Network/Auth Error");
+  }
+}
+
+
+
+
+
+
 function saveDescription() {
+
+	saveArtifactWithOAuth();
+	
+	if(true)
+	return;
+	
+	
   const updatedDesc = document.getElementById("newDescription").value.trim();
   const id = getQueryParam("id");
 
@@ -1104,27 +1170,37 @@ function saveDescription() {
    console.log(">>Final Link", flink);
     
 	
-fetch(flink)
-  .then(res => res.json())
-  .then(data => {
-    document.getElementById("fullScreenSpinner").style.display = "none";
-    closeDescriptionModal();
+	
+	fetch(flink)
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        alert("✅ Description updated!");
 
-    if (data.success) {
-      alert("✅ Description updated!");
-      location.reload();
-    } else {
-      alert("❌ Update failed.");
-    }
-  })
-  .catch(err => {
-    console.error("Fetch failed:", err);
-    alert("❌ Network error while updating description.");
-    document.getElementById("fullScreenSpinner").style.display = "none";
-    closeDescriptionModal();
-  });
+        // 🔁 Call the hardcoded artifact insert routine
+        saveArtifactHardcoded();
 
+        location.reload();
+      } else {
+        alert("❌ Description update failed.");
+      }
+    })
+    .catch(err => {
+      console.error("Fetch failed:", err);
+      alert("❌ Network error.",err);
+    });
+	
+	
 
+/*
+const iframe = document.createElement("iframe");
+iframe.style.display = "none";
+iframe.src = flink;
+document.body.appendChild(iframe);
+
+// Optionally remove after some delay
+setTimeout(() => document.body.removeChild(iframe), 5000);
+*/
 	
 
 
@@ -1137,6 +1213,48 @@ fetch(flink)
 		*/
 
   
+}
+
+
+
+function saveArtifactHardcoded() {
+  const id = getQueryParam("id");  // QR ID from URL
+  const sheetId = "1K3P8CSrLUmVRzEq6hAKUaWcBrsAdon1AdOguwLMPD4Y";  // 🔁 hardcoded user sheet ID
+  const startCell = "C14";  // 🔁 hardcoded insert row/col
+  const secretKey = "YOUR_SECRET";  // 🔐
+
+  // Hardcoded artifact data
+  const basic = "TestImage";
+  const fileType = "IMAGEFILE";
+  const option = "VIEW";
+  const url = "https://drive.google.com/file/d/123abc/view?usp=sharing";
+
+  const values = `${basic}||${fileType}||${option}||${url}`;
+
+  const params = new URLSearchParams({
+    mode: "updateCells",
+    id,
+    sheetId,
+    range: startCell,
+    values,
+    secret_key: secretKey
+  });
+
+  const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?${params.toString()}`;
+
+  fetch(targetUrl)
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        alert("✅ Artifact saved to C14!");
+      } else {
+        alert("❌ Artifact save failed: " + data.message);
+      }
+    })
+    .catch(err => {
+      console.error("Network error:", err);
+      alert("❌ Failed to reach server.");
+    });
 }
 
 
