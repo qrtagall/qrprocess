@@ -248,7 +248,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-5</div>
+	  <div id="versionTag">Ver-5.1</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -301,6 +301,7 @@
 	
     
 	const SALT = "QRTagall@2025";
+	let editMode = false;
 
 	  console.log("🚀 Script block reached!");
  
@@ -737,7 +738,10 @@ async function fetchAssetData(id) {
 
 	/*************** Main heading block **************/
     assetTitle.innerHTML = `${data.Description || "Verified Asset"}<br><span style="font-size: 13px; color: gray;">(${id})</span>`;
-
+	if (editMode) {
+	  assetTitle.innerHTML += `<button onclick="editDescription()" style="margin-left: 10px; font-size: 13px;">✏️ Edit</button>`;
+	}
+	  
     // 🧠 Render each row (from row 6 onward)
     let html = "";
     let blankRowCount = 0;
@@ -781,11 +785,28 @@ async function fetchAssetData(id) {
         }
       }
 
+	    /*
       html += `<div style="margin-bottom:20px;">
         <b>${basicInfo}</b><br>
         ${displayLink}
       </div>`;
-    }
+    }*/
+
+	html += `<div style="margin-bottom:20px; position: relative; border: 1px solid #ccc; padding: 10px; border-radius: 8px; background: #fafafa;">
+	  <b>${basicInfo}</b><br>
+	  ${displayLink}`;
+	
+	if (editMode) {
+	  html += `
+	    <div style="margin-top: 10px; display: flex; gap: 10px;">
+	      <button onclick="openEditModal(${i})" style="font-size: 13px;">✏️ Update</button>
+	      <button onclick="deleteArtifact(${i})" style="font-size: 13px;">🗑️ Delete</button>
+	      <button onclick="openAddModal(${i})" style="font-size: 13px;">➕ Add Below</button>
+	    </div>`;
+	}
+	
+	html += `</div>`;
+
 
 
    const ownerEmail = (data.UserName || "").trim().toLowerCase();
@@ -937,56 +958,41 @@ function googleLoginForEdit(id) {
 
 	/***************************************** EDIT *************************/
 
+
+
 function editAlert() {
   const editBtn = document.getElementById("editBtn");
 
   if (editBtn.disabled) {
     alert("🔐 Please log in first to edit this asset.");
-    return;
+  } else {
+    if (!isOwner) {
+      showOwnerConfirmModal();
+    } else {
+      editMode = true;
+      fetchAssetData(getQueryParam("id"));  // Reload in edit mode
+    }
   }
+}
 
-  if (!isOwner) {
-    showOwnerConfirmModal();
-    return;
+function openEditModal(rowNum) {
+  alert("🛠️ Edit modal for row " + rowNum + " will open here.");
+}
+
+function openAddModal(afterRowNum) {
+  alert("➕ Add modal after row " + afterRowNum + " will open here.");
+}
+
+function deleteArtifact(rowNum) {
+  const confirmed = confirm(`Are you sure you want to delete item at row ${rowNum}?`);
+  if (confirmed) {
+    alert("❌ Deletion logic to be implemented for row: " + rowNum);
+    // TODO: Call backend to delete row, then reload
   }
+}
 
-  // ✅ Enable edit mode
-  alert("✅ Edit mode enabled. Layout updated.");
-
-  const assetLinks = document.getElementById("assetLinks");
-  const blocks = assetLinks.querySelectorAll("div");
-
-  blocks.forEach((block, index) => {
-    // Avoid duplicate edit/add buttons if already added
-    if (block.querySelector(".edit-btn")) return;
-
-    // 📝 Edit Button
-    const editButton = document.createElement("button");
-    editButton.className = "edit-btn";
-    editButton.textContent = "✏️ Update";
-    editButton.style.marginTop = "10px";
-    editButton.onclick = () => {
-      alert(`🛠️ Edit clicked for item ${index + 1}`);
-      // TODO: Launch edit popup
-    };
-    block.appendChild(editButton);
-
-    // ➕ Add Button (AFTER current block)
-    const addButton = document.createElement("button");
-    addButton.className = "add-btn";
-    addButton.textContent = "➕ Add Below";
-    addButton.style.margin = "10px 0";
-    addButton.onclick = () => {
-      alert(`➕ Add clicked after item ${index + 1}`);
-      // TODO: Launch add popup
-    };
-
-    // Wrap the add button in a new div to insert after
-    const addWrapper = document.createElement("div");
-    addWrapper.appendChild(addButton);
-
-    block.insertAdjacentElement("afterend", addWrapper);
-  });
+function editDescription() {
+  alert("📝 Modal to edit Description will be added here.");
 }
 
 
