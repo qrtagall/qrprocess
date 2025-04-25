@@ -248,7 +248,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-5.3</div>
+	  <div id="versionTag">Ver-5.4</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -726,29 +726,16 @@ async function fetchAssetData(id) {
       } else if (!url.startsWith("http")) {
         contentBlock = `<p style='color:gray;'>${url}</p>`;
       } else {
-        const drivePreview = url.includes("drive.google.com") ? url.replace("/view?usp=sharing", "/preview") : url;
+         const drivePreview = url.includes("drive.google.com") ? url.replace("/view?usp=sharing", "/preview") : url;
         if (type === "IMAGEFILE") {
           contentBlock = `<img src="${drivePreview}" style="max-width:100%; margin-top:5px;">`;
         } else if (type === "PDFFILE" || type === "TEXTFILE") {
           contentBlock = `<iframe src="${drivePreview}" width="100%" height="400" style="border:0;"></iframe>`;
         } else if (type === "AUDIOFILE") {
           contentBlock = `<audio controls src="${url}" style="width:100%;"></audio>`;
-        } else if (fileType === "VIDEOFILE") {
-		  if (localLink.includes("drive.google.com")) {
-			const previewLink = localLink.replace("/view?usp=sharing", "/preview");
-			displayLink = `
-			  <iframe src="${previewLink}" width="100%" height="400" frameborder="0"
-				allow="autoplay; encrypted-media"
-				sandbox="allow-scripts allow-same-origin allow-presentation"></iframe>`;
-		  } else {
-			displayLink = `
-			  <video controls width="100%" style="margin-top:5px;">
-				<source src="${localLink}" type="video/mp4">
-				Your browser does not support the video tag.
-			  </video>`;
-		  }
-		}
-		else {
+        } else if (type === "VIDEOFILE") {
+          contentBlock = `<video controls width="100%"><source src="${url}"></video>`;
+        } else {
           contentBlock = `<a href="${url}" target="_blank">🔗 Open Link</a>`;
         }
       }
@@ -770,8 +757,9 @@ async function fetchAssetData(id) {
       html += `</div>`;
     });
 
-    assetLinks.innerHTML = html || "<p style='color:gray;'>No asset information available.</p>";
-    editBtn.disabled = false;
+    //assetLinks.innerHTML = html || "<p style='color:gray;'>No asset information available.</p>";
+assetLinks.innerHTML = await renderInfoBlock(data);    
+editBtn.disabled = false;
     editBtn.classList.remove("disabled-button");
     editBtn.classList.add("enabled");
 
