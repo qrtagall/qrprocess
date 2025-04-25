@@ -252,7 +252,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-6.1</div>
+	  <div id="versionTag">Ver-6.3</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -751,7 +751,7 @@ async function fetchAssetData(id) {
     popup.style.display = "none";
     mainContent.style.display = "block";
 
-    /*** QR Code Block ***/
+    /*** QR Code QR Block ***/
     const qrDiv = document.createElement("div");
 	qrDiv.id = "qrWrapper";  
     qrDiv.style.textAlign = "center";
@@ -799,18 +799,22 @@ async function fetchAssetData(id) {
 
     /*** Asset Title & Edit Option ***/
 	   assetTitle.innerHTML = `
-	  <div style="display: flex; justify-content: space-between; align-items: center;">
-		<div>
-		  ${data.Description || "Verified Asset"}<br>
-		  <span style="font-size: 13px; color: gray;">(${id})</span>
-		</div>
-		${editMode ? `<button onclick="editDescription()" style="font-size: 13px;">✏️ Edit</button>` : ""}
-	  </div>
-	`;
+  <div style="position: relative; display: flex; justify-content: center; align-items: center;">
+    <div style="text-align: center;">
+      ${data.Description || "Verified Asset"}<br>
+      <span style="font-size: 13px; color: gray;">(${id})</span>
+    </div>
+    ${editMode ? `
+      <button onclick="editDescription()" 
+        style="position: absolute; right: 0; font-size: 13px; margin-right: 10px;">
+        ✏️ Edit
+      </button>` : ""}
+  </div>
+  `;
 
 
     /*** Owner Detection ***/
-	sheetID=(data.SheetID || "").trim().toLowerCase();
+	sheetID=(data.SheetID || "").trim();
     const ownerEmail = (data.UserName || "").trim().toLowerCase();
     if (sessionEmail && sessionEmail === ownerEmail) {
       isOwner = true;
@@ -1009,6 +1013,7 @@ function editAlert() {
 	
 		document.getElementById("fullScreenSpinner").style.display = "flex";
 		
+		
       editMode = true;
       fetchAssetData(getQueryParam("id"));  // Reload in edit mode
     }
@@ -1150,58 +1155,17 @@ async function saveArtifactWithOAuth() {
 
 function saveDescription() {
 
-	saveArtifactWithOAuth();
 	
-	if(true)
-	return;
-	
-	
-  const updatedDesc = document.getElementById("newDescription").value.trim();
-  const id = getQueryParam("id");
-
-	console.log(">>Editor >>>>");
-  if (!updatedDesc) {
-    alert("⚠️ Description cannot be empty.");
-    return;
-  }
-
-	const flink=`https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?mode=updateDescription&id=${encodeURIComponent(id)}&desc=${encodeURIComponent(updatedDesc)}&sheetId=${encodeURIComponent(sheetID)}`;
-  
-   console.log(">>Final Link", flink);
-    
-	
-	
-	fetch(flink)
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
-        alert("✅ Description updated!");
-
-        // 🔁 Call the hardcoded artifact insert routine
-        saveArtifactHardcoded();
-
-        location.reload();
-      } else {
-        alert("❌ Description update failed.");
-      }
-    })
-    .catch(err => {
-      console.error("Fetch failed:", err);
-      alert("❌ Network error.",err);
-    });
-	
-	
-
-/*
-const iframe = document.createElement("iframe");
-iframe.style.display = "none";
-iframe.src = flink;
-document.body.appendChild(iframe);
-
-// Optionally remove after some delay
-setTimeout(() => document.body.removeChild(iframe), 5000);
-*/
-	
+		const updatedDesc = document.getElementById("newDescription").value.trim();
+		
+	saveArtifactInfo({
+  startCell: "B2",
+  basicInfo: updatedDesc,
+  fileType: "",
+  visibility: "",
+  linkOrText: "",
+  modalId: "editDescriptionModal" 
+});
 
 
      /*
@@ -1214,6 +1178,145 @@ setTimeout(() => document.body.removeChild(iframe), 5000);
 
   
 }
+
+
+function saveArtifactInfo({
+  
+  startCell,
+  basicInfo,
+  fileType,
+  visibility,
+  linkOrText,
+   modalId = null
+  
+}) 
+
+{
+	id= getQueryParam("id");
+	sheetId=sheetID;//: "1K3P8CSrLUmVRzEq6hAKUaWcBrsAdon1AdOguwLMPD4Y",
+	secretKey = "optional_static_key";
+  const values = `${basicInfo}||${fileType}||${visibility}||${linkOrText}`;
+
+  const query = new URLSearchParams({
+    mode: "updateCells",
+    id,
+    sheetId,
+    range: startCell,
+    values,
+    secret_key: secretKey
+  });
+
+  const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?${query.toString()}`;
+
+	console.log("✅ Final target  URL:", targetUrl);
+
+ const popup = window.open(
+  targetUrl,
+  "_blank",
+  "width=10,height=10,left=1,top=1,menubar=no,toolbar=no,location=no,status=no,resizable=no,scrollbars=no"
+);
+
+	
+	 setTimeout(() => {
+	 
+	  if (modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) modal.style.display = "none";
+    }
+
+      if (popup && !popup.closed) popup.close();
+      //if (spinner) spinner.style.display = "none";
+      alert("✅ Artifact info saved.");
+	  location.reload();
+	  
+    }, 1000);
+	
+}
+
+
+
+function saveArtifactViaPopup() {
+  const id = getQueryParam("id");
+  const sheetId = "1K3P8CSrLUmVRzEq6hAKUaWcBrsAdon1AdOguwLMPD4Y";
+  const startCell = "C14";
+
+  const basic = "TestImage";
+  const fileType = "IMAGEFILE";
+  const option = "VIEW";
+  const url = "https://drive.google.com/file/d/123abc/view?usp=sharing";
+
+  const values = `${basic}||${fileType}||${option}||${url}`;
+
+  const query = new URLSearchParams({
+    mode: "updateCells",
+    id,
+    sheetId,
+    range: startCell,
+    values,
+    secret_key: "optional_static_key"
+  });
+
+  const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?${query.toString()}`;
+
+  const popup = window.open(
+    targetUrl,
+    "_blank",
+    "width=5,height=5,left=100,top=100"
+  );
+
+  // Auto-close the popup after 3 seconds
+  setTimeout(() => {
+    if (popup && !popup.closed) {
+      popup.close();
+      alert("✅ Artifact write triggered (popup auto-closed)");
+    }
+  }, 3000);
+}
+
+
+
+function saveArtifactWithIframe() {
+  const id = getQueryParam("id");
+  const sheetId = "1K3P8CSrLUmVRzEq6hAKUaWcBrsAdon1AdOguwLMPD4Y";
+  const startCell = "C14";
+
+  const basic = "TestImage";
+  const fileType = "IMAGEFILE";
+  const option = "VIEW";
+  const url = "https://drive.google.com/file/d/123abc/view?usp=sharing";
+
+  const rawValues = `${basic}||${fileType}||${option}||${url}`; // ✨ Don't encode this fully!
+
+  // Manually build query string to control encoding
+  const baseUrl = "https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec";
+  const urlFinal = `${baseUrl}?mode=updateCells&id=${encodeURIComponent(id)}&sheetId=${encodeURIComponent(sheetId)}&range=${encodeURIComponent(startCell)}&values=${encodeURIComponent(rawValues)}&secret_key=optional_static_key`;
+
+  console.log("✅ Final iframe URL:", urlFinal);
+
+window.open(urlFinal, "_blank");
+/*
+  const iframe = document.createElement("iframe");
+  iframe.style.display = "none";
+  iframe.src = urlFinal;
+
+  document.body.appendChild(iframe);
+
+  iframe.onload = () => {
+    alert("✅ Artifact write triggered via iframe.");
+    setTimeout(() => document.body.removeChild(iframe), 1000);
+  };
+
+  setTimeout(() => {
+    if (document.body.contains(iframe)) {
+      document.body.removeChild(iframe);
+      alert("✅ Artifact write assumed complete (fallback).");
+    }
+  }, 3000);
+  */
+  
+}
+
+
 
 
 
