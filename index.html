@@ -246,7 +246,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-4.9</div>
+	  <div id="versionTag">Ver-4.10</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -606,6 +606,29 @@ function getIconFromFileType(fileType = "") {
   }
 }
 
+function downloadQR() {
+  const qrImage = document.getElementById("qrImage");
+  const link = document.createElement("a");
+  link.href = qrImage.src;
+  link.download = "qr-qrtagall.png";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function printQR() {
+  const printWindow = window.open("", "_blank");
+  printWindow.document.write(`
+    <html><head><title>Print QR</title></head><body style="text-align:center; font-family:sans-serif;">
+    <h3>QR Code</h3>
+    <img src="${document.getElementById("qrImage").src}" style="width:200px; height:200px; border:1px solid #ccc; padding:10px;"/>
+    </body></html>`);
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
+  printWindow.close();
+}
+	  
 
 async function fetchAssetData(id) {
   const popup = document.getElementById("popup");
@@ -636,7 +659,50 @@ async function fetchAssetData(id) {
     const data = json.data;
     popup.style.display = "none";
     mainContent.style.display = "block";
+	  
+	  /***************** QR Block ****************/
+	  // 🔳 Create and insert QR code block above asset title
+	const qrDiv = document.createElement("div");
+	qrDiv.style.textAlign = "center";
+	qrDiv.style.marginBottom = "20px";
+	
+	const qrImg = document.createElement("img");
+	qrImg.src = `https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=https://process.qrtagall.com/?id=${id}`;
+	qrImg.alt = "QR Code";
+	qrImg.id = "qrImage";
+	qrImg.style.width = "150px";
+	qrImg.style.height = "150px";
+	qrImg.style.border = "1px solid #ccc";
+	qrImg.style.padding = "6px";
+	qrImg.style.borderRadius = "8px";
+	qrImg.style.background = "#fff";
+	
+	// 📝 Label
+	const qrLabel = document.createElement("div");
+	qrLabel.textContent = "🔗 Scan this QR to access again";
+	qrLabel.style.fontSize = "14px";
+	qrLabel.style.color = "#666";
+	qrLabel.style.marginTop = "6px";
+	
+	// 🔘 Action buttons (Download / Print)
+	const qrActions = document.createElement("div");
+	qrActions.style.marginTop = "8px";
+	
+	qrActions.innerHTML = `
+	  <button onclick="downloadQR()" title="Download QR" style="font-size:14px; margin-right:10px;">⬇️</button>
+	  <button onclick="printQR()" title="Print QR" style="font-size:14px;">🖨️</button>
+	`;
+	
+	// 🧩 Assemble
+	qrDiv.appendChild(qrImg);
+	qrDiv.appendChild(qrLabel);
+	qrDiv.appendChild(qrActions);
+	
+	// 👆 Insert above assetTitle
+	mainContent.insertBefore(qrDiv, assetTitle);
 
+
+	  /*************** Main heading **************/
     assetTitle.innerHTML = `${data.Description || "Verified Asset"}<br><span style="font-size: 13px; color: gray;">(${id})</span>`;
 
     // 🧠 Render each row (from row 6 onward)
