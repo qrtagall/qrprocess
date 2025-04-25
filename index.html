@@ -13,6 +13,7 @@
     }
 	  
 
+	  
     body {
 		margin: 0;
 		padding: 0;
@@ -247,7 +248,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-4.11</div>
+	  <div id="versionTag">Ver-4.12</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -681,12 +682,8 @@ async function fetchAssetData(id) {
 	  if (err) console.error("QR generation error:", err);
 	});
 
-	qrImg.style.width = "150px";
-	qrImg.style.height = "150px";
-	qrImg.style.border = "1px solid #ccc";
-	qrImg.style.padding = "6px";
-	qrImg.style.borderRadius = "8px";
-	qrImg.style.background = "#fff";
+	qrCanvas.style.width = "150px";
+	qrCanvas.style.height = "150px";
 	
 	// 📝 Label
 	const qrLabel = document.createElement("div");
@@ -705,7 +702,7 @@ async function fetchAssetData(id) {
 	`;
 	
 	// 🧩 Assemble
-	qrDiv.appendChild(qrImg);
+	qrDiv.appendChild(qrCanvas);
 	qrDiv.appendChild(qrLabel);
 	qrDiv.appendChild(qrActions);
 	
