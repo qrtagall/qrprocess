@@ -248,7 +248,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-5.2</div>
+	  <div id="versionTag">Ver-5.3</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -733,12 +733,27 @@ async function fetchAssetData(id) {
           contentBlock = `<iframe src="${drivePreview}" width="100%" height="400" style="border:0;"></iframe>`;
         } else if (type === "AUDIOFILE") {
           contentBlock = `<audio controls src="${url}" style="width:100%;"></audio>`;
-        } else if (type === "VIDEOFILE") {
-          contentBlock = `<video controls width="100%"><source src="${url}"></video>`;
-        } else {
+        } else if (fileType === "VIDEOFILE") {
+		  if (localLink.includes("drive.google.com")) {
+			const previewLink = localLink.replace("/view?usp=sharing", "/preview");
+			displayLink = `
+			  <iframe src="${previewLink}" width="100%" height="400" frameborder="0"
+				allow="autoplay; encrypted-media"
+				sandbox="allow-scripts allow-same-origin allow-presentation"></iframe>`;
+		  } else {
+			displayLink = `
+			  <video controls width="100%" style="margin-top:5px;">
+				<source src="${localLink}" type="video/mp4">
+				Your browser does not support the video tag.
+			  </video>`;
+		  }
+		}
+		else {
           contentBlock = `<a href="${url}" target="_blank">🔗 Open Link</a>`;
         }
       }
+	  
+	  
 
       html += `<div style="margin-bottom:20px; border:1px solid #ccc; padding:10px; border-radius:8px; background:#fafafa;">
         <b>${icon} ${title}</b><br>${contentBlock}`;
@@ -767,6 +782,7 @@ async function fetchAssetData(id) {
     console.error("❌ Error retrieving data:", err);
   }
 }
+
   
 //assetLinks.innerHTML = await renderInfoBlock(data);
 
