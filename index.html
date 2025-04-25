@@ -248,7 +248,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-4.17</div>
+	  <div id="versionTag">Ver-4.18</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -633,16 +633,23 @@ function printQR() {
   const canvas = document.getElementById("qrCanvas");
   const dataUrl = canvas.toDataURL();
   const printWindow = window.open("", "_blank");
+
   printWindow.document.write(`
-    <html><head><title>"${dataUrl}"</title></head><body style="text-align:center; font-family:sans-serif;">
-    <h3>QR Code</h3>
-    <img src="${dataUrl}" style="width:300px; height:300px; border:1px solid #ccc; padding:10px;"/>
-    </body></html>`);
+    <html>
+      <head><title>QRTagAll Print</title></head>
+      <body style="text-align:center; font-family:sans-serif;">
+        <h3>QR Code</h3>
+        <img src="${dataUrl}" style="width:300px; height:300px; border:1px solid #ccc; padding:10px;"/>
+      </body>
+    </html>
+  `);
+
   printWindow.document.close();
   printWindow.focus();
   printWindow.print();
   printWindow.close();
 }
+
 
 	  
 
