@@ -248,7 +248,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-5.1</div>
+	  <div id="versionTag">Ver-5.2</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -637,8 +637,6 @@ async function fetchAssetData(id) {
     const apiUrl = `https://script.google.com/macros/s/AKfycbzgrQ9JzTzDY57cxlWs-g4kbiCb4C5j9X54BzE2eniGp3LQYKSFqNr5-yai4ZJmfjO83Q/exec?id=${encodeURIComponent(id)}`;
     const res = await fetch(apiUrl);
     const json = await res.json();
-
-	//CMEDIT	  
     spinner.style.display = "none";
 
     if (!json.found) {
@@ -652,184 +650,112 @@ async function fetchAssetData(id) {
     const data = json.data;
     popup.style.display = "none";
     mainContent.style.display = "block";
-	  
-/***************** QR Block ****************/
-	  // 🔳 Create and insert QR code block above asset title
-	const qrDiv = document.createElement("div");
-	qrDiv.style.textAlign = "center";
-	qrDiv.style.marginBottom = "20px";
-	
-	const qrCanvas = document.createElement("canvas");
-	qrCanvas.id = "qrCanvas";
-	qrCanvas.style.border = "1px solid #ccc";
-	qrCanvas.style.padding = "6px";
-	qrCanvas.style.borderRadius = "8px";
-	qrCanvas.style.background = "#fff";
-	
-	QRCode.toCanvas(qrCanvas, `https://process.qrtagall.com/?id=${id}`, { width: 200 }, err => {
-	  if (err) console.error("QR generation error:", err);
-	});
 
-	qrCanvas.style.width = "200px";
-	qrCanvas.style.height = "200px";
-	
-	// 📝 Label
-	const qrLabel = document.createElement("div");
-	qrLabel.textContent = "🔗 Scan this QR to access again";
-	qrLabel.style.fontSize = "14px";
-	qrLabel.style.color = "#666";
-	qrLabel.style.marginTop = "6px";
-	
-	// 🔘 Action buttons (Download / Print)
-	const qrActions = document.createElement("div");
-	qrActions.style.marginTop = "8px";
-	
-	qrActions.innerHTML = `
-	  <button onclick="downloadQR()" title="Download QR" style="font-size:14px; margin-right:10px;">⬇️</button>
-	  <button onclick="printQR()" title="Print QR" style="font-size:14px; margin-right:10px;">🖨️</button>
-	  <button onclick="copyQRLink()" title="Copy Link" style="font-size:14px; margin-right:10px;">📋</button>
-	  <a href="https://wa.me/?text=${encodeURIComponent(`Check this Asset via QRTagAll:\nhttps://process.qrtagall.com/?id=${id}`)}" 
-	     target="_blank" 
-	     title="Share on WhatsApp" 
-	     style="font-size:14px; text-decoration:none;">📱</a>
-	`;
-	
-	// 🧩 Assemble
-	qrDiv.appendChild(qrCanvas);
-	qrDiv.appendChild(qrLabel);
-	qrDiv.appendChild(qrActions);
-	
-	// 👆 Insert above assetTitle
-	mainContent.insertBefore(qrDiv, assetTitle);
+    /*** QR Code Block ***/
+    const qrDiv = document.createElement("div");
+    qrDiv.style.textAlign = "center";
+    qrDiv.style.marginBottom = "20px";
 
-	  function downloadQR() {
-	  const id = getQueryParam("id");
-	  const canvas = document.getElementById("qrCanvas");
-	  const link = document.createElement("a");
-	  link.href = canvas.toDataURL("image/png");
-	  link.download = `QRTagAll_${id}.png`; 
-	  document.body.appendChild(link);
-	  link.click();
-	  document.body.removeChild(link);
-	}
-	
-	function printQR() {
-	  const canvas = document.getElementById("qrCanvas");
-	  const dataUrl = canvas.toDataURL();
-	  const printWindow = window.open("", "_blank");
-	
-	  printWindow.document.write(`
-	    <html>
-	      <head><title>QRTagAll Print</title></head>
-	      <body style="text-align:center; font-family:sans-serif;">
-	        <h3>QR Code</h3>
-	        <img src="${dataUrl}" style="width:300px; height:300px; border:1px solid #ccc; padding:10px;"/>
-	      </body>
-	    </html>
-	  `);
-	
-	  printWindow.document.close();
-	  printWindow.focus();
-	  printWindow.print();
-	  printWindow.close();
-	}
+    const qrCanvas = document.createElement("canvas");
+    qrCanvas.id = "qrCanvas";
+    qrCanvas.style.border = "1px solid #ccc";
+    qrCanvas.style.padding = "6px";
+    qrCanvas.style.borderRadius = "8px";
+    qrCanvas.style.background = "#fff";
+    qrCanvas.style.width = "200px";
+    qrCanvas.style.height = "200px";
 
+    QRCode.toCanvas(qrCanvas, `https://process.qrtagall.com/?id=${id}`, { width: 200 }, err => {
+      if (err) console.error("QR generation error:", err);
+    });
 
+    const qrLabel = document.createElement("div");
+    qrLabel.textContent = "🔗 Scan this QR to access again";
+    qrLabel.style.fontSize = "14px";
+    qrLabel.style.color = "#666";
+    qrLabel.style.marginTop = "6px";
 
-	/*************** Main heading block **************/
+    const qrActions = document.createElement("div");
+    qrActions.style.marginTop = "8px";
+    qrActions.innerHTML = `
+      <button onclick="downloadQR()" title="Download QR" style="font-size:14px; margin-right:10px;">⬇️</button>
+      <button onclick="printQR()" title="Print QR" style="font-size:14px; margin-right:10px;">🖨️</button>
+      <button onclick="copyQRLink()" title="Copy Link" style="font-size:14px; margin-right:10px;">📋</button>
+      <a href="https://wa.me/?text=${encodeURIComponent(`Check this Asset via QRTagAll:\nhttps://process.qrtagall.com/?id=${id}`)}" 
+         target="_blank" title="Share on WhatsApp" style="font-size:14px; text-decoration:none;">📱</a>
+    `;
+
+    qrDiv.appendChild(qrCanvas);
+    qrDiv.appendChild(qrLabel);
+    qrDiv.appendChild(qrActions);
+    mainContent.insertBefore(qrDiv, assetTitle);
+
+    /*** Asset Title & Edit Option ***/
     assetTitle.innerHTML = `${data.Description || "Verified Asset"}<br><span style="font-size: 13px; color: gray;">(${id})</span>`;
-	if (editMode) {
-	  assetTitle.innerHTML += `<button onclick="editDescription()" style="margin-left: 10px; font-size: 13px;">✏️ Edit</button>`;
-	}
-	  
-    // 🧠 Render each row (from row 6 onward)
-    let html = "";
-    let blankRowCount = 0;
+    if (editMode) {
+      assetTitle.innerHTML += `<button onclick="editDescription()" style="margin-left: 10px; font-size: 13px;">✏️ Edit</button>`;
+    }
 
-    for (let i = 6; i <= 100; i++) {  // Assuming upper bound for safety
-      const basicInfo = data[`R${i}C1`] || "";
-      const fileType = (data[`R${i}C2`] || "").toUpperCase();
-      const options = (data[`R${i}C3`] || "").toUpperCase();
-      const localLink = (data[`R${i}C4`] || "").trim();
-
-      if (!basicInfo && !fileType && !options && !localLink) {
-        blankRowCount++;
-        if (blankRowCount >= 2) break;  // Stop after 2 consecutive blank rows
-        continue;
-      } else {
-        blankRowCount = 0;
-      }
-
-      let displayLink = "";
-
-      if (!localLink) {
-        displayLink = "<p style='color:gray;'>🔗 Link not available</p>";
-      } else if (!localLink.startsWith("http")) {
-        displayLink = `<p style='color:gray;'>${localLink}</p>`;
-      } else {
-        const icon = getIconFromFileType(fileType);
-        const drivePreview = localLink.includes("drive.google.com")
-          ? localLink.replace("/view?usp=sharing", "/preview")
-          : localLink;
-
-        if (fileType === "IMAGEFILE") {
-          displayLink = `<img src="${drivePreview}" style="max-width:100%; margin-top:5px;">`;
-        } else if (fileType === "PDFFILE" || fileType === "TEXTFILE") {
-          displayLink = `<iframe src="${drivePreview}" width="100%" height="400" style="border:0; margin-top:5px;"></iframe>`;
-        } else if (fileType === "AUDIOFILE") {
-          displayLink = `<audio controls src="${localLink}" style="width:100%; margin-top:5px;"></audio>`;
-        } else if (fileType === "VIDEOFILE") {
-          displayLink = `<video controls width="100%" style="margin-top:5px;"><source src="${localLink}"></video>`;
-        } else {
-          displayLink = `<a href="${localLink}" target="_blank">🔗 Open Link</a>`;
-        }
-      }
-
-	    /*
-      html += `<div style="margin-bottom:20px;">
-        <b>${basicInfo}</b><br>
-        ${displayLink}
-      </div>`;
-    }*/
-
-	html += `<div style="margin-bottom:20px; position: relative; border: 1px solid #ccc; padding: 10px; border-radius: 8px; background: #fafafa;">
-	  <b>${basicInfo}</b><br>
-	  ${displayLink}`;
-	
-	if (editMode) {
-	  html += `
-	    <div style="margin-top: 10px; display: flex; gap: 10px;">
-	      <button onclick="openEditModal(${i})" style="font-size: 13px;">✏️ Update</button>
-	      <button onclick="deleteArtifact(${i})" style="font-size: 13px;">🗑️ Delete</button>
-	      <button onclick="openAddModal(${i})" style="font-size: 13px;">➕ Add Below</button>
-	    </div>`;
-	}
-	
-	html += `</div>`;
-
-
-
-   const ownerEmail = (data.UserName || "").trim().toLowerCase();
-  console.log("Owner Email>>>: ", ownerEmail);
-
-	  
-
+    /*** Owner Detection ***/
+    const ownerEmail = (data.UserName || "").trim().toLowerCase();
     if (sessionEmail && sessionEmail === ownerEmail) {
       isOwner = true;
-      updatePanelBackground("#e6ffe6"); // light green
+      updatePanelBackground("#e6ffe6");
       editBtn.innerHTML = "✏️ Edit Details";
     } else {
       isOwner = false;
-      updatePanelBackground("#fffbe6"); // neutral
+      updatePanelBackground("#fffbe6");
       editBtn.innerHTML = "🔐 Log-in to Edit Details";
     }
-	  
-    assetLinks.innerHTML = await renderInfoBlock(data);
-//html || "<p style='color:gray;'>No asset information available.</p>";
-	  
 
-   
+    /*** Artifact Rendering ***/
+    const assetArray = data.assets || [];
+    let html = "";
 
+    assetArray.forEach((item, index) => {
+      const title = item.title || `Item ${index + 1}`;
+      const type = (item.type || "").toUpperCase();
+      const visibility = (item.visibility || "").toUpperCase();
+      const url = item.url || "";
+
+      const icon = getIconFromFileType(type);
+      let contentBlock = "";
+
+      if (!url || url === "Not Available") {
+        contentBlock = `<p style='color:gray;'>🔗 Link not available</p>`;
+      } else if (!url.startsWith("http")) {
+        contentBlock = `<p style='color:gray;'>${url}</p>`;
+      } else {
+        const drivePreview = url.includes("drive.google.com") ? url.replace("/view?usp=sharing", "/preview") : url;
+        if (type === "IMAGEFILE") {
+          contentBlock = `<img src="${drivePreview}" style="max-width:100%; margin-top:5px;">`;
+        } else if (type === "PDFFILE" || type === "TEXTFILE") {
+          contentBlock = `<iframe src="${drivePreview}" width="100%" height="400" style="border:0;"></iframe>`;
+        } else if (type === "AUDIOFILE") {
+          contentBlock = `<audio controls src="${url}" style="width:100%;"></audio>`;
+        } else if (type === "VIDEOFILE") {
+          contentBlock = `<video controls width="100%"><source src="${url}"></video>`;
+        } else {
+          contentBlock = `<a href="${url}" target="_blank">🔗 Open Link</a>`;
+        }
+      }
+
+      html += `<div style="margin-bottom:20px; border:1px solid #ccc; padding:10px; border-radius:8px; background:#fafafa;">
+        <b>${icon} ${title}</b><br>${contentBlock}`;
+
+      if (editMode) {
+        html += `
+          <div style="margin-top: 10px; display: flex; gap: 10px;">
+            <button onclick="openEditModal(${index})">✏️ Update</button>
+            <button onclick="deleteArtifact(${index})">🗑️ Delete</button>
+            <button onclick="openAddModal(${index})">➕ Add Below</button>
+          </div>`;
+      }
+
+      html += `</div>`;
+    });
+
+    assetLinks.innerHTML = html || "<p style='color:gray;'>No asset information available.</p>";
     editBtn.disabled = false;
     editBtn.classList.remove("disabled-button");
     editBtn.classList.add("enabled");
@@ -841,7 +767,7 @@ async function fetchAssetData(id) {
     console.error("❌ Error retrieving data:", err);
   }
 }
-
+  
 //assetLinks.innerHTML = await renderInfoBlock(data);
 
 
