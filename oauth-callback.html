@@ -23,6 +23,7 @@
 
         // Store email
         localStorage.setItem("qr_claimed_email", email);
+         localStorage.setItem("qr_access_token", accessToken);
 
         // Redirect back to main page
         const redirectUrl = `https://process.qrtagall.com/?id=${encodeURIComponent(state)}&verified=1`;
