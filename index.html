@@ -248,7 +248,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-4.19</div>
+	  <div id="versionTag">Ver-4.20</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -618,37 +618,6 @@ function getIconFromFileType(fileType = "") {
 }
 
 	  
-function downloadQR() {
-  const id = getQueryParam("id");
-  const canvas = document.getElementById("qrCanvas");
-  const link = document.createElement("a");
-  link.href = canvas.toDataURL("image/png");
-  link.download = `QRTagAll_${id}.png`; 
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
-
-function printQR() {
-  const canvas = document.getElementById("qrCanvas");
-  const dataUrl = canvas.toDataURL();
-  const printWindow = window.open("", "_blank");
-
-  printWindow.document.write(`
-    <html>
-      <head><title>QRTagAll Print</title></head>
-      <body style="text-align:center; font-family:sans-serif;">
-        <h3>QR Code</h3>
-        <img src="${dataUrl}" style="width:300px; height:300px; border:1px solid #ccc; padding:10px;"/>
-      </body>
-    </html>
-  `);
-
-  printWindow.document.close();
-  printWindow.focus();
-  printWindow.print();
-  printWindow.close();
-}
 
 
 	  
@@ -683,7 +652,7 @@ async function fetchAssetData(id) {
     popup.style.display = "none";
     mainContent.style.display = "block";
 	  
-	  /***************** QR Block ****************/
+/***************** QR Block ****************/
 	  // 🔳 Create and insert QR code block above asset title
 	const qrDiv = document.createElement("div");
 	qrDiv.style.textAlign = "center";
@@ -732,9 +701,41 @@ async function fetchAssetData(id) {
 	// 👆 Insert above assetTitle
 	mainContent.insertBefore(qrDiv, assetTitle);
 
+	  function downloadQR() {
+	  const id = getQueryParam("id");
+	  const canvas = document.getElementById("qrCanvas");
+	  const link = document.createElement("a");
+	  link.href = canvas.toDataURL("image/png");
+	  link.download = `QRTagAll_${id}.png`; 
+	  document.body.appendChild(link);
+	  link.click();
+	  document.body.removeChild(link);
+	}
+	
+	function printQR() {
+	  const canvas = document.getElementById("qrCanvas");
+	  const dataUrl = canvas.toDataURL();
+	  const printWindow = window.open("", "_blank");
+	
+	  printWindow.document.write(`
+	    <html>
+	      <head><title>QRTagAll Print</title></head>
+	      <body style="text-align:center; font-family:sans-serif;">
+	        <h3>QR Code</h3>
+	        <img src="${dataUrl}" style="width:300px; height:300px; border:1px solid #ccc; padding:10px;"/>
+	      </body>
+	    </html>
+	  `);
+	
+	  printWindow.document.close();
+	  printWindow.focus();
+	  printWindow.print();
+	  printWindow.close();
+	}
 
 
-	  /*************** Main heading **************/
+
+	/*************** Main heading block **************/
     assetTitle.innerHTML = `${data.Description || "Verified Asset"}<br><span style="font-size: 13px; color: gray;">(${id})</span>`;
 
     // 🧠 Render each row (from row 6 onward)
