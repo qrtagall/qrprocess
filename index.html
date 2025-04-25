@@ -248,7 +248,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-4.12</div>
+	  <div id="versionTag">Ver-4.13</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -608,6 +608,16 @@ function getIconFromFileType(fileType = "") {
   }
 }
 
+  function copyQRLink() {
+  const id = getQueryParam("id");
+  const qrUrl = `https://process.qrtagall.com/?id=${id}`;
+
+  navigator.clipboard.writeText(qrUrl)
+    .then(() => alert("📋 Link copied to clipboard!"))
+    .catch(err => alert("❌ Failed to copy link."));
+}
+
+	  
 function downloadQR() {
   const canvas = document.getElementById("qrCanvas");
   const link = document.createElement("a");
@@ -698,8 +708,11 @@ async function fetchAssetData(id) {
 	
 	qrActions.innerHTML = `
 	  <button onclick="downloadQR()" title="Download QR" style="font-size:14px; margin-right:10px;">⬇️</button>
-	  <button onclick="printQR()" title="Print QR" style="font-size:14px;">🖨️</button>
+	  <button onclick="printQR()" title="Print QR" style="font-size:14px; margin-right:10px;">🖨️</button>
+	  <button onclick="copyQRLink()" title="Copy Link" style="font-size:14px; margin-right:10px;">📋</button>
+	  <a href="https://wa.me/?text=${encodeURIComponent(`Check this asset: https://process.qrtagall.com/?id=${id}`)}" target="_blank" title="Share on WhatsApp" style="font-size:14px; text-decoration:none;">📱</a>
 	`;
+
 	
 	// 🧩 Assemble
 	qrDiv.appendChild(qrCanvas);
