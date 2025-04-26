@@ -60,8 +60,10 @@
     console.log("✅ Redirecting to Save URL:", saveUrl);
 
     // ✅ Instead of fetch(), just REDIRECT to saveUrl (Apps Script page)
-    window.location.href = saveUrl;
+   // window.location.href = saveUrl;
 
+
+  /*
     // ✅ SetTimeout after 8-10 seconds, trigger second OAuth escape
     setTimeout(() => {
       const finalRedirectUrl = `https://process.qrtagall.com/?id=${encodeURIComponent(id)}`;
@@ -76,6 +78,8 @@
       console.log("🔁 Triggering Second OAuth Escape:", secondOAuthUrl);
       window.location.href = secondOAuthUrl;
     }, 10000);
+
+    */
 
   } catch (error) {
     console.error("Critical Error:", error);
