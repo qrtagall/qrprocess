@@ -252,7 +252,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-6.8</div>
+	  <div id="versionTag">Ver-6.9</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -431,8 +431,8 @@ function cleanUpUrl() {
   window.history.replaceState({}, document.title, url.toString());
 }
 
-	const sessionEmail = localStorage.getItem("qr_claimed_email");
-	//const sessionEmail = "dev.chandan2002x@gmail.com";//localStorage.getItem("qr_claimed_email");
+	//const sessionEmail = localStorage.getItem("qr_claimed_email");
+	const sessionEmail = "dev.chandan2002x@gmail.com";//localStorage.getItem("qr_claimed_email");
 
 	console.log("📧 QR was last claimed/verified by:", sessionEmail);
 	if (sessionEmail)
@@ -1203,7 +1203,7 @@ function saveArtifact() {
         // ✅ Here: set global insertAfterRow properly
         if (afterRowNum === -1) {
 
-            insertAfterRow = -2;
+            insertAfterRow --; //=-2;
             modalTitle.innerText = "➕ Add Artifact at Top";
         } else {
             insertAfterRow = afterRowNum;
@@ -1479,11 +1479,25 @@ const updatedDesc = document.getElementById("newDescription").value.trim();
                 if (modal) modal.style.display = "none";
             }
 
-            if (popup && !popup.closed) popup.close();
+            try {
+                if (popup && !popup.closed) popup.close();
+            }
+            catch (e)
+                {
+                }
+
+
+            try {
+                window.focus(); // ✅ Bring back focus (desktop only attempt)
+            } catch (e) {
+                //console.warn("Focus not allowed:", e);
+            }
 
             alert("✅ Artifact info saved.");
             location.reload();
         }, 1000);
+
+
     }
 
 
