@@ -52,7 +52,11 @@
     console.log("✅ Save URL received:", saveUrl);
 
     // ✅ Redirect to saveUrl to save artifact
-    window.location.href = saveUrl;
+    //window.location.href = saveUrl;
+const iframe = document.createElement('iframe');
+iframe.src = saveUrl;
+iframe.style.display = "none"; 
+document.body.appendChild(iframe);
 
     
 
