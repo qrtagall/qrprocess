@@ -52,7 +52,7 @@
       console.error("Failed to parse state:", e);
     }
     
-    if (!saveUrl || !id) {
+    if (!saveUrl) {
       document.getElementById("status").textContent = "❌ Missing save URL or ID.";
       return;
     }
