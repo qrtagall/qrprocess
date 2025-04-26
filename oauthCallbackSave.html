@@ -35,7 +35,8 @@
   <div class="spinner">⏳</div>
 
 <script>
-(async function() {
+
+  (async function() {
   try {
     const params = new URLSearchParams(window.location.hash.substring(1));
     const accessToken = params.get("access_token");
@@ -51,27 +52,60 @@
 
     console.log("✅ Save URL received:", saveUrl);
 
-    // ✅✅✅ Verify the accessToken FIRST like in claim flow
+    // ✅ Validate accessToken
     const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
     const userInfo = await userInfoRes.json();
     if (!userInfo.email) {
-      throw new Error("❌ No email received, invalid token");
+      throw new Error("❌ No email received");
     }
-    console.log("📧 Email fetched for validation:", userInfo.email);
+    console.log("📧 Email:", userInfo.email);
 
-    // ✅ After validation, now safe to redirect
-    window.location.href = saveUrl;
+    // ✅ Now save artifact via FETCH, not window.location
+    const saveRes = await fetch(saveUrl, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      }
+    });
 
-    // (Your setTimeout block here after redirect...)
+    const saveData = await saveRes.json();
+    console.log("📝 Save Result:", saveData);
+
+    if (!saveData.success) {
+      throw new Error(saveData.message || "Artifact save failed.");
+    }
+
+    // ✅ After save, proceed
+    setTimeout(() => {
+      const idMatch = saveUrl.match(/[?&]id=([^&]+)/);
+      const id = idMatch ? idMatch[1] : null;
+
+      const finalRedirectUrl = id 
+        ? `https://process.qrtagall.com/?id=${id}`
+        : "https://process.qrtagall.com";
+
+      const secondOAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
+          `?response_type=token` +
+          `&client_id=121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com` +
+          `&redirect_uri=${encodeURIComponent('https://process.qrtagall.com/oauth-redirect-final.html')}` +
+          `&scope=${encodeURIComponent('https://www.googleapis.com/auth/userinfo.email')}` +
+          `&state=${encodeURIComponent(finalRedirectUrl)}`;
+
+      console.log("🔁 Second OAuth Trigger:", secondOAuthUrl);
+      window.location.href = secondOAuthUrl;
+    }, 2000);
 
   } catch (error) {
-    console.error("❌ Critical Error:", error);
+    console.error("❌ Error:", error);
     document.getElementById("status").textContent = "❌ Save Failed.";
-    window.location.href = "https://process.qrtagall.com";
+    setTimeout(() => {
+      window.location.href = "https://process.qrtagall.com";
+    }, 1500);
   }
 })();
+
 
 </script>
 
