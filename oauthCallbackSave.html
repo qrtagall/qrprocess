@@ -44,46 +44,27 @@
 
     const statusEl = document.getElementById("status");
 
-    if (!saveUrl) {
-      statusEl.textContent = "❌ Missing save URL.";
+    if (!saveUrl || !accessToken) {
+      statusEl.textContent = "❌ Missing information.";
       return;
     }
 
     console.log("✅ Save URL received:", saveUrl);
 
-    // ✅ Redirect to saveUrl to save artifact
+    // ✅✅✅ Verify the accessToken FIRST like in claim flow
+    const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    const userInfo = await userInfoRes.json();
+    if (!userInfo.email) {
+      throw new Error("❌ No email received, invalid token");
+    }
+    console.log("📧 Email fetched for validation:", userInfo.email);
+
+    // ✅ After validation, now safe to redirect
     window.location.href = saveUrl;
 
-    // ✅ After some delay, trigger second OAuth escape
-    setTimeout(() => {
-      try {
-        // Extract ID from saveUrl manually
-        const idMatch = saveUrl.match(/[?&]id=([^&]+)/);
-        const id = idMatch ? idMatch[1] : null;
-
-        if (!id) {
-          console.warn("⚠️ ID extraction failed.");
-          window.location.href = "https://process.qrtagall.com";
-          return;
-        }
-
-        const finalRedirectUrl = `https://process.qrtagall.com/?id=${id}`;
-
-        const secondOAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
-          `?response_type=token` +
-          `&client_id=121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com` +
-          `&redirect_uri=${encodeURIComponent('https://process.qrtagall.com/oauth-redirect-final.html')}` +
-          `&scope=${encodeURIComponent('https://www.googleapis.com/auth/userinfo.email')}` +
-          `&state=${encodeURIComponent(finalRedirectUrl)}`;
-
-        console.log("🔁 Triggering second OAuth escape:", secondOAuthUrl);
-        //window.location.href = secondOAuthUrl;
-
-      } catch (e) {
-        console.error("❌ Error during final redirect setup:", e);
-        window.location.href = "https://process.qrtagall.com";
-      }
-    }, 10000); // Wait 8 seconds before escaping Apps Script
+    // (Your setTimeout block here after redirect...)
 
   } catch (error) {
     console.error("❌ Critical Error:", error);
@@ -91,6 +72,7 @@
     window.location.href = "https://process.qrtagall.com";
   }
 })();
+
 </script>
 
 </body>
