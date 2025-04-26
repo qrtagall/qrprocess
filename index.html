@@ -252,7 +252,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-6.11</div>
+	  <div id="versionTag">Ver-6.12</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -851,7 +851,9 @@ async function fetchAssetData(id) {
       } else {
           isOwner = false;
 
-          if (ownerEmail) {
+          //if (ownerEmail) 
+	  if (sessionEmail && sessionEmail !== ownerEmail) 
+	  {
               // ✅ Someone owns it, but not you
               updatePanelBackground("#ffb3b3"); // 🔴 Reddish
               editBtn.innerHTML = "🔐 Log-in as Owner<br>to Edit Details";
