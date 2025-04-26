@@ -55,15 +55,18 @@
     }
 
     // ✅ Open the save URL in a hidden popup
-    const savePopup = window.open(saveUrl, "_blank", "width=10,height=10,left=1,top=1");
+    //const savePopup = window.open(saveUrl, "_blank", "width=10,height=10,left=1,top=1");
+
+     window.location.href = saveUrl;
 
     // ✅ Give time for Google Script to process (2-3 seconds)
     setTimeout(() => {
+      /*
       try {
         if (savePopup && !savePopup.closed) savePopup.close();
       } catch (e) {
         console.warn("⚠️ Could not close save popup:", e);
-      }
+      }*/
 
       // ✅ After save, redirect back to process.qrtagall.com
       let id = null;
