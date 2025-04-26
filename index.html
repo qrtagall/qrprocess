@@ -252,7 +252,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-6.10</div>
+	  <div id="versionTag">Ver-6.11</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -841,35 +841,29 @@ async function fetchAssetData(id) {
 
 
     /*** Owner Detection ***/
-	sheetID=(data.SheetID || "").trim();
-    const ownerEmail = (data.UserName || "").trim().toLowerCase();
-    if (sessionEmail && sessionEmail === ownerEmail) {
-      isOwner = true;
-      updatePanelBackground("#e6ffe6");
-      editBtn.innerHTML = "✏️ Edit Details";
-    } else
-    {
-        isOwner = false;
+    sheetID = (data.SheetID || "").trim();
+      const ownerEmail = (data.UserName || "").trim().toLowerCase();
+
+      if (sessionEmail && sessionEmail === ownerEmail) {
+          isOwner = true;
+          updatePanelBackground("#e6ffe6"); // ✅ Green for owner
+          editBtn.innerHTML = "✏️ Edit Details";
+      } else {
+          isOwner = false;
+
+          if (ownerEmail) {
+              // ✅ Someone owns it, but not you
+              updatePanelBackground("#ffb3b3"); // 🔴 Reddish
+              editBtn.innerHTML = "🔐 Log-in as Owner<br>to Edit Details";
+          } else {
+              // ✅ No owner (unclaimed QR)
+              updatePanelBackground("#fffbe6"); // ⚠️ Yellow
+              editBtn.innerHTML = "🔐 Log-in to Edit Details";
+          }
+      }
 
 
-
-        if(ownerEmail )
-        {
-            editBtn.innerHTML = "🔐 Log-in as Owner<br>to Edit Details";
-            updatePanelBackground("#ffb3b3");
-        }
-        else
-        {
-            editBtn.innerHTML = "🔐 Log-in to Edit Details";
-            updatePanelBackground("#fffbe6");
-
-        }
-
-
-
-    }
-
-    /*** Artifact Rendering ***/
+      /*** Artifact Rendering ***/
     const assetArray = data.assets || [];
     let html = "";
 
