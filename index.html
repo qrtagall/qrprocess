@@ -252,7 +252,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-6.12</div>
+	  <div id="versionTag">Ver-6.13</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -851,9 +851,7 @@ async function fetchAssetData(id) {
       } else {
           isOwner = false;
 
-          //if (ownerEmail) 
-	  if (sessionEmail && sessionEmail !== ownerEmail) 
-	  {
+          if (sessionEmail && sessionEmail !== ownerEmail) {
               // ✅ Someone owns it, but not you
               updatePanelBackground("#ffb3b3"); // 🔴 Reddish
               editBtn.innerHTML = "🔐 Log-in as Owner<br>to Edit Details";
@@ -1435,7 +1433,7 @@ const updatedDesc = document.getElementById("newDescription").value.trim();
   
 }
 
-
+/*
     function saveArtifactInfo({
                                   startCell,
                                   basicInfo = undefined,
@@ -1509,60 +1507,112 @@ const updatedDesc = document.getElementById("newDescription").value.trim();
 
             alert("✅ Artifact info saved.");
             location.reload();
-        }, 5000);
-
-
-    }
-
-
-
-    /*
-    function saveArtifactInfo({startCell, basicInfo,  fileType,  visibility,  linkOrText,  modalId = null})
-    {
-        id= getQueryParam("id");
-        sheetId=sheetID;
-        secretKey = "optional_static_key";
-        const values = `${basicInfo}||${fileType}||${visibility}||${linkOrText}`;
-
-        const query = new URLSearchParams({
-        mode: "updateCells",
-        id,
-        sheetId,
-        range: startCell,
-        values,
-        secret_key: secretKey
-      });
-
-    const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?${query.toString()}`;
-
-    console.log("✅ Final target  URL:", targetUrl);
-
-     const popup = window.open(
-      targetUrl,
-      "_blank",
-      "width=10,height=10,left=1,top=1,menubar=no,toolbar=no,location=no,status=no,resizable=no,scrollbars=no"
-    );
-
-
-         setTimeout(() => {
-
-          if (modalId) {
-          const modal = document.getElementById(modalId);
-          if (modal) modal.style.display = "none";
-        }
-
-          if (popup && !popup.closed) popup.close();
-          //if (spinner) spinner.style.display = "none";
-          alert("✅ Artifact info saved.");
-          location.reload();
-
         }, 1000);
 
+
     }
-    */
+*/
 
 
-function saveArtifactViaPopup() {
+
+    function saveArtifactInfo({
+                                  startCell,
+                                  basicInfo = undefined,
+                                  fileType = undefined,
+                                  visibility = undefined,
+                                  linkOrText = undefined,
+                                  modalId = null,
+                                  isInsert = false,
+                                  isDelete = false
+                              }) {
+        const id = getQueryParam("id");
+        const sheetId = sheetID;
+        const secretKey = "optional_static_key";
+
+        // ✅ Always prepare 4 fields
+        const valueParts = [
+            basicInfo !== undefined ? basicInfo : "",
+            fileType !== undefined ? fileType : "",
+            visibility !== undefined ? visibility : "",
+            linkOrText !== undefined ? linkOrText : ""
+        ];
+
+        // ✅ If somehow more values are passed, trim extra
+        const finalValues = valueParts.slice(0, 4).join("||");
+
+        const query = new URLSearchParams({
+            mode: "updateCells",
+            id,
+            sheetId,
+            range: startCell,
+            values: finalValues,
+            secret_key: secretKey
+        });
+
+        if (isInsert) query.append("insert", "1");
+        if (isDelete) query.append("delete", "1");
+
+
+        const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?${query.toString()}`;
+
+        console.log("✅ Final Target URL:", targetUrl);
+
+        triggerLink(targetUrl, modalId);
+    }
+
+
+    function triggerLink_old(targetUrl, modalId = null) {
+        const popup = window.open(
+            targetUrl,
+            "_blank",
+            "width=10,height=10,left=1,top=1,menubar=no,toolbar=no,location=no,status=no,resizable=no,scrollbars=no"
+        );
+
+        setTimeout(() => {
+            if (modalId) {
+                const modal = document.getElementById(modalId);
+                if (modal) modal.style.display = "none";
+            }
+
+            try {
+                if (popup && !popup.closed) popup.close();
+            } catch (e) {}
+
+            try {
+                window.focus();
+            } catch (e) {}
+
+            alert("✅ Artifact info saved.");
+            location.reload();
+        }, 1000);
+    }
+
+
+    function triggerLink(targetUrl, modalId = null) {
+        const clientId = "121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com";
+        const redirectUri = "https://process.qrtagall.com/oauthCallbackSave.html";  // (Later I’ll help you prepare)
+        const scope = "https://www.googleapis.com/auth/userinfo.email";
+
+        const oauthUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
+            `?response_type=token` +
+            `&client_id=${encodeURIComponent(clientId)}` +
+            `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+            `&scope=${encodeURIComponent(scope)}` +
+            `&state=${encodeURIComponent(targetUrl)}`;
+
+        console.log("🚀 Redirecting to OAuth:", oauthUrl);
+
+        //window.location.href = oauthUrl; // Full redirect
+
+        //const savePopup = window.open(oauthUrl, "_blank", "width=10,height=10,left=1,top=1");
+        window.location.href = oauthUrl;
+    }
+
+
+
+
+
+    function saveArtifactViaPopup() {
   const id = getQueryParam("id");
   const sheetId = "1K3P8CSrLUmVRzEq6hAKUaWcBrsAdon1AdOguwLMPD4Y";
   const startCell = "C14";
