@@ -54,6 +54,8 @@
     // ✅ Redirect to saveUrl to save artifact
     window.location.href = saveUrl;
 
+    
+
     // ✅ After some delay, trigger second OAuth escape
     setTimeout(() => {
       try {
@@ -63,7 +65,8 @@
 
         if (!id) {
           console.warn("⚠️ ID extraction failed.");
-          window.location.href = "https://process.qrtagall.com";
+          alert("✅ ID not found");
+          //window.location.href = "https://process.qrtagall.com";
           return;
         }
 
@@ -77,7 +80,7 @@
           `&state=${encodeURIComponent(finalRedirectUrl)}`;
 
         console.log("🔁 Triggering second OAuth escape:", secondOAuthUrl);
-        window.location.href = secondOAuthUrl;
+        //window.location.href = secondOAuthUrl;
 
       } catch (e) {
         console.error("❌ Error during final redirect setup:", e);
