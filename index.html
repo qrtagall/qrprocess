@@ -252,7 +252,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-6.4</div>
+	  <div id="versionTag">Ver-6.8</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -324,68 +324,68 @@
 	
 	
 	<!-- 🔲 Modal for Adding Artifact -->
+<!-- 🔲 Modal for Adding Artifact -->
 <div id="addArtifactModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:#00000055; z-index:10000; justify-content:center; align-items:center;">
-  <div style="background:white; padding:20px; border-radius:10px; max-width:500px; width:90%; box-shadow:0 0 10px rgba(0,0,0,0.2); position:relative;">
-    <h3>➕ Add Artifact Info</h3>
+    <div style="background:white; padding:20px; border-radius:10px; max-width:500px; width:90%; box-shadow:0 0 10px rgba(0,0,0,0.2); position:relative;">
+        <h3 id="addArtifactModalTitle">➕ Add Artifact Info</h3>
 
-    <label>Basic Info:</label><br>
-    <input type="text" id="artifactBasicInfo" style="width:100%; margin-bottom:10px;"><br>
+        <!-- ✅ Basic Info Section -->
+        <div id="basicInfoSection">
+            <label>Basic Info:</label><br>
+            <input type="text" id="artifactBasicInfo" style="width:100%; margin-bottom:10px;"><br>
+        </div>
 
-    <label>File Type:</label><br>
-    <select id="artifactFileType" style="width:100%; margin-bottom:10px;" onchange="onFileTypeChange()">
-      <option value="TEXT">TEXT</option>
-      <option value="IMAGEFILE">IMAGEFILE</option>
-      <option value="PDFFILE">PDFFILE</option>
-      <option value="AUDIOFILE">AUDIOFILE</option>
-      <option value="VIDEOFILE">VIDEOFILE</option>
-    </select><br>
+        <!-- ✅ File Type Section -->
+        <div id="fileTypeSection">
+            <label>File Type:</label><br>
+            <select id="artifactFileType" style="width:100%; margin-bottom:10px;" onchange="onFileTypeChange()">
+                <option value="TEXT">TEXT</option>
+                <option value="IMAGEFILE">IMAGEFILE</option>
+                <option value="PDFFILE">PDFFILE</option>
+                <option value="AUDIOFILE">AUDIOFILE</option>
+                <option value="VIDEOFILE">VIDEOFILE</option>
+            </select><br>
+        </div>
 
-    <label>Visibility:</label><br>
-    <select id="artifactOption" style="width:100%; margin-bottom:10px;">
-      <option value="VIEW">VIEW</option>
-      <option value="NOVIEW">NOVIEW</option>
-    </select><br>
+        <!-- ✅ Visibility Section -->
+        <div id="visibilitySection">
+            <label>Visibility:</label><br>
+            <select id="artifactOption" style="width:100%; margin-bottom:10px;">
+                <option value="VIEW">VIEW</option>
+                <option value="NOVIEW">NOVIEW</option>
+            </select><br>
+        </div>
 
-    <div id="textInputSection">
-      <label>Text Info:</label><br>
-      <textarea id="artifactTextInfo" style="width:100%; height:80px;"></textarea>
+        <!-- ✅ Text Info Section -->
+        <div id="textInputSection">
+            <label>Text Info:</label><br>
+            <textarea id="artifactTextInfo" style="width:100%; height:80px;"></textarea>
+        </div>
+
+        <!-- ✅ File Upload Section -->
+        <div id="fileUploadSection" style="display:none;">
+            <button onclick="openUploadModal()" style="margin-bottom:10px;">📁 Select/Upload File</button>
+            <p id="uploadedFileLink" style="font-size:14px; color:gray;"></p>
+        </div>
+
+        <div style="text-align:right; margin-top:15px;">
+            <button onclick="closeAddModal()">Cancel</button>
+            <button onclick="saveArtifact()">Save</button>
+        </div>
     </div>
-
-    <div id="fileUploadSection" style="display:none;">
-      <button onclick="openUploadModal()" style="margin-bottom:10px;">📁 Select/Upload File</button>
-      <p id="uploadedFileLink" style="font-size:14px; color:gray;"></p>
-    </div>
-
-    <div style="text-align:right; margin-top:15px;">
-      <button onclick="closeAddModal()">Cancel</button>
-      <button onclick="saveArtifact()">Save</button>
-    </div>
-  </div>
-</div>
-
-<!-- 📂 Sub-modal for Uploading File -->
-<div id="uploadModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:#00000055; z-index:11000; justify-content:center; align-items:center;">
-  <div style="background:white; padding:20px; border-radius:10px; max-width:400px; width:90%; box-shadow:0 0 10px rgba(0,0,0,0.2); position:relative;">
-    <h4>📤 Upload / Select File</h4>
-    <input type="file" id="filePicker" style="margin-bottom:10px;"><br>
-    <button onclick="simulateUseFile()">✅ Use this file</button>
-    <button onclick="closeUploadModal()">Cancel</button>
-    <p id="filePreview" style="font-size:13px; color:gray; margin-top:10px;"></p>
-  </div>
 </div>
 
 <!-- ✏️ Modal to Edit Description -->
 <div id="editDescriptionModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:#00000055; z-index:10000; justify-content:center; align-items:center;">
-  <div style="background:white; padding:20px; border-radius:10px; max-width:400px; width:90%; box-shadow:0 0 10px rgba(0,0,0,0.2); position:relative;">
-    <h4>📝 Edit Description</h4>
-    <textarea id="newDescription" style="width:100%; height:80px; margin-bottom:10px;"></textarea>
-    <div style="text-align:right;">
-      <button onclick="closeDescriptionModal()">Cancel</button>
-      <button onclick="saveDescription()">Save</button>
+    <div style="background:white; padding:20px; border-radius:10px; max-width:400px; width:90%; box-shadow:0 0 10px rgba(0,0,0,0.2); position:relative;">
+        <h4>📝 Edit Description</h4>
+        <textarea id="newDescription" style="width:100%; height:80px; margin-bottom:10px;"></textarea>
+        <div style="text-align:right;">
+            <button onclick="closeDescriptionModal()">Cancel</button>
+            <button onclick="saveDescription()">Save</button>
+        </div>
     </div>
-  </div>
 </div>
-
 
 
 
@@ -397,6 +397,8 @@
 	let insertAfterRow = null;
 	let selectedUploadedFileLink = "";
 	let sheetID="";
+    var currentEditMode = null; // new global
+    var assetDataList = [];  // global
 
 	  console.log("🚀 Script block reached!");
  
@@ -429,8 +431,8 @@ function cleanUpUrl() {
   window.history.replaceState({}, document.title, url.toString());
 }
 
-	const sessionEmail = localStorage.getItem("qr_claimed_email");	  
-	//const sessionEmail = "dev.chandan2002x@gmail.com";//localStorage.getItem("qr_claimed_email");	  
+	const sessionEmail = localStorage.getItem("qr_claimed_email");
+	//const sessionEmail = "dev.chandan2002x@gmail.com";//localStorage.getItem("qr_claimed_email");
 
 	console.log("📧 QR was last claimed/verified by:", sessionEmail);
 	if (sessionEmail)
@@ -628,67 +630,83 @@ async function resolveAndRender(value, i, customTitle = `Link ${i}`) {
 
 
 
-	  
 
 
 
-async function renderInfoBlock(data) {
-  let html = "";
-  const assets = data.assets || [];
 
-  for (let i = 0; i < assets.length; i++) {
-    const item = assets[i];
-    const title = item.title || `Asset ${i + 1}`;
-    const type = (item.type || "").toUpperCase();
-    const visibility = (item.visibility || "").toUpperCase();
-    const url = item.url || "";
 
-    const icon = getIconFromTitle(title);
 
-    html += `<div style="margin-bottom:20px; border:1px solid #ccc; padding:10px; border-radius:8px; background:#fafafa;">`;
+    async function renderInfoBlock(data) {
+        let html = "";
+        const assets = data.assets || [];
+        assetDataList = assets; // ✅ Store globally for edit mode
 
-    // Visibility logic
-    if (visibility === "NOVIEW" && !isOwner) {
-      html += `<p>${icon} <b>${title}</b> <span style="color:gray;">(🔒 No view permission)</span></p>`;
-    } else if (!url || url.trim() === "" || url.toLowerCase() === "not available") {
-      html += `<p>${icon} <b>${title}</b> <span style="color:gray;">(🔗 Link not available)</span></p>`;
-    } else if (type === "TEXT") {
-      html += `<p>${icon} <b>${title}:</b> ${url}</p>`;
-    } else if (type.includes("FILE") && /drive\.google\.com/.test(url)) {
-      const match = url.match(/\/d\/([^/]+)/);
-      const fileId = match ? match[1] : null;
-      if (fileId) {
-        const iframePreview = `https://drive.google.com/file/d/${fileId}/preview`;
-        html += `
-          <b>${icon} ${title}</b><br>
-          <iframe src="${iframePreview}" width="100%" height="400" frameborder="0"
-            allow="autoplay; encrypted-media"
-            sandbox="allow-scripts allow-same-origin allow-presentation">
-          </iframe>`;
-      } else {
-        html += `<p>${icon} <b>${title}:</b> <a href="${url}" target="_blank">${url}</a></p>`;
-      }
-    } else if (url.startsWith("http")) {
-      html += await resolveAndRender(url, i + 1, title);
-    } else {
-      html += `<p>${icon} <b>${title}:</b> ${url}</p>`;
+        for (let i = 0; i < assets.length; i++) {
+            const index = i; // ✅ Fix async closure issue
+            const item = assets[index];
+            const title = item.title || `Asset ${index + 1}`;
+            const type = (item.type || "").toUpperCase();
+            const visibility = (item.visibility || "").toUpperCase();
+            const url = item.url || "";
+
+            const icon = getIconFromTitle(title);
+
+            // 🔒 Visibility icon for owner view
+            let visibilityIcon = "";
+            if (isOwner) {
+                if (visibility === "NOVIEW") {
+                    visibilityIcon = `<span style="font-size: 14px; color: #888;" title="Hidden from public">🔒</span>`;
+                } else if (visibility === "VIEW") {
+                    visibilityIcon = `<span style="font-size: 14px; color: #4CAF50;" title="Visible to all">✅</span>`;
+                }
+            }
+
+            html += `<div style="margin-bottom:20px; border:1px solid #ccc; padding:10px; border-radius:8px; background:#fafafa;">`;
+
+            // 🔍 Main artifact info
+            if (visibility === "NOVIEW" && !isOwner) {
+                html += `<p><b>${index + 1}.</b> ${icon} <b>${title}</b> <span style="color:gray;">(🔒 No view permission)</span></p>`;
+            } else if (!url || url.trim() === "" || url.toLowerCase() === "not available") {
+                html += `<p><b>${index + 1}.</b> ${icon} <b>${title}</b> <span style="color:gray;">(🔗 Link not available)</span></p>`;
+            } else if (type === "TEXT") {
+                html += `<p><b>${index + 1}.</b> ${icon} <b>${title}</b> ${visibilityIcon}: ${url}</p>`;
+            } else if (type.includes("FILE") && /drive\.google\.com/.test(url)) {
+                const match = url.match(/\/d\/([^/]+)/);
+                const fileId = match ? match[1] : null;
+                if (fileId) {
+                    const iframePreview = `https://drive.google.com/file/d/${fileId}/preview`;
+                    html += `
+        <b>${index + 1}. ${icon} ${title} ${visibilityIcon}</b><br>
+        <iframe src="${iframePreview}" width="100%" height="400" frameborder="0"
+          allow="autoplay; encrypted-media"
+          sandbox="allow-scripts allow-same-origin allow-presentation">
+        </iframe>`;
+                } else {
+                    html += `<p><b>${index + 1}.</b> ${icon} <b>${title}</b> ${visibilityIcon}: <a href="${url}" target="_blank">${url}</a></p>`;
+                }
+            } else if (url.startsWith("http")) {
+                html += await resolveAndRender(url, index + 1, title); // still safe
+            } else {
+                html += `<p><b>${index + 1}.</b> ${icon} <b>${title}</b> ${visibilityIcon}: ${url}</p>`;
+            }
+
+            // ✏️ Edit / Delete / Add controls (only in edit mode)
+            if (editMode) {
+                html += `
+      <div style="margin-top: 10px; display: flex; gap: 10px;">
+        <button onclick="openAddModal(${index}, true)" style="font-size: 13px;">📝 Edit</button>
+        <button onclick="deleteArtifact(${index})" style="font-size: 13px;">🗑️ Delete</button>
+        <button onclick="openAddModal(${index})" style="font-size: 13px;">➕ Add Below</button>
+      </div>
+    `;
+            }
+
+            html += `</div>`;
+        }
+
+
+        return html || "<p style='color:gray;'>No asset information available.</p>";
     }
-
-    // 👇 Add edit buttons if in edit mode
-    if (editMode) {
-      html += `
-        <div style="margin-top: 10px; display: flex; gap: 10px;">
-          <button onclick="deleteArtifact(${i})">🗑️ Delete</button>
-          <button onclick="openAddModal(${i})">➕ Add Below</button>
-        </div>
-      `;
-    }
-
-    html += `</div>`;
-  }
-
-  return html || "<p style='color:gray;'>No asset information available.</p>";
-}
 
 
 
@@ -748,6 +766,7 @@ async function fetchAssetData(id) {
     }
 
     const data = json.data;
+
     popup.style.display = "none";
     mainContent.style.display = "block";
 
@@ -814,7 +833,7 @@ async function fetchAssetData(id) {
 
   ${editMode ? `
     <div style="text-align: center; margin-top: 5px;">
-      <button onclick="openAddModal(0)" style="font-size: 13px;">➕ Add Artifact</button>
+      <button onclick="openAddModal(-1)" style="font-size: 13px;">➕ Add Artifact</button>
     </div>` : ""}
 `;
 
@@ -1026,7 +1045,7 @@ function editAlert() {
   }
 }
 
-
+/*
 function openAddModal(afterRowNum) {
   insertAfterRow = afterRowNum;
   selectedUploadedFileLink = "";
@@ -1075,20 +1094,247 @@ function saveArtifact() {
 
   closeAddModal();
 }
+*/
+
+    function deleteArtifact(rowNum) {
+        const confirmed = confirm(`Are you sure you want to delete artifact at row ${rowNum}?`);
+        if (confirmed) {
+            saveArtifactInfo({
+                startCell: rowNum + 6,  // 🧠 Asset index to sheet row mapping (because 6th row starts artifacts)
+                basicInfo: "",
+                fileType: "",
+                visibility: "",
+                linkOrText: "",
+                isDelete: true
+            });
+        }
+    }
+
+/*
+    function openAddModal(afterRowNum, isEditMode = false) {
+        insertAfterRow = afterRowNum;
+        selectedUploadedFileLink = "";
 
 
-function deleteArtifact(rowNum) {
-  const confirmed = confirm(`Are you sure you want to delete item at row ${rowNum}?`);
-  if (confirmed) {
-    alert("❌ Deletion logic to be implemented for row: " + rowNum);
-    // TODO: Call backend to delete row, then reload
-  }
-}
+
+        const basicInfoInput = document.getElementById("artifactBasicInfo");
+        const fileTypeInput = document.getElementById("artifactFileType");
+        const visibilityInput = document.getElementById("artifactOption");
+        const textInfoInput = document.getElementById("artifactTextInfo");
+        const uploadedFileLink = document.getElementById("uploadedFileLink");
+        const fileTypeSection = document.getElementById("artifactFileType").parentElement;
+        const textInputSection = document.getElementById("textInputSection");
+        const fileUploadSection = document.getElementById("fileUploadSection");
+        const modalTitle = document.getElementById("addArtifactModalTitle");
+
+        // Always reset visibility first
+        fileTypeSection.style.display = "block";
+        textInputSection.style.display = "block";
+        fileUploadSection.style.display = "block";
+
+        // Reset field states
+        basicInfoInput.disabled = false;
+        fileTypeInput.disabled = false;
+        textInfoInput.disabled = false;
+        uploadedFileLink.style.pointerEvents = "auto";
+        visibilityInput.disabled = false;
+
+        if (isEditMode) {
+
+            // EDIT MODE LOGIC
+
+            const item = assetDataList[afterRowNum];  // ← assume this global list (already from renderInfoBlock)
+            modalTitle.innerText = "📝 Edit Artifact Visibility";
+            basicInfoInput.value = item.title || "";
+            fileTypeInput.value = (item.type || "TEXT").toUpperCase();
+            //visibilityInput.value = (item.visibility || "VIEW").toUpperCase();
+            const vis = (item.visibility || "VIEW").toUpperCase();
+            visibilityInput.value = vis === "VIEW" || vis === "NOVIEW" ? vis : "VIEW";
+
+            if (item.type.toUpperCase() === "TEXT") {
+                textInfoInput.value = item.url || "";
+                uploadedFileLink.textContent = "";
+            } else {
+                textInfoInput.value = "";
+                uploadedFileLink.textContent = item.url || "";
+            }
+
+            // Disable fields except visibility
+            basicInfoInput.disabled = true;
+            fileTypeInput.disabled = true;
+            textInfoInput.disabled = true;
+
+           // uploadedFileLink.style.pointerEvents = "none";
+
+            // Hide unwanted sections
+            //fileTypeInput.disabled = true;
+            fileTypeSection.style.display = "none";
+            textInputSection.style.display = "none";
+            fileUploadSection.style.display = "none";
+
+            currentEditMode = "edit";
+        } else {
+            // ADD MODE LOGIC
+            modalTitle.innerText = "➕ Add New Artifact Info";
+            basicInfoInput.value = `New Artifact ${afterRowNum + 2}`;
+            textInfoInput.value = "Enter your text here...";
+            fileTypeInput.value = "TEXT";
+            visibilityInput.value = "VIEW";
+            uploadedFileLink.textContent = "";
+            onFileTypeChange();
+
+            currentEditMode = "add";
+        }
+
+        document.getElementById("addArtifactModal").style.display = "flex";
+    }
+*/
+
+    function openAddModal(afterRowNum, isEditMode = false) {
+        selectedUploadedFileLink = "";
+
+        const basicInfoInput = document.getElementById("artifactBasicInfo");
+        const textInfoInput = document.getElementById("artifactTextInfo");
+        const fileTypeInput = document.getElementById("artifactFileType");
+        const visibilityInput = document.getElementById("artifactOption");
+        const uploadedFileLink = document.getElementById("uploadedFileLink");
+        const modalTitle = document.getElementById("addArtifactModalTitle");
+
+        // ✅ Here: set global insertAfterRow properly
+        if (afterRowNum === -1) {
+
+            insertAfterRow = -2;
+            modalTitle.innerText = "➕ Add Artifact at Top";
+        } else {
+            insertAfterRow = afterRowNum;
+            modalTitle.innerText = "➕ Add Artifact Info";
+        }
+
+
+        if (isEditMode) {
+            currentEditMode = "edit";
+
+            modalTitle.innerText = "📝 Edit Artifact Visibility";
+
+            basicInfoInput.disabled = true;
+            fileTypeInput.disabled = true;
+            textInfoInput.disabled = true;
+
+            document.getElementById("artifactFileType").parentElement.style.display = "none";
+            document.getElementById("textInputSection").style.display = "none";
+            document.getElementById("fileUploadSection").style.display = "none";
+
+            const item = assetDataList[afterRowNum];
+            basicInfoInput.value = item.title || "";
+            fileTypeInput.value = (item.type || "TEXT").toUpperCase();
+            visibilityInput.value = (item.visibility || "VIEW").toUpperCase();
+            if (item.type.toUpperCase() === "TEXT") {
+                textInfoInput.value = item.url || "";
+                uploadedFileLink.textContent = "";
+            } else {
+                textInfoInput.value = "";
+                uploadedFileLink.textContent = item.url || "";
+            }
+        } else {
+            currentEditMode = "add";
+
+            basicInfoInput.disabled = false;
+            fileTypeInput.disabled = false;
+            textInfoInput.disabled = false;
+
+            document.getElementById("artifactFileType").parentElement.style.display = "block";
+            document.getElementById("textInputSection").style.display = "block";
+            document.getElementById("fileUploadSection").style.display = "none";
+
+            basicInfoInput.value = insertAfterRow === -2 ? "New Artifact" : `New Artifact ${insertAfterRow + 2}`;
+
+
+
+            //basicInfoInput.value = insertAfterRow === -2 ? "New Artifact" : `New Artifact ${insertAfterRow + 2}`;
+            textInfoInput.value = "Enter your text here...";
+            fileTypeInput.value = "TEXT";
+            visibilityInput.value = "VIEW";
+            uploadedFileLink.textContent = "";
+        }
+
+        document.getElementById("addArtifactModal").style.display = "flex";
+    }
 
 
 
 
-/************************ Edit Description *************/
+
+
+    function closeAddModal() {
+        document.getElementById("addArtifactModal").style.display = "none";
+        insertAfterRow = null;
+        selectedUploadedFileLink = "";
+        currentEditMode = null;
+    }
+
+
+
+    function saveArtifact() {
+        const basicInfo = document.getElementById("artifactBasicInfo").value.trim();
+        const fileType = document.getElementById("artifactFileType").value;
+        const visibility = document.getElementById("artifactOption").value;
+        const isText = fileType === "TEXT";
+        const url = isText
+            ? document.getElementById("artifactTextInfo").value.trim()
+            : selectedUploadedFileLink || document.getElementById("uploadedFileLink").textContent.trim();
+
+        if (!basicInfo || !fileType || !visibility || (!isText && !url)) {
+            alert("⚠️ Please complete all fields.");
+            return;
+        }
+
+        if (currentEditMode === "edit") {
+            // ✅ Edit mode: Only update visibility
+            const payload = {
+                rowNum: insertAfterRow,  // In Edit, we know the row directly
+                visibility: visibility
+            };
+
+            alert(`📝 Update artifact:\nVisibility set to ➡️ ${payload.visibility}`);
+
+            saveArtifactInfo({
+                startCell: "C" + (payload.rowNum + 6), // mapping asset array index to Sheet row number (Row 6 onward)
+                visibility: payload.visibility,
+                modalId: "addArtifactModal"   // ✅ Auto-close Add Modal after save
+            });
+            // TODO: Call backend to only update visibility
+        }
+        else {
+            // ✅ Add mode: Insert full artifact
+            const payload = {
+                afterRow: insertAfterRow,
+                basicInfo,
+                fileType,
+                options: visibility,
+                localUrl: url
+            };
+
+            alert(`➕ New artifact to be inserted after row ${insertAfterRow}:\n\n${JSON.stringify(payload, null, 2)}`);
+
+            saveArtifactInfo({
+                startCell: payload.afterRow + 7,  // 🧠 afterRow is artifact index; +6 (starting row) +1 (insert *below*)
+                basicInfo: payload.basicInfo,
+                fileType: payload.fileType,
+                visibility: payload.options,
+                linkOrText: payload.localUrl,
+                isInsert: true,
+                modalId: "addArtifactModal"
+            });
+        }
+
+
+        closeAddModal();
+    }
+
+
+
+
+    /************************ Edit Description *************/
 function editDescription() {
   //alert("📝 Modal to edit Description will be added here.");
   const current = document.getElementById("assetTitle").innerText.split("\n")[0];
@@ -1176,49 +1422,116 @@ const updatedDesc = document.getElementById("newDescription").value.trim();
 }
 
 
-function saveArtifactInfo({startCell, basicInfo,  fileType,  visibility,  linkOrText,  modalId = null})
-{
-	id= getQueryParam("id");
-	sheetId=sheetID;
-	secretKey = "optional_static_key";
-    const values = `${basicInfo}||${fileType}||${visibility}||${linkOrText}`;
+    function saveArtifactInfo({
+                                  startCell,
+                                  basicInfo = undefined,
+                                  fileType = undefined,
+                                  visibility = undefined,
+                                  linkOrText = undefined,
+                                  modalId = null,
+                                  isInsert = false,
+                                  isDelete = false
+                              }) {
+        const id = getQueryParam("id");
+        const sheetId = sheetID;
+        const secretKey = "optional_static_key";
 
-    const query = new URLSearchParams({
-    mode: "updateCells",
-    id,
-    sheetId,
-    range: startCell,
-    values,
-    secret_key: secretKey
-  });
+        // ✅ Prepare dynamic values array
+        const valueParts = [];
 
-const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?${query.toString()}`;
+        if (basicInfo !== undefined) valueParts.push(basicInfo);
+        if (fileType !== undefined) valueParts.push(fileType);
+        if (visibility !== undefined) valueParts.push(visibility);
+        if (linkOrText !== undefined) valueParts.push(linkOrText);
 
-console.log("✅ Final target  URL:", targetUrl);
+        const values = valueParts.join("||");
 
- const popup = window.open(
-  targetUrl,
-  "_blank",
-  "width=10,height=10,left=1,top=1,menubar=no,toolbar=no,location=no,status=no,resizable=no,scrollbars=no"
-);
+        const query = new URLSearchParams({
+            mode: "updateCells",
+            id,
+            sheetId,
+            range: startCell,
+            values,
+            secret_key: secretKey
+        });
 
-	
-	 setTimeout(() => {
-	 
-	  if (modalId) {
-      const modal = document.getElementById(modalId);
-      if (modal) modal.style.display = "none";
+        // ✅ Conditionally add insert=1 or delete=1
+        if (isInsert) {
+            query.append("insert", "1");
+        }
+        if (isDelete) {
+            query.append("delete", "1");
+        }
+
+        const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?${query.toString()}`;
+
+        console.log("✅ Final target URL:", targetUrl);
+
+        const popup = window.open(
+            targetUrl,
+            "_blank",
+            "width=10,height=10,left=1,top=1,menubar=no,toolbar=no,location=no,status=no,resizable=no,scrollbars=no"
+        );
+
+        setTimeout(() => {
+            if (modalId) {
+                const modal = document.getElementById(modalId);
+                if (modal) modal.style.display = "none";
+            }
+
+            if (popup && !popup.closed) popup.close();
+
+            alert("✅ Artifact info saved.");
+            location.reload();
+        }, 1000);
     }
 
-      if (popup && !popup.closed) popup.close();
-      //if (spinner) spinner.style.display = "none";
-      alert("✅ Artifact info saved.");
-	  location.reload();
-	  
-    }, 1000);
-	
-}
 
+
+    /*
+    function saveArtifactInfo({startCell, basicInfo,  fileType,  visibility,  linkOrText,  modalId = null})
+    {
+        id= getQueryParam("id");
+        sheetId=sheetID;
+        secretKey = "optional_static_key";
+        const values = `${basicInfo}||${fileType}||${visibility}||${linkOrText}`;
+
+        const query = new URLSearchParams({
+        mode: "updateCells",
+        id,
+        sheetId,
+        range: startCell,
+        values,
+        secret_key: secretKey
+      });
+
+    const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?${query.toString()}`;
+
+    console.log("✅ Final target  URL:", targetUrl);
+
+     const popup = window.open(
+      targetUrl,
+      "_blank",
+      "width=10,height=10,left=1,top=1,menubar=no,toolbar=no,location=no,status=no,resizable=no,scrollbars=no"
+    );
+
+
+         setTimeout(() => {
+
+          if (modalId) {
+          const modal = document.getElementById(modalId);
+          if (modal) modal.style.display = "none";
+        }
+
+          if (popup && !popup.closed) popup.close();
+          //if (spinner) spinner.style.display = "none";
+          alert("✅ Artifact info saved.");
+          location.reload();
+
+        }, 1000);
+
+    }
+    */
 
 
 function saveArtifactViaPopup() {
