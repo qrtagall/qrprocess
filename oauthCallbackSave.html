@@ -1,104 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>🔄 Saving Artifact...</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body {
-      background: #f0f0f0;
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f4f4;
       text-align: center;
-    }
-    .loader {
-      border: 6px solid #e0e0e0;
-      border-top: 6px solid #4CAF50;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-      margin: 20px auto;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    .message {
-      font-size: 18px;
+      padding-top: 80px;
       color: #333;
+    }
+    .spinner {
+      margin-top: 20px;
+      font-size: 22px;
+      animation: blink 1s infinite;
+    }
+    @keyframes blink {
+      0% { opacity: 0.2; }
+      50% { opacity: 1; }
+      100% { opacity: 0.2; }
+    }
+    .info {
+      font-size: 14px;
+      color: #777;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
-
-<div>
-  <div class="loader"></div>
-  <div class="message">Saving your artifact... Please wait.</div>
-</div>
+  <h2>🔐 Saving Artifact (v-1)</h2>
+  <p class="info" id="status">Just a moment while we save your artifact...</p>
+  <div class="spinner">⏳</div>
 
 <script>
 (async function() {
   try {
-    // Extract access_token and state (your saveArtifactURL)
     const params = new URLSearchParams(window.location.hash.substring(1));
-    const saveUrl = decodeURIComponent(params.get('state') || "");
+    const accessToken = params.get("access_token");
+    const rawState = params.get("state") || "";
+    const saveUrl = decodeURIComponent(rawState);
 
-    console.log("✅ Save URL received:", saveUrl);
+    const statusEl = document.getElementById("status");
 
     if (!saveUrl) {
-      alert("❌ Missing save URL. Cannot proceed.");
+      statusEl.textContent = "❌ Missing save URL.";
       return;
     }
 
-    // ✅ Open the save URL in a hidden popup
-    //const savePopup = window.open(saveUrl, "_blank", "width=10,height=10,left=1,top=1");
+    console.log("✅ Save URL received:", saveUrl);
 
-     window.location.href = saveUrl;
+    // ✅ Redirect to saveUrl to save artifact
+    window.location.href = saveUrl;
 
-    // ✅ Give time for Google Script to process (2-3 seconds)
+    // ✅ After some delay, trigger second OAuth escape
     setTimeout(() => {
-      /*
       try {
-        if (savePopup && !savePopup.closed) savePopup.close();
-      } catch (e) {
-        console.warn("⚠️ Could not close save popup:", e);
-      }*/
+        // Extract ID from saveUrl manually
+        const idMatch = saveUrl.match(/[?&]id=([^&]+)/);
+        const id = idMatch ? idMatch[1] : null;
 
-      // ✅ After save, redirect back to process.qrtagall.com
-      let id = null;
-      try {
-        const rawState = decodeURIComponent(params.get('state') || "");
-        const idMatch = rawState.match(/[?&]id=([^&]+)/);
-        id = idMatch ? idMatch[1] : null;
-      } catch (e) {
-        console.warn("⚠️ ID extraction failed from state:", e);
-      }
-
-      const redirectUrl = id 
-        ? `https://process.qrtagall.com/?id=${id}` 
-        : "https://process.qrtagall.com";
-
-      if (window.opener && !window.opener.closed) {
-        try {
-          window.opener.location.href = redirectUrl;
-          window.close();
-        } catch (e) {
-          console.warn("⚠️ Unable to close popup:", e);
-          window.location.href = redirectUrl;
+        if (!id) {
+          console.warn("⚠️ ID extraction failed.");
+          window.location.href = "https://process.qrtagall.com";
+          return;
         }
-      } else {
-        window.location.href = redirectUrl;
-      }
 
-    }, 5000); // 3 sec wait
+        const finalRedirectUrl = `https://process.qrtagall.com/?id=${id}`;
+
+        const secondOAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
+          `?response_type=token` +
+          `&client_id=121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com` +
+          `&redirect_uri=${encodeURIComponent('https://process.qrtagall.com/oauth-redirect-final.html')}` +
+          `&scope=${encodeURIComponent('https://www.googleapis.com/auth/userinfo.email')}` +
+          `&state=${encodeURIComponent(finalRedirectUrl)}`;
+
+        console.log("🔁 Triggering second OAuth escape:", secondOAuthUrl);
+        window.location.href = secondOAuthUrl;
+
+      } catch (e) {
+        console.error("❌ Error during final redirect setup:", e);
+        window.location.href = "https://process.qrtagall.com";
+      }
+    }, 8000); // Wait 8 seconds before escaping Apps Script
 
   } catch (error) {
-    console.error("❌ Error during save:", error);
-    alert("❌ Save failed. Please try again.");
+    console.error("❌ Critical Error:", error);
+    document.getElementById("status").textContent = "❌ Save Failed.";
     window.location.href = "https://process.qrtagall.com";
   }
 })();
