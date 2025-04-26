@@ -252,7 +252,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-6.9</div>
+	  <div id="versionTag">Ver-6.10</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -265,12 +265,14 @@
 
 	  <!-- 🔐 Log-in to Edit button (disabled for now) -->
 	  <div style="display: flex; justify-content: center; margin-top: 40px;">
-	 	  <button id="editBtn" class="enabled" onclick="editAlert()">
-			🔐 Log-in to Edit Details
+          <button id="editBtn" class="enabled" onclick="editAlert()" style="text-align: center; line-height: 1.2;">
+          🔐 Log-in to Edit Details
 		  </button>
 		</div>
 
 	</div>
+
+
 	
 	
 	
@@ -431,8 +433,8 @@ function cleanUpUrl() {
   window.history.replaceState({}, document.title, url.toString());
 }
 
-	//const sessionEmail = localStorage.getItem("qr_claimed_email");
-	const sessionEmail = "dev.chandan2002x@gmail.com";//localStorage.getItem("qr_claimed_email");
+	const sessionEmail = localStorage.getItem("qr_claimed_email");
+	//const sessionEmail = "dev.chandan2002x@gmail.com";//localStorage.getItem("qr_claimed_email");
 
 	console.log("📧 QR was last claimed/verified by:", sessionEmail);
 	if (sessionEmail)
@@ -845,10 +847,26 @@ async function fetchAssetData(id) {
       isOwner = true;
       updatePanelBackground("#e6ffe6");
       editBtn.innerHTML = "✏️ Edit Details";
-    } else {
-      isOwner = false;
-      updatePanelBackground("#fffbe6");
-      editBtn.innerHTML = "🔐 Log-in to Edit Details";
+    } else
+    {
+        isOwner = false;
+
+
+
+        if(ownerEmail )
+        {
+            editBtn.innerHTML = "🔐 Log-in as Owner<br>to Edit Details";
+            updatePanelBackground("#ffb3b3");
+        }
+        else
+        {
+            editBtn.innerHTML = "🔐 Log-in to Edit Details";
+            updatePanelBackground("#fffbe6");
+
+        }
+
+
+
     }
 
     /*** Artifact Rendering ***/
