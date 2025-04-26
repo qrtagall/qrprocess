@@ -58,6 +58,7 @@
 
     // ✅ After some delay, trigger second OAuth escape
     setTimeout(() => {
+       console.log("Timeout Triggered");
       try {
         // Extract ID from saveUrl manually
         const idMatch = saveUrl.match(/[?&]id=([^&]+)/);
@@ -81,7 +82,7 @@
               console.log("🔁 Redirecting to second OAuth flow:", secondOAuthUrl);
               window.location.href = secondOAuthUrl;
               */
-        
+        console.log("Timeout Triggered>>1");
         const finalRedirectUrl = `https://process.qrtagall.com/?id=20250423203948660_6cb7df426b881d3';//${id}`;
 
         const secondOAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
