@@ -70,7 +70,19 @@
           return;
         }
 
-        const finalRedirectUrl = `https://process.qrtagall.com/?id=${id}`;
+        /*
+         const secondOAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
+                `?response_type=token` +
+                `&client_id=121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com` +
+                `&redirect_uri=${encodeURIComponent('https://process.qrtagall.com/oauth-redirect-final.html')}` +
+                `&scope=${encodeURIComponent('https://www.googleapis.com/auth/userinfo.email')}` +
+                `&state=${encodeURIComponent(finalRedirectUrl)}`;
+              
+              console.log("🔁 Redirecting to second OAuth flow:", secondOAuthUrl);
+              window.location.href = secondOAuthUrl;
+              */
+        
+        const finalRedirectUrl = `https://process.qrtagall.com/?id=20250423203948660_6cb7df426b881d3';//${id}`;
 
         const secondOAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
           `?response_type=token` +
@@ -80,13 +92,13 @@
           `&state=${encodeURIComponent(finalRedirectUrl)}`;
 
         console.log("🔁 Triggering second OAuth escape:", secondOAuthUrl);
-        //window.location.href = secondOAuthUrl;
+        window.location.href = secondOAuthUrl;
 
       } catch (e) {
         console.error("❌ Error during final redirect setup:", e);
         window.location.href = "https://process.qrtagall.com";
       }
-    }, 8000); // Wait 8 seconds before escaping Apps Script
+    }, 10000); // Wait 8 seconds before escaping Apps Script
 
   } catch (error) {
     console.error("❌ Critical Error:", error);
