@@ -35,61 +35,62 @@
   <div class="spinner">⏳</div>
 
 <script>
-
- (async function() {
+(async function() {
   try {
     const params = new URLSearchParams(window.location.hash.substring(1));
-    const rawState = params.get("state");
-    
-    let saveUrl = "";
-    let id = "";
-    
-    try {
-      const parsedState = JSON.parse(decodeURIComponent(rawState));
-      saveUrl = parsedState.saveUrl || "";
-      id = parsedState.id || "";
-    } catch (e) {
-      console.error("Failed to parse state:", e);
-    }
-    
+    const accessToken = params.get("access_token");
+    const rawState = params.get("state") || "";
+    const saveUrl = decodeURIComponent(rawState);
+
+    const statusEl = document.getElementById("status");
+
     if (!saveUrl) {
-      document.getElementById("status").textContent = "❌ Missing save URL or ID.";
+      statusEl.textContent = "❌ Missing save URL.";
       return;
     }
 
-    console.log("✅ Redirecting to Save URL:", saveUrl);
+    console.log("✅ Save URL received:", saveUrl);
 
-    // ✅ Instead of fetch(), just REDIRECT to saveUrl (Apps Script page)
-   // window.location.href = saveUrl;
+    // ✅ Redirect to saveUrl to save artifact
+    window.location.href = saveUrl;
 
-
-  /*
-    // ✅ SetTimeout after 8-10 seconds, trigger second OAuth escape
+    // ✅ After some delay, trigger second OAuth escape
     setTimeout(() => {
-      const finalRedirectUrl = `https://process.qrtagall.com/?id=${encodeURIComponent(id)}`;
-      
-      const secondOAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
-        `?response_type=token` +
-        `&client_id=121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com` +
-        `&redirect_uri=${encodeURIComponent('https://process.qrtagall.com/oauth-redirect-final.html')}` +
-        `&scope=${encodeURIComponent('https://www.googleapis.com/auth/userinfo.email')}` +
-        `&state=${encodeURIComponent(finalRedirectUrl)}`;
+      try {
+        // Extract ID from saveUrl manually
+        const idMatch = saveUrl.match(/[?&]id=([^&]+)/);
+        const id = idMatch ? idMatch[1] : null;
 
-      console.log("🔁 Triggering Second OAuth Escape:", secondOAuthUrl);
-      window.location.href = secondOAuthUrl;
-    }, 10000);
+        if (!id) {
+          console.warn("⚠️ ID extraction failed.");
+          window.location.href = "https://process.qrtagall.com";
+          return;
+        }
 
-    */
+        const finalRedirectUrl = `https://process.qrtagall.com/?id=${id}`;
+
+        const secondOAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
+          `?response_type=token` +
+          `&client_id=121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com` +
+          `&redirect_uri=${encodeURIComponent('https://process.qrtagall.com/oauth-redirect-final.html')}` +
+          `&scope=${encodeURIComponent('https://www.googleapis.com/auth/userinfo.email')}` +
+          `&state=${encodeURIComponent(finalRedirectUrl)}`;
+
+        console.log("🔁 Triggering second OAuth escape:", secondOAuthUrl);
+        window.location.href = secondOAuthUrl;
+
+      } catch (e) {
+        console.error("❌ Error during final redirect setup:", e);
+        window.location.href = "https://process.qrtagall.com";
+      }
+    }, 8000); // Wait 8 seconds before escaping Apps Script
 
   } catch (error) {
-    console.error("Critical Error:", error);
-    document.getElementById("status").textContent = "❌ Unexpected error occurred.";
+    console.error("❌ Critical Error:", error);
+    document.getElementById("status").textContent = "❌ Save Failed.";
     window.location.href = "https://process.qrtagall.com";
   }
 })();
-
-
-
 </script>
 
 </body>
