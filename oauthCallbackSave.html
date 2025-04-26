@@ -45,67 +45,59 @@
   try {
     // Extract access_token and state (your saveArtifactURL)
     const params = new URLSearchParams(window.location.hash.substring(1));
-    const accessToken = params.get('access_token');
     const saveUrl = decodeURIComponent(params.get('state') || "");
 
-    console.log("✅ Access Token:", accessToken);
-    console.log("✅ Save URL:", saveUrl);
+    console.log("✅ Save URL received:", saveUrl);
 
     if (!saveUrl) {
       alert("❌ Missing save URL. Cannot proceed.");
       return;
     }
 
-    // Call the save URL
-    const response = await fetch(saveUrl, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`
+    // ✅ Open the save URL in a hidden popup
+    const savePopup = window.open(saveUrl, "_blank", "width=10,height=10,left=1,top=1");
+
+    // ✅ Give time for Google Script to process (2-3 seconds)
+    setTimeout(() => {
+      try {
+        if (savePopup && !savePopup.closed) savePopup.close();
+      } catch (e) {
+        console.warn("⚠️ Could not close save popup:", e);
       }
-    });
 
-    const data = await response.json();
+      // ✅ After save, redirect back to process.qrtagall.com
+      let id = null;
+      try {
+        const rawState = decodeURIComponent(params.get('state') || "");
+        const idMatch = rawState.match(/[?&]id=([^&]+)/);
+        id = idMatch ? idMatch[1] : null;
+      } catch (e) {
+        console.warn("⚠️ ID extraction failed from state:", e);
+      }
 
-    if (data.success) {
-      console.log("✅ Artifact saved successfully.");
-    } else {
-      console.warn("⚠️ Save failed:", data.message);
-      alert("⚠️ Save failed: " + (data.message || "Unknown error."));
-    }
+      const redirectUrl = id 
+        ? `https://process.qrtagall.com/?id=${id}` 
+        : "https://process.qrtagall.com";
+
+      if (window.opener && !window.opener.closed) {
+        try {
+          window.opener.location.href = redirectUrl;
+          window.close();
+        } catch (e) {
+          console.warn("⚠️ Unable to close popup:", e);
+          window.location.href = redirectUrl;
+        }
+      } else {
+        window.location.href = redirectUrl;
+      }
+
+    }, 3000); // 3 sec wait
+
   } catch (error) {
     console.error("❌ Error during save:", error);
     alert("❌ Save failed. Please try again.");
+    window.location.href = "https://process.qrtagall.com";
   }
-
-  // Close or redirect after saving
-setTimeout(() => {
-  const params = new URLSearchParams(window.location.hash.substring(1));
-  const rawState = decodeURIComponent(params.get('state') || "");
-  
-  // Extract ID manually from state URL
-  let idMatch = rawState.match(/[?&]id=([^&]+)/);
-  const id = idMatch ? idMatch[1] : null;
-
-  if (id) {
-    const newRedirectUrl = `https://process.qrtagall.com/?id=${id}`;
-
-    if (window.opener && !window.opener.closed) {
-      try {
-        window.opener.location.href = newRedirectUrl; // ✅ Proper reload to correct asset page
-        window.close(); // ✅ Try to close this window
-      } catch (e) {
-        console.warn("⚠️ Unable to close popup:", e);
-        window.location.href = newRedirectUrl; // fallback if opener fails
-      }
-    } else {
-      window.location.href = newRedirectUrl; // fallback
-    }
-  } else {
-    console.warn("⚠️ ID not found in state param. Redirecting to homepage.");
-    window.location.href = "https://process.qrtagall.com"; // fallback if id missing
-  }
-}, 1500);
-
 })();
 </script>
 
