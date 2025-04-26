@@ -77,13 +77,13 @@
           `&state=${encodeURIComponent(finalRedirectUrl)}`;
 
         console.log("🔁 Triggering second OAuth escape:", secondOAuthUrl);
-        window.location.href = secondOAuthUrl;
+        //window.location.href = secondOAuthUrl;
 
       } catch (e) {
         console.error("❌ Error during final redirect setup:", e);
         window.location.href = "https://process.qrtagall.com";
       }
-    }, 8000); // Wait 8 seconds before escaping Apps Script
+    }, 10000); // Wait 8 seconds before escaping Apps Script
 
   } catch (error) {
     console.error("❌ Critical Error:", error);
