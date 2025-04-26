@@ -30,7 +30,7 @@
   </style>
 </head>
 <body>
-  <h2>🔐 Saving Artifact (v-2)</h2>
+  <h2>🔐 Saving Artifact (v-3)</h2>
   <p class="info" id="status">Just a moment while we save your artifact...</p>
   <div class="spinner">⏳</div>
 
@@ -53,11 +53,13 @@
 
     // ✅ Redirect to saveUrl to save artifact
     //window.location.href = saveUrl;
+/*
 const iframe = document.createElement('iframe');
 iframe.src = saveUrl;
 iframe.style.display = "none"; 
 document.body.appendChild(iframe);
-
+*/
+    window.location.href = saveUrl;
     
 
     // ✅ After some delay, trigger second OAuth escape
