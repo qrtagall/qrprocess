@@ -98,12 +98,7 @@
         // ✅ Call backend to register the claim
         const backendUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec`;
         const finalRedirectUrl = `${window.location.origin}/?id=${encodeURIComponent(id)}&claimed=1&email=${encodeURIComponent(email)}`;
-
-
         const claimUrl = `${backendUrl}?initClaim=${encodeURIComponent(id)}&asset=${encodeURIComponent(asset)}`;
-        
-        // &email=${encodeURIComponent(email)}&oauthClaim=1  <-- commented separately
-        
         // Log the backend request
         console.log("📡 Sending claim info to backend:", claimUrl);
         
