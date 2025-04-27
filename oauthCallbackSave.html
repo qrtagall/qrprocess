@@ -30,7 +30,7 @@
   </style>
 </head>
 <body>
-  <h2>🔐 Saving Artifact (v-11)</h2>
+  <h2>🔐 Saving Artifact (v-12)</h2>
   <p class="info" id="status">Just a moment while we save your artifact...</p>
   <div class="spinner">⏳</div>
 
@@ -68,14 +68,14 @@
     
 
     // ✅ Redirect to saveUrl to save artifact
-  window.location.href = saveUrl;
+ // window.location.href = saveUrl;
 /*
 const iframe = document.createElement('iframe');
 iframe.src = saveUrl;
 iframe.style.display = "none"; 
 document.body.appendChild(iframe);
 */
- //  window.open(saveUrl, "_blank");
+   window.open(saveUrl, "_blank");
     
 
 
@@ -89,15 +89,15 @@ document.body.appendChild(iframe);
        
 
         /*
-          // ✅ Trigger second OAuth to escape Apps Script sandbox
-              const secondOAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
+        const finalRedirectUrl = `${window.location.origin}/?id=${encodeURIComponent(id)}&claimed=1&email=${encodeURIComponent(email)}`;
+          const secondOAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
                 `?response_type=token` +
                 `&client_id=121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com` +
                 `&redirect_uri=${encodeURIComponent('https://process.qrtagall.com/oauth-redirect-final.html')}` +
                 `&scope=${encodeURIComponent('https://www.googleapis.com/auth/userinfo.email')}` +
                 `&state=${encodeURIComponent(finalRedirectUrl)}`;
-              
-              console.log("🔁 Redirecting to second OAuth flow:", secondOAuthUrl);
+            
+                    console.log("🔁 Redirecting to second OAuth flow:", secondOAuthUrl);
               window.location.href = secondOAuthUrl;
               */
         
