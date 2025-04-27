@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Saving... Please Wait (V2.0)</title>
+  <title>Saving... Please Wait (V3.0)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
@@ -34,14 +34,25 @@
     }
   </style>
   <script>
-    
+
+
 window.addEventListener('load', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const furl = urlParams.get('redirect');
+
+    console.log(">>>>>>>>>> Save URL received:", furl);
+
     setTimeout(() => {
-    const furl=sessionStorage.getItem('saveWaitRedirect');
-       console.log(">>>>>>>>>> Save URL received:", furl);
-      //window.location.href = furl || '/';
-    }, 2500); // wait 2.5 sec then go to Google OAuth
+      if (furl) {
+        window.location.href = furl;
+      } else {
+        window.location.href = '/'; // fallback
+      }
+    }, 2500);
   });
+
+    
+    
     
   </script>
 </head>
