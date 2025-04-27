@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>QRTagAll Final Redirect</title>
+</head>
+<body style="font-family:sans-serif; text-align:center; padding-top:80px;">
+  <h2>🔐 Finalizing login...</h2>
+  <p id="status">Just a moment...</p>
+  <script>
+    const hash = new URLSearchParams(window.location.hash.slice(1));
+    const accessToken = hash.get("access_token");
+    const stateUrl = hash.get("state");
+
+    const status = document.getElementById("status");
+
+    if (!stateUrl) {
+      status.textContent = "❌ No redirect URL found.";
+    } else {
+      console.log("🎯 Redirecting to:", stateUrl);
+      status.textContent = "✅ Redirecting to final page...";
+      window.location.href = stateUrl;
+    }
+  </script>
+</body>
+</html>
