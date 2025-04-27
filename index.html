@@ -1,294 +1,294 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>QRTagall | ID Verifier</title>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <meta charset="UTF-8">
+    <title>QRTagall | ID Verifier</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    :root {
-      --primary: #005aab;
-      --valid: #00cc88;
-      --error: #ff4444;
-    }
-	  
-
-	  
-    body {
-		margin: 0;
-		padding: 0;
-		background: #f4f4f4;
-		font-family: 'Segoe UI', sans-serif;
-		min-height: 100vh;
-		display: block; 
-		overflow-y: auto; 
-    }
-
-    #popup {
-	  position: relative;
-	  background: white;
-	  padding: 30px;
-	  border-radius: 12px;
-	  box-shadow: 0 0 20px rgba(0,0,0,0.1);
-	  text-align: center;
-	  width: 320px;
-	  margin: 80px auto; /* this centers it with scroll */
-	  animation: fadeIn 0.4s ease;
-	}
-
-
-    h2 {
-      margin-top: 0;
-      color: var(--primary);
-    }
-
-    #result {
-      font-size: 16px;
-      margin-top: 20px;
-      font-weight: bold;
-    }
-
-    #claimBtn {
-      margin-top: 25px;
-      display: none;
-      background-color: var(--primary);
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      font-size: 15px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-
-    #claimBtn:hover {
-      background-color: #005fa3;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.95); }
-      to { opacity: 1; transform: scale(1); }
-    }
-
-    .login-options {
-      margin-top: 25px;
-    }
-
-    .login-options p {
-      font-weight: bold;
-      margin-bottom: 10px;
-      color: #333;
-    }
-
-    .auth-buttons {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-    }
-
-    .auth-button {
-      width: 40px;
-      height: 40px;
-      opacity: 0.3;
-      cursor: not-allowed;
-      transition: transform 0.2s;
-    }
-
-    .auth-button.enabled {
-      opacity: 1;
-      cursor: pointer;
-    }
-
-    .auth-button.enabled:hover {
-      transform: scale(1.1);
-    }
-	
-	.auth-buttons-vertical {
-	  display: flex;
-	  flex-direction: column;
-	  align-items: center;
-	  gap: 12px;
-	  margin-top: 10px;
-	}
-
-	.auth-button-box {
-	  display: flex;
-	  align-items: center;
-	  gap: 10px;
-	  padding: 10px 20px;
-	  border-radius: 8px;
-	  border: 1px solid #ccc;
-	  background-color: #fff;
-	  font-size: 14px;
-	  font-weight: 500;
-	  color: #333;
-	  width: 220px;
-	  justify-content: center;
-	  cursor: not-allowed;
-	  opacity: 0.5;
-	  transition: transform 0.2s, box-shadow 0.2s;
-	}
-
-	.auth-button-box img.auth-logo {
-	  width: 18px;
-	  height: 18px;
-	  object-fit: contain;
-	}
-
-	.auth-button-box.enabled {
-	  opacity: 1;
-	  cursor: pointer;
-	}
-
-	.auth-button-box.enabled:hover {
-	  transform: scale(1.03);
-	  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-	}
-
-	#versionTag {
-	  font-size: 8px;
-	  color: #666;
-	  position: absolute;
-	  bottom: 12px;
-	  right: 20px;
-	  font-family: monospace;
-	}
-
-	#mainContent {
-	  display: flex;
-	  flex-direction: column;
-	  align-items: center;
-	  max-width: 800px;
-	  margin: 40px auto;
-	  padding: 30px;
-	  background-color: white;
-	  border-radius: 12px;
-	  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-	}
-
-	#mainContent h2 {
-	  color: var(--primary);
-	  font-size: 24px;
-	  margin-bottom: 20px;
-	  text-align: center;
-	}
-
-	#mainContent p {
-	  width: 100%;
-	  font-size: 16px;
-	  text-align: left;
-	  margin: 10px 0;
-	  line-height: 1.5;
-	}
-
-	#mainContent iframe,
-	#mainContent img {
-	  max-width: 100%;
-	  border: 1px solid #ccc;
-	  border-radius: 8px;
-	  margin: 20px 0;
-	}
-
-	.editBtn {
-  transition: all 0.3s ease;
-}
-
-.disabled-button {
-  margin-top: 40px;
-  padding: 16px 48px;
-  font-size: 18px;
-  font-weight: 600;
-  border-radius: 12px;
-  background-color: #ccc;
-  color: #bbb;
-  border: none;
-  cursor: not-allowed;
-  opacity: 0.6;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-}
-
-.enabled {
-  background-color: var(--primary);
-  color: white;
-  cursor: pointer;
-  opacity: 1;
-  box-shadow: 0 4px 10px rgba(0, 119, 204, 0.2);
-  padding: 18px 52px;   /* ✅ new size here */
-  font-size: 19px;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+    <style>
+        :root {
+            --primary: #005aab;
+            --valid: #00cc88;
+            --error: #ff4444;
+        }
 
 
 
-  </style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f4f4f4;
+            font-family: 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            display: block;
+            overflow-y: auto;
+        }
+
+        #popup {
+            position: relative;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 320px;
+            margin: 80px auto; /* this centers it with scroll */
+            animation: fadeIn 0.4s ease;
+        }
+
+
+        h2 {
+            margin-top: 0;
+            color: var(--primary);
+        }
+
+        #result {
+            font-size: 16px;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        #claimBtn {
+            margin-top: 25px;
+            display: none;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #claimBtn:hover {
+            background-color: #005fa3;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .login-options {
+            margin-top: 25px;
+        }
+
+        .login-options p {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .auth-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .auth-button {
+            width: 40px;
+            height: 40px;
+            opacity: 0.3;
+            cursor: not-allowed;
+            transition: transform 0.2s;
+        }
+
+        .auth-button.enabled {
+            opacity: 1;
+            cursor: pointer;
+        }
+
+        .auth-button.enabled:hover {
+            transform: scale(1.1);
+        }
+
+        .auth-buttons-vertical {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .auth-button-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            width: 220px;
+            justify-content: center;
+            cursor: not-allowed;
+            opacity: 0.5;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .auth-button-box img.auth-logo {
+            width: 18px;
+            height: 18px;
+            object-fit: contain;
+        }
+
+        .auth-button-box.enabled {
+            opacity: 1;
+            cursor: pointer;
+        }
+
+        .auth-button-box.enabled:hover {
+            transform: scale(1.03);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        #versionTag {
+            font-size: 8px;
+            color: #666;
+            position: absolute;
+            bottom: 12px;
+            right: 20px;
+            font-family: monospace;
+        }
+
+        #mainContent {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 30px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #mainContent h2 {
+            color: var(--primary);
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        #mainContent p {
+            width: 100%;
+            font-size: 16px;
+            text-align: left;
+            margin: 10px 0;
+            line-height: 1.5;
+        }
+
+        #mainContent iframe,
+        #mainContent img {
+            max-width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .editBtn {
+            transition: all 0.3s ease;
+        }
+
+        .disabled-button {
+            margin-top: 40px;
+            padding: 16px 48px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 12px;
+            background-color: #ccc;
+            color: #bbb;
+            border: none;
+            cursor: not-allowed;
+            opacity: 0.6;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        }
+
+        .enabled {
+            background-color: var(--primary);
+            color: white;
+            cursor: pointer;
+            opacity: 1;
+            box-shadow: 0 4px 10px rgba(0, 119, 204, 0.2);
+            padding: 18px 52px;   /* ✅ new size here */
+            font-size: 19px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+
+
+    </style>
 </head>
 <body>
 
-	
+
 <!-- Spinner & Popup -->
-	<div id="popup">
-	  <h2>🔍 Verifying QR ID</h2>
-	  <p id="idText" style="font-size:14px; color:gray;"></p>
-	  <div id="spinner" style="margin-top:20px;">⏳ Please wait...</div>
-	  <div id="result" style="display:none;"></div>
+<div id="popup">
+    <h2>🔍 Verifying QR ID</h2>
+    <p id="idText" style="font-size:14px; color:gray;"></p>
+    <div id="spinner" style="margin-top:20px;">⏳ Please wait...</div>
+    <div id="result" style="display:none;"></div>
 
-	  <div id="loginSection" class="login-options" style="display:none;">
-		  <p>"Enter Asset Name and Login" to Own this QR</p>
-		
-		  <!-- 👇 Asset Name Input Box -->
-		  <input id="assetNameInput" type="text" placeholder="Enter Asset Name"
-		         style="margin-bottom:10px; padding:8px; width:80%; border-radius:6px; border:1px solid #ccc;" />
-		
-		  <div class="auth-buttons-vertical">
-		    <button class="auth-button-box enabled" onclick="googleLoginNew()">
-		      <img class="auth-logo" src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo">
-		      <span>Continue with Google</span>
-		    </button>
-		  </div>
-		</div>
+    <div id="loginSection" class="login-options" style="display:none;">
+        <p>"Enter Asset Name and Login" to Own this QR</p>
 
+        <!-- 👇 Asset Name Input Box -->
+        <input id="assetNameInput" type="text" placeholder="Enter Asset Name"
+               style="margin-bottom:10px; padding:8px; width:80%; border-radius:6px; border:1px solid #ccc;" />
 
-	  <div id="versionTag">Ver-1.5</div>
-	</div>
-
-	<!-- Main Content for Verified IDs -->
-	<div id="mainContent" style="display:none; padding:30px; max-width:600px; font-family:'Segoe UI', sans-serif;">
-	  <h2 id="assetTitle" style="color:var(--primary); font-size:24px;"></h2>
-	  <div id="assetLinks" style="margin-top:10px;"></div>
+        <div class="auth-buttons-vertical">
+            <button class="auth-button-box enabled" onclick="googleLoginNew()">
+                <img class="auth-logo" src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo">
+                <span>Continue with Google</span>
+            </button>
+        </div>
+    </div>
 
 
-		<hr style="border: none; height: 3px; width: 80%; background: linear-gradient(to right, orange, #ffa500); margin: 60px auto 30px auto; border-radius: 5px;">
+    <div id="versionTag">Ver-1.6</div>
+</div>
 
-	  <!-- 🔐 Log-in to Edit button (disabled for now) -->
-	  <div style="display: flex; justify-content: center; margin-top: 40px;">
-          <button id="editBtn" class="enabled" onclick="editAlert()" style="text-align: center; line-height: 1.2;">
-          🔐 Log-in to Edit Details
-		  </button>
-		</div>
-
-	</div>
+<!-- Main Content for Verified IDs -->
+<div id="mainContent" style="display:none; padding:30px; max-width:600px; font-family:'Segoe UI', sans-serif;">
+    <h2 id="assetTitle" style="color:var(--primary); font-size:24px;"></h2>
+    <div id="assetLinks" style="margin-top:10px;"></div>
 
 
-	
-	
-	
-	<div id="ownerConfirmModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:9999; align-items:center; justify-content:center;">
-	  <div style="background:white; padding:30px 25px; border-radius:12px; width:90%; max-width:360px; text-align:center; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
-		<h3 style="margin-top:0; font-size:18px; color:#e67e22;">⚠️ Only QR owner can edit !</h3>
-		<p style="margin-bottom:25px; font-size:15px;">Are you the owner - would you like to log in?</p>
-		<button id="ownerLoginYes" style="background-color:#005aab; color:white; padding:10px 20px; border:none; border-radius:6px; font-weight:bold; margin-right:10px; cursor:pointer;">Yes, Login</button>
-		<button id="ownerLoginCancel" style="background-color:#ccc; color:#333; padding:10px 20px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Cancel</button>
-	  </div>
-	</div>
-	
-		
-		<div id="fullScreenSpinner" style="
+    <hr style="border: none; height: 3px; width: 80%; background: linear-gradient(to right, orange, #ffa500); margin: 60px auto 30px auto; border-radius: 5px;">
+
+    <!-- 🔐 Log-in to Edit button (disabled for now) -->
+    <div style="display: flex; justify-content: center; margin-top: 40px;">
+        <button id="editBtn" class="enabled" onclick="editAlert()" style="text-align: center; line-height: 1.2;">
+            🔐 Log-in to Edit Details
+        </button>
+    </div>
+
+</div>
+
+
+
+
+
+<div id="ownerConfirmModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:white; padding:30px 25px; border-radius:12px; width:90%; max-width:360px; text-align:center; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+        <h3 style="margin-top:0; font-size:18px; color:#e67e22;">⚠️ Only QR owner can edit !</h3>
+        <p style="margin-bottom:25px; font-size:15px;">Are you the owner - would you like to log in?</p>
+        <button id="ownerLoginYes" style="background-color:#005aab; color:white; padding:10px 20px; border:none; border-radius:6px; font-weight:bold; margin-right:10px; cursor:pointer;">Yes, Login</button>
+        <button id="ownerLoginCancel" style="background-color:#ccc; color:#333; padding:10px 20px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Cancel</button>
+    </div>
+</div>
+
+
+<div id="fullScreenSpinner" style="
 	  display: none;
 	  position: fixed;
 	  top: 0; left: 0; right: 0; bottom: 0;
@@ -297,7 +297,7 @@
 	  justify-content: center;
 	  align-items: center;
 	">
-	  <div class="spinner" style="
+    <div class="spinner" style="
 		border: 8px solid #f3f3f3;
 		border-top: 8px solid #3498db;
 		border-radius: 50%;
@@ -305,11 +305,11 @@
 		height: 60px;
 		animation: spin 1s linear infinite;
 	  "></div>
-	</div>
+</div>
 
 
 
-	<button id="logoutBtn" onclick="handleLogout()" style="
+<button id="logoutBtn" onclick="handleLogout()" style="
 	  position: fixed;
 	  bottom: 20px;
 	  right: 20px;
@@ -324,10 +324,10 @@
 	  z-index: 999;
 	">🔓 Log Out</button>
 
-	
-	
-	
-	<!-- 🔲 Modal for Adding Artifact -->
+
+
+
+<!-- 🔲 Modal for Adding Artifact -->
 <!-- 🔲 Modal for Adding Artifact -->
 <div id="addArtifactModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:#00000055; z-index:10000; justify-content:center; align-items:center;">
     <div style="background:white; padding:20px; border-radius:10px; max-width:500px; width:90%; box-shadow:0 0 10px rgba(0,0,0,0.2); position:relative;">
@@ -393,230 +393,231 @@
 
 
 
-  <script>
-	
-    
-	const SALT = "QRTagall@2025";
-	let editMode = false;
-	let insertAfterRow = null;
-	let selectedUploadedFileLink = "";
-	let sheetID="";
+<script>
+
+
+    const SALT = "QRTagall@2025";
+    let editMode = false;
+    let insertAfterRow = null;
+    let selectedUploadedFileLink = "";
+    let sheetID="";
     var currentEditMode = null; // new global
     var assetDataList = [];  // global
+    let ownerEmail="";
 
-	  console.log("🚀 Script block reached!");
- 
+    console.log("🚀 Script block reached!");
 
 
-	  
-	  
+
+
+
     async function sha256(input) {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(input);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-      return Array.from(new Uint8Array(hashBuffer))
-        .map(b => b.toString(16).padStart(2, '0')).join('');
+        const encoder = new TextEncoder();
+        const data = encoder.encode(input);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        return Array.from(new Uint8Array(hashBuffer))
+            .map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
     function getQueryParam(param) {
-      const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get(param);
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
     }
 
     function claimQRCode() {
-      alert("🚀 Claim process initiated. This part will be linked to actual claiming logic.");
-      // TODO: Redirect or initiate claim form
+        alert("🚀 Claim process initiated. This part will be linked to actual claiming logic.");
+        // TODO: Redirect or initiate claim form
     }
 
 
-function cleanUpUrl() {
-  const url = new URL(window.location.href);
-  url.searchParams.delete("claimed");
-  window.history.replaceState({}, document.title, url.toString());
-}
+    function cleanUpUrl() {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("claimed");
+        window.history.replaceState({}, document.title, url.toString());
+    }
 
-	const sessionEmail = localStorage.getItem("qr_claimed_email");
-	//const sessionEmail = "dev.chandan2002x@gmail.com";//localStorage.getItem("qr_claimed_email");
+    const sessionEmail = localStorage.getItem("qr_claimed_email");
+    //const sessionEmail = "dev.chandan2002x@gmail.com";//localStorage.getItem("qr_claimed_email");
 
-	console.log("📧 QR was last claimed/verified by:", sessionEmail);
-	if (sessionEmail)
-	{
-	  document.getElementById("logoutBtn").style.display = "block";
-	}
-
-
-/*********************LogOut *********************/
-  function handleLogout() {
-  localStorage.removeItem("qr_claimed_email");
-  // Optional: clear sessionStorage too
-  sessionStorage.removeItem("qr_claimed_email");
-
-  alert("🔓 You have been logged out.");
-  window.location.reload();
-}
-
-/************** New Google Auth and QR Claim *********************/
-
-function googleLoginNew() {
-  const id = getQueryParam("id");
-  let assetName = document.getElementById("assetNameInput").value.trim();
+    console.log("📧 QR was last claimed/verified by:", sessionEmail);
+    if (sessionEmail)
+    {
+        document.getElementById("logoutBtn").style.display = "block";
+    }
 
 
-  if (!assetName) {
-   // alert("⚠️ Please enter an asset name before continuing.");
-   // return;
-	  assetName = "Unnamed Asset";
-  }
+    /*********************LogOut *********************/
+    function handleLogout() {
+        localStorage.removeItem("qr_claimed_email");
+        // Optional: clear sessionStorage too
+        sessionStorage.removeItem("qr_claimed_email");
 
-  const clientId = "121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com";
-  const redirectUri = "https://process.qrtagall.com/oauth-claim-callback.html";
-  const scope = "https://www.googleapis.com/auth/userinfo.email";
+        alert("🔓 You have been logged out.");
+        window.location.reload();
+    }
 
-  // Encode both ID and assetName in a stringified JSON
-  const stateObj = {
-    id: id,
-    asset: assetName
-  };
-  const state = encodeURIComponent(JSON.stringify(stateObj));
+    /************** New Google Auth and QR Claim *********************/
 
-  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
-    `?response_type=token` +
-    `&client_id=${encodeURIComponent(clientId)}` +
-    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-    `&scope=${encodeURIComponent(scope)}` +
-    `&state=${state}`;
-
-  console.log("🔐 Redirecting to Google OAuth:", authUrl);
-  window.location.href = authUrl;
-}
+    function googleLoginNew() {
+        const id = getQueryParam("id");
+        let assetName = document.getElementById("assetNameInput").value.trim();
 
 
+        if (!assetName) {
+            // alert("⚠️ Please enter an asset name before continuing.");
+            // return;
+            assetName = "Unnamed Asset";
+        }
 
+        const clientId = "121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com";
+        const redirectUri = "https://process.qrtagall.com/oauth-claim-callback.html";
+        const scope = "https://www.googleapis.com/auth/userinfo.email";
 
-console.log("🔄 Initiating Verification...");
-	  
+        // Encode both ID and assetName in a stringified JSON
+        const stateObj = {
+            id: id,
+            asset: assetName
+        };
+        const state = encodeURIComponent(JSON.stringify(stateObj));
+
+        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
+            `?response_type=token` +
+            `&client_id=${encodeURIComponent(clientId)}` +
+            `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+            `&scope=${encodeURIComponent(scope)}` +
+            `&state=${state}`;
+
+        console.log("🔐 Redirecting to Google OAuth:", authUrl);
+        window.location.href = authUrl;
+    }
 
 
 
-	  
-	  
-let isOwner=false;
 
-/*********************** ID Verification **************************/  
+    console.log("🔄 Initiating Verification...");
+
+
+
+
+
+
+    let isOwner=false;
+
+    /*********************** ID Verification **************************/
 
 
     async function verifyId() {
-  const id = getQueryParam("id");
-  const resultDiv = document.getElementById("result");
-  const spinner = document.getElementById("spinner");
-  const idText = document.getElementById("idText");
-  const loginSection = document.getElementById("loginSection");
- 
-
-  if (!id) {
-    spinner.style.display = "none";
-    resultDiv.style.display = "block";
-    resultDiv.textContent = "❌ No ID provided in URL.";
-    resultDiv.style.color = "var(--error)";
-    return;
-  }
-
-  idText.textContent = id;
-
-  if (!id.includes("_")) {
-    spinner.style.display = "none";
-    resultDiv.style.display = "block";
-    resultDiv.textContent = "❌ Invalid format. Expected format: TIMESTAMP_SIGNATURE";
-    resultDiv.style.color = "var(--error)";
-    return;
-  }
-
-  const [timestamp, hashPart] = id.split("_");
-
-  if (!/^\d{17}$/.test(timestamp)) {
-    spinner.style.display = "none";
-    resultDiv.style.display = "block";
-    resultDiv.textContent = "❌ Invalid timestamp format.";
-    resultDiv.style.color = "var(--error)";
-    return;
-  }
-
-  const expectedHash = await sha256(timestamp + SALT);
-  const isValid = expectedHash.startsWith(hashPart);
-
-  if (isValid) {
-    //document.getElementById("fullScreenSpinner").style.display = "none";
-	await fetchAssetData(id);
-	
-  } else {
-    spinner.style.display = "none";
-    resultDiv.style.display = "block";
-    resultDiv.textContent = "❌ Invalid ID (Signature mismatch or tampered)";
-    resultDiv.style.color = "var(--error)";
-    loginSection.style.display = "none";
-  }
-}
+        const id = getQueryParam("id");
+        const resultDiv = document.getElementById("result");
+        const spinner = document.getElementById("spinner");
+        const idText = document.getElementById("idText");
+        const loginSection = document.getElementById("loginSection");
 
 
-	function convertDriveUrl(value) {
-	  const match = value.match(/drive\.google\.com\/file\/d\/([^/]+)/);
-	  if (match) {
-		const fileId = match[1];
-		return `https://drive.google.com/uc?export=download&id=${fileId}`;
-	  }
-	  return value;
-	}
+        if (!id) {
+            spinner.style.display = "none";
+            resultDiv.style.display = "block";
+            resultDiv.textContent = "❌ No ID provided in URL.";
+            resultDiv.style.color = "var(--error)";
+            return;
+        }
 
+        idText.textContent = id;
 
-function getIconFromTitle(title = "") {
-  const lower = title.toLowerCase();
+        if (!id.includes("_")) {
+            spinner.style.display = "none";
+            resultDiv.style.display = "block";
+            resultDiv.textContent = "❌ Invalid format. Expected format: TIMESTAMP_SIGNATURE";
+            resultDiv.style.color = "var(--error)";
+            return;
+        }
 
-  if (lower.includes("image") || lower.includes("photo") || lower.includes("pic")) return "🖼️";
-  if (lower.includes("video") || lower.includes("clip")) return "🎥";
-  if (lower.includes("pdf") || lower.includes("manual") || lower.includes("doc")) return "📄";
-  if (lower.includes("invoice") || lower.includes("bill") || lower.includes("receipt")) return "🧾";
-  if (lower.includes("map") || lower.includes("location")) return "🗺️";
-  if (lower.includes("drawing") || lower.includes("sketch")) return "📐";
-  if (lower.includes("audio") || lower.includes("mp3") || lower.includes("sound")) return "🎧";
+        const [timestamp, hashPart] = id.split("_");
 
-  return "🔗"; // default
-}
+        if (!/^\d{17}$/.test(timestamp)) {
+            spinner.style.display = "none";
+            resultDiv.style.display = "block";
+            resultDiv.textContent = "❌ Invalid timestamp format.";
+            resultDiv.style.color = "var(--error)";
+            return;
+        }
 
+        const expectedHash = await sha256(timestamp + SALT);
+        const isValid = expectedHash.startsWith(hashPart);
 
+        if (isValid) {
+            //document.getElementById("fullScreenSpinner").style.display = "none";
+            await fetchAssetData(id);
 
-async function resolveAndRender(value, i, customTitle = `Link ${i}`) {
-  value = convertDriveUrl(value); 
-
-  const isFileLikely = /\.(jpg|jpeg|png|gif|webp|mp4|webm|ogg|pdf)$/i.test(value);
-
-	// 🧠 Pick emoji based on keywords in custom title
-	const lower = customTitle.toLowerCase();
-	const icon = getIconFromTitle(customTitle);
-
-  try {
-    let finalUrl = value;
-    let contentType = "";
-
-    if (isFileLikely) {
-      const resolveUrl = `https://script.google.com/macros/s/AKfycbzgrQ9JzTzDY57cxlWs-g4kbiCb4C5j9X54BzE2eniGp3LQYKSFqNr5-yai4ZJmfjO83Q/exec?resolve=${encodeURIComponent(value)}`;
-      const res = await fetch(resolveUrl);
-      const json = await res.json();
-
-      if (json.error) return `<p>⚠️ Couldn’t load ${customTitle}</p>`;
-
-      finalUrl = json.resolvedUrl;
-      contentType = json.contentType;
+        } else {
+            spinner.style.display = "none";
+            resultDiv.style.display = "block";
+            resultDiv.textContent = "❌ Invalid ID (Signature mismatch or tampered)";
+            resultDiv.style.color = "var(--error)";
+            loginSection.style.display = "none";
+        }
     }
 
-    if (/image/i.test(contentType)) {
-      return `<div><b>${icon} ${customTitle}</b><br><img src="${finalUrl}" style="max-width:100%;"></div>`;
-    } else if (/video/i.test(contentType)) {
-      return `<div><b>${icon} ${customTitle}</b><br><video controls width="100%"><source src="${finalUrl}"></video></div>`;
-    } else if (/pdf/i.test(contentType)) {
-      return `<p>${icon} <a href="${finalUrl}" target="_blank">${customTitle}</a></p>`;
-    } else {
-      const linkHost = finalUrl.match(/https?:\/\/([^/]+)/)?.[1] || "link";
-      return `
+
+    function convertDriveUrl(value) {
+        const match = value.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+        if (match) {
+            const fileId = match[1];
+            return `https://drive.google.com/uc?export=download&id=${fileId}`;
+        }
+        return value;
+    }
+
+
+    function getIconFromTitle(title = "") {
+        const lower = title.toLowerCase();
+
+        if (lower.includes("image") || lower.includes("photo") || lower.includes("pic")) return "🖼️";
+        if (lower.includes("video") || lower.includes("clip")) return "🎥";
+        if (lower.includes("pdf") || lower.includes("manual") || lower.includes("doc")) return "📄";
+        if (lower.includes("invoice") || lower.includes("bill") || lower.includes("receipt")) return "🧾";
+        if (lower.includes("map") || lower.includes("location")) return "🗺️";
+        if (lower.includes("drawing") || lower.includes("sketch")) return "📐";
+        if (lower.includes("audio") || lower.includes("mp3") || lower.includes("sound")) return "🎧";
+
+        return "🔗"; // default
+    }
+
+
+
+    async function resolveAndRender(value, i, customTitle = `Link ${i}`) {
+        value = convertDriveUrl(value);
+
+        const isFileLikely = /\.(jpg|jpeg|png|gif|webp|mp4|webm|ogg|pdf)$/i.test(value);
+
+        // 🧠 Pick emoji based on keywords in custom title
+        const lower = customTitle.toLowerCase();
+        const icon = getIconFromTitle(customTitle);
+
+        try {
+            let finalUrl = value;
+            let contentType = "";
+
+            if (isFileLikely) {
+                const resolveUrl = `https://script.google.com/macros/s/AKfycbzgrQ9JzTzDY57cxlWs-g4kbiCb4C5j9X54BzE2eniGp3LQYKSFqNr5-yai4ZJmfjO83Q/exec?resolve=${encodeURIComponent(value)}`;
+                const res = await fetch(resolveUrl);
+                const json = await res.json();
+
+                if (json.error) return `<p>⚠️ Couldn’t load ${customTitle}</p>`;
+
+                finalUrl = json.resolvedUrl;
+                contentType = json.contentType;
+            }
+
+            if (/image/i.test(contentType)) {
+                return `<div><b>${icon} ${customTitle}</b><br><img src="${finalUrl}" style="max-width:100%;"></div>`;
+            } else if (/video/i.test(contentType)) {
+                return `<div><b>${icon} ${customTitle}</b><br><video controls width="100%"><source src="${finalUrl}"></video></div>`;
+            } else if (/pdf/i.test(contentType)) {
+                return `<p>${icon} <a href="${finalUrl}" target="_blank">${customTitle}</a></p>`;
+            } else {
+                const linkHost = finalUrl.match(/https?:\/\/([^/]+)/)?.[1] || "link";
+                return `
         <div style="display:flex; align-items:center; border:1px solid #ddd; padding:12px; border-radius:8px; margin-bottom:10px;">
           <img src="https://www.google.com/s2/favicons?domain=${linkHost}&sz=64" alt="favicon" style="width:32px;height:32px;margin-right:10px;">
           <div style="flex-grow:1;">
@@ -624,12 +625,12 @@ async function resolveAndRender(value, i, customTitle = `Link ${i}`) {
             <a href="${finalUrl}" target="_blank" style="font-size:14px; color:var(--primary); text-decoration:none;">↗️ Visit</a>
           </div>
         </div>`;
-    }
+            }
 
-  } catch (e) {
-    return `<p>⚠️ Error loading ${customTitle}</p>`;
-  }
-}
+        } catch (e) {
+            return `<p>⚠️ Error loading ${customTitle}</p>`;
+        }
+    }
 
 
 
@@ -718,111 +719,111 @@ async function resolveAndRender(value, i, customTitle = `Link ${i}`) {
 
 
 
-/******************* Parsing info *******************/
+    /******************* Parsing info *******************/
 
-function getIconFromFileType(fileType = "") {
-  switch (fileType.toUpperCase()) {
-    case "IMAGEFILE": return "🖼️";
-    case "PDFFILE": return "📄";
-    case "TEXTFILE": return "📝";
-    case "AUDIOFILE": return "🎧";
-    case "VIDEOFILE": return "🎥";
-    default: return "🔗";
-  }
-}
-
-  function copyQRLink() {
-  const id = getQueryParam("id");
-  const qrUrl = `https://process.qrtagall.com/?id=${id}`;
-
-  navigator.clipboard.writeText(qrUrl)
-    .then(() => alert("📋 Link copied to clipboard!"))
-    .catch(err => alert("❌ Failed to copy link."));
-}
-
-	  
-
-
-	  
-
-async function fetchAssetData(id) {
-  const popup = document.getElementById("popup");
-  const mainContent = document.getElementById("mainContent");
-  const assetTitle = document.getElementById("assetTitle");
-  const assetLinks = document.getElementById("assetLinks");
-  const resultDiv = document.getElementById("result");
-  const spinner = document.getElementById("spinner");
-  const loginSection = document.getElementById("loginSection");
-  const editBtn = document.getElementById("editBtn");
-
-  try {
-    const apiUrl = `https://script.google.com/macros/s/AKfycbzgrQ9JzTzDY57cxlWs-g4kbiCb4C5j9X54BzE2eniGp3LQYKSFqNr5-yai4ZJmfjO83Q/exec?id=${encodeURIComponent(id)}`;
-    const res = await fetch(apiUrl);
-    const json = await res.json();
-    spinner.style.display = "none";
-
-    if (!json.found) {
-      resultDiv.style.display = "block";
-      resultDiv.style.color = "orange";
-      resultDiv.innerHTML = "This ID is unclaimed or missing in records.";
-      loginSection.style.display = "block";
-      return;
+    function getIconFromFileType(fileType = "") {
+        switch (fileType.toUpperCase()) {
+            case "IMAGEFILE": return "🖼️";
+            case "PDFFILE": return "📄";
+            case "TEXTFILE": return "📝";
+            case "AUDIOFILE": return "🎧";
+            case "VIDEOFILE": return "🎥";
+            default: return "🔗";
+        }
     }
 
-    const data = json.data;
+    function copyQRLink() {
+        const id = getQueryParam("id");
+        const qrUrl = `https://process.qrtagall.com/?id=${id}`;
 
-    popup.style.display = "none";
-    mainContent.style.display = "block";
+        navigator.clipboard.writeText(qrUrl)
+            .then(() => alert("📋 Link copied to clipboard!"))
+            .catch(err => alert("❌ Failed to copy link."));
+    }
 
-    /*** QR Code QR Block ***/
-    const qrDiv = document.createElement("div");
-	qrDiv.id = "qrWrapper";  
-    qrDiv.style.textAlign = "center";
-    qrDiv.style.marginBottom = "20px";
 
-    const qrCanvas = document.createElement("canvas");
-    qrCanvas.id = "qrCanvas";
-    qrCanvas.style.border = "1px solid #ccc";
-    qrCanvas.style.padding = "6px";
-    qrCanvas.style.borderRadius = "8px";
-    qrCanvas.style.background = "#fff";
-    qrCanvas.style.width = "200px";
-    qrCanvas.style.height = "200px";
 
-    QRCode.toCanvas(qrCanvas, `https://process.qrtagall.com/?id=${id}`, { width: 200 }, err => {
-      if (err) console.error("QR generation error:", err);
-    });
 
-    const qrLabel = document.createElement("div");
-    qrLabel.textContent = "🔗 Scan this QR to access again";
-    qrLabel.style.fontSize = "14px";
-    qrLabel.style.color = "#666";
-    qrLabel.style.marginTop = "6px";
 
-    const qrActions = document.createElement("div");
-    qrActions.style.marginTop = "8px";
-    qrActions.innerHTML = `
+
+    async function fetchAssetData(id) {
+        const popup = document.getElementById("popup");
+        const mainContent = document.getElementById("mainContent");
+        const assetTitle = document.getElementById("assetTitle");
+        const assetLinks = document.getElementById("assetLinks");
+        const resultDiv = document.getElementById("result");
+        const spinner = document.getElementById("spinner");
+        const loginSection = document.getElementById("loginSection");
+        const editBtn = document.getElementById("editBtn");
+
+        try {
+            const apiUrl = `https://script.google.com/macros/s/AKfycbzgrQ9JzTzDY57cxlWs-g4kbiCb4C5j9X54BzE2eniGp3LQYKSFqNr5-yai4ZJmfjO83Q/exec?id=${encodeURIComponent(id)}`;
+            const res = await fetch(apiUrl);
+            const json = await res.json();
+            spinner.style.display = "none";
+
+            if (!json.found) {
+                resultDiv.style.display = "block";
+                resultDiv.style.color = "orange";
+                resultDiv.innerHTML = "This ID is unclaimed or missing in records.";
+                loginSection.style.display = "block";
+                return;
+            }
+
+            const data = json.data;
+
+            popup.style.display = "none";
+            mainContent.style.display = "block";
+
+            /*** QR Code QR Block ***/
+            const qrDiv = document.createElement("div");
+            qrDiv.id = "qrWrapper";
+            qrDiv.style.textAlign = "center";
+            qrDiv.style.marginBottom = "20px";
+
+            const qrCanvas = document.createElement("canvas");
+            qrCanvas.id = "qrCanvas";
+            qrCanvas.style.border = "1px solid #ccc";
+            qrCanvas.style.padding = "6px";
+            qrCanvas.style.borderRadius = "8px";
+            qrCanvas.style.background = "#fff";
+            qrCanvas.style.width = "200px";
+            qrCanvas.style.height = "200px";
+
+            QRCode.toCanvas(qrCanvas, `https://process.qrtagall.com/?id=${id}`, { width: 200 }, err => {
+                if (err) console.error("QR generation error:", err);
+            });
+
+            const qrLabel = document.createElement("div");
+            qrLabel.textContent = "🔗 Scan this QR to access again";
+            qrLabel.style.fontSize = "14px";
+            qrLabel.style.color = "#666";
+            qrLabel.style.marginTop = "6px";
+
+            const qrActions = document.createElement("div");
+            qrActions.style.marginTop = "8px";
+            qrActions.innerHTML = `
       <button onclick="downloadQR()" title="Download QR" style="font-size:14px; margin-right:10px;">⬇️</button>
       <button onclick="printQR()" title="Print QR" style="font-size:14px; margin-right:10px;">🖨️</button>
       <button onclick="copyQRLink()" title="Copy Link" style="font-size:14px; margin-right:10px;">📋</button>
-      <a href="https://wa.me/?text=${encodeURIComponent(`Check this Asset via QRTagAll:\nhttps://process.qrtagall.com/?id=${id}`)}" 
+      <a href="https://wa.me/?text=${encodeURIComponent(`Check this Asset via QRTagAll:\nhttps://process.qrtagall.com/?id=${id}`)}"
          target="_blank" title="Share on WhatsApp" style="font-size:14px; text-decoration:none;">📱</a>
     `;
 
-    qrDiv.appendChild(qrCanvas);
-    qrDiv.appendChild(qrLabel);
-    qrDiv.appendChild(qrActions);
-	
-	const existingQRDiv = document.getElementById("qrWrapper");
-	if (existingQRDiv) existingQRDiv.remove();
-    
-	mainContent.insertBefore(qrDiv, assetTitle);
-	
-	
+            qrDiv.appendChild(qrCanvas);
+            qrDiv.appendChild(qrLabel);
+            qrDiv.appendChild(qrActions);
 
-    /*** Asset Title & Edit Option ***/
-      /*** Asset Title & Edit Option ***/
-      assetTitle.innerHTML = `
+            const existingQRDiv = document.getElementById("qrWrapper");
+            if (existingQRDiv) existingQRDiv.remove();
+
+            mainContent.insertBefore(qrDiv, assetTitle);
+
+
+
+            /*** Asset Title & Edit Option ***/
+            /*** Asset Title & Edit Option ***/
+            assetTitle.innerHTML = `
   <div style="position: relative; display: flex; justify-content: center; align-items: center; margin-bottom: 10px;">
     <div style="text-align: center;">
       ${data.Description || "Verified Asset"}<br>
@@ -842,275 +843,275 @@ async function fetchAssetData(id) {
 `;
 
 
-    /*** Owner Detection ***/
-    sheetID = (data.SheetID || "").trim();
-      const ownerEmail = (data.UserName || "").trim().toLowerCase();
+            /*** Owner Detection ***/
+            sheetID = (data.SheetID || "").trim();
+            ownerEmail = (data.UserName || "").trim().toLowerCase();
 
-      if (sessionEmail && sessionEmail === ownerEmail) {
-          isOwner = true;
-          updatePanelBackground("#e6ffe6"); // ✅ Green for owner
-          editBtn.innerHTML = "✏️ Edit Details";
-      } else {
-          isOwner = false;
+            if (sessionEmail && sessionEmail === ownerEmail) {
+                isOwner = true;
+                updatePanelBackground("#e6ffe6"); // ✅ Green for owner
+                editBtn.innerHTML = "✏️ Edit Details";
+            } else {
+                isOwner = false;
 
-          if (sessionEmail && sessionEmail !== ownerEmail) {
-              // ✅ Someone owns it, but not you
-              updatePanelBackground("#ffb3b3"); // 🔴 Reddish
-              editBtn.innerHTML = "🔐 Log-in as Owner<br>to Edit Details";
-          } else {
-              // ✅ No owner (unclaimed QR)
-              updatePanelBackground("#fffbe6"); // ⚠️ Yellow
-              editBtn.innerHTML = "🔐 Log-in to Edit Details";
-          }
-      }
+                if (sessionEmail && sessionEmail !== ownerEmail) {
+                    // ✅ Someone owns it, but not you
+                    updatePanelBackground("#ffb3b3"); // 🔴 Reddish
+                    editBtn.innerHTML = "🔐 Log-in as Owner<br>to Edit Details";
+                } else {
+                    // ✅ No owner (unclaimed QR)
+                    updatePanelBackground("#fffbe6"); // ⚠️ Yellow
+                    editBtn.innerHTML = "🔐 Log-in to Edit Details";
+                }
+            }
 
 
-      /*** Artifact Rendering ***/
-    const assetArray = data.assets || [];
-    let html = "";
+            /*** Artifact Rendering ***/
+            const assetArray = data.assets || [];
+            let html = "";
 
-    assetArray.forEach((item, index) => {
-      const title = item.title || `Item ${index + 1}`;
-      const type = (item.type || "").toUpperCase();
-      const visibility = (item.visibility || "").toUpperCase();
-      const url = item.url || "";
+            assetArray.forEach((item, index) => {
+                const title = item.title || `Item ${index + 1}`;
+                const type = (item.type || "").toUpperCase();
+                const visibility = (item.visibility || "").toUpperCase();
+                const url = item.url || "";
 
-      const icon = getIconFromFileType(type);
-      let contentBlock = "";
+                const icon = getIconFromFileType(type);
+                let contentBlock = "";
 
-      if (!url || url === "Not Available") {
-        contentBlock = `<p style='color:gray;'>🔗 Link not available</p>`;
-      } else if (!url.startsWith("http")) {
-        contentBlock = `<p style='color:gray;'>${url}</p>`;
-      } else {
-         const drivePreview = url.includes("drive.google.com") ? url.replace("/view?usp=sharing", "/preview") : url;
-        if (type === "IMAGEFILE") {
-          contentBlock = `<img src="${drivePreview}" style="max-width:100%; margin-top:5px;">`;
-        } else if (type === "PDFFILE" || type === "TEXTFILE") {
-          contentBlock = `<iframe src="${drivePreview}" width="100%" height="400" style="border:0;"></iframe>`;
-        } else if (type === "AUDIOFILE") {
-          contentBlock = `<audio controls src="${url}" style="width:100%;"></audio>`;
-        } else if (type === "VIDEOFILE") {
-          contentBlock = `<video controls width="100%"><source src="${url}"></video>`;
-        } else {
-          contentBlock = `<a href="${url}" target="_blank">🔗 Open Link</a>`;
-        }
-      }
-	  
-	  
+                if (!url || url === "Not Available") {
+                    contentBlock = `<p style='color:gray;'>🔗 Link not available</p>`;
+                } else if (!url.startsWith("http")) {
+                    contentBlock = `<p style='color:gray;'>${url}</p>`;
+                } else {
+                    const drivePreview = url.includes("drive.google.com") ? url.replace("/view?usp=sharing", "/preview") : url;
+                    if (type === "IMAGEFILE") {
+                        contentBlock = `<img src="${drivePreview}" style="max-width:100%; margin-top:5px;">`;
+                    } else if (type === "PDFFILE" || type === "TEXTFILE") {
+                        contentBlock = `<iframe src="${drivePreview}" width="100%" height="400" style="border:0;"></iframe>`;
+                    } else if (type === "AUDIOFILE") {
+                        contentBlock = `<audio controls src="${url}" style="width:100%;"></audio>`;
+                    } else if (type === "VIDEOFILE") {
+                        contentBlock = `<video controls width="100%"><source src="${url}"></video>`;
+                    } else {
+                        contentBlock = `<a href="${url}" target="_blank">🔗 Open Link</a>`;
+                    }
+                }
 
-      html += `<div style="margin-bottom:20px; border:1px solid #ccc; padding:10px; border-radius:8px; background:#fafafa;">
+
+
+                html += `<div style="margin-bottom:20px; border:1px solid #ccc; padding:10px; border-radius:8px; background:#fafafa;">
         <b>${icon} ${title}</b><br>${contentBlock}`;
 
-      if (editMode) {
-        html += `
+                if (editMode) {
+                    html += `
           <div style="margin-top: 10px; display: flex; gap: 10px;">
             <button onclick="deleteArtifact(${index})">🗑️ Delete</button>
             <button onclick="openAddModal(${index})">➕ Add Below</button>
           </div>`;
+                }
+
+                html += `</div>`;
+            });
+
+            //assetLinks.innerHTML = html || "<p style='color:gray;'>No asset information available.</p>";
+            assetLinks.innerHTML = await renderInfoBlock(data);
+            editBtn.disabled = false;
+            editBtn.classList.remove("disabled-button");
+            editBtn.classList.add("enabled");
+
+        } catch (err) {
+            spinner.style.display = "none";
+            resultDiv.style.display = "block";
+            resultDiv.innerHTML = "❌ Error retrieving data. " + err;
+            console.error("❌ Error retrieving data:", err);
+        }
+        finally
+        {
+
+            document.getElementById("fullScreenSpinner").style.display = "none";
+
+        }
+
+        //spinnerOverlay.style.display = "none";
+    }
+
+
+    //assetLinks.innerHTML = await renderInfoBlock(data);
+
+
+    /***************************************************************/
+
+
+
+    function updatePanelBackground(colorCode) {
+        const panel = document.getElementById("mainContent");
+        if (panel) {
+            panel.style.backgroundColor = colorCode;
+            //console.log("🎨 Panel background updated to:", colorCode);
+        }
+    }
+
+
+    function showOwnerConfirmModal() {
+        const modal = document.getElementById("ownerConfirmModal");
+        const heading = modal.querySelector("h3");
+        const subtext = modal.querySelector("p");
+
+        //const sessionEmail = localStorage.getItem("qr_claimed_email");
+
+        if (sessionEmail) {
+            heading.innerHTML = `⚠️ This QR is owned by a different user.`;
+            subtext.innerHTML = `You are logged in as <b>${sessionEmail}</b>.<br>Would you like to switch User Account?`;
+        } else {
+            heading.innerHTML = `⚠️ Only QR owner can edit!`;
+            subtext.innerHTML = `Are you the owner – would you like to log in?`;
+        }
+
+        modal.style.display = "flex";
+        /*
+          document.getElementById("ownerLoginYes").onclick = () =>
+        {
+             modal.style.display = "none";
+            if(sessionEmail && !isOwner)
+            {
+                handleLogout();
+            }
+            else
+            {
+             googleLoginForEdit();  // 👈 Trigger alternate login flow
+            }
+
+
+          };*/
+
+        document.getElementById("ownerLoginCancel").onclick = () => {
+            modal.style.display = "none";
+        };
+
+
+        document.getElementById("ownerLoginYes").onclick = () => {
+            modal.style.display = "none";
+
+            const id = getQueryParam("id");
+
+            if (sessionEmail) {
+                // ⚠️ Logout flow for switching account
+                //const redirectAfterLogout = `https://process.qrtagall.com/force-relogin.html?id=${encodeURIComponent(id)}`;
+                //window.location.href = `https://accounts.google.com/Logout?continue=https://process.qrtagall.com/force-relogin.html?id=${encodeURIComponent(id)}`;
+                // Clear stored session
+                localStorage.removeItem("qr_claimed_email");
+                sessionStorage.removeItem("qr_claimed_email");
+
+                // Re-initiate login (skip logout URL)
+                googleLoginForEdit(id);
+
+            } else {
+                // ✅ Direct login for first time
+                googleLoginForEdit(id);
+            }
+        };
+
+
+
+    }
+
+
+
+
+
+
+
+    function googleLoginForEdit(id) {
+        const clientId = "121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com";
+        const redirectUri = "https://process.qrtagall.com/oauth-callback.html";
+        const scope = "https://www.googleapis.com/auth/userinfo.email";
+
+        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
+            `?response_type=token` +
+            `&client_id=${encodeURIComponent(clientId)}` +
+            `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+            `&scope=${encodeURIComponent(scope)}` +
+            `&state=${encodeURIComponent(id)}`;
+
+
+        window.location.href = authUrl;
+    }
+
+    /***************************************** EDIT *************************/
+
+
+
+    function editAlert() {
+        const editBtn = document.getElementById("editBtn");
+
+        if (editBtn.disabled) {
+            alert("🔐 Please log in first to edit this asset.");
+        } else {
+            if (!isOwner) {
+                showOwnerConfirmModal();
+            } else {
+
+                document.getElementById("fullScreenSpinner").style.display = "flex";
+
+
+
+                editMode = true;
+                fetchAssetData(getQueryParam("id"));  // Reload in edit mode
+            }
+        }
+    }
+
+    /*
+    function openAddModal(afterRowNum) {
+      insertAfterRow = afterRowNum;
+      selectedUploadedFileLink = "";
+
+      document.getElementById("artifactBasicInfo").value = `New Artifact ${afterRowNum + 1}`;
+      document.getElementById("artifactTextInfo").value = "Enter your text here...";
+      document.getElementById("artifactFileType").value = "TEXT";
+      document.getElementById("artifactOption").value = "VIEW";
+      document.getElementById("uploadedFileLink").textContent = "";
+      onFileTypeChange();
+
+      document.getElementById("addArtifactModal").style.display = "flex";
+    }
+
+
+    function closeAddModal() {
+      document.getElementById("addArtifactModal").style.display = "none";
+      insertAfterRow = null;
+      selectedUploadedFileLink = "";
+    }
+
+    function saveArtifact() {
+      const info = document.getElementById("artifactBasicInfo").value.trim();
+      const fileType = document.getElementById("artifactFileType").value;
+      const visibility = document.getElementById("artifactOption").value;
+      const isText = fileType === "TEXT";
+      const url = isText
+        ? document.getElementById("artifactTextInfo").value.trim()
+        : selectedUploadedFileLink;
+
+      if (!info || !fileType || !visibility || (!isText && !url)) {
+        alert("⚠️ Please complete all fields.");
+        return;
       }
 
-      html += `</div>`;
-    });
+      const payload = {
+        afterRow: insertAfterRow,
+        basicInfo: info,
+        fileType,
+        options: visibility,
+        localUrl: url
+      };
 
-    //assetLinks.innerHTML = html || "<p style='color:gray;'>No asset information available.</p>";
-	assetLinks.innerHTML = await renderInfoBlock(data);    
-	editBtn.disabled = false;
-    editBtn.classList.remove("disabled-button");
-    editBtn.classList.add("enabled");
+      alert(`➕ New artifact to be inserted after row ${insertAfterRow}:\n\n${JSON.stringify(payload, null, 2)}`);
+      // TODO: insertArtifactInSheet(payload);
 
-  } catch (err) {
-    spinner.style.display = "none";
-    resultDiv.style.display = "block";
-    resultDiv.innerHTML = "❌ Error retrieving data. " + err;
-    console.error("❌ Error retrieving data:", err);
-  }
-  finally
-  {
-  
-  document.getElementById("fullScreenSpinner").style.display = "none";
-
-  }
-  
-  //spinnerOverlay.style.display = "none";
-}
-
-  
-//assetLinks.innerHTML = await renderInfoBlock(data);
-
-
-/***************************************************************/
-
-
-
-function updatePanelBackground(colorCode) {
-  const panel = document.getElementById("mainContent");
-  if (panel) {
-    panel.style.backgroundColor = colorCode;
-    //console.log("🎨 Panel background updated to:", colorCode);
-  }
-}
-
-
-function showOwnerConfirmModal() {
-  const modal = document.getElementById("ownerConfirmModal");
-  const heading = modal.querySelector("h3");
-  const subtext = modal.querySelector("p");
-
-  //const sessionEmail = localStorage.getItem("qr_claimed_email");
-
-  if (sessionEmail) {
-    heading.innerHTML = `⚠️ This QR is owned by a different user.`;
-    subtext.innerHTML = `You are logged in as <b>${sessionEmail}</b>.<br>Would you like to switch User Account?`;
-  } else {
-    heading.innerHTML = `⚠️ Only QR owner can edit!`;
-    subtext.innerHTML = `Are you the owner – would you like to log in?`;
-  }
-
-  modal.style.display = "flex";
-/*
-  document.getElementById("ownerLoginYes").onclick = () => 
-{
-	 modal.style.display = "none";
-	if(sessionEmail && !isOwner)
-	{
-		handleLogout();
-	}
-	else
-	{
-	 googleLoginForEdit();  // 👈 Trigger alternate login flow
-	}
-   
-   
-  };*/
-
-  document.getElementById("ownerLoginCancel").onclick = () => {
-    modal.style.display = "none";
-  };
-  
-
-document.getElementById("ownerLoginYes").onclick = () => {
-  modal.style.display = "none";
-
-  const id = getQueryParam("id");
-
-  if (sessionEmail) {
-    // ⚠️ Logout flow for switching account
-    //const redirectAfterLogout = `https://process.qrtagall.com/force-relogin.html?id=${encodeURIComponent(id)}`;
-    //window.location.href = `https://accounts.google.com/Logout?continue=https://process.qrtagall.com/force-relogin.html?id=${encodeURIComponent(id)}`;
-	// Clear stored session
-  localStorage.removeItem("qr_claimed_email");
-  sessionStorage.removeItem("qr_claimed_email");
-
-  // Re-initiate login (skip logout URL)
-  googleLoginForEdit(id);
-
-  } else {
-    // ✅ Direct login for first time
-    googleLoginForEdit(id);
-  }
-};
-
-	
-
-}
-
-
-
-
-
-
-
-function googleLoginForEdit(id) {
-  const clientId = "121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com";
-  const redirectUri = "https://process.qrtagall.com/oauth-callback.html";
-  const scope = "https://www.googleapis.com/auth/userinfo.email";
-
-  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
-    `?response_type=token` +
-    `&client_id=${encodeURIComponent(clientId)}` +
-    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-    `&scope=${encodeURIComponent(scope)}` +
-    `&state=${encodeURIComponent(id)}`;
-
-
-  window.location.href = authUrl;
-}
-
-	/***************************************** EDIT *************************/
-
-
-
-function editAlert() {
-  const editBtn = document.getElementById("editBtn");
-
-  if (editBtn.disabled) {
-    alert("🔐 Please log in first to edit this asset.");
-  } else {
-    if (!isOwner) {
-      showOwnerConfirmModal();
-    } else {
-	
-		document.getElementById("fullScreenSpinner").style.display = "flex";
-
-		
-		
-      editMode = true;
-      fetchAssetData(getQueryParam("id"));  // Reload in edit mode
+      closeAddModal();
     }
-  }
-}
-
-/*
-function openAddModal(afterRowNum) {
-  insertAfterRow = afterRowNum;
-  selectedUploadedFileLink = "";
-
-  document.getElementById("artifactBasicInfo").value = `New Artifact ${afterRowNum + 1}`;
-  document.getElementById("artifactTextInfo").value = "Enter your text here...";
-  document.getElementById("artifactFileType").value = "TEXT";
-  document.getElementById("artifactOption").value = "VIEW";
-  document.getElementById("uploadedFileLink").textContent = "";
-  onFileTypeChange();
-
-  document.getElementById("addArtifactModal").style.display = "flex";
-}
-
-
-function closeAddModal() {
-  document.getElementById("addArtifactModal").style.display = "none";
-  insertAfterRow = null;
-  selectedUploadedFileLink = "";
-}
-
-function saveArtifact() {
-  const info = document.getElementById("artifactBasicInfo").value.trim();
-  const fileType = document.getElementById("artifactFileType").value;
-  const visibility = document.getElementById("artifactOption").value;
-  const isText = fileType === "TEXT";
-  const url = isText
-    ? document.getElementById("artifactTextInfo").value.trim()
-    : selectedUploadedFileLink;
-
-  if (!info || !fileType || !visibility || (!isText && !url)) {
-    alert("⚠️ Please complete all fields.");
-    return;
-  }
-
-  const payload = {
-    afterRow: insertAfterRow,
-    basicInfo: info,
-    fileType,
-    options: visibility,
-    localUrl: url
-  };
-
-  alert(`➕ New artifact to be inserted after row ${insertAfterRow}:\n\n${JSON.stringify(payload, null, 2)}`);
-  // TODO: insertArtifactInSheet(payload);
-
-  closeAddModal();
-}
-*/
+    */
 
     function deleteArtifact(rowNum) {
         const confirmed = confirm(`Are you sure you want to delete artifact at row ${rowNum}?`);
@@ -1126,85 +1127,85 @@ function saveArtifact() {
         }
     }
 
-/*
-    function openAddModal(afterRowNum, isEditMode = false) {
-        insertAfterRow = afterRowNum;
-        selectedUploadedFileLink = "";
+    /*
+        function openAddModal(afterRowNum, isEditMode = false) {
+            insertAfterRow = afterRowNum;
+            selectedUploadedFileLink = "";
 
 
 
-        const basicInfoInput = document.getElementById("artifactBasicInfo");
-        const fileTypeInput = document.getElementById("artifactFileType");
-        const visibilityInput = document.getElementById("artifactOption");
-        const textInfoInput = document.getElementById("artifactTextInfo");
-        const uploadedFileLink = document.getElementById("uploadedFileLink");
-        const fileTypeSection = document.getElementById("artifactFileType").parentElement;
-        const textInputSection = document.getElementById("textInputSection");
-        const fileUploadSection = document.getElementById("fileUploadSection");
-        const modalTitle = document.getElementById("addArtifactModalTitle");
+            const basicInfoInput = document.getElementById("artifactBasicInfo");
+            const fileTypeInput = document.getElementById("artifactFileType");
+            const visibilityInput = document.getElementById("artifactOption");
+            const textInfoInput = document.getElementById("artifactTextInfo");
+            const uploadedFileLink = document.getElementById("uploadedFileLink");
+            const fileTypeSection = document.getElementById("artifactFileType").parentElement;
+            const textInputSection = document.getElementById("textInputSection");
+            const fileUploadSection = document.getElementById("fileUploadSection");
+            const modalTitle = document.getElementById("addArtifactModalTitle");
 
-        // Always reset visibility first
-        fileTypeSection.style.display = "block";
-        textInputSection.style.display = "block";
-        fileUploadSection.style.display = "block";
+            // Always reset visibility first
+            fileTypeSection.style.display = "block";
+            textInputSection.style.display = "block";
+            fileUploadSection.style.display = "block";
 
-        // Reset field states
-        basicInfoInput.disabled = false;
-        fileTypeInput.disabled = false;
-        textInfoInput.disabled = false;
-        uploadedFileLink.style.pointerEvents = "auto";
-        visibilityInput.disabled = false;
+            // Reset field states
+            basicInfoInput.disabled = false;
+            fileTypeInput.disabled = false;
+            textInfoInput.disabled = false;
+            uploadedFileLink.style.pointerEvents = "auto";
+            visibilityInput.disabled = false;
 
-        if (isEditMode) {
+            if (isEditMode) {
 
-            // EDIT MODE LOGIC
+                // EDIT MODE LOGIC
 
-            const item = assetDataList[afterRowNum];  // ← assume this global list (already from renderInfoBlock)
-            modalTitle.innerText = "📝 Edit Artifact Visibility";
-            basicInfoInput.value = item.title || "";
-            fileTypeInput.value = (item.type || "TEXT").toUpperCase();
-            //visibilityInput.value = (item.visibility || "VIEW").toUpperCase();
-            const vis = (item.visibility || "VIEW").toUpperCase();
-            visibilityInput.value = vis === "VIEW" || vis === "NOVIEW" ? vis : "VIEW";
+                const item = assetDataList[afterRowNum];  // ← assume this global list (already from renderInfoBlock)
+                modalTitle.innerText = "📝 Edit Artifact Visibility";
+                basicInfoInput.value = item.title || "";
+                fileTypeInput.value = (item.type || "TEXT").toUpperCase();
+                //visibilityInput.value = (item.visibility || "VIEW").toUpperCase();
+                const vis = (item.visibility || "VIEW").toUpperCase();
+                visibilityInput.value = vis === "VIEW" || vis === "NOVIEW" ? vis : "VIEW";
 
-            if (item.type.toUpperCase() === "TEXT") {
-                textInfoInput.value = item.url || "";
-                uploadedFileLink.textContent = "";
+                if (item.type.toUpperCase() === "TEXT") {
+                    textInfoInput.value = item.url || "";
+                    uploadedFileLink.textContent = "";
+                } else {
+                    textInfoInput.value = "";
+                    uploadedFileLink.textContent = item.url || "";
+                }
+
+                // Disable fields except visibility
+                basicInfoInput.disabled = true;
+                fileTypeInput.disabled = true;
+                textInfoInput.disabled = true;
+
+               // uploadedFileLink.style.pointerEvents = "none";
+
+                // Hide unwanted sections
+                //fileTypeInput.disabled = true;
+                fileTypeSection.style.display = "none";
+                textInputSection.style.display = "none";
+                fileUploadSection.style.display = "none";
+
+                currentEditMode = "edit";
             } else {
-                textInfoInput.value = "";
-                uploadedFileLink.textContent = item.url || "";
+                // ADD MODE LOGIC
+                modalTitle.innerText = "➕ Add New Artifact Info";
+                basicInfoInput.value = `New Artifact ${afterRowNum + 2}`;
+                textInfoInput.value = "Enter your text here...";
+                fileTypeInput.value = "TEXT";
+                visibilityInput.value = "VIEW";
+                uploadedFileLink.textContent = "";
+                onFileTypeChange();
+
+                currentEditMode = "add";
             }
 
-            // Disable fields except visibility
-            basicInfoInput.disabled = true;
-            fileTypeInput.disabled = true;
-            textInfoInput.disabled = true;
-
-           // uploadedFileLink.style.pointerEvents = "none";
-
-            // Hide unwanted sections
-            //fileTypeInput.disabled = true;
-            fileTypeSection.style.display = "none";
-            textInputSection.style.display = "none";
-            fileUploadSection.style.display = "none";
-
-            currentEditMode = "edit";
-        } else {
-            // ADD MODE LOGIC
-            modalTitle.innerText = "➕ Add New Artifact Info";
-            basicInfoInput.value = `New Artifact ${afterRowNum + 2}`;
-            textInfoInput.value = "Enter your text here...";
-            fileTypeInput.value = "TEXT";
-            visibilityInput.value = "VIEW";
-            uploadedFileLink.textContent = "";
-            onFileTypeChange();
-
-            currentEditMode = "add";
+            document.getElementById("addArtifactModal").style.display = "flex";
         }
-
-        document.getElementById("addArtifactModal").style.display = "flex";
-    }
-*/
+    */
 
     function openAddModal(afterRowNum, isEditMode = false) {
         selectedUploadedFileLink = "";
@@ -1358,173 +1359,173 @@ function saveArtifact() {
 
 
     /************************ Edit Description *************/
-function editDescription() {
-  //alert("📝 Modal to edit Description will be added here.");
-  const current = document.getElementById("assetTitle").innerText.split("\n")[0];
-  document.getElementById("newDescription").value = current;
-  document.getElementById("editDescriptionModal").style.display = "flex";
-}
-
-function closeDescriptionModal() {
-    console.log(">>>Closing Description Modal");
-    document.getElementById("fullScreenSpinner").style.display = "none";
-  document.getElementById("editDescriptionModal").style.display = "none";
-}
-
-
-
-
-
-
-/*
-async function saveArtifactWithOAuth() {
-  const accessToken = localStorage.getItem("qr_access_token");
-  if (!accessToken) {
-    alert("🔒 Please login first.");
-    return;
-  }
-
-  const id = getQueryParam("id");
-  const sheetId = "1K3P8CSrLUmVRzEq6hAKUaWcBrsAdon1AdOguwLMPD4Y";
-  const startCell = "C14";
-
-  const basic = "TestImage";
-  const fileType = "IMAGEFILE";
-  const option = "VIEW";
-  const url = "https://drive.google.com/file/d/123abc/view?usp=sharing";
-
-  const values = `${basic}||${fileType}||${option}||${url}`;
-
-  const query = new URLSearchParams({
-    mode: "updateCells",
-    id,
-    sheetId,
-    range: startCell,
-    values
-  });
-
-  const targetUrl = `https://script.google.com/macros/s/YOUR_SCRIPT_C_ID/exec?${query.toString()}`;
-
-  try {
-    const response = await fetch(targetUrl, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`
-      }
-    });
-
-    const data = await response.json();
-
-    if (data.success) {
-      alert("✅ OAuth-authenticated write successful!");
-    } else {
-      alert("❌ Write failed: " + data.message);
+    function editDescription() {
+        //alert("📝 Modal to edit Description will be added here.");
+        const current = document.getElementById("assetTitle").innerText.split("\n")[0];
+        document.getElementById("newDescription").value = current;
+        document.getElementById("editDescriptionModal").style.display = "flex";
     }
-  } catch (err) {
-    console.error("OAuth Fetch Error:", err);
-    alert("❌ Network/Auth Error");
-  }
-}
-*/
+
+    function closeDescriptionModal() {
+        console.log(">>>Closing Description Modal");
+        document.getElementById("fullScreenSpinner").style.display = "none";
+        document.getElementById("editDescriptionModal").style.display = "none";
+    }
 
 
 
 
 
-function saveDescription() {
-const updatedDesc = document.getElementById("newDescription").value.trim();
 
-	saveArtifactInfo({
-  startCell: "B2",
-  basicInfo: updatedDesc,
-  fileType: "",
-  visibility: "",
-  linkOrText: "",
-  modalId: "editDescriptionModal" 
-    });
+    /*
+    async function saveArtifactWithOAuth() {
+      const accessToken = localStorage.getItem("qr_access_token");
+      if (!accessToken) {
+        alert("🔒 Please login first.");
+        return;
+      }
 
+      const id = getQueryParam("id");
+      const sheetId = "1K3P8CSrLUmVRzEq6hAKUaWcBrsAdon1AdOguwLMPD4Y";
+      const startCell = "C14";
 
-  
-}
+      const basic = "TestImage";
+      const fileType = "IMAGEFILE";
+      const option = "VIEW";
+      const url = "https://drive.google.com/file/d/123abc/view?usp=sharing";
 
-/*
-    function saveArtifactInfo({
-                                  startCell,
-                                  basicInfo = undefined,
-                                  fileType = undefined,
-                                  visibility = undefined,
-                                  linkOrText = undefined,
-                                  modalId = null,
-                                  isInsert = false,
-                                  isDelete = false
-                              }) {
-        const id = getQueryParam("id");
-        const sheetId = sheetID;
-        const secretKey = "optional_static_key";
+      const values = `${basic}||${fileType}||${option}||${url}`;
 
-        // ✅ Prepare dynamic values array
-        const valueParts = [];
+      const query = new URLSearchParams({
+        mode: "updateCells",
+        id,
+        sheetId,
+        range: startCell,
+        values
+      });
 
-        if (basicInfo !== undefined) valueParts.push(basicInfo);
-        if (fileType !== undefined) valueParts.push(fileType);
-        if (visibility !== undefined) valueParts.push(visibility);
-        if (linkOrText !== undefined) valueParts.push(linkOrText);
+      const targetUrl = `https://script.google.com/macros/s/YOUR_SCRIPT_C_ID/exec?${query.toString()}`;
 
-        const values = valueParts.join("||");
-
-        const query = new URLSearchParams({
-            mode: "updateCells",
-            id,
-            sheetId,
-            range: startCell,
-            values,
-            secret_key: secretKey
+      try {
+        const response = await fetch(targetUrl, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
         });
 
-        // ✅ Conditionally add insert=1 or delete=1
-        if (isInsert) {
-            query.append("insert", "1");
+        const data = await response.json();
+
+        if (data.success) {
+          alert("✅ OAuth-authenticated write successful!");
+        } else {
+          alert("❌ Write failed: " + data.message);
         }
-        if (isDelete) {
-            query.append("delete", "1");
-        }
-
-        const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?${query.toString()}`;
-
-        console.log("✅ Final target URL:", targetUrl);
-
-        const popup = window.open(
-            targetUrl,
-            "_blank",
-            "width=10,height=10,left=1,top=1,menubar=no,toolbar=no,location=no,status=no,resizable=no,scrollbars=no"
-        );
-
-        setTimeout(() => {
-            if (modalId) {
-                const modal = document.getElementById(modalId);
-                if (modal) modal.style.display = "none";
-            }
-
-            try {
-                if (popup && !popup.closed) popup.close();
-            }
-            catch (e)
-                {
-                }
+      } catch (err) {
+        console.error("OAuth Fetch Error:", err);
+        alert("❌ Network/Auth Error");
+      }
+    }
+    */
 
 
-            try {
-                window.focus(); // ✅ Bring back focus (desktop only attempt)
-            } catch (e) {
-                //console.warn("Focus not allowed:", e);
-            }
 
-            alert("✅ Artifact info saved.");
-            location.reload();
-        }, 1000);
+
+
+    function saveDescription() {
+        const updatedDesc = document.getElementById("newDescription").value.trim();
+
+        saveArtifactInfo({
+            startCell: "B2",
+            basicInfo: updatedDesc,
+            fileType: "",
+            visibility: "",
+            linkOrText: "",
+            modalId: "editDescriptionModal"
+        });
+
 
 
     }
-*/
+
+    /*
+        function saveArtifactInfo({
+                                      startCell,
+                                      basicInfo = undefined,
+                                      fileType = undefined,
+                                      visibility = undefined,
+                                      linkOrText = undefined,
+                                      modalId = null,
+                                      isInsert = false,
+                                      isDelete = false
+                                  }) {
+            const id = getQueryParam("id");
+            const sheetId = sheetID;
+            const secretKey = "optional_static_key";
+
+            // ✅ Prepare dynamic values array
+            const valueParts = [];
+
+            if (basicInfo !== undefined) valueParts.push(basicInfo);
+            if (fileType !== undefined) valueParts.push(fileType);
+            if (visibility !== undefined) valueParts.push(visibility);
+            if (linkOrText !== undefined) valueParts.push(linkOrText);
+
+            const values = valueParts.join("||");
+
+            const query = new URLSearchParams({
+                mode: "updateCells",
+                id,
+                sheetId,
+                range: startCell,
+                values,
+                secret_key: secretKey
+            });
+
+            // ✅ Conditionally add insert=1 or delete=1
+            if (isInsert) {
+                query.append("insert", "1");
+            }
+            if (isDelete) {
+                query.append("delete", "1");
+            }
+
+            const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?${query.toString()}`;
+
+            console.log("✅ Final target URL:", targetUrl);
+
+            const popup = window.open(
+                targetUrl,
+                "_blank",
+                "width=10,height=10,left=1,top=1,menubar=no,toolbar=no,location=no,status=no,resizable=no,scrollbars=no"
+            );
+
+            setTimeout(() => {
+                if (modalId) {
+                    const modal = document.getElementById(modalId);
+                    if (modal) modal.style.display = "none";
+                }
+
+                try {
+                    if (popup && !popup.closed) popup.close();
+                }
+                catch (e)
+                    {
+                    }
+
+
+                try {
+                    window.focus(); // ✅ Bring back focus (desktop only attempt)
+                } catch (e) {
+                    //console.warn("Focus not allowed:", e);
+                }
+
+                alert("✅ Artifact info saved.");
+                location.reload();
+            }, 1000);
+
+
+        }
+    */
 
 
 
@@ -1582,21 +1583,56 @@ const updatedDesc = document.getElementById("newDescription").value.trim();
 
 
     async function triggerLink_old(params, modalId = null) {
-
         const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?${params}`;
+        //const ownerEmail = (sessionEmail || "").toLowerCase(); // 🔥 assuming sessionEmail is already known
 
-        // 🔥 Step 1: Force OAuth login first
+        if (modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) modal.style.display = "none";
+        }
+
+        const spinner = document.getElementById("fullScreenSpinner");
+        if (spinner) spinner.style.display = "flex";
+
+        // Helper to fetch user's email from token
+        async function fetchUserEmail(token) {
+            try {
+                const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+                const data = await res.json();
+                return (data.email || "").toLowerCase();
+            } catch (e) {
+                console.error("❌ Failed to fetch user email:", e);
+                return "";
+            }
+        }
+
         await new Promise((resolve, reject) => {
             const client = google.accounts.oauth2.initTokenClient({
-                client_id: '121290253918-cae49r46mo3r9f9rhd7rq6ao9ae69jjv.apps.googleusercontent.com', // Replace with yours
+                client_id: '121290253918-cae49r46mo3r9f9rhd7rq6ao9ae69jjv.apps.googleusercontent.com',
                 scope: 'https://www.googleapis.com/auth/userinfo.email',
-                prompt: 'consent',  // 🔥 Always show login popup
-                callback: (response) => {
+                prompt: 'consent',
+                callback: async (response) => {
                     if (response.access_token) {
-                        console.log("✅ Access token acquired for forced login.");
+                        console.log("✅ Access token acquired.");
                         localStorage.setItem('qr_oauth_token', response.access_token);
-                        resolve();
+
+                        const userEmail = await fetchUserEmail(response.access_token);
+                        console.log("📧 Logged in as:", userEmail);
+
+                        if (userEmail === ownerEmail) {
+                            console.log("✅ Owner verified, proceeding...");
+                            resolve();
+                        } else {
+                            spinner.style.display = "none";
+                            alert("❌ You are not the owner of this QR Asset.\nPlease login with the correct account.");
+                            reject("User is not the owner");
+                        }
                     } else {
+                        spinner.style.display = "none";
                         reject("❌ OAuth login failed.");
                     }
                 },
@@ -1605,32 +1641,28 @@ const updatedDesc = document.getElementById("newDescription").value.trim();
             client.requestAccessToken();
         });
 
-        // 🔥 Step 2: After successful login, proceed normally
-        if (modalId) {
-            const modal = document.getElementById(modalId);
-            if (modal) modal.style.display = "none";
-        }
-
-        const spinner = document.getElementById("fullScreenSpinner");
-        spinner.style.display = "flex";
-
-        // Let spinner paint
-       // setTimeout(() => {
-            try {
-                const img = new Image();
-                img.src = targetUrl;
-            } catch (e) {
-                console.error("❌ Image fetch failed:", e);
-            }
+        // 🔥 After owner check passed, now fire image load
+        try {
+            const img = new Image();
+            img.style.display = "none";
+            img.src = targetUrl;
+            document.body.appendChild(img);
 
             setTimeout(() => {
-                spinner.style.display = "none";
+                if (img && img.parentNode) {
+                    img.parentNode.removeChild(img);
+                }
+            }, 5000);
 
-                alert("✅ Artifact info saved.");
-                location.reload();
-            }, 3000);
+        } catch (e) {
+            console.error("❌ Image load error:", e);
+        }
 
-      //  }, 1000); // Give spinner time to paint
+        setTimeout(() => {
+            spinner.style.display = "none";
+            alert("✅ Artifact info saved.");
+            location.reload();
+        }, 3000);
     }
 
 
@@ -1658,15 +1690,15 @@ const updatedDesc = document.getElementById("newDescription").value.trim();
 
             }
 
-           // let response = null;
-           // try {
-           //     const res = await fetch(targetUrl);
-           //     response = await res.json();
-           // } catch (e) {
-           // }
-            
+            // let response = null;
+            // try {
+            //     const res = await fetch(targetUrl);
+            //     response = await res.json();
+            // } catch (e) {
+            // }
+
             //console.log(">>>>>>>>> Response.........", response);
-            
+
 
 
 
@@ -1675,7 +1707,7 @@ const updatedDesc = document.getElementById("newDescription").value.trim();
 
                 document.getElementById("fullScreenSpinner").style.display = "none";
 
-               // alert("✅ Artifact info saved.");
+                // alert("✅ Artifact info saved.");
                 location.reload();
             }, 3000);
 
@@ -1683,140 +1715,140 @@ const updatedDesc = document.getElementById("newDescription").value.trim();
     }
 
 
-	  /*
-	async function triggerLink_old(params, modalId = null) {
-    const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?${params}`;
-    let accessToken = localStorage.getItem('qr_oauth_token');
+    /*
+  async function triggerLink_old(params, modalId = null) {
+  const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?${params}`;
+  let accessToken = localStorage.getItem('qr_oauth_token');
 
-    if (modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) modal.style.display = "none";
-    }
+  if (modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) modal.style.display = "none";
+  }
 
-    const spinner = document.getElementById("fullScreenSpinner");
-    if (spinner) spinner.style.display = "flex";
+  const spinner = document.getElementById("fullScreenSpinner");
+  if (spinner) spinner.style.display = "flex";
 
-    async function requestLogin() {
-        await new Promise((resolve, reject) => {
-            const client = google.accounts.oauth2.initTokenClient({
-                client_id: '121290253918-cae49r46mo3r9f9rhd7rq6ao9ae69jjv.apps.googleusercontent.com',
-                scope: 'https://www.googleapis.com/auth/userinfo.email',
-                prompt: 'consent',
-                callback: (response) => {
-                    if (response.access_token) {
-                        console.log("✅ Access token acquired after login.");
-                        localStorage.setItem('qr_oauth_token', response.access_token);
-                        accessToken = response.access_token;
-                        resolve();
-                    } else {
-                        reject("❌ OAuth login failed.");
-                    }
-                },
-            });
-            client.requestAccessToken();
-        });
-    }
+  async function requestLogin() {
+      await new Promise((resolve, reject) => {
+          const client = google.accounts.oauth2.initTokenClient({
+              client_id: '121290253918-cae49r46mo3r9f9rhd7rq6ao9ae69jjv.apps.googleusercontent.com',
+              scope: 'https://www.googleapis.com/auth/userinfo.email',
+              prompt: 'consent',
+              callback: (response) => {
+                  if (response.access_token) {
+                      console.log("✅ Access token acquired after login.");
+                      localStorage.setItem('qr_oauth_token', response.access_token);
+                      accessToken = response.access_token;
+                      resolve();
+                  } else {
+                      reject("❌ OAuth login failed.");
+                  }
+              },
+          });
+          client.requestAccessToken();
+      });
+  }
 
-    if (!accessToken) {
-        console.log("🔒 No token found. Forcing login...");
-        await requestLogin();
-    } else {
-        console.log("🔓 Using existing saved access token.");
-    }
+  if (!accessToken) {
+      console.log("🔒 No token found. Forcing login...");
+      await requestLogin();
+  } else {
+      console.log("🔓 Using existing saved access token.");
+  }
 
-    // Now fire the URL silently using Image
-    try {
-        const img = new Image();
-        img.style.display = "none"; // invisible
-        img.src = targetUrl;
-        document.body.appendChild(img);
+  // Now fire the URL silently using Image
+  try {
+      const img = new Image();
+      img.style.display = "none"; // invisible
+      img.src = targetUrl;
+      document.body.appendChild(img);
 
-        // optional: clean up after 5 sec
-        setTimeout(() => {
-            if (img && img.parentNode) {
-                img.parentNode.removeChild(img);
-            }
-        }, 5000);
-    } catch (e) {
-        console.error("❌ Image fetch failed:", e);
-    }
+      // optional: clean up after 5 sec
+      setTimeout(() => {
+          if (img && img.parentNode) {
+              img.parentNode.removeChild(img);
+          }
+      }, 5000);
+  } catch (e) {
+      console.error("❌ Image fetch failed:", e);
+  }
 
-    setTimeout(() => {
-        spinner.style.display = "none";
-        //alert("✅ Artifact info has been tried to save.");
-        location.reload();
-    }, 3000);
+  setTimeout(() => {
+      spinner.style.display = "none";
+      //alert("✅ Artifact info has been tried to save.");
+      location.reload();
+  }, 3000);
 }
 
 */
-	  
-
-/*********************************************************************/
-/**************************** Modal: Add ****************************/
-
-function onFileTypeChange() {
-  const type = document.getElementById("artifactFileType").value;
-  if (type === "TEXT") {
-    document.getElementById("textInputSection").style.display = "block";
-    document.getElementById("fileUploadSection").style.display = "none";
-  } else {
-    document.getElementById("textInputSection").style.display = "none";
-    document.getElementById("fileUploadSection").style.display = "block";
-  }
-}
-
-function openUploadModal() {
-  document.getElementById("uploadModal").style.display = "flex";
-  document.getElementById("filePicker").value = "";
-  document.getElementById("filePreview").textContent = "";
-}
-
-function closeUploadModal() {
-  document.getElementById("uploadModal").style.display = "none";
-}
-
-function simulateUseFile() {
-  const fileInput = document.getElementById("filePicker");
-  if (fileInput.files.length > 0) {
-    const fileName = fileInput.files[0].name;
-    document.getElementById("uploadedFileLink").textContent = `🆗 Selected file: ${fileName}`;
-    // TODO: Upload to Drive and get sharable link
-  } else {
-    document.getElementById("uploadedFileLink").textContent = `❌ No file selected`;
-  }
-  closeUploadModal();
-}
 
 
+    /*********************************************************************/
+    /**************************** Modal: Add ****************************/
+
+    function onFileTypeChange() {
+        const type = document.getElementById("artifactFileType").value;
+        if (type === "TEXT") {
+            document.getElementById("textInputSection").style.display = "block";
+            document.getElementById("fileUploadSection").style.display = "none";
+        } else {
+            document.getElementById("textInputSection").style.display = "none";
+            document.getElementById("fileUploadSection").style.display = "block";
+        }
+    }
+
+    function openUploadModal() {
+        document.getElementById("uploadModal").style.display = "flex";
+        document.getElementById("filePicker").value = "";
+        document.getElementById("filePreview").textContent = "";
+    }
+
+    function closeUploadModal() {
+        document.getElementById("uploadModal").style.display = "none";
+    }
+
+    function simulateUseFile() {
+        const fileInput = document.getElementById("filePicker");
+        if (fileInput.files.length > 0) {
+            const fileName = fileInput.files[0].name;
+            document.getElementById("uploadedFileLink").textContent = `🆗 Selected file: ${fileName}`;
+            // TODO: Upload to Drive and get sharable link
+        } else {
+            document.getElementById("uploadedFileLink").textContent = `❌ No file selected`;
+        }
+        closeUploadModal();
+    }
 
 
 
 
 
-function saveNewArtifact() {
-  const basic = document.getElementById("newBasicInfo").value.trim();
-  const filetype = document.getElementById("newFileType").value.trim().toUpperCase();
-  const option = document.getElementById("newOptions").value.trim().toUpperCase();
-  const link = document.getElementById("newLocalLink").value.trim();
 
-  if (!basic || !filetype || !option) {
-    alert("⚠️ Please fill all required fields.");
-    return;
-  }
 
-  alert(`✅ New artifact to be inserted after row ${insertAfterRow}:\n\nTitle: ${basic}\nType: ${filetype}\nOption: ${option}\nLink: ${link}`);
+    function saveNewArtifact() {
+        const basic = document.getElementById("newBasicInfo").value.trim();
+        const filetype = document.getElementById("newFileType").value.trim().toUpperCase();
+        const option = document.getElementById("newOptions").value.trim().toUpperCase();
+        const link = document.getElementById("newLocalLink").value.trim();
 
-  // 🧠 Here you can later call Apps Script API to insert into sheet.
+        if (!basic || !filetype || !option) {
+            alert("⚠️ Please fill all required fields.");
+            return;
+        }
 
-  closeAddModal();
-}
+        alert(`✅ New artifact to be inserted after row ${insertAfterRow}:\n\nTitle: ${basic}\nType: ${filetype}\nOption: ${option}\nLink: ${link}`);
+
+        // 🧠 Here you can later call Apps Script API to insert into sheet.
+
+        closeAddModal();
+    }
 
 
 
     verifyId();
-//handleClaimedReturn();
-  </script>
-  
-  
+    //handleClaimedReturn();
+</script>
+
+
 </body>
 </html>
