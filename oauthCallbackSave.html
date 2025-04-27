@@ -30,7 +30,7 @@
   </style>
 </head>
 <body>
-  <h2>🔐 Saving Artifact (v-15)</h2>
+  <h2>🔐 Saving Artifact (v-16)</h2>
   <p class="info" id="status">Just a moment while we save your artifact...</p>
   <div class="spinner">⏳</div>
 
@@ -62,6 +62,10 @@
         statusEl.textContent = "❌ MissingQR ID.";
         return;
       }
+
+    const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
 
     console.log("✅ Extracted ID:", id);
 
