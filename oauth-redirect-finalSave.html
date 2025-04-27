@@ -1,25 +1,51 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>QRTagAll Final Redirect</title>
+  <title>QRTagAll Final Redirect V1.0</title>
 </head>
 <body style="font-family:sans-serif; text-align:center; padding-top:80px;">
   <h2>🔐 Finalizing login...</h2>
   <p id="status">Just a moment...</p>
+
   <script>
-    const hash = new URLSearchParams(window.location.hash.slice(1));
-    const accessToken = hash.get("access_token");
-    const stateUrl = hash.get("state");
+    //AKfycbyJnS9Firp-v_lM8ZY39tAjUIQu02oi1cn2ddzCcRlpPkjeFcV8CR2y_dRxmhIyGiYguA
+async function exchangeCodeForToken() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  if (!code) {
+    alert("No code found!");
+    return;
+  }
 
-    const status = document.getElementById("status");
+  try {
+    const response = await fetch('https://script.google.com/macros/s/AKfycbyJnS9Firp-v_lM8ZY39tAjUIQu02oi1cn2ddzCcRlpPkjeFcV8CR2y_dRxmhIyGiYguA/exec', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: code }),
+    });
 
-    if (!stateUrl) {
-      status.textContent = "❌ No redirect URL found.";
+    const data = await response.json();
+    console.log("User Info:", data);
+
+    if (data.email) {
+      // Store or use email as needed
+      localStorage.setItem('qr_claimed_email', data.email);
+
+      // Redirect back to your QRTagAll process page
+      const stateUrl = params.get('state') || 'https://process.qrtagall.com/';
+      window.location.href = stateUrl + `&email=${encodeURIComponent(data.email)}`;
     } else {
-      console.log("🎯 Redirecting to:", stateUrl);
-      status.textContent = "✅ Redirecting to final page...";
-      window.location.href = stateUrl;
+      alert("Failed to retrieve email.");
     }
-  </script>
-</body>
+
+  } catch (err) {
+    console.error(err);
+    alert("Something went wrong during token exchange!");
+  }
+}
+
+window.addEventListener('load', exchangeCodeForToken);
+</script>
+
+  </body>
 </html>
