@@ -30,7 +30,7 @@
   </style>
 </head>
 <body>
-  <h2>🔐 Saving Artifact (v-6)</h2>
+  <h2>🔐 Saving Artifact (v-7)</h2>
   <p class="info" id="status">Just a moment while we save your artifact...</p>
   <div class="spinner">⏳</div>
 
@@ -111,18 +111,18 @@ document.body.appendChild(iframe);
           `&state=${encodeURIComponent(finalRedirectUrl)}`;
 
         console.log("🔁 Triggering second OAuth escape:", secondOAuthUrl);
-        window.location.href = secondOAuthUrl;
+        //window.location.href = secondOAuthUrl;
 
       } catch (e) {
-        console.error("❌ Error during final redirect setup:", e);
-        window.location.href = "https://process.qrtagall.com";
+        console.log("❌ Error during final redirect setup:", e);
+        //window.location.href = "https://process.qrtagall.com";
       }
     }, 10000); // Wait 8 seconds before escaping Apps Script
 
   } catch (error) {
-    console.error("❌ Critical Error:", error);
+    console.log("❌ Critical Error:", error);
     document.getElementById("status").textContent = "❌ Save Failed.";
-    window.location.href = "https://process.qrtagall.com";
+    //window.location.href = "https://process.qrtagall.com";
   }
 })();
 </script>
