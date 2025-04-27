@@ -30,7 +30,7 @@
   </style>
 </head>
 <body>
-  <h2>🔐 Saving Artifact (v-8)</h2>
+  <h2>🔐 Saving Artifact (v-9)</h2>
   <p class="info" id="status">Just a moment while we save your artifact...</p>
   <div class="spinner">⏳</div>
 
@@ -78,20 +78,15 @@ document.body.appendChild(iframe);
  //  window.open(saveUrl, "_blank");
     
 
+
+     const finalRedirectUrl = `${window.location.origin}/?id=${encodeURIComponent(id)}`;
     // ✅ After some delay, trigger second OAuth escape
     setTimeout(() => {
        console.log("Timeout Triggered");
       try {
-        // Extract ID from saveUrl manually
-        const idMatch = saveUrl.match(/[?&]id=([^&]+)/);
-        const id = idMatch ? idMatch[1] : null;
+        
 
-        if (!id) {
-          console.warn("⚠️ ID extraction failed.");
-          alert("✅ ID not found");
-          //window.location.href = "https://process.qrtagall.com";
-          return;
-        }
+       
 
         /*
           // ✅ Trigger second OAuth to escape Apps Script sandbox
@@ -108,7 +103,7 @@ document.body.appendChild(iframe);
         
         console.log("Timeout Triggered>>1");
         //const finalRedirectUrl = `https://process.qrtagall.com/?id=${id}`;
-        const finalRedirectUrl = `${window.location.origin}/?id=${encodeURIComponent(id)}`;
+        
 
         const secondOAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
           `?response_type=token` +
@@ -118,18 +113,20 @@ document.body.appendChild(iframe);
           `&state=${encodeURIComponent(finalRedirectUrl)}`;
 
         console.log("🔁 Triggering second OAuth escape:", secondOAuthUrl);
-        //window.location.href = secondOAuthUrl;
+        window.location.href = secondOAuthUrl;
 
       } catch (e) {
         console.log("❌ Error during final redirect setup:", e);
-        //window.location.href = "https://process.qrtagall.com";
+         
+        window.location.href = finalRedirectUrl;
       }
     }, 10000); // Wait 8 seconds before escaping Apps Script
 
   } catch (error) {
     console.log("❌ Critical Error:", error);
     document.getElementById("status").textContent = "❌ Save Failed.";
-    //window.location.href = "https://process.qrtagall.com";
+    
+        window.location.href = finalRedirectUrl;
   }
 })();
 </script>
