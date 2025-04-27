@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Saving... Please Wait (V1.0)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding-top: 100px;
+      background-color: #f5f5f5;
+    }
+    h1 {
+      font-size: 24px;
+      color: #333;
+    }
+    p {
+      font-size: 16px;
+      color: #666;
+    }
+    #spinner {
+      margin-top: 30px;
+      width: 50px;
+      height: 50px;
+      border: 5px solid #ccc;
+      border-top-color: #333;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+  <script>
+    
+window.addEventListener('load', () => {
+    setTimeout(() => {
+      window.location.href = sessionStorage.getItem('saveWaitRedirect') || '/';
+    }, 2500); // wait 2.5 sec then go to Google OAuth
+  });
+    
+  </script>
+</head>
+<body>
+  <h1>Saving your information...</h1>
+  <p>Please wait a moment</p>
+  <div id="spinner"></div>
+</body>
+</html>
