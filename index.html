@@ -254,7 +254,7 @@
     </div>
 
 
-    <div id="versionTag">Ver-2.1</div>
+    <div id="versionTag">Ver-2.2</div>
 </div>
 
 <!-- Main Content for Verified IDs -->
@@ -419,6 +419,7 @@
     var assetDataList = [];  // global
     let ownerEmail="";
     let selectedUploadedFileData = "";  // 🔥 NEW global to store base64
+    let selectedUploadedFileName = "";   // 🔥 Add this new
 
     console.log("🚀 Script block reached!");
 
@@ -1138,6 +1139,7 @@
                 visibility: "",
                 linkOrText: "",
                 rawfiledata: "",
+                rawfilename: selectedUploadedFileName,
                 isDelete: true
             });
         }
@@ -1313,7 +1315,7 @@
     }
 
 
-//CM edit
+    //CM edit
     function saveArtifact() {
         const basicInfo = document.getElementById("artifactBasicInfo").value.trim();
         const fileType = document.getElementById("artifactFileType").value;
@@ -1364,6 +1366,7 @@
                 linkOrText: payload.localUrl,
                 isInsert: true,
                 modalId: "addArtifactModal",
+                rawfilename: selectedUploadedFileName,
                 rawfiledata: selectedUploadedFileData
             });
         }
@@ -1458,6 +1461,7 @@
             visibility: "",
             linkOrText: "",
             modalId: "editDescriptionModal",
+            rawfilename: selectedUploadedFileName,
             rawfiledata: selectedUploadedFileData
         });
 
@@ -1538,6 +1542,7 @@
                                         modalId = null,
                                         isInsert = false,
                                         isDelete = false,
+                                        rawfilename = undefined,
                                         rawfiledata = undefined
                                     }) {
         const id = getQueryParam("id");
@@ -1570,7 +1575,7 @@
         console.log(">>>>>>>>> URL........", params);
 
         if (rawfiledata) {
-            await triggerLink_post(params, rawfiledata, modalId);
+            await triggerLink_post(params, rawfiledata, rawfilename, modalId);
         } else {
             await triggerLink_old(params, modalId);
         }
@@ -1581,99 +1586,100 @@
 
 
 
-   async function triggerLink_post(params, rawfiledata, modalId = null) {
-    const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec`;
+    async function triggerLink_post(params, rawfiledata, modalId = null) {
+        const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec`;
 
-    if (modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) modal.style.display = "none";
-    }
-
-    const spinner = document.getElementById("fullScreenSpinner");
-    if (spinner) spinner.style.display = "flex";
-
-    // 🔥 Step 1: OAuth Force Login
-    async function fetchUserEmail(token) {
-        try {
-            const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
-            const data = await res.json();
-            return (data.email || "").toLowerCase();
-        } catch (e) {
-            console.error("❌ Failed to fetch user email:", e);
-            return "";
+        if (modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) modal.style.display = "none";
         }
-    }
 
-    await new Promise((resolve, reject) => {
-        const client = google.accounts.oauth2.initTokenClient({
-            client_id: '121290253918-cae49r46mo3r9f9rhd7rq6ao9ae69jjv.apps.googleusercontent.com',
-            scope: 'https://www.googleapis.com/auth/userinfo.email',
-            prompt: 'consent',
-            callback: async (response) => {
-                if (response.access_token) {
-                    console.log("✅ Access token acquired.");
-                    localStorage.setItem('qr_oauth_token', response.access_token);
+        const spinner = document.getElementById("fullScreenSpinner");
+        if (spinner) spinner.style.display = "flex";
 
-                    const userEmail = await fetchUserEmail(response.access_token);
-                    console.log("📧 Logged in as:", userEmail);
+        // 🔥 Step 1: OAuth Force Login
+        async function fetchUserEmail(token) {
+            try {
+                const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+                const data = await res.json();
+                return (data.email || "").toLowerCase();
+            } catch (e) {
+                console.error("❌ Failed to fetch user email:", e);
+                return "";
+            }
+        }
 
-                    if (userEmail === ownerEmail) {
-                        console.log("✅ Owner verified, proceeding...");
-                        resolve();
+        await new Promise((resolve, reject) => {
+            const client = google.accounts.oauth2.initTokenClient({
+                client_id: '121290253918-cae49r46mo3r9f9rhd7rq6ao9ae69jjv.apps.googleusercontent.com',
+                scope: 'https://www.googleapis.com/auth/userinfo.email',
+                prompt: 'consent',
+                callback: async (response) => {
+                    if (response.access_token) {
+                        console.log("✅ Access token acquired.");
+                        localStorage.setItem('qr_oauth_token', response.access_token);
+
+                        const userEmail = await fetchUserEmail(response.access_token);
+                        console.log("📧 Logged in as:", userEmail);
+
+                        if (userEmail === ownerEmail) {
+                            console.log("✅ Owner verified, proceeding...");
+                            resolve();
+                        } else {
+                            spinner.style.display = "none";
+                            alert("❌ You are not the owner of this QR Asset.\nPlease login with the correct account.");
+                            reject("User is not the owner");
+                        }
                     } else {
                         spinner.style.display = "none";
-                        alert("❌ You are not the owner of this QR Asset.\nPlease login with the correct account.");
-                        reject("User is not the owner");
+                        reject("❌ OAuth login failed.");
                     }
-                } else {
-                    spinner.style.display = "none";
-                    reject("❌ OAuth login failed.");
-                }
-            },
+                },
+            });
+
+            client.requestAccessToken();
         });
 
-        client.requestAccessToken();
-    });
-
-    // 🔥 Step 2: After Auth Verified, do Form+Iframe POST
-    const finalData = {
-        ...Object.fromEntries(new URLSearchParams(params)),
-        rawfiledata: rawfiledata
-    };
-
-    await new Promise((resolve, reject) => {
-        const iframe = document.createElement("iframe");
-        iframe.name = "hidden_iframe_" + Math.random().toString(36).substring(2);
-        iframe.style.display = "none";
-        document.body.appendChild(iframe);
-
-        const form = document.createElement("form");
-        form.method = "POST";
-        form.action = targetUrl;
-        form.target = iframe.name;
-
-        const input = document.createElement("input");
-        input.type = "hidden";
-        input.name = "data";
-        input.value = JSON.stringify(finalData);
-
-        form.appendChild(input);
-        document.body.appendChild(form);
-
-        iframe.onload = function() {
-            spinner.style.display = "none";
-            alert("✅ Artifact info saved successfully (via POST iframe).");
-            location.reload();
-            resolve();
+        // 🔥 Step 2: After Auth Verified, do Form+Iframe POST
+        const finalData = {
+            ...Object.fromEntries(new URLSearchParams(params)),
+            rawfiledata: rawfiledata,
+            rawfilename: rawfilename || ""
         };
 
-        form.submit();
-    });
-}
+        await new Promise((resolve, reject) => {
+            const iframe = document.createElement("iframe");
+            iframe.name = "hidden_iframe_" + Math.random().toString(36).substring(2);
+            iframe.style.display = "none";
+            document.body.appendChild(iframe);
+
+            const form = document.createElement("form");
+            form.method = "POST";
+            form.action = targetUrl;
+            form.target = iframe.name;
+
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = "data";
+            input.value = JSON.stringify(finalData);
+
+            form.appendChild(input);
+            document.body.appendChild(form);
+
+            iframe.onload = function() {
+                spinner.style.display = "none";
+                alert("✅ Artifact info saved successfully (via POST iframe).");
+                location.reload();
+                resolve();
+            };
+
+            form.submit();
+        });
+    }
 
 
 
@@ -1683,7 +1689,7 @@
 
         const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?${params}`;
         //const ownerEmail = (sessionEmail || "").toLowerCase(); // 🔥 assuming sessionEmail is already known
-       // console.log(">>>>>>>>> URL........", targetUrl);
+        // console.log(">>>>>>>>> URL........", targetUrl);
 
         if (modalId) {
             const modal = document.getElementById(modalId);
@@ -1911,19 +1917,6 @@
     }
 
     function simulateUseFile() {
-      /*
-      const fileInput = document.getElementById("filePicker");
-        if (fileInput.files.length > 0) {
-            const fileName = fileInput.files[0].name;
-            document.getElementById("uploadedFileLink").textContent = `🆗 Selected file: ${fileName}`;
-            // TODO: Upload to Drive and get sharable link
-        } else {
-            document.getElementById("uploadedFileLink").textContent = `❌ No file selected`;
-        }
-        closeUploadModal();
-
-       */
-
         const fileInput = document.getElementById("filePicker");
         const file = fileInput.files[0];
 
@@ -1941,13 +1934,13 @@
 
         const reader = new FileReader();
         reader.onload = function(event) {
-            selectedUploadedFileData = event.target.result.split(',')[1]; // 🔥 get base64 without prefix
+            selectedUploadedFileData = event.target.result.split(',')[1]; // get base64
+            selectedUploadedFileName = file.name;  // 🔥 capture filename
             document.getElementById("uploadedFileLink").textContent = `🆗 Selected file: ${file.name}`;
             closeUploadModal();
         };
-        reader.readAsDataURL(file);  // 🔥 read as DataURL to get base64
+        reader.readAsDataURL(file);
     }
-
 
 
 
