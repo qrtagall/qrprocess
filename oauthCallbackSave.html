@@ -30,7 +30,7 @@
   </style>
 </head>
 <body>
-  <h2>🔐 Saving Artifact (v-12)</h2>
+  <h2>🔐 Saving Artifact (v-13)</h2>
   <p class="info" id="status">Just a moment while we save your artifact...</p>
   <div class="spinner">⏳</div>
 
@@ -75,8 +75,11 @@ iframe.src = saveUrl;
 iframe.style.display = "none"; 
 document.body.appendChild(iframe);
 */
-   window.open(saveUrl, "_blank");
-    
+  // window.open(saveUrl, "_blank");
+    try
+    {
+      await fetch(saveUrl);
+    }catch(e1){}
 
 
      const finalRedirectUrl = `${window.location.origin}/?id=${encodeURIComponent(id)}`;
