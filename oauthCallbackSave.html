@@ -30,7 +30,7 @@
   </style>
 </head>
 <body>
-  <h2>🔐 Saving Artifact (v-16)</h2>
+  <h2>🔐 Saving Artifact (v-17)</h2>
   <p class="info" id="status">Just a moment while we save your artifact...</p>
   <div class="spinner">⏳</div>
 
@@ -72,14 +72,16 @@
     
 
     // ✅ Redirect to saveUrl to save artifact
-  window.location.href = saveUrl;
+  //window.location.href = saveUrl;
 /*
 const iframe = document.createElement('iframe');
 iframe.src = saveUrl;
 iframe.style.display = "none"; 
 document.body.appendChild(iframe);
 */
-  // window.open(saveUrl, "_blank");
+ 
+    const popup = window.open(saveUrl, "_blank");
+
    
 
      const finalRedirectUrl = `${window.location.origin}/?id=${encodeURIComponent(id)}`;
@@ -116,6 +118,9 @@ document.body.appendChild(iframe);
           `&state=${encodeURIComponent(finalRedirectUrl)}`;
 
         console.log("🔁 Triggering second OAuth escape:", secondOAuthUrl);
+
+         try { if (popup && !popup.closed) popup.close(); } catch (e) {}
+        
         window.location.href = secondOAuthUrl;
 
       } catch (e) {
