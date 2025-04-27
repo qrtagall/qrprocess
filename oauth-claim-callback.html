@@ -29,7 +29,7 @@
   </style>
 </head>
 <body>
-  <h2>🔐 Finalizing QR Claim (v-14)</h2>
+  <h2>🔐 Finalizing QR Claim (v-15)</h2>
   <p class="info" id="status">Just a moment while we make something spectacular for you...</p>
   <div class="spinner">⏳</div>
 
@@ -57,9 +57,14 @@
       }
       
       const statusEl = document.getElementById("status");
-            
-      if (!accessToken || !id) {
-        statusEl.textContent = "❌ Missing access token or QR ID.";
+
+       if (!accessToken) {
+        statusEl.textContent = "❌ Missing access token.";
+        return;
+      }
+      
+      if ( !id) {
+        statusEl.textContent = "❌ MissingQR ID.";
         return;
       }
 
