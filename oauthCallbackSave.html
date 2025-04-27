@@ -30,7 +30,7 @@
   </style>
 </head>
 <body>
-  <h2>🔐 Saving Artifact (v-7)</h2>
+  <h2>🔐 Saving Artifact (v-8)</h2>
   <p class="info" id="status">Just a moment while we save your artifact...</p>
   <div class="spinner">⏳</div>
 
@@ -52,13 +52,20 @@
         statusEl.textContent = "❌ Missing access token.";
         return;
       }
-      
+        console.log("✅ Save URL received:", saveUrl);
+
+
+     const idMatch = saveUrl.match(/[?&]id=([^&]+)/);
+    const id = idMatch ? idMatch[1] : null;
+
       if ( !id) {
         statusEl.textContent = "❌ MissingQR ID.";
         return;
       }
 
-    console.log("✅ Save URL received:", saveUrl);
+    console.log("✅ Extracted ID:", id);
+
+    
 
     // ✅ Redirect to saveUrl to save artifact
     window.location.href = saveUrl;
