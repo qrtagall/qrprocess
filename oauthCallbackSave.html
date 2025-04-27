@@ -30,7 +30,7 @@
   </style>
 </head>
 <body>
-  <h2>🔐 Saving Artifact (v-5)</h2>
+  <h2>🔐 Saving Artifact (v-6)</h2>
   <p class="info" id="status">Just a moment while we save your artifact...</p>
   <div class="spinner">⏳</div>
 
@@ -48,6 +48,15 @@
       statusEl.textContent = "❌ Missing save URL.";
       return;
     }
+     if (!accessToken) {
+        statusEl.textContent = "❌ Missing access token.";
+        return;
+      }
+      
+      if ( !id) {
+        statusEl.textContent = "❌ MissingQR ID.";
+        return;
+      }
 
     console.log("✅ Save URL received:", saveUrl);
 
@@ -78,7 +87,8 @@ document.body.appendChild(iframe);
         }
 
         /*
-         const secondOAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
+          // ✅ Trigger second OAuth to escape Apps Script sandbox
+              const secondOAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
                 `?response_type=token` +
                 `&client_id=121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com` +
                 `&redirect_uri=${encodeURIComponent('https://process.qrtagall.com/oauth-redirect-final.html')}` +
@@ -88,13 +98,15 @@ document.body.appendChild(iframe);
               console.log("🔁 Redirecting to second OAuth flow:", secondOAuthUrl);
               window.location.href = secondOAuthUrl;
               */
+        
         console.log("Timeout Triggered>>1");
-        const finalRedirectUrl = `https://process.qrtagall.com/?id=${id}`;
+        //const finalRedirectUrl = `https://process.qrtagall.com/?id=${id}`;
+        const finalRedirectUrl = `${window.location.origin}/?id=${encodeURIComponent(id)}`;
 
         const secondOAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
           `?response_type=token` +
           `&client_id=121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com` +
-          `&redirect_uri=${encodeURIComponent('https://process.qrtagall.com/oauth-redirect-final.html')}` +
+          `&redirect_uri=${encodeURIComponent('https://process.qrtagall.com/oauth-redirect-finalSave.html')}` +
           `&scope=${encodeURIComponent('https://www.googleapis.com/auth/userinfo.email')}` +
           `&state=${encodeURIComponent(finalRedirectUrl)}`;
 
