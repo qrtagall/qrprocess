@@ -254,7 +254,7 @@
     </div>
 
 
-    <div id="versionTag">Ver-1.7</div>
+    <div id="versionTag">Ver-2.0</div>
 </div>
 
 <!-- Main Content for Verified IDs -->
@@ -393,18 +393,18 @@
 
 <!-- 📤 Upload Modal -->
 <div id="uploadModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:10001; align-items:center; justify-content:center;">
-  <div style="background:white; padding:30px; border-radius:12px; width:90%; max-width:400px; text-align:center; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
-    <h3 style="margin-top:0;">📤 Upload / Select File</h3>
-    
-    <input type="file" id="filePicker" style="margin:20px 0; width:100%;"><br>
+    <div style="background:white; padding:30px; border-radius:12px; width:90%; max-width:400px; text-align:center; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+        <h3 style="margin-top:0;">📤 Upload / Select File</h3>
 
-    <div id="filePreview" style="margin:10px 0; font-size:14px; color:gray;">No file selected</div>
+        <input type="file" id="filePicker" style="margin:20px 0; width:100%;"><br>
 
-    <div style="margin-top:20px;">
-      <button onclick="simulateUseFile()">Use Selected</button>
-      <button onclick="closeUploadModal()">Cancel</button>
+        <div id="filePreview" style="margin:10px 0; font-size:14px; color:gray;">No file selected</div>
+
+        <div style="margin-top:20px;">
+            <button onclick="simulateUseFile()">Use Selected</button>
+            <button onclick="closeUploadModal()">Cancel</button>
+        </div>
     </div>
-  </div>
 </div>
 
 <script>
@@ -418,6 +418,7 @@
     var currentEditMode = null; // new global
     var assetDataList = [];  // global
     let ownerEmail="";
+    let selectedUploadedFileData = "";  // 🔥 NEW global to store base64
 
     console.log("🚀 Script block reached!");
 
@@ -1136,6 +1137,7 @@
                 fileType: "",
                 visibility: "",
                 linkOrText: "",
+                rawfiledata: "",
                 isDelete: true
             });
         }
@@ -1311,7 +1313,7 @@
     }
 
 
-
+//CM edit
     function saveArtifact() {
         const basicInfo = document.getElementById("artifactBasicInfo").value.trim();
         const fileType = document.getElementById("artifactFileType").value;
@@ -1361,7 +1363,8 @@
                 visibility: payload.options,
                 linkOrText: payload.localUrl,
                 isInsert: true,
-                modalId: "addArtifactModal"
+                modalId: "addArtifactModal",
+                rawfiledata: selectedUploadedFileData
             });
         }
 
@@ -1454,95 +1457,19 @@
             fileType: "",
             visibility: "",
             linkOrText: "",
-            modalId: "editDescriptionModal"
+            modalId: "editDescriptionModal",
+            rawfiledata: selectedUploadedFileData
         });
 
 
 
     }
 
+
+
+
+
     /*
-        function saveArtifactInfo({
-                                      startCell,
-                                      basicInfo = undefined,
-                                      fileType = undefined,
-                                      visibility = undefined,
-                                      linkOrText = undefined,
-                                      modalId = null,
-                                      isInsert = false,
-                                      isDelete = false
-                                  }) {
-            const id = getQueryParam("id");
-            const sheetId = sheetID;
-            const secretKey = "optional_static_key";
-
-            // ✅ Prepare dynamic values array
-            const valueParts = [];
-
-            if (basicInfo !== undefined) valueParts.push(basicInfo);
-            if (fileType !== undefined) valueParts.push(fileType);
-            if (visibility !== undefined) valueParts.push(visibility);
-            if (linkOrText !== undefined) valueParts.push(linkOrText);
-
-            const values = valueParts.join("||");
-
-            const query = new URLSearchParams({
-                mode: "updateCells",
-                id,
-                sheetId,
-                range: startCell,
-                values,
-                secret_key: secretKey
-            });
-
-            // ✅ Conditionally add insert=1 or delete=1
-            if (isInsert) {
-                query.append("insert", "1");
-            }
-            if (isDelete) {
-                query.append("delete", "1");
-            }
-
-            const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?${query.toString()}`;
-
-            console.log("✅ Final target URL:", targetUrl);
-
-            const popup = window.open(
-                targetUrl,
-                "_blank",
-                "width=10,height=10,left=1,top=1,menubar=no,toolbar=no,location=no,status=no,resizable=no,scrollbars=no"
-            );
-
-            setTimeout(() => {
-                if (modalId) {
-                    const modal = document.getElementById(modalId);
-                    if (modal) modal.style.display = "none";
-                }
-
-                try {
-                    if (popup && !popup.closed) popup.close();
-                }
-                catch (e)
-                    {
-                    }
-
-
-                try {
-                    window.focus(); // ✅ Bring back focus (desktop only attempt)
-                } catch (e) {
-                    //console.warn("Focus not allowed:", e);
-                }
-
-                alert("✅ Artifact info saved.");
-                location.reload();
-            }, 1000);
-
-
-        }
-    */
-
-
-
     async function saveArtifactInfo({
                                         startCell,
                                         basicInfo = undefined,
@@ -1551,7 +1478,8 @@
                                         linkOrText = undefined,
                                         modalId = null,
                                         isInsert = false,
-                                        isDelete = false
+                                        isDelete = false,
+                                        rawfiledata = undefined
                                     }) {
         const id = getQueryParam("id");
         const sheetId = sheetID;
@@ -1579,26 +1507,178 @@
 
         if (isInsert) query.append("insert", "1");
         if (isDelete) query.append("delete", "1");
+        if (rawfiledata) query.append("rawfiledata", encodeURIComponent(rawfiledata));
 
 
         //const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?${query.toString()}`;
         //console.log("✅ Final Target URL:", targetUrl);
         //triggerLink_old(targetUrl, modalId);
 
-        const spinner = document.getElementById("fullScreenSpinner");
-        spinner.style.display = "flex";
+
 
         const params = `${query.toString()}`;
 
+        console.log(">>>>>>>>> URL........", params);
+
+        if (rawfiledata)
+        {
+
+        }
+        else
         await triggerLink_old(params, modalId);
+    }
+    */
+
+    async function saveArtifactInfo({
+                                        startCell,
+                                        basicInfo = undefined,
+                                        fileType = undefined,
+                                        visibility = undefined,
+                                        linkOrText = undefined,
+                                        modalId = null,
+                                        isInsert = false,
+                                        isDelete = false,
+                                        rawfiledata = undefined
+                                    }) {
+        const id = getQueryParam("id");
+        const sheetId = sheetID;
+        const secretKey = "optional_static_key";
+
+        const valueParts = [
+            basicInfo !== undefined ? basicInfo : "",
+            fileType !== undefined ? fileType : "",
+            visibility !== undefined ? visibility : "",
+            linkOrText !== undefined ? linkOrText : ""
+        ];
+
+        const finalValues = valueParts.slice(0, 4).join("||");
+
+        const query = new URLSearchParams({
+            mode: "updateCells",
+            id,
+            sheetId,
+            range: startCell,
+            values: finalValues,
+            secret_key: secretKey
+        });
+
+        if (isInsert) query.append("insert", "1");
+        if (isDelete) query.append("delete", "1");
+
+        const params = query.toString();
+
+        console.log(">>>>>>>>> URL........", params);
+
+        if (rawfiledata) {
+            await triggerLink_post(params, rawfiledata, modalId);
+        } else {
+            await triggerLink_old(params, modalId);
+        }
+    }
+
+    //CCCMEDIT
+
+
+
+
+    async function triggerLink_post(params, rawfiledata, modalId = null) {
+        const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec`;
+
+        if (modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) modal.style.display = "none";
+        }
+
+        const spinner = document.getElementById("fullScreenSpinner");
+        if (spinner) spinner.style.display = "flex";
+
+        // 🔥 Same auth logic first
+        async function fetchUserEmail(token) {
+            try {
+                const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+                const data = await res.json();
+                return (data.email || "").toLowerCase();
+            } catch (e) {
+                console.error("❌ Failed to fetch user email:", e);
+                return "";
+            }
+        }
+
+        await new Promise((resolve, reject) => {
+            const client = google.accounts.oauth2.initTokenClient({
+                client_id: '121290253918-cae49r46mo3r9f9rhd7rq6ao9ae69jjv.apps.googleusercontent.com',
+                scope: 'https://www.googleapis.com/auth/userinfo.email',
+                prompt: 'consent',
+                callback: async (response) => {
+                    if (response.access_token) {
+                        console.log("✅ Access token acquired.");
+                        localStorage.setItem('qr_oauth_token', response.access_token);
+
+                        const userEmail = await fetchUserEmail(response.access_token);
+                        console.log("📧 Logged in as:", userEmail);
+
+                        if (userEmail === ownerEmail) {
+                            console.log("✅ Owner verified, proceeding...");
+                            resolve();
+                        } else {
+                            spinner.style.display = "none";
+                            alert("❌ You are not the owner of this QR Asset.\nPlease login with the correct account.");
+                            reject("User is not the owner");
+                        }
+                    } else {
+                        spinner.style.display = "none";
+                        reject("❌ OAuth login failed.");
+                    }
+                },
+            });
+
+            client.requestAccessToken();
+        });
+
+        // 🔥 After auth check passed: fire the real POST now
+        const finalBody = {
+            ...Object.fromEntries(new URLSearchParams(params)),
+            rawfiledata: rawfiledata
+        };
+
+        try {
+            const response = await fetch(targetUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(finalBody)
+            });
+
+            const resData = await response.json();
+            console.log("✅ POST Response:", resData);
+
+            if (resData.success) {
+                alert("✅ Artifact info saved successfully!");
+            } else {
+                alert("❌ Save failed: " + (resData.message || "Unknown error"));
+            }
+        } catch (e) {
+            console.error("❌ POST Error:", e);
+            alert("❌ Network or server error during save.");
+        } finally {
+            spinner.style.display = "none";
+            location.reload();
+        }
     }
 
 
 
-
     async function triggerLink_old(params, modalId = null) {
+
+
         const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?${params}`;
         //const ownerEmail = (sessionEmail || "").toLowerCase(); // 🔥 assuming sessionEmail is already known
+       // console.log(">>>>>>>>> URL........", targetUrl);
 
         if (modalId) {
             const modal = document.getElementById(modalId);
@@ -1681,6 +1761,9 @@
 
 
 
+
+
+
     async function triggerLink_old1(params, modalId = null) {
         const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?${params}`;
 
@@ -1695,6 +1778,7 @@
 
         // Let the browser paint the spinner FIRST
         setTimeout(async () => {
+
 
 
             try {
@@ -1822,7 +1906,8 @@
     }
 
     function simulateUseFile() {
-        const fileInput = document.getElementById("filePicker");
+      /*
+      const fileInput = document.getElementById("filePicker");
         if (fileInput.files.length > 0) {
             const fileName = fileInput.files[0].name;
             document.getElementById("uploadedFileLink").textContent = `🆗 Selected file: ${fileName}`;
@@ -1831,6 +1916,31 @@
             document.getElementById("uploadedFileLink").textContent = `❌ No file selected`;
         }
         closeUploadModal();
+
+       */
+
+        const fileInput = document.getElementById("filePicker");
+        const file = fileInput.files[0];
+
+        if (!file) {
+            alert("❌ No file selected.");
+            closeUploadModal();
+            return;
+        }
+
+        if (file.size > 10 * 1024 * 1024) {  // 10 MB
+            alert("⚠️ File size exceeds 10MB. Please select a smaller file.");
+            closeUploadModal();
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            selectedUploadedFileData = event.target.result.split(',')[1]; // 🔥 get base64 without prefix
+            document.getElementById("uploadedFileLink").textContent = `🆗 Selected file: ${file.name}`;
+            closeUploadModal();
+        };
+        reader.readAsDataURL(file);  // 🔥 read as DataURL to get base64
     }
 
 
