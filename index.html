@@ -4,7 +4,9 @@
   <meta charset="UTF-8">
   <title>QRTagall | ID Verifier</title>
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     :root {
       --primary: #005aab;
@@ -252,7 +254,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-1.1</div>
+	  <div id="versionTag">Ver-1.2/div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -1280,10 +1282,17 @@ function saveArtifact() {
 
 
     function closeAddModal() {
+
+        console.log(">>>Closing Modal");
+
+        document.getElementById("fullScreenSpinner").style.display = "none";
+
         document.getElementById("addArtifactModal").style.display = "none";
         insertAfterRow = null;
         selectedUploadedFileLink = "";
         currentEditMode = null;
+
+
     }
 
 
@@ -1357,6 +1366,8 @@ function editDescription() {
 }
 
 function closeDescriptionModal() {
+    console.log(">>>Closing Description Modal");
+    document.getElementById("fullScreenSpinner").style.display = "none";
   document.getElementById("editDescriptionModal").style.display = "none";
 }
 
@@ -1365,7 +1376,7 @@ function closeDescriptionModal() {
 
 
 
-
+/*
 async function saveArtifactWithOAuth() {
   const accessToken = localStorage.getItem("qr_access_token");
   if (!accessToken) {
@@ -1413,7 +1424,7 @@ async function saveArtifactWithOAuth() {
     alert("❌ Network/Auth Error");
   }
 }
-
+*/
 
 
 
@@ -1570,15 +1581,14 @@ const updatedDesc = document.getElementById("newDescription").value.trim();
 
 
 
+    async function triggerLink_old(params, modalId = null) {
 
-
-	   async function triggerLink_old(params, modalId = null) {
         const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?${params}`;
 
         // 🔥 Step 1: Force OAuth login first
         await new Promise((resolve, reject) => {
             const client = google.accounts.oauth2.initTokenClient({
-                client_id: '121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com', // Replace with yours
+                client_id: '121290253918-cae49r46mo3r9f9rhd7rq6ao9ae69jjv.apps.googleusercontent.com', // Replace with yours
                 scope: 'https://www.googleapis.com/auth/userinfo.email',
                 prompt: 'consent',  // 🔥 Always show login popup
                 callback: (response) => {
@@ -1605,7 +1615,7 @@ const updatedDesc = document.getElementById("newDescription").value.trim();
         spinner.style.display = "flex";
 
         // Let spinner paint
-        setTimeout(() => {
+       // setTimeout(() => {
             try {
                 const img = new Image();
                 img.src = targetUrl;
@@ -1620,8 +1630,58 @@ const updatedDesc = document.getElementById("newDescription").value.trim();
                 location.reload();
             }, 3000);
 
-        }, 1000); // Give spinner time to paint
+      //  }, 1000); // Give spinner time to paint
     }
+
+
+
+    async function triggerLink_old1(params, modalId = null) {
+        const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?${params}`;
+
+
+
+
+        if (modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) modal.style.display = "none";
+        }
+        document.getElementById("fullScreenSpinner").style.display = "flex";
+
+        // Let the browser paint the spinner FIRST
+        setTimeout(async () => {
+
+
+            try {
+                const img = new Image();
+                img.src = targetUrl;
+            } catch (e) {
+
+            }
+
+           /* let response = null;
+            try {
+                const res = await fetch(targetUrl);
+                response = await res.json();
+            } catch (e) {
+            }
+            *
+            console.log(">>>>>>>>> Response.........", response);
+            */
+
+
+
+            setTimeout(() => {
+
+
+                document.getElementById("fullScreenSpinner").style.display = "none";
+
+                alert("✅ Artifact info saved.");
+                location.reload();
+            }, 3000);
+
+        },1000); // 🔥 Magic! spinner visible before image src fires
+    }
+
 
 
     /*
