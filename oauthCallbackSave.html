@@ -30,7 +30,7 @@
   </style>
 </head>
 <body>
-  <h2>🔐 Saving Artifact (v-17)</h2>
+  <h2>🔐 Saving Artifact (v-18)</h2>
   <p class="info" id="status">Just a moment while we save your artifact...</p>
   <div class="spinner">⏳</div>
 
@@ -79,8 +79,21 @@ iframe.src = saveUrl;
 iframe.style.display = "none"; 
 document.body.appendChild(iframe);
 */
+
+
+     const popup = window.open(
+            saveUrl,
+            "_blank",
+            "width=10,height=10,left=1,top=1,menubar=no,toolbar=no,location=no,status=no,resizable=no,scrollbars=no"
+        );
  
-    const popup = window.open(saveUrl, "_blank");
+   try
+   {
+     const iframe = document.createElement('iframe');
+iframe.src = saveUrl;
+iframe.style.display = "none"; 
+document.body.appendChild(iframe);
+   }catch(e1){}
 
    
 
