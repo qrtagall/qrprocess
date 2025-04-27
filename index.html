@@ -254,7 +254,7 @@
     </div>
 
 
-    <div id="versionTag">Ver-2.0</div>
+    <div id="versionTag">Ver-2.1</div>
 </div>
 
 <!-- Main Content for Verified IDs -->
@@ -1581,95 +1581,100 @@
 
 
 
-    async function triggerLink_post(params, rawfiledata, modalId = null) {
-        const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec`;
+   async function triggerLink_post(params, rawfiledata, modalId = null) {
+    const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec`;
 
-        if (modalId) {
-            const modal = document.getElementById(modalId);
-            if (modal) modal.style.display = "none";
-        }
+    if (modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) modal.style.display = "none";
+    }
 
-        const spinner = document.getElementById("fullScreenSpinner");
-        if (spinner) spinner.style.display = "flex";
+    const spinner = document.getElementById("fullScreenSpinner");
+    if (spinner) spinner.style.display = "flex";
 
-        // 🔥 Same auth logic first
-        async function fetchUserEmail(token) {
-            try {
-                const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                });
-                const data = await res.json();
-                return (data.email || "").toLowerCase();
-            } catch (e) {
-                console.error("❌ Failed to fetch user email:", e);
-                return "";
-            }
-        }
-
-        await new Promise((resolve, reject) => {
-            const client = google.accounts.oauth2.initTokenClient({
-                client_id: '121290253918-cae49r46mo3r9f9rhd7rq6ao9ae69jjv.apps.googleusercontent.com',
-                scope: 'https://www.googleapis.com/auth/userinfo.email',
-                prompt: 'consent',
-                callback: async (response) => {
-                    if (response.access_token) {
-                        console.log("✅ Access token acquired.");
-                        localStorage.setItem('qr_oauth_token', response.access_token);
-
-                        const userEmail = await fetchUserEmail(response.access_token);
-                        console.log("📧 Logged in as:", userEmail);
-
-                        if (userEmail === ownerEmail) {
-                            console.log("✅ Owner verified, proceeding...");
-                            resolve();
-                        } else {
-                            spinner.style.display = "none";
-                            alert("❌ You are not the owner of this QR Asset.\nPlease login with the correct account.");
-                            reject("User is not the owner");
-                        }
-                    } else {
-                        spinner.style.display = "none";
-                        reject("❌ OAuth login failed.");
-                    }
-                },
-            });
-
-            client.requestAccessToken();
-        });
-
-        // 🔥 After auth check passed: fire the real POST now
-        const finalBody = {
-            ...Object.fromEntries(new URLSearchParams(params)),
-            rawfiledata: rawfiledata
-        };
-
+    // 🔥 Step 1: OAuth Force Login
+    async function fetchUserEmail(token) {
         try {
-            const response = await fetch(targetUrl, {
-                method: "POST",
+            const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
                 headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(finalBody)
+                    Authorization: `Bearer ${token}`
+                }
             });
-
-            const resData = await response.json();
-            console.log("✅ POST Response:", resData);
-
-            if (resData.success) {
-                alert("✅ Artifact info saved successfully!");
-            } else {
-                alert("❌ Save failed: " + (resData.message || "Unknown error"));
-            }
+            const data = await res.json();
+            return (data.email || "").toLowerCase();
         } catch (e) {
-            console.error("❌ POST Error:", e);
-            alert("❌ Network or server error during save.");
-        } finally {
-            spinner.style.display = "none";
-            location.reload();
+            console.error("❌ Failed to fetch user email:", e);
+            return "";
         }
     }
+
+    await new Promise((resolve, reject) => {
+        const client = google.accounts.oauth2.initTokenClient({
+            client_id: '121290253918-cae49r46mo3r9f9rhd7rq6ao9ae69jjv.apps.googleusercontent.com',
+            scope: 'https://www.googleapis.com/auth/userinfo.email',
+            prompt: 'consent',
+            callback: async (response) => {
+                if (response.access_token) {
+                    console.log("✅ Access token acquired.");
+                    localStorage.setItem('qr_oauth_token', response.access_token);
+
+                    const userEmail = await fetchUserEmail(response.access_token);
+                    console.log("📧 Logged in as:", userEmail);
+
+                    if (userEmail === ownerEmail) {
+                        console.log("✅ Owner verified, proceeding...");
+                        resolve();
+                    } else {
+                        spinner.style.display = "none";
+                        alert("❌ You are not the owner of this QR Asset.\nPlease login with the correct account.");
+                        reject("User is not the owner");
+                    }
+                } else {
+                    spinner.style.display = "none";
+                    reject("❌ OAuth login failed.");
+                }
+            },
+        });
+
+        client.requestAccessToken();
+    });
+
+    // 🔥 Step 2: After Auth Verified, do Form+Iframe POST
+    const finalData = {
+        ...Object.fromEntries(new URLSearchParams(params)),
+        rawfiledata: rawfiledata
+    };
+
+    await new Promise((resolve, reject) => {
+        const iframe = document.createElement("iframe");
+        iframe.name = "hidden_iframe_" + Math.random().toString(36).substring(2);
+        iframe.style.display = "none";
+        document.body.appendChild(iframe);
+
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action = targetUrl;
+        form.target = iframe.name;
+
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = "data";
+        input.value = JSON.stringify(finalData);
+
+        form.appendChild(input);
+        document.body.appendChild(form);
+
+        iframe.onload = function() {
+            spinner.style.display = "none";
+            alert("✅ Artifact info saved successfully (via POST iframe).");
+            location.reload();
+            resolve();
+        };
+
+        form.submit();
+    });
+}
+
 
 
 
