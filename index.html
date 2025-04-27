@@ -252,7 +252,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-1</div>
+	  <div id="versionTag">Ver-1.1</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -1570,53 +1570,58 @@ const updatedDesc = document.getElementById("newDescription").value.trim();
 
 
 
-    async function triggerLink_old(params, modalId = null) {
+
+
+	   async function triggerLink_old(params, modalId = null) {
         const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?${params}`;
 
+        // 🔥 Step 1: Force OAuth login first
+        await new Promise((resolve, reject) => {
+            const client = google.accounts.oauth2.initTokenClient({
+                client_id: '121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com', // Replace with yours
+                scope: 'https://www.googleapis.com/auth/userinfo.email',
+                prompt: 'consent',  // 🔥 Always show login popup
+                callback: (response) => {
+                    if (response.access_token) {
+                        console.log("✅ Access token acquired for forced login.");
+                        localStorage.setItem('qr_oauth_token', response.access_token);
+                        resolve();
+                    } else {
+                        reject("❌ OAuth login failed.");
+                    }
+                },
+            });
 
+            client.requestAccessToken();
+        });
 
-
+        // 🔥 Step 2: After successful login, proceed normally
         if (modalId) {
             const modal = document.getElementById(modalId);
             if (modal) modal.style.display = "none";
         }
-        document.getElementById("fullScreenSpinner").style.display = "flex";
 
-        // Let the browser paint the spinner FIRST
-        setTimeout(async () => {
+        const spinner = document.getElementById("fullScreenSpinner");
+        spinner.style.display = "flex";
 
-
+        // Let spinner paint
+        setTimeout(() => {
             try {
                 const img = new Image();
                 img.src = targetUrl;
             } catch (e) {
-                
+                console.error("❌ Image fetch failed:", e);
             }
-
-           /* let response = null;
-            try {
-                const res = await fetch(targetUrl);
-                response = await res.json();
-            } catch (e) {
-            }
-            *
-            console.log(">>>>>>>>> Response.........", response);
-            */
-
-
 
             setTimeout(() => {
-
-
-                document.getElementById("fullScreenSpinner").style.display = "none";
+                spinner.style.display = "none";
 
                 alert("✅ Artifact info saved.");
                 location.reload();
             }, 3000);
 
-        },1000); // 🔥 Magic! spinner visible before image src fires
+        }, 1000); // Give spinner time to paint
     }
-
 
 
     /*
