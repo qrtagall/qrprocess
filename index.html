@@ -252,7 +252,7 @@
 		</div>
 
 
-	  <div id="versionTag">Ver-6.13</div>
+	  <div id="versionTag">Ver-7.0</div>
 	</div>
 
 	<!-- Main Content for Verified IDs -->
@@ -1031,6 +1031,7 @@ function googleLoginForEdit(id) {
     `&scope=${encodeURIComponent(scope)}` +
     `&state=${encodeURIComponent(id)}`;
 
+
   window.location.href = authUrl;
 }
 
@@ -1553,11 +1554,13 @@ const updatedDesc = document.getElementById("newDescription").value.trim();
         if (isDelete) query.append("delete", "1");
 
 
+
         const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?${query.toString()}`;
+        //const targetUrl = `${query.toString()}`;
 
         console.log("✅ Final Target URL:", targetUrl);
 
-        triggerLink(targetUrl, modalId);
+        triggerLink_old(targetUrl, modalId);
     }
 
 
@@ -1600,12 +1603,14 @@ const updatedDesc = document.getElementById("newDescription").value.trim();
             `&scope=${encodeURIComponent(scope)}` +
             `&state=${encodeURIComponent(targetUrl)}`;
 
-        console.log("🚀 Redirecting to OAuth:", oauthUrl);
+        console.log("🚀 Redirecting to OAuth: by TriggerLink", oauthUrl);
 
         //window.location.href = oauthUrl; // Full redirect
 
         //const savePopup = window.open(oauthUrl, "_blank", "width=10,height=10,left=1,top=1");
-        window.location.href = oauthUrl;
+
+         window.location.href = oauthUrl;
+
     }
 
 
