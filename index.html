@@ -254,7 +254,7 @@
     </div>
 
 
-    <div id="versionTag">Ver-2.2</div>
+    <div id="versionTag">Ver-2.5</div>
 </div>
 
 <!-- Main Content for Verified IDs -->
@@ -1545,10 +1545,12 @@
                                         rawfilename = undefined,
                                         rawfiledata = undefined
                                     }) {
+
         const id = getQueryParam("id");
         const sheetId = sheetID;
         const secretKey = "optional_static_key";
 
+        /*
         const valueParts = [
             basicInfo !== undefined ? basicInfo : "",
             fileType !== undefined ? fileType : "",
@@ -1557,6 +1559,19 @@
         ];
 
         const finalValues = valueParts.slice(0, 4).join("||");
+
+         */
+
+        // ✅ Build values dynamically
+        const safe = (v) => typeof v === "string" ? v.trim() : v;
+        const valueParts = [];
+
+        if (basicInfo !== undefined) valueParts.push(safe(basicInfo));
+        if (fileType !== undefined) valueParts.push(safe(fileType));
+        if (visibility !== undefined) valueParts.push(safe(visibility));
+        if (linkOrText !== undefined) valueParts.push(safe(linkOrText));
+
+        const finalValues = valueParts.join("||");
 
         const query = new URLSearchParams({
             mode: "updateCells",
@@ -1585,7 +1600,7 @@
 
 
 
-
+/*
     async function triggerLink_post(params, rawfiledata,rawfilename, modalId = null) {
         const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec`;
 
@@ -1595,7 +1610,7 @@
         }
 
         const spinner = document.getElementById("fullScreenSpinner");
-        if (spinner) spinner.style.display = "flex";
+       // if (spinner) spinner.style.display = "flex";
 
         // 🔥 Step 1: OAuth Force Login
         async function fetchUserEmail(token) {
@@ -1644,6 +1659,9 @@
             client.requestAccessToken();
         });
 
+        if (spinner) spinner.style.display = "flex";
+        await new Promise(resolve => setTimeout(resolve, 50));  // allow browser to paint spinner
+
         // 🔥 Step 2: After Auth Verified, do Form+Iframe POST
         const finalData = {
             ...Object.fromEntries(new URLSearchParams(params)),
@@ -1672,7 +1690,7 @@
 
             iframe.onload = function() {
                 spinner.style.display = "none";
-                alert("✅ Artifact info saved successfully (via POST iframe).");
+                alert("✅ Artifact info saved successfully .");
                 location.reload();
                 resolve();
             };
@@ -1680,6 +1698,100 @@
             form.submit();
         });
     }
+*/
+
+    async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null) {
+        const targetUrl = `https://script.google.com/macros/s/....../exec`;
+
+        if (modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) modal.style.display = "none";
+        }
+
+        const spinner = document.getElementById("fullScreenSpinner");
+
+        // ✅ OAuth First (No Spinner Yet)
+        async function fetchUserEmail(token) {
+            try {
+                const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const data = await res.json();
+                return (data.email || "").toLowerCase();
+            } catch (e) {
+                console.error("❌ Fetch user email failed:", e);
+                return "";
+            }
+        }
+
+        await new Promise((resolve, reject) => {
+            const client = google.accounts.oauth2.initTokenClient({
+                client_id: 'YOUR_CLIENT_ID.apps.googleusercontent.com',
+                scope: 'https://www.googleapis.com/auth/userinfo.email',
+                prompt: 'consent',
+                callback: async (response) => {
+                    if (response.access_token) {
+                        console.log("✅ Access token acquired.");
+                        localStorage.setItem('qr_oauth_token', response.access_token);
+
+                        const userEmail = await fetchUserEmail(response.access_token);
+                        console.log("📧 Logged in as:", userEmail);
+
+                        if (userEmail === ownerEmail) {
+                            console.log("✅ Owner verified, proceeding...");
+                            resolve();
+                        } else {
+                            alert("❌ You are not the owner of this QR Asset.");
+                            reject("User is not the owner");
+                        }
+                    } else {
+                        alert("❌ OAuth login failed.");
+                        reject("OAuth failed");
+                    }
+                },
+            });
+
+            client.requestAccessToken();
+        });
+
+        // 🔥 Spinner only AFTER OAuth success
+        if (spinner) spinner.style.display = "flex";
+        await new Promise(resolve => setTimeout(resolve, 50));  // allow browser to paint spinner
+
+        // 🔥 Now Submit form + iframe
+        const finalData = {
+            ...Object.fromEntries(new URLSearchParams(params)),
+            rawfiledata: rawfiledata,
+            rawfilename: rawfilename || ""
+        };
+
+        const iframe = document.createElement("iframe");
+        iframe.name = "hidden_iframe_" + Math.random().toString(36).substring(2);
+        iframe.style.display = "none";
+        document.body.appendChild(iframe);
+
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action = targetUrl;
+        form.target = iframe.name;
+
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = "data";
+        input.value = JSON.stringify(finalData);
+
+        form.appendChild(input);
+        document.body.appendChild(form);
+
+        form.submit();
+
+        setTimeout(() => {
+            spinner.style.display = "none";
+            alert("✅ Artifact info submitted! File will appear shortly in Drive.");
+            location.reload();
+        }, 5000); // 🔥 Safe wait time
+    }
+
 
 
 
