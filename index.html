@@ -253,19 +253,24 @@
         </div>
     </div>
 
+    <div id="versionTag"></div>
 
-    <div id="versionTag">Ver-2.7</div>
 </div>
 
-<!-- Main Content for Verified IDs -->
-<div id="mainContent" style="display:none; padding:30px; max-width:600px; font-family:'Segoe UI', sans-serif;">
-    <h2 id="assetTitle" style="color:var(--primary); font-size:24px;"></h2>
-    <div id="assetLinks" style="margin-top:10px;"></div>
 
+
+
+<!-- ✅ Then mainContent separately -->
+<div id="mainContent" style="display:none; padding:30px; max-width:600px; font-family:'Segoe UI', sans-serif;">
+
+    <!-- Dynamically insert QR Div here later (after tagline) -->
+
+    <h2 id="assetTitle" style="color:var(--primary); font-size:24px;"></h2>
+
+    <div id="assetLinks" style="margin-top:10px;"></div>
 
     <hr style="border: none; height: 3px; width: 80%; background: linear-gradient(to right, orange, #ffa500); margin: 60px auto 30px auto; border-radius: 5px;">
 
-    <!-- 🔐 Log-in to Edit button (disabled for now) -->
     <div style="display: flex; justify-content: center; margin-top: 40px;">
         <button id="editBtn" class="enabled" onclick="editAlert()" style="text-align: center; line-height: 1.2;">
             🔐 Log-in to Edit Details
@@ -273,9 +278,6 @@
     </div>
 
 </div>
-
-
-
 
 
 <div id="ownerConfirmModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:9999; align-items:center; justify-content:center;">
@@ -407,9 +409,34 @@
     </div>
 </div>
 
+
+<div id="taglineWrapper" style="
+    text-align: center;
+    font-size: 20px;
+    color: #ffffff; /* Default text color: White */
+    background: #000; /* Black ribbon */
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+    padding: 10px 0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+">
+    <a href="https://qrtagall.com" target="_blank" style="color: #FFA500; font-weight: bold; text-decoration: none;">
+        QRTagAll
+    </a>
+    <span style="color: #ffffff;font-size: 15px">  Fix it, Scan it, Own it.</span>
+    <span id="versionTagx" style="color: #aaaaaa;font-size: 10px"> </span>
+
+</div>
+
+
+
+
+
 <script>
 
-
+    const QRTagAll_Version = "2.7";
     const SALT = "QRTagall@2025";
     let editMode = false;
     let insertAfterRow = null;
@@ -422,7 +449,8 @@
     let selectedUploadedFileName = "";   // 🔥 Add this new
 
     console.log("🚀 Script block reached!");
-
+    document.getElementById("versionTag").textContent = `Ver-${QRTagAll_Version}`;
+    document.getElementById("versionTagx").textContent = `Ver-${QRTagAll_Version}`;
 
 
 
@@ -759,6 +787,24 @@
 
 
 
+    function maskEmailUser(email) {
+        const atIndex = email.indexOf('@');
+        if (atIndex === -1) return "";
+
+        const username = email.slice(0, atIndex);
+
+        if (username.length <= 4) {
+            return username[0] + "*".repeat(username.length - 1);  // e.g., "a**"
+        }
+
+        const visibleCount = Math.ceil(username.length / 4); // show ~25% beginning and end
+        const start = username.slice(0, visibleCount);
+        const end = username.slice(-visibleCount);
+        const masked = start + "*".repeat(username.length - 2 * visibleCount) + end;
+
+        return masked;
+    }
+
 
 
 
@@ -791,12 +837,29 @@
             popup.style.display = "none";
             mainContent.style.display = "block";
 
+
+            /*** 🔥 Always remove old QR div first ***/
+            const existingQRDiv = document.getElementById("qrWrapper");
+            if (existingQRDiv) existingQRDiv.remove();
+
+
             /*** QR Code QR Block ***/
             const qrDiv = document.createElement("div");
             qrDiv.id = "qrWrapper";
             qrDiv.style.textAlign = "center";
             qrDiv.style.marginBottom = "20px";
 
+            /*** 1. First prepare the URL to encode inside QR ***/
+            const qrUrl = `https://process.qrtagall.com/?id=${encodeURIComponent(id)}`;
+
+            /*** 2. Create Label (comes first visually) ***/
+            const qrLabel = document.createElement("div");
+            qrLabel.textContent = "🔗 Scan this QR to access again";
+            qrLabel.style.fontSize = "14px";
+            qrLabel.style.color = "#666";
+            qrLabel.style.marginBottom = "6px";
+
+            /*** 3. Create QR Canvas ***/
             const qrCanvas = document.createElement("canvas");
             qrCanvas.id = "qrCanvas";
             qrCanvas.style.border = "1px solid #ccc";
@@ -806,62 +869,86 @@
             qrCanvas.style.width = "200px";
             qrCanvas.style.height = "200px";
 
-            QRCode.toCanvas(qrCanvas, `https://process.qrtagall.com/?id=${id}`, { width: 200 }, err => {
+            /*** 4. Encode qrUrl inside Canvas ***/
+            QRCode.toCanvas(qrCanvas, qrUrl, { width: 200 }, err => {
                 if (err) console.error("QR generation error:", err);
             });
 
-            const qrLabel = document.createElement("div");
-            qrLabel.textContent = "🔗 Scan this QR to access again";
-            qrLabel.style.fontSize = "14px";
-            qrLabel.style.color = "#666";
-            qrLabel.style.marginTop = "6px";
+            const qrLink = document.createElement("a");
+            qrLink.href = qrUrl;
+            qrLink.target = "_blank";  // open in new tab
+            qrLink.style.display = "inline-block";  // ensure QR remains block aligned
+            qrLink.appendChild(qrCanvas);
 
+
+
+            /*** 5. Actions (Download, Print, Copy, WhatsApp) ***/
             const qrActions = document.createElement("div");
             qrActions.style.marginTop = "8px";
             qrActions.innerHTML = `
-      <button onclick="downloadQR()" title="Download QR" style="font-size:14px; margin-right:10px;">⬇️</button>
-      <button onclick="printQR()" title="Print QR" style="font-size:14px; margin-right:10px;">🖨️</button>
-      <button onclick="copyQRLink()" title="Copy Link" style="font-size:14px; margin-right:10px;">📋</button>
-      <a href="https://wa.me/?text=${encodeURIComponent(`Check this Asset via QRTagAll:\nhttps://process.qrtagall.com/?id=${id}`)}"
-         target="_blank" title="Share on WhatsApp" style="font-size:14px; text-decoration:none;">📱</a>
-    `;
+  <button onclick="downloadQR()" title="Download QR" style="font-size:14px; margin-right:10px;">⬇️</button>
+  <button onclick="printQR()" title="Print QR" style="font-size:14px; margin-right:10px;">🖨️</button>
+  <button onclick="copyQRLink()" title="Copy Link" style="font-size:14px; margin-right:10px;">📋</button>
+  <a href="https://wa.me/?text=${encodeURIComponent(`Check this Asset via QRTagAll:\n${qrUrl}`)}"
+     target="_blank" title="Share on WhatsApp" style="font-size:14px; text-decoration:none;">📱</a>
+`;
 
-            qrDiv.appendChild(qrCanvas);
-            qrDiv.appendChild(qrLabel);
-            qrDiv.appendChild(qrActions);
 
-            const existingQRDiv = document.getElementById("qrWrapper");
-            if (existingQRDiv) existingQRDiv.remove();
+
+
+
+            /*** 6. Append in Correct Order ***/
+            qrDiv.appendChild(qrLabel);     // Label first
+            //qrDiv.appendChild(qrCanvas);    // Then QR image
+            qrDiv.appendChild(qrLink);
+            qrDiv.appendChild(qrActions);   // Then buttons
+
+
 
             mainContent.insertBefore(qrDiv, assetTitle);
 
 
+            /*** 4. AFTER fully building qrDiv, insert into page ***/
+        const taglineWrapper = document.getElementById("taglineWrapper");
+            if (taglineWrapper) {
+                  taglineWrapper.parentNode.insertBefore(mainContent, taglineWrapper.nextSibling);
+            }
 
-            /*** Asset Title & Edit Option ***/
-            /*** Asset Title & Edit Option ***/
-            assetTitle.innerHTML = `
-  <div style="position: relative; display: flex; justify-content: center; align-items: center; margin-bottom: 10px;">
-    <div style="text-align: center;">
-      ${data.Description || "Verified Asset"}<br>
-      <span style="font-size: 13px; color: gray;">(${id})</span>
-    </div>
-    ${editMode ? `
-      <button onclick="editDescription()"
-        style="position: absolute; right: 0; font-size: 13px; margin-right: 10px;">
-        ✏️ Edit
-      </button>` : ""}
-  </div>
 
-  ${editMode ? `
-    <div style="text-align: center; margin-top: 5px;">
-      <button onclick="openAddModal(-1)" style="font-size: 13px;">➕ Add Artifact</button>
-    </div>` : ""}
-`;
+
 
 
             /*** Owner Detection ***/
             sheetID = (data.SheetID || "").trim();
             ownerEmail = (data.UserName || "").trim().toLowerCase();
+
+
+            /*** Asset Title & Edit Option ***/
+            /*** Asset Title & Edit Option ***/
+            const maskedOwner = maskEmailUser(ownerEmail);
+
+            assetTitle.innerHTML = `
+          <div style="position: relative; display: flex; flex-direction: column; align-items: center; margin-bottom: 10px;">
+            <div style="text-align: center;">
+              ${data.Description || "Verified Asset"}<br>
+            <div style="margin-top: 2px; line-height: 0.8;">
+                <span style="font-size: 13px; color: gray;">(${id})</span><br>
+                <span style="font-size: 12px; color: #888;">Owner: ${maskedOwner}</span>
+              </div>
+            </div>
+            ${editMode ? `
+              <button onclick="editDescription()"
+                style="position: absolute; right: 10px; top: 10px; font-size: 13px;">
+                ✏️ Edit
+              </button>` : ""}
+          </div>
+
+          ${editMode ? `
+            <div style="text-align: center; margin-top: 5px;">
+              <button onclick="openAddModal(-1)" style="font-size: 13px;">➕ Add Artifact</button>
+            </div>` : ""}
+        `;
+
 
             if (sessionEmail && sessionEmail === ownerEmail) {
                 isOwner = true;
@@ -1610,7 +1697,7 @@
         }
 
         const spinner = document.getElementById("fullScreenSpinner");
-       // if (spinner) spinner.style.display = "flex";
+        // if (spinner) spinner.style.display = "flex";
 
         // 🔥 Step 1: OAuth Force Login
         async function fetchUserEmail(token) {
@@ -1699,100 +1786,100 @@
         });
     }
 
-/*
-    async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null) {
-        const targetUrl = `https://script.google.com/macros/s/....../exec`;
+    /*
+        async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null) {
+            const targetUrl = `https://script.google.com/macros/s/....../exec`;
 
-        if (modalId) {
-            const modal = document.getElementById(modalId);
-            if (modal) modal.style.display = "none";
-        }
-
-        const spinner = document.getElementById("fullScreenSpinner");
-
-        // ✅ OAuth First (No Spinner Yet)
-        async function fetchUserEmail(token) {
-            try {
-                const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                const data = await res.json();
-                return (data.email || "").toLowerCase();
-            } catch (e) {
-                console.error("❌ Fetch user email failed:", e);
-                return "";
+            if (modalId) {
+                const modal = document.getElementById(modalId);
+                if (modal) modal.style.display = "none";
             }
-        }
 
-        await new Promise((resolve, reject) => {
-            const client = google.accounts.oauth2.initTokenClient({
-                client_id: '121290253918-cae49r46mo3r9f9rhd7rq6ao9ae69jjv.apps.googleusercontent.com',
-                scope: 'https://www.googleapis.com/auth/userinfo.email',
-                prompt: 'consent',
-                callback: async (response) => {
-                    if (response.access_token) {
-                        console.log("✅ Access token acquired.");
-                        localStorage.setItem('qr_oauth_token', response.access_token);
+            const spinner = document.getElementById("fullScreenSpinner");
 
-                        const userEmail = await fetchUserEmail(response.access_token);
-                        console.log("📧 Logged in as:", userEmail);
+            // ✅ OAuth First (No Spinner Yet)
+            async function fetchUserEmail(token) {
+                try {
+                    const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    const data = await res.json();
+                    return (data.email || "").toLowerCase();
+                } catch (e) {
+                    console.error("❌ Fetch user email failed:", e);
+                    return "";
+                }
+            }
 
-                        if (userEmail === ownerEmail) {
-                            console.log("✅ Owner verified, proceeding...");
-                            resolve();
+            await new Promise((resolve, reject) => {
+                const client = google.accounts.oauth2.initTokenClient({
+                    client_id: '121290253918-cae49r46mo3r9f9rhd7rq6ao9ae69jjv.apps.googleusercontent.com',
+                    scope: 'https://www.googleapis.com/auth/userinfo.email',
+                    prompt: 'consent',
+                    callback: async (response) => {
+                        if (response.access_token) {
+                            console.log("✅ Access token acquired.");
+                            localStorage.setItem('qr_oauth_token', response.access_token);
+
+                            const userEmail = await fetchUserEmail(response.access_token);
+                            console.log("📧 Logged in as:", userEmail);
+
+                            if (userEmail === ownerEmail) {
+                                console.log("✅ Owner verified, proceeding...");
+                                resolve();
+                            } else {
+                                alert("❌ You are not the owner of this QR Asset.");
+                                reject("User is not the owner");
+                            }
                         } else {
-                            alert("❌ You are not the owner of this QR Asset.");
-                            reject("User is not the owner");
+                            alert("❌ OAuth login failed.");
+                            reject("OAuth failed");
                         }
-                    } else {
-                        alert("❌ OAuth login failed.");
-                        reject("OAuth failed");
-                    }
-                },
+                    },
+                });
+
+                client.requestAccessToken();
             });
 
-            client.requestAccessToken();
-        });
+            // 🔥 Spinner only AFTER OAuth success
+            if (spinner) spinner.style.display = "flex";
+            await new Promise(resolve => setTimeout(resolve, 50));  // allow browser to paint spinner
 
-        // 🔥 Spinner only AFTER OAuth success
-        if (spinner) spinner.style.display = "flex";
-        await new Promise(resolve => setTimeout(resolve, 50));  // allow browser to paint spinner
+            // 🔥 Now Submit form + iframe
+            const finalData = {
+                ...Object.fromEntries(new URLSearchParams(params)),
+                rawfiledata: rawfiledata,
+                rawfilename: rawfilename || ""
+            };
 
-        // 🔥 Now Submit form + iframe
-        const finalData = {
-            ...Object.fromEntries(new URLSearchParams(params)),
-            rawfiledata: rawfiledata,
-            rawfilename: rawfilename || ""
-        };
+            const iframe = document.createElement("iframe");
+            iframe.name = "hidden_iframe_" + Math.random().toString(36).substring(2);
+            iframe.style.display = "none";
+            document.body.appendChild(iframe);
 
-        const iframe = document.createElement("iframe");
-        iframe.name = "hidden_iframe_" + Math.random().toString(36).substring(2);
-        iframe.style.display = "none";
-        document.body.appendChild(iframe);
+            const form = document.createElement("form");
+            form.method = "POST";
+            form.action = targetUrl;
+            form.target = iframe.name;
 
-        const form = document.createElement("form");
-        form.method = "POST";
-        form.action = targetUrl;
-        form.target = iframe.name;
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = "data";
+            input.value = JSON.stringify(finalData);
 
-        const input = document.createElement("input");
-        input.type = "hidden";
-        input.name = "data";
-        input.value = JSON.stringify(finalData);
+            form.appendChild(input);
+            document.body.appendChild(form);
 
-        form.appendChild(input);
-        document.body.appendChild(form);
+        iframe.onload = function() {
+                spinner.style.display = "none";
+                alert("✅ Artifact info saved successfully .");
+                location.reload();
+                resolve();
+            }
+            form.submit();
 
-	iframe.onload = function() {
-            spinner.style.display = "none";
-            alert("✅ Artifact info saved successfully .");
-            location.reload();
-            resolve();
         }
-        form.submit();
-	
-    }
-	*/
+        */
 
 
 
