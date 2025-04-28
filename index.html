@@ -254,7 +254,7 @@
     </div>
 
 
-    <div id="versionTag">Ver-2.6</div>
+    <div id="versionTag">Ver-2.7</div>
 </div>
 
 <!-- Main Content for Verified IDs -->
@@ -1600,7 +1600,7 @@
 
 
 
-/*
+
     async function triggerLink_post(params, rawfiledata,rawfilename, modalId = null) {
         const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec`;
 
@@ -1698,8 +1698,8 @@
             form.submit();
         });
     }
-*/
 
+/*
     async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null) {
         const targetUrl = `https://script.google.com/macros/s/....../exec`;
 
@@ -1783,14 +1783,16 @@
         form.appendChild(input);
         document.body.appendChild(form);
 
-        form.submit();
-
-        setTimeout(() => {
+	iframe.onload = function() {
             spinner.style.display = "none";
-            alert("✅ Artifact info submitted! File will appear shortly in Drive.");
+            alert("✅ Artifact info saved successfully .");
             location.reload();
-        }, 5000); // 🔥 Safe wait time
+            resolve();
+        }
+        form.submit();
+	
     }
+	*/
 
 
 
