@@ -1786,102 +1786,6 @@
         });
     }
 
-    /*
-        async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null) {
-            const targetUrl = `https://script.google.com/macros/s/....../exec`;
-
-            if (modalId) {
-                const modal = document.getElementById(modalId);
-                if (modal) modal.style.display = "none";
-            }
-
-            const spinner = document.getElementById("fullScreenSpinner");
-
-            // ✅ OAuth First (No Spinner Yet)
-            async function fetchUserEmail(token) {
-                try {
-                    const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-                    const data = await res.json();
-                    return (data.email || "").toLowerCase();
-                } catch (e) {
-                    console.error("❌ Fetch user email failed:", e);
-                    return "";
-                }
-            }
-
-            await new Promise((resolve, reject) => {
-                const client = google.accounts.oauth2.initTokenClient({
-                    client_id: '121290253918-cae49r46mo3r9f9rhd7rq6ao9ae69jjv.apps.googleusercontent.com',
-                    scope: 'https://www.googleapis.com/auth/userinfo.email',
-                    prompt: 'consent',
-                    callback: async (response) => {
-                        if (response.access_token) {
-                            console.log("✅ Access token acquired.");
-                            localStorage.setItem('qr_oauth_token', response.access_token);
-
-                            const userEmail = await fetchUserEmail(response.access_token);
-                            console.log("📧 Logged in as:", userEmail);
-
-                            if (userEmail === ownerEmail) {
-                                console.log("✅ Owner verified, proceeding...");
-                                resolve();
-                            } else {
-                                alert("❌ You are not the owner of this QR Asset.");
-                                reject("User is not the owner");
-                            }
-                        } else {
-                            alert("❌ OAuth login failed.");
-                            reject("OAuth failed");
-                        }
-                    },
-                });
-
-                client.requestAccessToken();
-            });
-
-            // 🔥 Spinner only AFTER OAuth success
-            if (spinner) spinner.style.display = "flex";
-            await new Promise(resolve => setTimeout(resolve, 50));  // allow browser to paint spinner
-
-            // 🔥 Now Submit form + iframe
-            const finalData = {
-                ...Object.fromEntries(new URLSearchParams(params)),
-                rawfiledata: rawfiledata,
-                rawfilename: rawfilename || ""
-            };
-
-            const iframe = document.createElement("iframe");
-            iframe.name = "hidden_iframe_" + Math.random().toString(36).substring(2);
-            iframe.style.display = "none";
-            document.body.appendChild(iframe);
-
-            const form = document.createElement("form");
-            form.method = "POST";
-            form.action = targetUrl;
-            form.target = iframe.name;
-
-            const input = document.createElement("input");
-            input.type = "hidden";
-            input.name = "data";
-            input.value = JSON.stringify(finalData);
-
-            form.appendChild(input);
-            document.body.appendChild(form);
-
-        iframe.onload = function() {
-                spinner.style.display = "none";
-                alert("✅ Artifact info saved successfully .");
-                location.reload();
-                resolve();
-            }
-            form.submit();
-
-        }
-        */
-
-
 
 
 
@@ -1898,7 +1802,7 @@
         }
 
         const spinner = document.getElementById("fullScreenSpinner");
-        if (spinner) spinner.style.display = "flex";
+       
 
         // Helper to fetch user's email from token
         async function fetchUserEmail(token) {
@@ -1947,6 +1851,9 @@
             client.requestAccessToken();
         });
 
+        if (spinner) spinner.style.display = "flex";
+        await new Promise(resolve => setTimeout(resolve, 50));  // allow browser to paint spinner
+
         // 🔥 After owner check passed, now fire image load
         try {
             const img = new Image();
@@ -1958,6 +1865,7 @@
                 if (img && img.parentNode) {
                     img.parentNode.removeChild(img);
                 }
+                spinner.style.display = "none";
             }, 5000);
 
         } catch (e) {
