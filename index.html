@@ -458,7 +458,7 @@
 
 <script>
 
-    const QRTagAll_Ver_ = "2.10";
+    const QRTagAll_Ver_ = "2.11";
     let editMode = false;
     let insertAfterRow = null;
     let selectedUploadedFileLink = "";
@@ -1031,7 +1031,7 @@
             if (sessionEmail && (sessionEmail === ownerEmail )||  idx.startsWith("UNIVERSAL"))
             {
                 isOwner = true;
-                updatePanelBackground("#e6ffe6"); // ✅ Green for owner
+                updatePanelBackground("#e6ffe6"); // ✅ Green for ownerconst idx = getQueryParam("id");
                 editBtn.innerHTML = "✏️ Edit Details";
             } else {
                 isOwner = false;
