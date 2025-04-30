@@ -458,7 +458,7 @@
 
 <script>
 
-    const QRTagAll_Ver_ = "2.16";
+    const QRTagAll_Ver_ = "2.17";
     let editMode = false;
     let insertAfterRow = null;
     let selectedUploadedFileLink = "";
@@ -867,7 +867,48 @@
                     html += `<p><b>${index + 1}.</b> ${icon} <b>${title}</b> ${visibilityIcon}:
                         <a href="${url}" target="_blank">${url}</a></p>`;
                 }
-            } else if (url.startsWith("http")) {
+            }
+        else if (type === "TEXT" && url.includes("drive.google.com")) {
+            // 🔁 Fallback: if mistyped as TEXT but it's a Drive file, force preview
+            const match = url.match(/\/d\/([^/]+)/);
+            const fileId = match ? match[1] : null;
+            if (fileId) {
+                const iframePreview = `https://drive.google.com/file/d/${fileId}/preview`;
+                html += `
+            <p><b>${index + 1}.</b> ${icon} <b>${title}</b> ${visibilityIcon}</p>
+            <iframe src="${iframePreview}" width="100%" height="400" frameborder="0"
+              allow="autoplay; encrypted-media"
+              sandbox="allow-scripts allow-same-origin allow-presentation"
+              style="margin-bottom:10px;">
+            </iframe>`;
+            } else {
+                html += await resolveAndRender(url, index + 1, title);
+            }
+        }
+        else if (url.includes("drive.google.com")) {
+            // ✅ Force render as Drive preview no matter the type
+            const match = url.match(/\/d\/([^/]+)/);
+            const fileId = match ? match[1] : null;
+
+            if (fileId) {
+                const iframePreview = `https://drive.google.com/file/d/${fileId}/preview`;
+                html += `
+            <p><b>${index + 1}.</b> ${icon} <b>${title}</b> ${visibilityIcon}</p>
+            <iframe src="${iframePreview}" width="100%" height="400" frameborder="0"
+              allow="autoplay; encrypted-media"
+              sandbox="allow-scripts allow-same-origin allow-presentation"
+              style="margin-bottom:10px;">
+            </iframe>`;
+            } else {
+                html += await resolveAndRender(url, index + 1, title);
+            }
+        }
+        else if (url.startsWith("http")) {
+            html += await resolveAndRender(url, index + 1, title);
+        }
+
+
+        else if (url.startsWith("http")) {
                 html += await resolveAndRender(url, index + 1, title); // still safe
             } else {
                 html += `<p><b>${index + 1}.</b> ${icon} <b>${title}</b> ${visibilityIcon}: ${url}</p>`;
