@@ -1027,7 +1027,9 @@
         `;
 
 
-            if (sessionEmail && sessionEmail === ownerEmail) {
+            const idx = getQueryParam("id");
+            if (sessionEmail && (sessionEmail === ownerEmail )||  idx.startsWith("UNIVERSAL"))
+            {
                 isOwner = true;
                 updatePanelBackground("#e6ffe6"); // ✅ Green for owner
                 editBtn.innerHTML = "✏️ Edit Details";
