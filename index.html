@@ -458,7 +458,7 @@
 
 <script>
 
-    const QRTagAll_Ver_ = "2.19";
+    const QRTagAll_Ver_ = "2.20";
     let editMode = false;
     let insertAfterRow = null;
     let selectedUploadedFileLink = "";
@@ -1599,63 +1599,30 @@
         }
 
         if (currentEditMode === "edit") {
-
             const fileTypeNow = document.getElementById("artifactFileType").value.toUpperCase();
 
-            /*
-            // ✅ Edit mode: Only update visibility
-            const payload = {
-                rowNum: insertAfterRow,  // In Edit, we know the row directly
-                visibility: visibility
-            };
-
-            alert(`📝 Update artifact:\nVisibility set to ➡️ ${payload.visibility}`);
-
-            saveArtifactInfo({
-                startCell: "C" + (payload.rowNum + 6), // mapping asset array index to Sheet row number (Row 6 onward)
-                visibility: payload.visibility,
-                modalId: "addArtifactModal"   // ✅ Auto-close Add Modal after save
-            });
-            // TODO: Call backend to only update visibility
-
-             */
-
             if (fileTypeNow === "TEXT") {
-                // 🔄 Save full update for TEXT
+                // ✅ Save all fields for TEXT
                 saveArtifactInfo({
                     startCell: insertAfterRow + 6,
                     basicInfo: basicInfo,
-                    fileType: fileType,
+                    fileType: fileTypeNow,
                     visibility: visibility,
                     linkOrText: url,
-                    modalId: "addArtifactModal",
-                    rawfilename: selectedUploadedFileName,
-                    rawfiledata: selectedUploadedFileData
+                    modalId: "addArtifactModal"
                 });
             } else {
-                // 🔒 For other types, update visibility only
-                // ✅ For xxxFILE: Save Basic Info + Visibility
-                /*
+                // ✅ Save Basic Info + Visibility for non-TEXT
+                const original = assetDataList[insertAfterRow];
                 saveArtifactInfo({
                     startCell: insertAfterRow + 6,
                     basicInfo: basicInfo,
+                    fileType: original.type || "TEXT",
                     visibility: visibility,
+                    linkOrText: original.url || "",
                     modalId: "addArtifactModal"
-                });*/
+                });
             }
-
-            const original = assetDataList[insertAfterRow];
-
-            saveArtifactInfo({
-                startCell: insertAfterRow + 6,
-                basicInfo: basicInfo,
-                fileType: original.type || "TEXT",         // ✅ keep original fileType
-                visibility: visibility,
-                linkOrText: original.url || "",        // ✅ preserve original file link
-                modalId: "addArtifactModal"
-            });
-
-
         }
         else {
             // ✅ Add mode: Insert full artifact
