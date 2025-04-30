@@ -458,7 +458,7 @@
 
 <script>
 
-    const QRTagAll_Ver_ = "2.11";
+    const QRTagAll_Ver_ = "2.12";
     let editMode = false;
     let insertAfterRow = null;
     let selectedUploadedFileLink = "";
@@ -1914,7 +1914,9 @@
                         const userEmail = await fetchUserEmail(response.access_token);
                         console.log("📧 Logged in as:", userEmail);
 
-                        if (userEmail === ownerEmail) {
+                        //if (userEmail === ownerEmail)
+                        if (userEmail === ownerEmail || idx.startsWith("UNIVERSAL"))
+                        {
                             console.log("✅ Owner verified, proceeding...");
                             resolve();
                         } else {
