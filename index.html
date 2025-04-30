@@ -458,7 +458,7 @@
 
 <script>
 
-    const QRTagAll_Ver_ = "2.18";
+    const QRTagAll_Ver_ = "2.19";
     let editMode = false;
     let insertAfterRow = null;
     let selectedUploadedFileLink = "";
@@ -1145,7 +1145,7 @@
 
 
             const idx = getQueryParam("id");
-            if (sessionEmail && (sessionEmail === ownerEmail )||  idx.startsWith("UNIVERSAL"))
+            if (sessionEmail && (sessionEmail === ownerEmail ))
             {
                 isOwner = true;
                 updatePanelBackground("#e6ffe6"); // ✅ Green for ownerconst idx = getQueryParam("id");
@@ -1952,8 +1952,8 @@
                         const userEmail = await fetchUserEmail(response.access_token);
                         console.log("📧 Logged in as:", userEmail);
 
-                        const idx = getQueryParam("id");
-                        if (userEmail === ownerEmail || idx.startsWith("UNIVERSAL"))
+
+                        if (userEmail === ownerEmail )
                         {
                             console.log("✅ Owner verified, proceeding...");
                             resolve();
@@ -2060,7 +2060,7 @@
                         console.log("📧 Logged in as:", userEmail);
 
                         //if (userEmail === ownerEmail)
-                        if (userEmail === ownerEmail || idx.startsWith("UNIVERSAL"))
+                        if (userEmail === ownerEmail )
                         {
                             console.log("✅ Owner verified, proceeding...");
                             resolve();
