@@ -458,7 +458,7 @@
 
 <script>
 
-    const QRTagAll_Ver_ = "2.22";
+    const QRTagAll_Ver_ = "2.23";
     let editMode = false;
     let insertAfterRow = null;
     let selectedUploadedFileLink = "";
@@ -2220,16 +2220,26 @@
     /**************************** Modal: Add ****************************/
 
     function onFileTypeChange() {
-        const type = document.getElementById("artifactFileType").value;
+        const type = document.getElementById("artifactFileType").value.toUpperCase();
+        const uploadBtn = document.querySelector("#fileUploadSection button");
+
         if (type === "TEXT") {
             document.getElementById("textInputSection").style.display = "block";
             document.getElementById("fileUploadSection").style.display = "none";
         } else {
             document.getElementById("textInputSection").style.display = "none";
-            //document.getElementById("fileUploadSection").style.display = "block";
-            document.querySelector("#fileUploadSection button").disabled = true;
-            document.querySelector("#fileUploadSection button").style.opacity = "0.6";
-            document.querySelector("#fileUploadSection button").style.cursor = "not-allowed";
+            document.getElementById("fileUploadSection").style.display = "block";
+
+            // ✅ Enable/disable button based on mode
+            if (currentEditMode === "edit") {
+                uploadBtn.disabled = true;
+                uploadBtn.style.opacity = "0.6";
+                uploadBtn.style.cursor = "not-allowed";
+            } else {
+                uploadBtn.disabled = false;
+                uploadBtn.style.opacity = "1";
+                uploadBtn.style.cursor = "pointer";
+            }
         }
     }
 
