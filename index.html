@@ -458,8 +458,7 @@
 
 <script>
 
-    const QRTagAll_Ver_ = "2.8";
-    const SALT = "QRTagall@2025";
+    const QRTagAll_Ver_ = "2.9";
     let editMode = false;
     let insertAfterRow = null;
     let selectedUploadedFileLink = "";
@@ -572,6 +571,55 @@
     /*********************** ID Verification **************************/
 
 
+
+    function loadProxyIframe() {
+        return new Promise((resolve) => {
+            proxyFrame = document.createElement("iframe");
+            proxyFrame.style.display = "none";
+            proxyFrame.src = "https://proxy.qrtagall.com";
+
+            proxyFrame.onload = () => {
+                console.log("✅ Proxy iframe loaded");
+                proxyLoaded = true;
+                resolve();
+            };
+
+            document.body.appendChild(proxyFrame);
+        });
+    }
+
+
+
+  async  function Verifyidx(idToVerify) {
+        return new Promise((resolve, reject) => {
+            if (!window.proxyFrame || !window.proxyLoaded) {
+                reject("Proxy iframe not loaded");
+                return;
+            }
+
+            const handler = (event) => {
+                if (!event.data || (event.data.type !== "qr_verified" && event.data.type !== "qr_error")) return;
+
+                window.removeEventListener("message", handler);
+
+                if (event.data.type === "qr_verified") {
+                    resolve(event.data.result);  // "VALID" or "INVALID"
+                } else {
+                    reject(event.data.error);
+                }
+            };
+
+            window.addEventListener("message", handler);
+
+            // Fire verification request to proxy
+            proxyFrame.contentWindow.postMessage({
+                type: "verify",
+                id: idToVerify
+            }, "*");
+        });
+    }
+
+
     async function verifyId() {
         const id = getQueryParam("id");
 
@@ -584,7 +632,6 @@
         const spinner = document.getElementById("spinner");
         const idText = document.getElementById("idText");
         const loginSection = document.getElementById("loginSection");
-
 
         if (!id) {
             spinner.style.display = "none";
@@ -604,23 +651,23 @@
             return;
         }
 
-        const [timestamp, hashPart] = id.split("_");
+        // ✅ Check localStorage cache
+        const cacheKey = `verified_${id}`;
+        const cachedResult = localStorage.getItem(cacheKey);
 
-        if (!/^\d{17}$/.test(timestamp)) {
+        if (cachedResult === "VALID") {
+            console.log("✅ ID verified from cache:", id);
             spinner.style.display = "none";
-            resultDiv.style.display = "block";
-            resultDiv.textContent = "❌ Invalid timestamp format.";
-            resultDiv.style.color = "var(--error)";
+            await fetchAssetData(id);
             return;
         }
 
-        const expectedHash = await sha256(timestamp + SALT);
-        const isValid = expectedHash.startsWith(hashPart);
+        await loadProxyIframe();
+        const result = await Verifyidx(id);
 
-        if (isValid) {
-            //document.getElementById("fullScreenSpinner").style.display = "none";
+        if (result === "VALID") {
+            localStorage.setItem(cacheKey, "VALID"); // ✅ Save for future
             await fetchAssetData(id);
-
         } else {
             spinner.style.display = "none";
             resultDiv.style.display = "block";
@@ -629,6 +676,8 @@
             loginSection.style.display = "none";
         }
     }
+
+
 
 
     function convertDriveUrl(value) {
