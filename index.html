@@ -458,7 +458,7 @@
 
 <script>
 
-    const QRTagAll_Ver_ = "2.21";
+    const QRTagAll_Ver_ = "2.22";
     let editMode = false;
     let insertAfterRow = null;
     let selectedUploadedFileLink = "";
@@ -1576,6 +1576,8 @@
             fileTypeInput.value = "TEXT";
             visibilityInput.value = "VIEW";
             uploadedFileLink.textContent = "";
+
+            onFileTypeChange();
         }
 
         document.getElementById("addArtifactModal").style.display = "flex";
