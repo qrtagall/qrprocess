@@ -1434,33 +1434,7 @@
 
 
         if (isEditMode) {
-            /*currentEditMode = "edit";
 
-            modalTitle.innerText = "📝 Edit Artifact Visibility";
-
-            basicInfoInput.disabled = true;
-            fileTypeInput.disabled = true;
-            textInfoInput.disabled = true;
-
-            document.getElementById("artifactFileType").parentElement.style.display = "none";
-            document.getElementById("textInputSection").style.display = "none";
-            document.getElementById("fileUploadSection").style.display = "none";
-
-
-
-            const item = assetDataList[afterRowNum];
-            basicInfoInput.value = item.title || "";
-            fileTypeInput.value = (item.type || "TEXT").toUpperCase();
-            visibilityInput.value = (item.visibility || "VIEW").toUpperCase();
-            if (item.type.toUpperCase() === "TEXT") {
-                textInfoInput.value = item.url || "";
-                uploadedFileLink.textContent = "";
-            } else {
-                textInfoInput.value = "";
-                uploadedFileLink.textContent = item.url || "";
-            }
-
-             */
 
             currentEditMode = "edit";
 
@@ -1487,18 +1461,28 @@
                 document.getElementById("textInputSection").style.display = "block";
                 document.getElementById("fileUploadSection").style.display = "none";
             } else {
-                // For non-TEXT: allow only visibility edit (rest disabled)
+
+
                 textInfoInput.value = "";
                 uploadedFileLink.textContent = item.url || "";
 
-                basicInfoInput.disabled = true;
+                basicInfoInput.disabled = false;
                 fileTypeInput.disabled = true;
                 textInfoInput.disabled = true;
                 visibilityInput.disabled = false;
 
-                document.getElementById("artifactFileType").parentElement.style.display = "none";
+                document.getElementById("artifactFileType").parentElement.style.display = "block";
                 document.getElementById("textInputSection").style.display = "none";
-                document.getElementById("fileUploadSection").style.display = "none";
+                document.getElementById("fileUploadSection").style.display = "block";
+
+                // 🔒 Disable upload for editing existing files
+                const uploadBtn = document.querySelector("#fileUploadSection button");
+                if (uploadBtn) {
+                    uploadBtn.disabled = true;
+                    uploadBtn.style.opacity = "0.6";
+                    uploadBtn.style.cursor = "not-allowed";
+                }
+
             }
         } else {
             currentEditMode = "add";
@@ -1596,8 +1580,10 @@
                 });
             } else {
                 // 🔒 For other types, update visibility only
+                // ✅ For xxxFILE: Save Basic Info + Visibility
                 saveArtifactInfo({
-                    startCell: "C" + (insertAfterRow + 6),
+                    startCell: insertAfterRow + 6,
+                    basicInfo: basicInfo,
                     visibility: visibility,
                     modalId: "addArtifactModal"
                 });
@@ -2186,7 +2172,10 @@
             document.getElementById("fileUploadSection").style.display = "none";
         } else {
             document.getElementById("textInputSection").style.display = "none";
-            document.getElementById("fileUploadSection").style.display = "block";
+            //document.getElementById("fileUploadSection").style.display = "block";
+            document.querySelector("#fileUploadSection button").disabled = true;
+            document.querySelector("#fileUploadSection button").style.opacity = "0.6";
+            document.querySelector("#fileUploadSection button").style.cursor = "not-allowed";
         }
     }
 
