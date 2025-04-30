@@ -458,7 +458,7 @@
 
 <script>
 
-    const QRTagAll_Ver_ = "2.12";
+    const QRTagAll_Ver_ = "2.13";
     let editMode = false;
     let insertAfterRow = null;
     let selectedUploadedFileLink = "";
@@ -735,7 +735,13 @@
             } else if (/video/i.test(contentType)) {
                 return `<div><b>${icon} ${customTitle}</b><br><video controls width="100%"><source src="${finalUrl}"></video></div>`;
             } else if (/pdf/i.test(contentType)) {
-                return `<p>${icon} <a href="${finalUrl}" target="_blank">${customTitle}</a></p>`;
+                return `
+                  <p><b>${icon} ${customTitle}</b></p>
+                  <div style="margin-left:10px; margin-bottom: 10px;">
+                    <a href="${finalUrl}" target="_blank" style="color:var(--primary); text-decoration:underline;">↗️ Visit</a>
+                  </div>
+                `;
+
             } else {
                 const linkHost = finalUrl.match(/https?:\/\/([^/]+)/)?.[1] || "link";
                 return `
@@ -795,7 +801,57 @@
             } else if (!url || url.trim() === "" || url.toLowerCase() === "not available") {
                 html += `<p><b>${index + 1}.</b> ${icon} <b>${title}</b> <span style="color:gray;">(🔗 Link not available)</span></p>`;
             } else if (type === "TEXT") {
-                html += `<p><b>${index + 1}.</b> ${icon} <b>${title}</b> ${visibilityIcon}: ${url}</p>`;
+                //html += `<p><b>${index + 1}.</b> ${icon} <b>${title}</b> ${visibilityIcon}: ${url}</p>`;
+
+                    const urlRegex = /(https?:\/\/[^\s]+)/g;
+                    const match = url.match(urlRegex);
+
+                    if (match && match.length === 1 && match[0].trim() === url.trim()) {
+                        // Pure URL only
+
+
+                                            html += `
+                      <p><b>${index + 1}.</b> ${icon} <b>${title}</b> ${visibilityIcon}</p>
+                      <div style="margin-left: 10px; margin-bottom: 8px;">
+                        <a href="${url}" target="_blank" style="color: var(--primary); text-decoration: underline;">🌐 WebLink</a>
+                      </div>
+                    `;
+                    } else if (match && match.length > 0) {
+                        // Text with embedded URL(s)
+                        const replaced = url.replace(urlRegex, (link) => {
+                            return `<a href="${link}" target="_blank" style="color: var(--primary); text-decoration: underline;">🌐 WebLink</a>`;
+                        });
+
+                                html += `
+                          <p><b>${index + 1}.</b> ${icon} <b>${title}</b> ${visibilityIcon}</p>
+                          <div style="margin-left: 10px; margin-bottom: 8px;">${replaced}</div>
+                        `;
+                        } else {
+                        // Plain non-link text
+
+                        let safeText = url.replace(/\n/g, "<br>");
+                        safeText = boldLeadingLabels(safeText);
+
+                        // Detect and enhance phone numbers like +91 8310355091 or +918310355091
+                        const phoneMatch = url.match(/\+91[\s\-]*\d[\d\s\-]{9,}/g);
+
+                        if (phoneMatch) {
+                            phoneMatch.forEach((rawNum) => {
+                                const cleanNum = rawNum.replace(/[^\d+]/g, '');  // removes spaces and dashes
+                                const callBtn = `<a href="tel:${cleanNum}" style="background:#4CAF50;color:white;padding:4px 8px;border-radius:6px;font-size:12px;text-decoration:none;margin-left:6px;">📞 Call</a>`;
+                                const waBtn = `<a href="https://wa.me/${cleanNum.replace('+', '')}" target="_blank" style="background:#25D366;color:white;padding:4px 8px;border-radius:6px;font-size:12px;text-decoration:none;margin-left:4px;">💬 WhatsApp</a>`;
+                                safeText = safeText.replace(rawNum, `${rawNum}${callBtn}${waBtn}`);
+                            });
+                        }
+
+                        html += `
+                      <p><b>${index + 1}.</b> ${icon} <b>${title}</b> ${visibilityIcon}</p>
+                      <div style="margin-left: 10px; margin-bottom: 10px; font-size: 14px; line-height: 1.6; background: #f9f9ff; padding: 10px 12px; border-left: 4px solid #005aab; border-radius: 6px;">
+                        ${safeText}
+                      </div>
+                    `;
+
+                    }
             } else if (type.includes("FILE") && /drive\.google\.com/.test(url)) {
                 const match = url.match(/\/d\/([^/]+)/);
                 const fileId = match ? match[1] : null;
@@ -808,7 +864,8 @@
           sandbox="allow-scripts allow-same-origin allow-presentation">
         </iframe>`;
                 } else {
-                    html += `<p><b>${index + 1}.</b> ${icon} <b>${title}</b> ${visibilityIcon}: <a href="${url}" target="_blank">${url}</a></p>`;
+                    html += `<p><b>${index + 1}.</b> ${icon} <b>${title}</b> ${visibilityIcon}:
+                        <a href="${url}" target="_blank">${url}</a></p>`;
                 }
             } else if (url.startsWith("http")) {
                 html += await resolveAndRender(url, index + 1, title); // still safe
@@ -832,6 +889,25 @@
 
 
         return html || "<p style='color:gray;'>No asset information available.</p>";
+    }
+
+
+    function boldLeadingLabels(text) {
+        return text.split('<br>').map(line => {
+            const words = line.trim().split(/\s+/);
+            const colonIndex = line.indexOf(':');
+
+            if (colonIndex !== -1 && words.length > 0) {
+                const prefix = line.slice(0, colonIndex);
+                const prefixWordCount = prefix.trim().split(/\s+/).length;
+
+                if (prefixWordCount <= 5) {
+                    const rest = line.slice(colonIndex); // from ':' onward
+                    return `<span style="color:#005aab; font-weight:bold; display:inline-block; margin-bottom:2px;">${prefix}</span>${rest}`;
+                }
+            }
+            return `<span style="color:#333;">${line}</span>`;
+        }).join('<br>');
     }
 
 
@@ -1052,32 +1128,53 @@
             const assetArray = data.assets || [];
             let html = "";
 
-            assetArray.forEach((item, index) => {
-                const title = item.title || `Item ${index + 1}`;
-                const type = (item.type || "").toUpperCase();
-                const visibility = (item.visibility || "").toUpperCase();
-                const url = item.url || "";
 
-                const icon = getIconFromFileType(type);
-                let contentBlock = "";
+           /*
+
+                const urlRegex = /(https?:\/\/[^\s]+)/g;
+
 
                 if (!url || url === "Not Available") {
                     contentBlock = `<p style='color:gray;'>🔗 Link not available</p>`;
-                } else if (!url.startsWith("http")) {
-                    contentBlock = `<p style='color:gray;'>${url}</p>`;
-                } else {
-                    const drivePreview = url.includes("drive.google.com") ? url.replace("/view?usp=sharing", "/preview") : url;
-                    if (type === "IMAGEFILE") {
-                        contentBlock = `<img src="${drivePreview}" style="max-width:100%; margin-top:5px;">`;
-                    } else if (type === "PDFFILE" || type === "TEXTFILE") {
-                        contentBlock = `<iframe src="${drivePreview}" width="100%" height="400" style="border:0;"></iframe>`;
-                    } else if (type === "AUDIOFILE") {
-                        contentBlock = `<audio controls src="${url}" style="width:100%;"></audio>`;
-                    } else if (type === "VIDEOFILE") {
-                        contentBlock = `<video controls width="100%"><source src="${url}"></video>`;
-                    } else {
-                        contentBlock = `<a href="${url}" target="_blank">🔗 Open Link</a>`;
+                } else if (type === "TEXT") {
+
+                    const match = url.match(urlRegex);
+                    if (match) {
+                        console.log("match>>>>",match);
                     }
+
+                    if (match && match.length === 1 && match[0].trim() === url.trim()) {
+                        // Pure URL only — no other text
+                        contentBlock = `<p><a href="${url}" target="_blank" style="color: var(--primary); text-decoration: underline;">🌐 WebLink</a></p>`;
+                    } else if (match && match.length > 0) {
+                        console.log("Non PureURL>>>>",url);
+                        // Text containing URL(s)
+
+                        const replaced = url.replace(urlRegex, (link) => {
+                            return `<a href="${link}" target="_blank" style="color: var(--primary); text-decoration: underline;">WebLink</a>`;
+                        });
+
+                        contentBlock = `<p><b>${icon} ${title}</b><br>${replaced}</p>`;
+                    } else {
+                        // Plain non-link text
+                        contentBlock = `<p style='color:gray;'>${url}</p>`;
+                    }
+                    //contentBlock="";
+                    console.log("URL URL>>>>",contentBlock);
+
+                } else if (type === "IMAGEFILE") {
+                    const drivePreview = url.includes("drive.google.com")
+                        ? url.replace("/view?usp=sharing", "/preview")
+                        : url;
+                    contentBlock = `<img src="${drivePreview}" style="max-width:100%; margin-top:5px;">`;
+                } else if (type === "PDFFILE" || type === "TEXTFILE") {
+                    contentBlock = `<iframe src="${url}" width="100%" height="400" style="border:0;"></iframe>`;
+                } else if (type === "AUDIOFILE") {
+                    contentBlock = `<audio controls src="${url}" style="width:100%;"></audio>`;
+                } else if (type === "VIDEOFILE") {
+                    contentBlock = `<video controls width="100%"><source src="${url}"></video>`;
+                } else {
+                    contentBlock = `<a href="${url}" target="_blank">🔗 Open Link</a>`;
                 }
 
 
@@ -1095,9 +1192,11 @@
 
                 html += `</div>`;
             });
+            */
 
-            //assetLinks.innerHTML = html || "<p style='color:gray;'>No asset information available.</p>";
             assetLinks.innerHTML = await renderInfoBlock(data);
+            //assetLinks.innerHTML = html || "<p style='color:gray;'>No asset information available.</p>";
+
             editBtn.disabled = false;
             editBtn.classList.remove("disabled-button");
             editBtn.classList.add("enabled");
