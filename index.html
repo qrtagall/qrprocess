@@ -458,7 +458,7 @@
 
 <script>
 
-    const QRTagAll_Ver_ = "2.17";
+    const QRTagAll_Ver_ = "2.18";
     let editMode = false;
     let insertAfterRow = null;
     let selectedUploadedFileLink = "";
@@ -1482,10 +1482,23 @@
             const item = assetDataList[afterRowNum];
             const fileType = (item.type || "TEXT").toUpperCase();
 
+
+
             modalTitle.innerText = `📝 Edit ${fileType === "TEXT" ? "Text Info" : "Artifact Visibility"}`;
 
             basicInfoInput.value = item.title || "";
-            fileTypeInput.value = fileType;
+            //fileTypeInput.value = fileType;
+            //CMEDIT
+            const existingType = (item.type || "").toUpperCase();
+            fileTypeInput.value = existingType;
+
+            // Optional: fallback if type is invalid (e.g., typo in Sheet)
+            if (!Array.from(fileTypeInput.options).some(opt => opt.value === existingType)) {
+                console.warn(`⚠️ Unknown fileType: ${existingType}, defaulting to TEXT`);
+                fileTypeInput.value = "TEXT";
+            }
+
+
             visibilityInput.value = (item.visibility || "VIEW").toUpperCase();
 
             if (fileType === "TEXT") {
