@@ -458,7 +458,7 @@
 
 <script>
 
-    const QRTagAll_Ver_ = "2.20";
+    const QRTagAll_Ver_ = "2.21";
     let editMode = false;
     let insertAfterRow = null;
     let selectedUploadedFileLink = "";
@@ -1547,7 +1547,25 @@
 
             document.getElementById("artifactFileType").parentElement.style.display = "block";
             document.getElementById("textInputSection").style.display = "block";
-            document.getElementById("fileUploadSection").style.display = "none";
+            //document.getElementById("fileUploadSection").style.display = "none";
+
+            const fileType = fileTypeInput.value.toUpperCase();
+
+            if (fileType === "TEXT") {
+                document.getElementById("textInputSection").style.display = "block";
+                document.getElementById("fileUploadSection").style.display = "none";
+            } else {
+                document.getElementById("textInputSection").style.display = "none";
+                document.getElementById("fileUploadSection").style.display = "block";
+
+                // ✅ Enable file upload in ADD mode
+                const uploadBtn = document.querySelector("#fileUploadSection button");
+                if (uploadBtn) {
+                    uploadBtn.disabled = false;
+                    uploadBtn.style.opacity = "1";
+                    uploadBtn.style.cursor = "pointer";
+                }
+            }
 
             basicInfoInput.value = insertAfterRow === -2 ? "New Artifact" : `New Artifact ${insertAfterRow + 2}`;
 
