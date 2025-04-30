@@ -458,7 +458,7 @@
 
 <script>
 
-    const QRTagAll_Ver_ = "2.15";
+    const QRTagAll_Ver_ = "2.16";
     let editMode = false;
     let insertAfterRow = null;
     let selectedUploadedFileLink = "";
@@ -1581,13 +1581,26 @@
             } else {
                 // 🔒 For other types, update visibility only
                 // ✅ For xxxFILE: Save Basic Info + Visibility
+                /*
                 saveArtifactInfo({
                     startCell: insertAfterRow + 6,
                     basicInfo: basicInfo,
                     visibility: visibility,
                     modalId: "addArtifactModal"
-                });
+                });*/
             }
+
+            const original = assetDataList[insertAfterRow];
+
+            saveArtifactInfo({
+                startCell: insertAfterRow + 6,
+                basicInfo: basicInfo,
+                fileType: original.type || "",         // ✅ keep original fileType
+                visibility: visibility,
+                linkOrText: original.url || "",        // ✅ preserve original file link
+                modalId: "addArtifactModal"
+            });
+
 
         }
         else {
