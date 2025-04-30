@@ -1410,85 +1410,7 @@
         }
     }
 
-    /*
-        function openAddModal(afterRowNum, isEditMode = false) {
-            insertAfterRow = afterRowNum;
-            selectedUploadedFileLink = "";
 
-
-
-            const basicInfoInput = document.getElementById("artifactBasicInfo");
-            const fileTypeInput = document.getElementById("artifactFileType");
-            const visibilityInput = document.getElementById("artifactOption");
-            const textInfoInput = document.getElementById("artifactTextInfo");
-            const uploadedFileLink = document.getElementById("uploadedFileLink");
-            const fileTypeSection = document.getElementById("artifactFileType").parentElement;
-            const textInputSection = document.getElementById("textInputSection");
-            const fileUploadSection = document.getElementById("fileUploadSection");
-            const modalTitle = document.getElementById("addArtifactModalTitle");
-
-            // Always reset visibility first
-            fileTypeSection.style.display = "block";
-            textInputSection.style.display = "block";
-            fileUploadSection.style.display = "block";
-
-            // Reset field states
-            basicInfoInput.disabled = false;
-            fileTypeInput.disabled = false;
-            textInfoInput.disabled = false;
-            uploadedFileLink.style.pointerEvents = "auto";
-            visibilityInput.disabled = false;
-
-            if (isEditMode) {
-
-                // EDIT MODE LOGIC
-
-                const item = assetDataList[afterRowNum];  // ← assume this global list (already from renderInfoBlock)
-                modalTitle.innerText = "📝 Edit Artifact Visibility";
-                basicInfoInput.value = item.title || "";
-                fileTypeInput.value = (item.type || "TEXT").toUpperCase();
-                //visibilityInput.value = (item.visibility || "VIEW").toUpperCase();
-                const vis = (item.visibility || "VIEW").toUpperCase();
-                visibilityInput.value = vis === "VIEW" || vis === "NOVIEW" ? vis : "VIEW";
-
-                if (item.type.toUpperCase() === "TEXT") {
-                    textInfoInput.value = item.url || "";
-                    uploadedFileLink.textContent = "";
-                } else {
-                    textInfoInput.value = "";
-                    uploadedFileLink.textContent = item.url || "";
-                }
-
-                // Disable fields except visibility
-                basicInfoInput.disabled = true;
-                fileTypeInput.disabled = true;
-                textInfoInput.disabled = true;
-
-               // uploadedFileLink.style.pointerEvents = "none";
-
-                // Hide unwanted sections
-                //fileTypeInput.disabled = true;
-                fileTypeSection.style.display = "none";
-                textInputSection.style.display = "none";
-                fileUploadSection.style.display = "none";
-
-                currentEditMode = "edit";
-            } else {
-                // ADD MODE LOGIC
-                modalTitle.innerText = "➕ Add New Artifact Info";
-                basicInfoInput.value = `New Artifact ${afterRowNum + 2}`;
-                textInfoInput.value = "Enter your text here...";
-                fileTypeInput.value = "TEXT";
-                visibilityInput.value = "VIEW";
-                uploadedFileLink.textContent = "";
-                onFileTypeChange();
-
-                currentEditMode = "add";
-            }
-
-            document.getElementById("addArtifactModal").style.display = "flex";
-        }
-    */
 
     function openAddModal(afterRowNum, isEditMode = false) {
         selectedUploadedFileLink = "";
@@ -1512,7 +1434,7 @@
 
 
         if (isEditMode) {
-            currentEditMode = "edit";
+            /*currentEditMode = "edit";
 
             modalTitle.innerText = "📝 Edit Artifact Visibility";
 
@@ -1524,6 +1446,8 @@
             document.getElementById("textInputSection").style.display = "none";
             document.getElementById("fileUploadSection").style.display = "none";
 
+
+
             const item = assetDataList[afterRowNum];
             basicInfoInput.value = item.title || "";
             fileTypeInput.value = (item.type || "TEXT").toUpperCase();
@@ -1534,6 +1458,47 @@
             } else {
                 textInfoInput.value = "";
                 uploadedFileLink.textContent = item.url || "";
+            }
+
+             */
+
+            currentEditMode = "edit";
+
+            const item = assetDataList[afterRowNum];
+            const fileType = (item.type || "TEXT").toUpperCase();
+
+            modalTitle.innerText = `📝 Edit ${fileType === "TEXT" ? "Text Info" : "Artifact Visibility"}`;
+
+            basicInfoInput.value = item.title || "";
+            fileTypeInput.value = fileType;
+            visibilityInput.value = (item.visibility || "VIEW").toUpperCase();
+
+            if (fileType === "TEXT") {
+                // Make all fields editable
+                textInfoInput.value = item.url || "";
+                uploadedFileLink.textContent = "";
+
+                basicInfoInput.disabled = false;
+                fileTypeInput.disabled = false;
+                textInfoInput.disabled = false;
+                visibilityInput.disabled = false;
+
+                document.getElementById("artifactFileType").parentElement.style.display = "block";
+                document.getElementById("textInputSection").style.display = "block";
+                document.getElementById("fileUploadSection").style.display = "none";
+            } else {
+                // For non-TEXT: allow only visibility edit (rest disabled)
+                textInfoInput.value = "";
+                uploadedFileLink.textContent = item.url || "";
+
+                basicInfoInput.disabled = true;
+                fileTypeInput.disabled = true;
+                textInfoInput.disabled = true;
+                visibilityInput.disabled = false;
+
+                document.getElementById("artifactFileType").parentElement.style.display = "none";
+                document.getElementById("textInputSection").style.display = "none";
+                document.getElementById("fileUploadSection").style.display = "none";
             }
         } else {
             currentEditMode = "add";
@@ -1596,6 +1561,10 @@
         }
 
         if (currentEditMode === "edit") {
+
+            const fileTypeNow = document.getElementById("artifactFileType").value.toUpperCase();
+            
+            /*
             // ✅ Edit mode: Only update visibility
             const payload = {
                 rowNum: insertAfterRow,  // In Edit, we know the row directly
@@ -1610,6 +1579,30 @@
                 modalId: "addArtifactModal"   // ✅ Auto-close Add Modal after save
             });
             // TODO: Call backend to only update visibility
+
+             */
+
+            if (fileTypeNow === "TEXT") {
+                // 🔄 Save full update for TEXT
+                saveArtifactInfo({
+                    startCell: insertAfterRow + 6,
+                    basicInfo: basicInfo,
+                    fileType: fileType,
+                    visibility: visibility,
+                    linkOrText: url,
+                    modalId: "addArtifactModal",
+                    rawfilename: selectedUploadedFileName,
+                    rawfiledata: selectedUploadedFileData
+                });
+            } else {
+                // 🔒 For other types, update visibility only
+                saveArtifactInfo({
+                    startCell: "C" + (insertAfterRow + 6),
+                    visibility: visibility,
+                    modalId: "addArtifactModal"
+                });
+            }
+
         }
         else {
             // ✅ Add mode: Insert full artifact
@@ -1621,7 +1614,7 @@
                 localUrl: url
             };
 
-            alert(`➕ New artifact to be inserted after row ${insertAfterRow}:\n\n${JSON.stringify(payload, null, 2)}`);
+           // alert(`➕ New artifact to be inserted after row ${insertAfterRow}:\n\n${JSON.stringify(payload, null, 2)}`);
 
             saveArtifactInfo({
                 startCell: payload.afterRow + 7,  // 🧠 afterRow is artifact index; +6 (starting row) +1 (insert *below*)
