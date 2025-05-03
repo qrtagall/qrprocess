@@ -243,6 +243,28 @@
 
 
 
+         .artifact-overlay {
+             position: absolute;
+             top: 0px;
+             right: 10px;
+
+             font-size: 12px;
+             color: orangered;
+
+            /* padding: 4px 8px;
+             border-radius: 4px;
+             background: #333;
+             color: #fff;
+             box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+             */
+
+         }
+
+
+
+
+
+
     </style>
 </head>
 <body>
@@ -458,7 +480,7 @@
 
 <script>
 
-    const QRTagAll_Ver_ = "2.23";
+    const QRTagAll_Ver_ = "2.24";
     let editMode = false;
     let insertAfterRow = null;
     let selectedUploadedFileLink = "";
@@ -724,10 +746,22 @@
                 const res = await fetch(resolveUrl);
                 const json = await res.json();
 
+
                 if (json.error) return `<p>⚠️ Couldn’t load ${customTitle}</p>`;
 
                 finalUrl = json.resolvedUrl;
                 contentType = json.contentType;
+
+                // ✅ Add this block to read creation date and format it
+                if (json.fileCreated) {
+                    const createdDate = new Date(json.fileCreated).toLocaleDateString("en-GB", {
+                        year: 'numeric', month: 'short', day: 'numeric'
+                    });
+                    fileCreatedText = `📅 Created on: ${createdDate}`;
+                } else {
+                    fileCreatedText = null;
+                }
+
             }
 
             if (/image/i.test(contentType)) {
@@ -773,6 +807,8 @@
         const assets = data.assets || [];
         assetDataList = assets; // ✅ Store globally for edit mode
 
+        console.log("⚠️ renderInfoBlock called with:", data.assets);
+
         for (let i = 0; i < assets.length; i++) {
             const index = i; // ✅ Fix async closure issue
             const item = assets[index];
@@ -780,6 +816,13 @@
             const type = (item.type || "").toUpperCase();
             const visibility = (item.visibility || "").toUpperCase();
             const url = item.url || "";
+
+            const dTime = item.DTime;
+            let fileCreatedText = "";
+            if (dTime) {
+                const createdDate = new Date(dTime);
+                fileCreatedText = `📅 Created: ${createdDate.toLocaleString()}`;
+            }
 
             const icon = getIconFromTitle(title);
 
@@ -793,7 +836,14 @@
                 }
             }
 
-            html += `<div style="margin-bottom:20px; border:1px solid #ccc; padding:10px; border-radius:8px; background:#fafafa;">`;
+            //html += `<div style="margin-bottom:20px; border:1px solid #ccc; padding:10px; border-radius:8px; background:#fafafa;">`;
+
+            html += `<div class="artifact-block" style="position: relative; margin-bottom:20px; border:1px solid #ccc; padding:10px; border-radius:8px; background:#fafafa;">`;
+
+            if (fileCreatedText) {
+                html += `<div class="artifact-overlay">${fileCreatedText}</div>`;
+            }
+
 
             // 🔍 Main artifact info
             if (visibility === "NOVIEW" && !isOwner) {
@@ -931,6 +981,10 @@
 
         return html || "<p style='color:gray;'>No asset information available.</p>";
     }
+
+
+
+
 
 
     function boldLeadingLabels(text) {
@@ -1170,70 +1224,7 @@
             let html = "";
 
 
-           /*
 
-                const urlRegex = /(https?:\/\/[^\s]+)/g;
-
-
-                if (!url || url === "Not Available") {
-                    contentBlock = `<p style='color:gray;'>🔗 Link not available</p>`;
-                } else if (type === "TEXT") {
-
-                    const match = url.match(urlRegex);
-                    if (match) {
-                        console.log("match>>>>",match);
-                    }
-
-                    if (match && match.length === 1 && match[0].trim() === url.trim()) {
-                        // Pure URL only — no other text
-                        contentBlock = `<p><a href="${url}" target="_blank" style="color: var(--primary); text-decoration: underline;">🌐 WebLink</a></p>`;
-                    } else if (match && match.length > 0) {
-                        console.log("Non PureURL>>>>",url);
-                        // Text containing URL(s)
-
-                        const replaced = url.replace(urlRegex, (link) => {
-                            return `<a href="${link}" target="_blank" style="color: var(--primary); text-decoration: underline;">WebLink</a>`;
-                        });
-
-                        contentBlock = `<p><b>${icon} ${title}</b><br>${replaced}</p>`;
-                    } else {
-                        // Plain non-link text
-                        contentBlock = `<p style='color:gray;'>${url}</p>`;
-                    }
-                    //contentBlock="";
-                    console.log("URL URL>>>>",contentBlock);
-
-                } else if (type === "IMAGEFILE") {
-                    const drivePreview = url.includes("drive.google.com")
-                        ? url.replace("/view?usp=sharing", "/preview")
-                        : url;
-                    contentBlock = `<img src="${drivePreview}" style="max-width:100%; margin-top:5px;">`;
-                } else if (type === "PDFFILE" || type === "TEXTFILE") {
-                    contentBlock = `<iframe src="${url}" width="100%" height="400" style="border:0;"></iframe>`;
-                } else if (type === "AUDIOFILE") {
-                    contentBlock = `<audio controls src="${url}" style="width:100%;"></audio>`;
-                } else if (type === "VIDEOFILE") {
-                    contentBlock = `<video controls width="100%"><source src="${url}"></video>`;
-                } else {
-                    contentBlock = `<a href="${url}" target="_blank">🔗 Open Link</a>`;
-                }
-
-
-
-                html += `<div style="margin-bottom:20px; border:1px solid #ccc; padding:10px; border-radius:8px; background:#fafafa;">
-        <b>${icon} ${title}</b><br>${contentBlock}`;
-
-                if (editMode) {
-                    html += `
-          <div style="margin-top: 10px; display: flex; gap: 10px;">
-            <button onclick="deleteArtifact(${index})">🗑️ Delete</button>
-            <button onclick="openAddModal(${index})">➕ Add Below</button>
-          </div>`;
-                }
-
-                html += `</div>`;
-            });
-            */
 
             assetLinks.innerHTML = await renderInfoBlock(data);
             //assetLinks.innerHTML = html || "<p style='color:gray;'>No asset information available.</p>";
