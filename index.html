@@ -535,7 +535,6 @@
 <script>
 
 
-
     const QRTagAll_Ver_ = "3.0";
     let editMode = false;
     let insertAfterRow = null;
@@ -2082,7 +2081,7 @@
     async function triggerLink_old(params, modalId = null) {
 
 
-        const targetUrl = `${AppScriptBaseUrl}?${params}`;
+        const targetUrl = `${AppScriptUserUrl}?${params}`;
 
         //const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?${params}`;
         //const ownerEmail = (sessionEmail || "").toLowerCase(); // 🔥 assuming sessionEmail is already known
