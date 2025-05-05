@@ -724,14 +724,14 @@
 
             setTimeout(() => {
                 if (img && img.parentNode) img.parentNode.removeChild(img);
-                spinner.style.display = "none";
+                //spinner.style.display = "none";
             }, 4000);
 
             setTimeout(() => {
                 spinner.style.display = "none";
                 alert("✅ QR Claimed & Sheet Created.");
                 location.reload();
-            }, 5000);
+            }, 10000);
 
         } catch (e) {
             spinner.style.display = "none";
