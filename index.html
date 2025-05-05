@@ -534,7 +534,9 @@
 
 <script>
 
-    const QRTagAll_Ver_ = "2.25";
+
+
+    const QRTagAll_Ver_ = "3.0";
     let editMode = false;
     let insertAfterRow = null;
     let selectedUploadedFileLink = "";
@@ -549,6 +551,13 @@
     document.getElementById("versionTag").textContent = `Ver-${QRTagAll_Ver_}`;
     document.getElementById("versionTagx").textContent = `Ver-${QRTagAll_Ver_}`;
 
+    //cm
+    //const AppScriptBaseUrl = "https://script.google.com/macros/s/AKfycbzgrQ9JzTzDY57cxlWs-g4kbiCb4C5j9X54BzE2eniGp3LQYKSFqNr5-yai4ZJmfjO83Q/exec";
+    //const AppScriptUserUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec`;
+
+    //QRTagAll
+    const AppScriptBaseUrl = "https://script.google.com/macros/s/AKfycby4lP7EpKCXew58BDqgZn39yxg_FmT1VilLPP0pthiDuTV2k6KCoOrSvbkM8mEBJvLUww/exec";
+    const AppScriptUserUrl = `https://script.google.com/macros/s/AKfycbzlXNlTnCL9MWYfu6ejMBXfSzhQp0SPTjL5YzmKiXTG7-3Lk4GhuBi-A8gzgf05WJdo/exec`;
 
 
 
@@ -809,7 +818,8 @@
             let contentType = "";
 
             if (isFileLikely) {
-                const resolveUrl = `https://script.google.com/macros/s/AKfycbzgrQ9JzTzDY57cxlWs-g4kbiCb4C5j9X54BzE2eniGp3LQYKSFqNr5-yai4ZJmfjO83Q/exec?resolve=${encodeURIComponent(value)}`;
+                //const resolveUrl = `https://script.google.com/macros/s/AKfycbzgrQ9JzTzDY57cxlWs-g4kbiCb4C5j9X54BzE2eniGp3LQYKSFqNr5-yai4ZJmfjO83Q/exec?resolve=${encodeURIComponent(value)}`;
+                const resolveUrl = `${AppScriptBaseUrl}?resolve=${encodeURIComponent(value)}`;
                 const res = await fetch(resolveUrl);
                 const json = await res.json();
 
@@ -1138,7 +1148,8 @@
 
 
         try {
-            const apiUrl = `https://script.google.com/macros/s/AKfycbzgrQ9JzTzDY57cxlWs-g4kbiCb4C5j9X54BzE2eniGp3LQYKSFqNr5-yai4ZJmfjO83Q/exec?id=${encodeURIComponent(id)}`;
+            //const apiUrl = `https://script.google.com/macros/s/AKfycbzgrQ9JzTzDY57cxlWs-g4kbiCb4C5j9X54BzE2eniGp3LQYKSFqNr5-yai4ZJmfjO83Q/exec?id=${encodeURIComponent(id)}`;
+            const apiUrl = `${AppScriptBaseUrl}?id=${encodeURIComponent(id)}`;
             const res = await fetch(apiUrl);
             const json = await res.json();
             spinner.style.display = "none";
@@ -1965,7 +1976,7 @@
 
 
     async function triggerLink_post(params, rawfiledata,rawfilename, modalId = null) {
-        const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec`;
+        const targetUrl = AppScriptUserUrl;// `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec`;
 
         if (modalId) {
             const modal = document.getElementById(modalId);
@@ -2070,7 +2081,9 @@
     async function triggerLink_old(params, modalId = null) {
 
 
-        const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?${params}`;
+        const targetUrl = `${AppScriptBaseUrl}?${params}`;
+
+        //const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?${params}`;
         //const ownerEmail = (sessionEmail || "").toLowerCase(); // 🔥 assuming sessionEmail is already known
         // console.log(">>>>>>>>> URL........", targetUrl);
 
@@ -2163,122 +2176,6 @@
 
 
 
-
-    async function triggerLink_old1(params, modalId = null) {
-        const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?${params}`;
-
-
-
-
-        if (modalId) {
-            const modal = document.getElementById(modalId);
-            if (modal) modal.style.display = "none";
-        }
-        document.getElementById("fullScreenSpinner").style.display = "flex";
-
-        // Let the browser paint the spinner FIRST
-        setTimeout(async () => {
-
-
-
-            try {
-                const img = new Image();
-                img.src = targetUrl;
-            } catch (e) {
-
-            }
-
-            // let response = null;
-            // try {
-            //     const res = await fetch(targetUrl);
-            //     response = await res.json();
-            // } catch (e) {
-            // }
-
-            //console.log(">>>>>>>>> Response.........", response);
-
-
-
-
-            setTimeout(() => {
-
-
-                document.getElementById("fullScreenSpinner").style.display = "none";
-
-                // alert("✅ Artifact info saved.");
-                location.reload();
-            }, 3000);
-
-        },1000); // 🔥 Magic! spinner visible before image src fires
-    }
-
-
-    /*
-  async function triggerLink_old(params, modalId = null) {
-  const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?${params}`;
-  let accessToken = localStorage.getItem('qr_oauth_token');
-
-  if (modalId) {
-      const modal = document.getElementById(modalId);
-      if (modal) modal.style.display = "none";
-  }
-
-  const spinner = document.getElementById("fullScreenSpinner");
-  if (spinner) spinner.style.display = "flex";
-
-  async function requestLogin() {
-      await new Promise((resolve, reject) => {
-          const client = google.accounts.oauth2.initTokenClient({
-              client_id: '121290253918-cae49r46mo3r9f9rhd7rq6ao9ae69jjv.apps.googleusercontent.com',
-              scope: 'https://www.googleapis.com/auth/userinfo.email',
-              prompt: 'consent',
-              callback: (response) => {
-                  if (response.access_token) {
-                      console.log("✅ Access token acquired after login.");
-                      localStorage.setItem('qr_oauth_token', response.access_token);
-                      accessToken = response.access_token;
-                      resolve();
-                  } else {
-                      reject("❌ OAuth login failed.");
-                  }
-              },
-          });
-          client.requestAccessToken();
-      });
-  }
-
-  if (!accessToken) {
-      console.log("🔒 No token found. Forcing login...");
-      await requestLogin();
-  } else {
-      console.log("🔓 Using existing saved access token.");
-  }
-
-  // Now fire the URL silently using Image
-  try {
-      const img = new Image();
-      img.style.display = "none"; // invisible
-      img.src = targetUrl;
-      document.body.appendChild(img);
-
-      // optional: clean up after 5 sec
-      setTimeout(() => {
-          if (img && img.parentNode) {
-              img.parentNode.removeChild(img);
-          }
-      }, 5000);
-  } catch (e) {
-      console.error("❌ Image fetch failed:", e);
-  }
-
-  setTimeout(() => {
-      spinner.style.display = "none";
-      //alert("✅ Artifact info has been tried to save.");
-      location.reload();
-  }, 3000);
-}
-
-*/
 
 
     /*********************************************************************/
