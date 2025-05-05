@@ -2008,7 +2008,14 @@
 
 
     async function triggerLink_post(params, rawfiledata,rawfilename, modalId = null) {
-        const targetUrl = AppScriptUserUrl;// `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec`;
+        let targetUrl = AppScriptUserUrl;// `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec`;
+
+
+        //let targetUrl = `${AppScriptUserUrl}?${params}`;
+
+        if(StorageType==="LOCAL")
+            targetUrl = AppScriptUserUrlLOCAL;
+
 
         if (modalId) {
             const modal = document.getElementById(modalId);
