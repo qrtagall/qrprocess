@@ -540,6 +540,7 @@
     let insertAfterRow = null;
     let selectedUploadedFileLink = "";
     let sheetID="";
+    let StorageType="";
     var currentEditMode = null; // new global
     var assetDataList = [];  // global
     let ownerEmail="";
@@ -558,6 +559,7 @@
     //QRTagAll
     const AppScriptBaseUrl = "https://script.google.com/macros/s/AKfycby4lP7EpKCXew58BDqgZn39yxg_FmT1VilLPP0pthiDuTV2k6KCoOrSvbkM8mEBJvLUww/exec";
     const AppScriptUserUrl = `https://script.google.com/macros/s/AKfycbzlXNlTnCL9MWYfu6ejMBXfSzhQp0SPTjL5YzmKiXTG7-3Lk4GhuBi-A8gzgf05WJdo/exec`;
+    const AppScriptUserUrlLOCAL = `https://script.google.com/macros/s/AKfycbxoAVj1O4ZAaaDRCzp3-sNaS_v1XmwQbO7oCWWi8ZnauoidAaXj0E1zZGVnIcKEg8JfQQ/exec`;
 
 
 
@@ -729,7 +731,7 @@
 
             setTimeout(() => {
                 spinner.style.display = "none";
-                alert("✅ QR Claimed & Sheet Created.");
+                alert("✅ QR Claimed !");
                 location.reload();
             }, 10000);
 
@@ -1339,6 +1341,9 @@
             /*** Owner Detection ***/
             sheetID = (data.SheetID || "").trim();
             ownerEmail = (data.UserName || "").trim().toLowerCase();
+            StorageType=(data.StorageType || "").trim().toUpperCase();
+
+            console.log("Storage Type>>>>>",StorageType);
 
 
             /*** Asset Title & Edit Option ***/
@@ -1932,65 +1937,7 @@
 
 
 
-    /*
-    async function saveArtifactInfo({
-                                        startCell,
-                                        basicInfo = undefined,
-                                        fileType = undefined,
-                                        visibility = undefined,
-                                        linkOrText = undefined,
-                                        modalId = null,
-                                        isInsert = false,
-                                        isDelete = false,
-                                        rawfiledata = undefined
-                                    }) {
-        const id = getQueryParam("id");
-        const sheetId = sheetID;
-        const secretKey = "optional_static_key";
 
-        // ✅ Always prepare 4 fields
-        const valueParts = [
-            basicInfo !== undefined ? basicInfo : "",
-            fileType !== undefined ? fileType : "",
-            visibility !== undefined ? visibility : "",
-            linkOrText !== undefined ? linkOrText : ""
-        ];
-
-        // ✅ If somehow more values are passed, trim extra
-        const finalValues = valueParts.slice(0, 4).join("||");
-
-        const query = new URLSearchParams({
-            mode: "updateCells",
-            id,
-            sheetId,
-            range: startCell,
-            values: finalValues,
-            secret_key: secretKey
-        });
-
-        if (isInsert) query.append("insert", "1");
-        if (isDelete) query.append("delete", "1");
-        if (rawfiledata) query.append("rawfiledata", encodeURIComponent(rawfiledata));
-
-
-        //const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?${query.toString()}`;
-        //console.log("✅ Final Target URL:", targetUrl);
-        //triggerLink_old(targetUrl, modalId);
-
-
-
-        const params = `${query.toString()}`;
-
-        console.log(">>>>>>>>> URL........", params);
-
-        if (rawfiledata)
-        {
-
-        }
-        else
-        await triggerLink_old(params, modalId);
-    }
-    */
 
     async function saveArtifactInfo({
                                         startCell,
@@ -2051,7 +1998,7 @@
         if (rawfiledata) {
             await triggerLink_post(params, rawfiledata, rawfilename, modalId);
         } else {
-            await triggerLink_old(params, modalId);
+            await triggerLink_get(params, modalId);
         }
     }
 
@@ -2164,10 +2111,14 @@
 
 
 
-    async function triggerLink_old(params, modalId = null) {
+    async function triggerLink_get(params, modalId = null) {
 
 
-        const targetUrl = `${AppScriptUserUrl}?${params}`;
+        let targetUrl = `${AppScriptUserUrl}?${params}`;
+
+        if(StorageType==="LOCAL")
+            targetUrl = `${AppScriptUserUrlLOCAL}?${params}`;
+
 
         //const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?${params}`;
         //const ownerEmail = (sessionEmail || "").toLowerCase(); // 🔥 assuming sessionEmail is already known
