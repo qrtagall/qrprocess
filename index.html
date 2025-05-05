@@ -160,6 +160,8 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.1);
         }
 
+
+
         #versionTag {
             font-size: 8px;
             color: #666;
@@ -277,25 +279,77 @@
         <canvas id="qrCanvas" style="padding:6px; border:1px solid #ccc; border-radius:8px; background:#fff;"></canvas>
     </div>
 
-    <h3>🔍 Verifying QR ID</h3>
+    <div id="verifyingLabel">
+        <h3>🔍 Verifying QR ID</h3>
+    </div>
     <p id="idText" style="font-size:14px; color:gray;"></p>
     <div id="spinner" style="margin-top:20px;">⏳ Please wait...</div>
     <div id="result" style="display:none;"></div>
 
+    <!--
     <div id="loginSection" class="login-options" style="display:none; font-size:13.5px;">
         <p style="font-weight: normal;">Give Asset Name and "Login" to Own this QR</p>
 
-        <!-- 👇 Asset Name Input Box -->
         <input id="assetNameInput" type="text" placeholder="Enter Asset Name"
                style="margin-bottom:10px; padding:8px; width:80%; border-radius:6px; border:1px solid #ccc; " />
 
         <div class="auth-buttons-vertical">
             <button class="auth-button-box enabled" onclick="googleLoginNew()">
                 <img class="auth-logo" src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo">
-                <span>Log-in with Google</span>
+                <span>Data in QRTagAll</span>
+            </button>
+            <button class="auth-button-box enabled" onclick="googleLoginNew()">
+                <img class="auth-logo" src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo">
+                <span>Data in GDrive</span>
             </button>
         </div>
     </div>
+    -->
+
+    <div id="loginSection" class="login-options" style="display:none; font-size:13.5px; text-align:center;">
+        <p style="font-weight: normal;">Give Asset Name (can edit later)</p>
+
+        <!-- 👇 Asset Name Input Box -->
+        <input id="assetNameInput" type="text" placeholder="Enter Asset Name"
+               style="margin-bottom:10px; padding:8px; width:80%; border-radius:6px; border:1px solid #ccc;" />
+
+        <p style="font-weight: normal;">Select Storage space where Asset Info shall be stored:</p>
+
+        <!-- 👇 Vertical layout with floating info button -->
+        <div style="position: relative; display: inline-block;">
+
+            <button class="auth-button-box enabled" onclick="QRTagAllLoginNew()">
+                <img class="auth-logo" src="https://qrtagall.com/Logo_small_NT.png" alt="QRTagAll Logo">
+                <span>Data in QRTagAll</span>
+            </button>
+
+            <!-- ℹ️ Info Button -->
+            <button onclick="toggleInfoPopup()" title="More Info"
+                    style="position: absolute; left: 110%; transform: translate(-50%, -50%); top: 50%; margin-top: -12px;
+             background: #eee; border: 1px solid #ccc; border-radius: 50%; width: 24px; height: 24px;text-align: center;
+             padding: 0; font-size: 14px; line-height: 1; cursor: pointer;">
+                ℹ️
+            </button>
+
+            <button class="auth-button-box enabled" onclick="googleLoginNew()" style="margin-top:24px;">
+                <img class="auth-logo" src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo">
+                <span>Data in GDrive</span>
+            </button>
+        </div>
+
+        <!-- 👇 Info popup -->
+        <div id="infoPopup" style="display:none; background:#fffbe5; color:#444; padding:10px 14px; border:1px solid #aaa; border-radius:8px; margin-top:10px; width:80%; margin-left:auto; margin-right:auto; font-size:13px; text-align:left;">
+            <b>ℹ️ What's the difference?</b><br><br>
+            - <b>QRTagAll</b>: Data shall be stored at QRTagAll's shared space. (Limited space)<br><br>
+            - <b>GDrive (Recommended)</b>: Data shall be stored in your own Google Drive. It needs exclusive permission to access your Google Drive.<br>
+            This will create the following directory in your Google Drive:<br>
+            MyDrive > QRTagAll > {ID} > {Your artifact files}<br>
+            For details, see the <a href="https://qrtagall.com/privacy.html" target="_blank" style="color:#0056b3; text-decoration:underline;">Privacy Policy</a>.<br><br>
+            Choose based on your storage preference.
+        </div>
+
+    </div>
+
 
     <div id="versionTag"></div>
 
@@ -480,7 +534,7 @@
 
 <script>
 
-    const QRTagAll_Ver_ = "2.24";
+    const QRTagAll_Ver_ = "2.25";
     let editMode = false;
     let insertAfterRow = null;
     let selectedUploadedFileLink = "";
@@ -543,6 +597,14 @@
         window.location.reload();
     }
 
+
+    /********************* Data in QRTagAll *********************/
+
+    function QRTagAllLoginNew()
+    {
+        alert("Yet to come...");
+    }
+
     /************** New Google Auth and QR Claim *********************/
 
     function googleLoginNew() {
@@ -579,6 +641,10 @@
     }
 
 
+    function toggleInfoPopup() {
+        const popup = document.getElementById("infoPopup");
+        popup.style.display = (popup.style.display === "none") ? "block" : "none";
+    }
 
 
     console.log("🔄 Initiating Verification...");
@@ -679,6 +745,7 @@
 
         if (cachedResult === "VALID") {
             console.log("✅ ID verified from cache:", id);
+
             spinner.style.display = "none";
             await fetchAssetData(id);
             return;
@@ -1065,12 +1132,17 @@
         const spinner = document.getElementById("spinner");
         const loginSection = document.getElementById("loginSection");
         const editBtn = document.getElementById("editBtn");
+        const verifyingLabel=document.getElementById("verifyingLabel");
+
+
+
 
         try {
             const apiUrl = `https://script.google.com/macros/s/AKfycbzgrQ9JzTzDY57cxlWs-g4kbiCb4C5j9X54BzE2eniGp3LQYKSFqNr5-yai4ZJmfjO83Q/exec?id=${encodeURIComponent(id)}`;
             const res = await fetch(apiUrl);
             const json = await res.json();
             spinner.style.display = "none";
+            verifyingLabel.style.display = "none";
 
             if (!json.found) {
                 resultDiv.style.display = "block";
@@ -1084,6 +1156,8 @@
 
             popup.style.display = "none";
             mainContent.style.display = "block";
+            //verifyingLabel.style.display="none";
+
 
 
             /*** 🔥 Always remove old QR div first ***/
