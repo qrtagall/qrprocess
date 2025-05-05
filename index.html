@@ -609,9 +609,10 @@
 
     /********************* Data in QRTagAll *********************/
 
-    function QRTagAllLoginNew()
+   async function QRTagAllLoginNew()
     {
-        alert("Yet to come...");
+        //alert("Yet to come...");
+      await triggerSelfClaim();
     }
 
     /************** New Google Auth and QR Claim *********************/
@@ -656,13 +657,97 @@
     }
 
 
+    /**************** self Claim *******************/
+
+    async function triggerSelfClaim() {
+        const spinner = document.getElementById("fullScreenSpinner");
+
+        // 🔍 Read required parameters
+        const id = getQueryParam("id");
+        let assetName = document.getElementById("assetNameInput")?.value.trim() || "Unnamed Asset";
+
+        if (!id || !assetName) {
+            alert("❌ Missing ID or Asset Name.");
+            return;
+        }
+
+        // 🔐 Fetch user email via OAuth token
+        async function fetchUserEmail(token) {
+            try {
+                const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const data = await res.json();
+                return (data.email || "").toLowerCase();
+            } catch (e) {
+                console.error("❌ Failed to fetch user email:", e);
+                return "";
+            }
+        }
+
+        // 🔐 Request OAuth token
+        const accessToken = await new Promise((resolve, reject) => {
+            const client = google.accounts.oauth2.initTokenClient({
+                client_id: '121290253918-cae49r46mo3r9f9rhd7rq6ao9ae69jjv.apps.googleusercontent.com',
+                scope: 'https://www.googleapis.com/auth/userinfo.email',
+                prompt: 'consent',
+                callback: (response) => {
+                    if (response.access_token) resolve(response.access_token);
+                    else reject("❌ Failed to acquire access token.");
+                },
+            });
+            client.requestAccessToken();
+        });
+
+        if (spinner) spinner.style.display = "flex";
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        const userEmail = await fetchUserEmail(accessToken);
+        if (!userEmail) {
+            spinner.style.display = "none";
+            alert("❌ Could not retrieve your email address. Please try again.");
+            return;
+        }
+
+        // 🌐 Construct SelfClaim API URL
+        const claimUrl = `https://script.google.com/macros/s/AKfycbxoAVj1O4ZAaaDRCzp3-sNaS_v1XmwQbO7oCWWi8ZnauoidAaXj0E1zZGVnIcKEg8JfQQ/exec` +
+            `?initClaim=${encodeURIComponent(id)}` +
+            `&asset=${encodeURIComponent(assetName)}` +
+            `&email=${encodeURIComponent(userEmail)}`;
+
+        // 🚀 Trigger Apps Script via Image Beacon
+        try {
+            const img = new Image();
+            img.style.display = "none";
+            img.src = claimUrl;
+            document.body.appendChild(img);
+
+            setTimeout(() => {
+                if (img && img.parentNode) img.parentNode.removeChild(img);
+                spinner.style.display = "none";
+            }, 4000);
+
+            setTimeout(() => {
+                spinner.style.display = "none";
+                alert("✅ QR Claimed & Sheet Created.");
+                location.reload();
+            }, 3000);
+
+        } catch (e) {
+            spinner.style.display = "none";
+            console.error("❌ Self-claim trigger failed:", e);
+            alert("❌ Failed to claim QR. Please try again.");
+        }
+    }
+
+
+
+
+
+
+
+
     console.log("🔄 Initiating Verification...");
-
-
-
-
-
-
     let isOwner=false;
 
     /*********************** ID Verification **************************/
@@ -2078,6 +2163,7 @@
 
 
 
+
     async function triggerLink_old(params, modalId = null) {
 
 
@@ -2172,7 +2258,7 @@
         }, 3000);
     }
 
-
+/*********************************************************************************/
 
 
 
