@@ -535,7 +535,7 @@
 <script>
 
 
-    const QRTagAll_Ver_ = "3.2";
+    const QRTagAll_Ver_ = "3.3";
     let editMode = false;
     let insertAfterRow = null;
     let selectedUploadedFileLink = "";
@@ -717,6 +717,7 @@
             `&asset=${encodeURIComponent(assetName)}` +
             `&email=${encodeURIComponent(userEmail)}`;
 
+        console.log("Claim url >>>>>>>>>>>>>",claimUrl);
         // 🚀 Trigger Apps Script via Image Beacon
         try {
             const img = new Image();
