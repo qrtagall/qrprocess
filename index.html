@@ -338,7 +338,7 @@
         </div>
 
         <!-- 👇 Info popup -->
-        <div id="infoPopup" style="display:none; background:#fffbe5; color:#444; padding:10px 14px; border:1px solid #aaa; border-radius:8px; margin-top:10px; width:80%; margin-left:auto; margin-right:auto; font-size:13px; text-align:left;">
+        <div id="infoPopup" style="display:none; background:#fffbe5; color:#444; padding:10px 14px; border:1px solid #aaa; border-radius:8px; margin-top:10px; width:80%; margin-left:auto; margin-right:auto; font-size:13px; text-align:justify;">
             <b>ℹ️ What's the difference?</b><br><br>
             - <b>QRTagAll</b>: Data shall be stored at QRTagAll's shared space. (Limited space)<br><br>
             - <b>GDrive (Recommended)</b>: Data shall be stored in your own Google Drive. It needs exclusive permission to access your Google Drive.<br>
@@ -535,7 +535,7 @@
 <script>
 
 
-    const QRTagAll_Ver_ = "3.1";
+    const QRTagAll_Ver_ = "3.2";
     let editMode = false;
     let insertAfterRow = null;
     let selectedUploadedFileLink = "";
@@ -2009,7 +2009,6 @@
 
     async function triggerLink_post(params, rawfiledata,rawfilename, modalId = null) {
         let targetUrl = AppScriptUserUrl;// `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec`;
-
 
         //let targetUrl = `${AppScriptUserUrl}?${params}`;
 
