@@ -535,7 +535,7 @@
 <script>
 
 
-    const QRTagAll_Ver_ = "3.6";
+    const QRTagAll_Ver_ = "3.7";
     let editMode = false;
     let insertAfterRow = null;
     let selectedUploadedFileLink = "";
@@ -1174,7 +1174,9 @@
         //CMEDITX
         //const endpoint = `https://script.google.com/macros/s/AKfycbzlXNlTnCL9MWYfu6ejMBXfSzhQp0SPTjL5YzmKiXTG7-3Lk4GhuBi-A8gzgf05WJdo/exec?mode=thumbnails&folderId=${folderId}`;
         //let targetUrl = `${AppScriptUserUrl}?${params}
-        const endpoint=  `${AppScriptUserUrl}?mode=thumbnails&folderId=${folderId}`;
+
+        const endpoint="https://script.google.com/macros/s/AKfycbxrLNo-pwzQWtkfl6QBUeZDyxsAxBub-QQsW6jqMLxPz6KPV-62wb8igpgbp21FQhND/exec?mode=thumbnails&folderId=1Bnj3smPeJRXjHZ662l0RiF0TUI9QN44n";
+        //const endpoint=  `${AppScriptUserUrl}?mode=thumbnails&folderId=${folderId}`;
         try {
             const res = await fetch(endpoint);
             const json = await res.json();
