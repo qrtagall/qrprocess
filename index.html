@@ -552,7 +552,7 @@
 <script>
 
 
-    const QRTagAll_Ver_ = "3.9";
+    const QRTagAll_Ver_ = "3.10";
     let editMode = false;
     let insertAfterRow = null;
     let selectedUploadedFileLink = "";
@@ -606,8 +606,8 @@
         window.history.replaceState({}, document.title, url.toString());
     }
 
-    //const sessionEmail = localStorage.getItem("qr_claimed_email");
-    const sessionEmail = "chandan2002x@gmail.com";//localStorage.getItem("qr_claimed_email");
+    const sessionEmail = localStorage.getItem("qr_claimed_email");
+    //const sessionEmail = "chandan2002x@gmail.com";//localStorage.getItem("qr_claimed_email");
 
     console.log("📧 QR was last claimed/verified by:", sessionEmail);
     if (sessionEmail)
