@@ -2126,6 +2126,7 @@
         if(StorageType==="LOCAL")
             targetUrl = `${AppScriptUserUrlLOCAL}?${params}`;
 
+        const separator = targetUrl.includes("?") ? "&" : "?";
 
         //const targetUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec?${params}`;
         //const ownerEmail = (sessionEmail || "").toLowerCase(); // 🔥 assuming sessionEmail is already known
@@ -2167,6 +2168,8 @@
 
                         const userEmail = await fetchUserEmail(response.access_token);
                         console.log("📧 Logged in as:", userEmail);
+                        targetUrl = `${targetUrl}${separator}email=${encodeURIComponent(userEmail)}`;
+
 
                         //if (userEmail === ownerEmail)
                         if (userEmail === ownerEmail )
@@ -2193,6 +2196,9 @@
 
         // 🔥 After owner check passed, now fire image load
         try {
+            //targetUrl = `${AppScriptUserUrl}?${params}&email=${encodeURIComponent(userEmail)}`;
+
+
             const img = new Image();
             img.style.display = "none";
             img.src = targetUrl;
