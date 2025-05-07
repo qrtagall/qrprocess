@@ -535,7 +535,7 @@
 <script>
 
 
-    const QRTagAll_Ver_ = "3.4";
+    const QRTagAll_Ver_ = "3.5";
     let editMode = false;
     let insertAfterRow = null;
     let selectedUploadedFileLink = "";
@@ -1099,7 +1099,27 @@
             } else {
                 html += await resolveAndRender(url, index + 1, title);
             }
-        }
+        }else if (type.includes("DRIVE") && url.includes("drive.google.com/drive/")) {
+
+                const match = url.match(/\/folders\/([a-zA-Z0-9_-]{10,})/);
+                //return match ? match[1] : null;
+                const folderId = match ? match[1] : null;
+                //const folderId = extractFolderIdFromUrl(url);
+                if (folderId) {
+                    const thumbnails = await fetchThumbnails(folderId);
+                    if (thumbnails.length > 0) {
+                        html += `
+              <p><b>${index + 1}.</b> ${icon} <b>${title}</b> ${visibilityIcon}</p>
+              ${renderThumbnailGrid(thumbnails)}
+            `;
+                    } else {
+                        html += `<p><b>${index + 1}.</b> ${icon} <b>${title}</b> ${visibilityIcon}:
+              <a href="${url}" target="_blank">Open Folder</a> (No thumbnails)</p>`;
+                    }
+                } else {
+                    html += `<p><b>${index + 1}.</b> ${icon} <b>${title}</b> ${visibilityIcon}: Invalid Drive URL</p>`;
+                }
+            }
         else if (url.includes("drive.google.com")) {
             // ✅ Force render as Drive preview no matter the type
             const match = url.match(/\/d\/([^/]+)/);
@@ -1150,6 +1170,20 @@
 
 
 
+    async function fetchThumbnails(folderId) {
+        //CMEDITX
+        //const endpoint = `https://script.google.com/macros/s/AKfycbzlXNlTnCL9MWYfu6ejMBXfSzhQp0SPTjL5YzmKiXTG7-3Lk4GhuBi-A8gzgf05WJdo/exec?mode=thumbnails&folderId=${folderId}`;
+        //let targetUrl = `${AppScriptUserUrl}?${params}
+        const endpoint=  '${AppScriptUserUrl}?mode=thumbnails&folderId=${folderId}';
+        try {
+            const res = await fetch(endpoint);
+            const json = await res.json();
+            if (json.success && json.media.length > 0) return json.media;
+        } catch (err) {
+            console.error("❌ Thumbnail fetch failed", err);
+        }
+        return [];
+    }
 
 
     function boldLeadingLabels(text) {
@@ -1603,7 +1637,8 @@
     */
 
     function deleteArtifact(rowNum) {
-        const confirmed = confirm(`Are you sure you want to delete artifact at row ${rowNum}?`);
+        const confirmed = confirm(`Are you sure you want to delete artifact ?');//at row ${rowNum}?`);
+
         if (confirmed) {
             saveArtifactInfo({
                 startCell: rowNum + 6,  // 🧠 Asset index to sheet row mapping (because 6th row starts artifacts)
