@@ -462,6 +462,8 @@
                 <option value="PDFFILE">PDFFILE</option>
                 <option value="AUDIOFILE">AUDIOFILE</option>
                 <option value="VIDEOFILE">VIDEOFILE</option>
+                <option value="DRIVE">GDRIVE</option>
+                <option value="OTHERS">OTHERFILE</option>
             </select><br>
         </div>
 
@@ -542,7 +544,7 @@
 
 </div>
 
-<div id="thumbnailGallery_${index}">Loading thumbnails...</div>
+<div id="thumbnailGallery_${index}"></div>
 
 
 
@@ -550,7 +552,7 @@
 <script>
 
 
-    const QRTagAll_Ver_ = "3.8";
+    const QRTagAll_Ver_ = "3.9";
     let editMode = false;
     let insertAfterRow = null;
     let selectedUploadedFileLink = "";
@@ -604,8 +606,8 @@
         window.history.replaceState({}, document.title, url.toString());
     }
 
-    const sessionEmail = localStorage.getItem("qr_claimed_email");
-    //const sessionEmail = "dev.chandan2002x@gmail.com";//localStorage.getItem("qr_claimed_email");
+    //const sessionEmail = localStorage.getItem("qr_claimed_email");
+    const sessionEmail = "chandan2002x@gmail.com";//localStorage.getItem("qr_claimed_email");
 
     console.log("📧 QR was last claimed/verified by:", sessionEmail);
     if (sessionEmail)
@@ -1296,40 +1298,43 @@
             }
 
             // Truncate base name if too long
-            if (base.length > 15) {
-                base = base.substring(0, 12) + "...";
+            if (base.length > 10) {
+                base = base.substring(0, 7) + "...";
             }
 
             const displayName = `${base}${ext}`;
-            const isImage = item.type === "image";
-            const isVideo = item.type === "video";
+            const type = item.type || "";
 
-            if (isImage && item.thumb) {
-                html += `
-        <div style="width: 120px; border: 1px solid #ccc; padding: 6px; border-radius: 6px; text-align: center; background: #fff;">
-          <a href="${item.link}" target="_blank" title="${originalName}">
-            <img src="${item.thumb}" alt="${originalName}" style="max-width: 100%; height: auto; border-radius: 4px;" />
-            <div style="margin-top: 4px; font-size: 12px; color: #444;">${displayName}</div>
-          </a>
-        </div>`;
+            let previewHTML = "";
+            if (type === "image" && item.thumb) {
+                previewHTML = `<img src="${item.thumb}" alt="${originalName}" style="max-width: 100%; height: auto; border-radius: 4px;" />`;
+            } else if (type === "video") {
+                previewHTML = `<div style="width: 100%; height: 80px; display: flex; align-items: center; justify-content: center; background: #000; color: white; border-radius: 4px;">▶</div>`;
+            } else {
+                // 📄 for PDFs, 📃 for DOCs, 🎧 for audio, 📁 as fallback
+                let icon = "📁";
+                const extLower = ext.toLowerCase();
+                if (extLower === ".pdf") icon = "📄";
+                else if ([".doc", ".docx", ".odt", ".rtf"].includes(extLower)) icon = "📃";
+                else if ([".mp3", ".wav", ".ogg"].includes(extLower)) icon = "🎧";
+                else if ([".xls", ".xlsx", ".csv"].includes(extLower)) icon = "📊";
+                else if ([".ppt", ".pptx"].includes(extLower)) icon = "📑";
+                previewHTML = `<div style="width: 100%; height: 80px; display: flex; align-items: center; justify-content: center; font-size: 32px; background: #f1f1f1; border-radius: 4px;">${icon}</div>`;
             }
 
-            else if (isVideo) {
-                html += `
-        <div style="width: 120px; border: 1px solid #ccc; padding: 6px; border-radius: 6px; text-align: center; background: #fff;">
-          <a href="${item.link}" target="_blank" title="${originalName}">
-            <div style="width: 100%; height: 80px; display: flex; align-items: center; justify-content: center; background: #000; color: white; border-radius: 4px;">
-              ▶
-            </div>
-            <div style="margin-top: 4px; font-size: 12px; color: #444;">${displayName}</div>
-          </a>
-        </div>`;
-            }
+            html += `
+      <div style="width: 120px; border: 1px solid #ccc; padding: 6px; border-radius: 6px; text-align: center; background: #fff;">
+        <a href="${item.link}" target="_blank" title="${originalName}">
+          ${previewHTML}
+          <div style="margin-top: 4px; font-size: 12px; color: #444;">${displayName}</div>
+        </a>
+      </div>`;
         }
 
         html += `</div>`;
         return html;
     }
+
 
 
 
@@ -1831,6 +1836,7 @@
             const item = assetDataList[afterRowNum];
             const fileType = (item.type || "TEXT").toUpperCase();
 
+            console.log(">>>>>File Type",fileType);
 
 
             modalTitle.innerText = `📝 Edit ${fileType === "TEXT" ? "Text Info" : "Artifact Visibility"}`;
