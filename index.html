@@ -552,7 +552,7 @@
 <script>
 
 
-    const QRTagAll_Ver_ = "3.11";
+    const QRTagAll_Ver_ = "3.12";
     let editMode = false;
     let insertAfterRow = null;
     let selectedUploadedFileLink = "";
@@ -567,6 +567,10 @@
     console.log("🚀 Script block reached!");
     document.getElementById("versionTag").textContent = `Ver-${QRTagAll_Ver_}`;
     document.getElementById("versionTagx").textContent = `Ver-${QRTagAll_Ver_}`;
+
+    const ICON_PHONE = `<img src="https://img.icons8.com/?size=96&id=dvZnjC1SVTyx&format=png" alt="Call" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">`;
+    const ICON_WHATSAPP = `<img src="https://img.icons8.com/?size=96&id=16713&format=png" alt="WhatsApp" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">`;
+
 
     //cm
     //const AppScriptBaseUrl = "https://script.google.com/macros/s/AKfycbzgrQ9JzTzDY57cxlWs-g4kbiCb4C5j9X54BzE2eniGp3LQYKSFqNr5-yai4ZJmfjO83Q/exec";
@@ -1135,8 +1139,6 @@
                     // Plain non-link text
 
                     let safeText = url.replace(/\n/g, "<br>");
-                    safeText = boldLeadingLabels(safeText);
-
 
                     safeText = safeText.replace(/<\s*(https?:\/\/[^\s<>]+)\s*>/g, (match, link) => {
                         return `<a href="${link}" target="_blank" style="color: var(--primary); text-decoration: underline;">🌐 WebLink</a>`;
@@ -1146,10 +1148,11 @@
                         return `<a href="${link}" target="_blank" style="color: var(--primary); text-decoration: underline;">🌐 WebLink</a>`;
                     });
 
+                    safeText = boldLeadingLabels(safeText);
 
-                    // Detect and enhance phone numbers like +91 8310355091 or +918310355091
-                    //const phoneMatch = url.match(/\+91[\s\-]*\d[\d\s\-]{9,}/g);
-                    //const phoneRegex = /\+91[\s\-]*\d[\d\s\-]{8,}/g;
+
+
+                    /*
                     const phoneRegex = /(?:\+91[\s\-]*)?(?:\d[\s\-]*){10}/g;
                    safeText = safeText.replace(phoneRegex, (rawNum) => {
                         const cleanNum = rawNum.replace(/[^\d+]/g, ''); // Keep digits and '+'
@@ -1160,6 +1163,52 @@
 
                         return `${rawNum}${callBtn}${waBtn}`;
                     });
+                    */
+                    const phoneRegex = /(?:(?:\+91|0)?[\s\-]*)?(?:\d[\s\-]*){10}/g;
+                    safeText = safeText.replace(phoneRegex, (rawNum) => {
+                        const digitOnly = rawNum.replace(/[^\d]/g, ''); // Keep only digits
+
+                        if (digitOnly.length === 10 || digitOnly.length === 11 || digitOnly.length === 12) {
+                            let formattedNum = digitOnly;
+
+                            if (digitOnly.length === 10) {
+                                formattedNum = '+91' + digitOnly;
+                            } else if (digitOnly.length === 11 && digitOnly.startsWith('0')) {
+                                formattedNum = '+91' + digitOnly.slice(1);
+                            } else if (digitOnly.length === 12 && digitOnly.startsWith('91')) {
+                                formattedNum = '+' + digitOnly;
+                            } else {
+                                return rawNum; // fallback, do not modify
+                            }
+
+                            //const callBtn = `<a href="tel:${formattedNum}" style="background:#4CAF50;color:white;padding:4px 8px;border-radius:6px;font-size:12px;text-decoration:none;margin-left:6px;">📞 Call</a>`;
+                            //const waBtn = `<a href="https://wa.me/${formattedNum.replace('+', '')}" target="_blank" style="background:#25D366;color:white;padding:4px 8px;border-radius:6px;font-size:12px;text-decoration:none;margin-left:4px;">💬 WhatsApp</a>`;
+
+
+                            const callBtn = `<a href="tel:${formattedNum}" style="color:#4CAF50;padding:2px 6px;border-radius:4px;font-size:13px;text-decoration:none;margin-left:6px;">
+                                              ${ICON_PHONE}
+                                            </a>`;
+
+                            const waBtn = `<a href="https://wa.me/${formattedNum.replace('+', '')}" target="_blank" style="color:#25D366;padding:2px 6px;border-radius:4px;font-size:13px;text-decoration:none;margin-left:4px;">
+                                              ${ICON_WHATSAPP}
+                                            </a>`;
+
+
+
+                         return `<span style="white-space:nowrap;">${rawNum}
+                  <a href="tel:${formattedNum}" style="display:inline-block; vertical-align:middle; margin-left:10px;">
+                    ${ICON_PHONE}
+                  </a>
+                  <a href="https://wa.me/${formattedNum.replace('+', '')}" target="_blank" style="display:inline-block; vertical-align:middle; margin-left:10px;">
+                    ${ICON_WHATSAPP}
+                  </a>
+                </span>`;
+
+                        }
+
+                        return rawNum; // fallback if doesn't meet 10+ digits
+                    });
+
 
 
 
@@ -1430,7 +1479,7 @@
 
 
 
-
+/*
     function boldLeadingLabels(text) {
         return text.split('<br>').map(line => {
             // Skip bolding if line contains HTML tags already (like <a>)
@@ -1452,6 +1501,35 @@
             return `<span style="color:#333;">${line}</span>`;
         }).join('<br>');
     }
+    */
+
+    function boldLeadingLabels(text) {
+        return text.split('<br>').map(line => {
+            if (line.includes('<a ') || line.includes('</a>')) return line;
+
+            const colonIndex = line.indexOf(':');
+            if (colonIndex === -1) {
+                return `<span style="color:#333;">${line}</span>`;
+            }
+
+            const prefix = line.slice(0, colonIndex + 1).trim();
+            const suffix = line.slice(colonIndex + 1);
+
+            // 🚫 If prefix is part of a URL (ending in :// or contains http), skip
+            if (/https?:\/\/[^ ]*$/i.test(prefix) || /^https?:\/\//i.test(prefix)) {
+                return `<span style="color:#333;">${line}</span>`;
+            }
+
+            // ✅ Also allow trailing "Text:" to be bolded
+            const prefixWordCount = prefix.split(/\s+/).length;
+            if (prefixWordCount <= 10) {
+                return `<span style="color:#005aab; font-weight:bold; display:inline-block; margin-bottom:2px;">${prefix}</span>${suffix}`;
+            }
+
+            return `<span style="color:#333;">${line}</span>`;
+        }).join('<br>');
+    }
+
 
 
 
