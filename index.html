@@ -552,7 +552,7 @@
 <script>
 
 
-    const QRTagAll_Ver_ = "3.10";
+    const QRTagAll_Ver_ = "3.11";
     let editMode = false;
     let insertAfterRow = null;
     let selectedUploadedFileLink = "";
@@ -910,6 +910,7 @@
 
 
 
+    /*
     async function resolveAndRender(value, i, customTitle = `Link ${i}`) {
         value = convertDriveUrl(value);
 
@@ -975,6 +976,70 @@
             return `<p>⚠️ Error loading ${customTitle}</p>`;
         }
     }
+*/
+
+    async function resolveAndRender(value, i, customTitle = `Link ${i}`) {
+        const isGoogleDrive = /drive\.google\.com/.test(value);
+        const isFileLikely = /\.(jpg|jpeg|png|gif|webp|mp4|webm|ogg|pdf)$/i.test(value);
+        const lower = customTitle.toLowerCase();
+        const icon = getIconFromTitle(customTitle);
+        let finalUrl = value;
+        let contentType = "";
+        let fileCreatedText = null;
+
+        try {
+            // 🔁 Only resolve via Apps Script if it's a Google Drive link
+            if (isGoogleDrive) {
+                const resolveUrl = `${AppScriptBaseUrl}?resolve=${encodeURIComponent(value)}`;
+                const res = await fetch(resolveUrl);
+                const json = await res.json();
+
+                if (json.error) return `<p>⚠️ Couldn’t load ${customTitle}</p>`;
+
+                finalUrl = json.resolvedUrl;
+                contentType = json.contentType;
+
+                if (json.fileCreated) {
+                    const createdDate = new Date(json.fileCreated).toLocaleDateString("en-GB", {
+                        year: 'numeric', month: 'short', day: 'numeric'
+                    });
+                    fileCreatedText = `📅 Created on: ${createdDate}`;
+                }
+            } else {
+                // For external links (not Google Drive), infer content type
+                if (isFileLikely) {
+                    contentType = finalUrl.split('.').pop().toLowerCase();
+                }
+            }
+
+            // 📦 Now render based on contentType
+            if (/image|jpg|jpeg|png|gif|webp/.test(contentType)) {
+                return `<div><b>${icon} ${customTitle}</b><br><img src="${finalUrl}" style="max-width:100%;"></div>`;
+            } else if (/video|mp4|webm|ogg/.test(contentType)) {
+                return `<div><b>${icon} ${customTitle}</b><br><video controls width="100%"><source src="${finalUrl}"></video></div>`;
+            } else if (/pdf/.test(contentType)) {
+                return `
+              <p><b>${icon} ${customTitle}</b></p>
+              <div style="margin-left:10px; margin-bottom: 10px;">
+                <a href="${finalUrl}" target="_blank" style="color:var(--primary); text-decoration:underline;">📄 Open PDF</a>
+              </div>`;
+            } else {
+                const linkHost = finalUrl.match(/https?:\/\/([^/]+)/)?.[1] || "link";
+                return `
+              <div style="display:flex; align-items:center; border:1px solid #ddd; padding:12px; border-radius:8px; margin-bottom:10px;">
+                <img src="https://www.google.com/s2/favicons?domain=${linkHost}&sz=64" alt="favicon" style="width:32px;height:32px;margin-right:10px;">
+                <div style="flex-grow:1;">
+                  <div style="font-size:15px; font-weight:500; color:#333;">${icon} ${customTitle}</div>
+                  <a href="${finalUrl}" target="_blank" style="font-size:14px; color:var(--primary); text-decoration:none;">↗️ Visit</a>
+                </div>
+              </div>`;
+            }
+
+        } catch (e) {
+            return `<p>⚠️ Error loading ${customTitle}</p>`;
+        }
+    }
+
 
 
 
@@ -1033,59 +1098,83 @@
                 html += `<p><b>${index + 1}.</b> ${icon} <b>${title}</b> <span style="color:gray;">(🔒 No view permission)</span></p>`;
             } else if (!url || url.trim() === "" || url.toLowerCase() === "not available") {
                 html += `<p><b>${index + 1}.</b> ${icon} <b>${title}</b> <span style="color:gray;">(🔗 Link not available)</span></p>`;
-            } else if (type === "TEXT") {
+            }
+
+
+
+            else if (type === "TEXT") {
                 //html += `<p><b>${index + 1}.</b> ${icon} <b>${title}</b> ${visibilityIcon}: ${url}</p>`;
 
-                    const urlRegex = /(https?:\/\/[^\s]+)/g;
-                    const match = url.match(urlRegex);
+                const urlRegex = /(https?:\/\/[^\s]+)/g;
+                const match = url.match(urlRegex);
 
-                    if (match && match.length === 1 && match[0].trim() === url.trim()) {
-                        // Pure URL only
+                /*
+                if (match && match.length === 1 && match[0].trim() === url.trim()) {
+                    // Pure URL only
 
 
-                                            html += `
+                    html += `
                       <p><b>${index + 1}.</b> ${icon} <b>${title}</b> ${visibilityIcon}</p>
                       <div style="margin-left: 10px; margin-bottom: 8px;">
                         <a href="${url}" target="_blank" style="color: var(--primary); text-decoration: underline;">🌐 WebLink</a>
                       </div>
                     `;
-                    } else if (match && match.length > 0) {
-                        // Text with embedded URL(s)
-                        const replaced = url.replace(urlRegex, (link) => {
-                            return `<a href="${link}" target="_blank" style="color: var(--primary); text-decoration: underline;">🌐 WebLink</a>`;
-                        });
+                } else if (match && match.length > 0) {
+                    // Text with embedded URL(s)
+                    const replaced = url.replace(urlRegex, (link) => {
+                        return `<a href="${link}" target="_blank" style="color: var(--primary); text-decoration: underline;">🌐 WebLink</a>`;
+                    });
 
-                                html += `
+                    html += `
                           <p><b>${index + 1}.</b> ${icon} <b>${title}</b> ${visibilityIcon}</p>
                           <div style="margin-left: 10px; margin-bottom: 8px;">${replaced}</div>
                         `;
-                        } else {
-                        // Plain non-link text
+                } else
+                */
+                {
+                    // Plain non-link text
 
-                        let safeText = url.replace(/\n/g, "<br>");
-                        safeText = boldLeadingLabels(safeText);
+                    let safeText = url.replace(/\n/g, "<br>");
+                    safeText = boldLeadingLabels(safeText);
 
-                        // Detect and enhance phone numbers like +91 8310355091 or +918310355091
-                        const phoneMatch = url.match(/\+91[\s\-]*\d[\d\s\-]{9,}/g);
 
-                        if (phoneMatch) {
-                            phoneMatch.forEach((rawNum) => {
-                                const cleanNum = rawNum.replace(/[^\d+]/g, '');  // removes spaces and dashes
-                                const callBtn = `<a href="tel:${cleanNum}" style="background:#4CAF50;color:white;padding:4px 8px;border-radius:6px;font-size:12px;text-decoration:none;margin-left:6px;">📞 Call</a>`;
-                                const waBtn = `<a href="https://wa.me/${cleanNum.replace('+', '')}" target="_blank" style="background:#25D366;color:white;padding:4px 8px;border-radius:6px;font-size:12px;text-decoration:none;margin-left:4px;">💬 WhatsApp</a>`;
-                                safeText = safeText.replace(rawNum, `${rawNum}${callBtn}${waBtn}`);
-                            });
-                        }
+                    safeText = safeText.replace(/<\s*(https?:\/\/[^\s<>]+)\s*>/g, (match, link) => {
+                        return `<a href="${link}" target="_blank" style="color: var(--primary); text-decoration: underline;">🌐 WebLink</a>`;
+                    });
 
-                        html += `
+                    safeText = safeText.replace(/(https?:\/\/[^\s<]+)/g, (link) => {
+                        return `<a href="${link}" target="_blank" style="color: var(--primary); text-decoration: underline;">🌐 WebLink</a>`;
+                    });
+
+
+                    // Detect and enhance phone numbers like +91 8310355091 or +918310355091
+                    //const phoneMatch = url.match(/\+91[\s\-]*\d[\d\s\-]{9,}/g);
+                    //const phoneRegex = /\+91[\s\-]*\d[\d\s\-]{8,}/g;
+                    const phoneRegex = /(?:\+91[\s\-]*)?(?:\d[\s\-]*){10}/g;
+                   safeText = safeText.replace(phoneRegex, (rawNum) => {
+                        const cleanNum = rawNum.replace(/[^\d+]/g, ''); // Keep digits and '+'
+                        const formattedNum = cleanNum.length === 10 ? '+91' + cleanNum : cleanNum;
+
+                        const callBtn = `<a href="tel:${formattedNum}" style="background:#4CAF50;color:white;padding:4px 8px;border-radius:6px;font-size:12px;text-decoration:none;margin-left:6px;">📞 Call</a>`;
+                        const waBtn = `<a href="https://wa.me/${formattedNum.replace('+', '')}" target="_blank" style="background:#25D366;color:white;padding:4px 8px;border-radius:6px;font-size:12px;text-decoration:none;margin-left:4px;">💬 WhatsApp</a>`;
+
+                        return `${rawNum}${callBtn}${waBtn}`;
+                    });
+
+
+
+                    html += `
                       <p><b>${index + 1}.</b> ${icon} <b>${title}</b> ${visibilityIcon}</p>
                       <div style="margin-left: 10px; margin-bottom: 10px; font-size: 14px; line-height: 1.6; background: #f9f9ff; padding: 10px 12px; border-left: 4px solid #005aab; border-radius: 6px;">
                         ${safeText}
                       </div>
                     `;
 
-                    }
-            } else if (type.includes("FILE") && /drive\.google\.com/.test(url)) {
+                }
+            }
+
+
+            else if (type.includes("FILE") && /drive\.google\.com/.test(url)) {
                 const match = url.match(/\/d\/([^/]+)/);
                 const fileId = match ? match[1] : null;
                 if (fileId) {
@@ -1194,15 +1283,18 @@
             }
         }
         else if (url.startsWith("http")) {
-            html += await resolveAndRender(url, index + 1, title);
-        }
+                console.log("Last resort>>>",url);
 
 
-        else if (url.startsWith("http")) {
                 html += await resolveAndRender(url, index + 1, title); // still safe
-            } else {
+            }
+        else {
+                console.log("NO resort>>>",url);
+
                 html += `<p><b>${index + 1}.</b> ${icon} <b>${title}</b> ${visibilityIcon}: ${url}</p>`;
             }
+
+
 
             // ✏️ Edit / Delete / Add controls (only in edit mode)
             if (editMode) {
@@ -1221,6 +1313,7 @@
 
         return html || "<p style='color:gray;'>No asset information available.</p>";
     }
+
 
 
 
@@ -1340,21 +1433,26 @@
 
     function boldLeadingLabels(text) {
         return text.split('<br>').map(line => {
+            // Skip bolding if line contains HTML tags already (like <a>)
+            if (line.includes('<a ') || line.includes('</a>')) return line;
+
             const words = line.trim().split(/\s+/);
             const colonIndex = line.indexOf(':');
 
             if (colonIndex !== -1 && words.length > 0) {
-                const prefix = line.slice(0, colonIndex);
+                const prefix = line.slice(0, colonIndex + 1);
+                const suffix = line.slice(colonIndex + 1);
                 const prefixWordCount = prefix.trim().split(/\s+/).length;
 
-                if (prefixWordCount <= 5) {
-                    const rest = line.slice(colonIndex); // from ':' onward
-                    return `<span style="color:#005aab; font-weight:bold; display:inline-block; margin-bottom:2px;">${prefix}</span>${rest}`;
+                if (prefixWordCount <= 10) {
+                    return `<span style="color:#005aab; font-weight:bold; display:inline-block; margin-bottom:2px;">${prefix}</span>${suffix}`;
                 }
             }
+
             return `<span style="color:#333;">${line}</span>`;
         }).join('<br>');
     }
+
 
 
 
