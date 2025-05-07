@@ -263,6 +263,20 @@
          }
 
 
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
 
 
 
@@ -528,6 +542,7 @@
 
 </div>
 
+<div id="thumbnailGallery_${index}">Loading thumbnails...</div>
 
 
 
@@ -535,7 +550,7 @@
 <script>
 
 
-    const QRTagAll_Ver_ = "3.7";
+    const QRTagAll_Ver_ = "3.8";
     let editMode = false;
     let insertAfterRow = null;
     let selectedUploadedFileLink = "";
@@ -560,6 +575,7 @@
     const AppScriptBaseUrl = "https://script.google.com/macros/s/AKfycby4lP7EpKCXew58BDqgZn39yxg_FmT1VilLPP0pthiDuTV2k6KCoOrSvbkM8mEBJvLUww/exec";
     const AppScriptUserUrl = `https://script.google.com/macros/s/AKfycbzlXNlTnCL9MWYfu6ejMBXfSzhQp0SPTjL5YzmKiXTG7-3Lk4GhuBi-A8gzgf05WJdo/exec`;
     const AppScriptUserUrlLOCAL = `https://script.google.com/macros/s/AKfycbxoAVj1O4ZAaaDRCzp3-sNaS_v1XmwQbO7oCWWi8ZnauoidAaXj0E1zZGVnIcKEg8JfQQ/exec`;
+    const AppScriptDriveViewUserUrl=`https://script.google.com/macros/s/AKfycbxrLNo-pwzQWtkfl6QBUeZDyxsAxBub-QQsW6jqMLxPz6KPV-62wb8igpgbp21FQhND/exec`;
 
 
 
@@ -1099,7 +1115,8 @@
             } else {
                 html += await resolveAndRender(url, index + 1, title);
             }
-        }else if (type.includes("DRIVE") && url.includes("drive.google.com/drive/")) {
+        }
+        /*else if (type.includes("DRIVE") && url.includes("drive.google.com/drive/")) {
 
                 const match = url.match(/\/folders\/([a-zA-Z0-9_-]{10,})/);
                 //return match ? match[1] : null;
@@ -1108,6 +1125,7 @@
                 if (folderId) {
                     const thumbnails = await fetchThumbnails(folderId);
                     if (thumbnails.length > 0) {
+
                         html += `
               <p><b>${index + 1}.</b> ${icon} <b>${title}</b> ${visibilityIcon}</p>
               ${renderThumbnailGrid(thumbnails)}
@@ -1119,8 +1137,43 @@
                 } else {
                     html += `<p><b>${index + 1}.</b> ${icon} <b>${title}</b> ${visibilityIcon}: Invalid Drive URL</p>`;
                 }
+            }*/
+
+            else if (type.includes("DRIVE") && url.includes("drive.google.com/drive/")) {
+                const match = url.match(/\/folders\/([a-zA-Z0-9_-]{10,})/);
+                const folderId = match ? match[1] : null;
+
+                // Add header and spinner placeholder regardless
+                html += `
+      <p><b>${index + 1}.</b> ${icon} <b>${title}</b> ${visibilityIcon}</p>
+      <div id="thumbnailGallery_${index}">
+        <div class="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 10px auto;"></div>
+      </div>
+    `;
+
+                if (folderId) {
+                    // async call that happens after renderInfoBlock() returns
+                    fetchThumbnails(folderId).then((thumbnails) => {
+                        const container = document.getElementById(`thumbnailGallery_${index}`);
+                        if (container) {
+                            if (thumbnails.length > 0) {
+                                container.innerHTML = renderThumbnailGrid(thumbnails);
+                            } else {
+                                container.innerHTML = `<a href="${url}" target="_blank">Open Folder</a> (No thumbnails found)`;
+                            }
+                        }
+                    }).catch(err => {
+                        const container = document.getElementById(`thumbnailGallery_${index}`);
+                        if (container) {
+                            container.innerHTML = `<p style="color:red;">❌ Failed to load thumbnails</p>`;
+                        }
+                    });
+                } else {
+                    html += `<p style="color:red;">Invalid Drive folder URL</p>`;
+                }
             }
-        else if (url.includes("drive.google.com")) {
+
+            else if (url.includes("drive.google.com")) {
             // ✅ Force render as Drive preview no matter the type
             const match = url.match(/\/d\/([^/]+)/);
             const fileId = match ? match[1] : null;
@@ -1175,8 +1228,8 @@
         //const endpoint = `https://script.google.com/macros/s/AKfycbzlXNlTnCL9MWYfu6ejMBXfSzhQp0SPTjL5YzmKiXTG7-3Lk4GhuBi-A8gzgf05WJdo/exec?mode=thumbnails&folderId=${folderId}`;
         //let targetUrl = `${AppScriptUserUrl}?${params}
 
-        const endpoint="https://script.google.com/macros/s/AKfycbxrLNo-pwzQWtkfl6QBUeZDyxsAxBub-QQsW6jqMLxPz6KPV-62wb8igpgbp21FQhND/exec?mode=thumbnails&folderId=1Bnj3smPeJRXjHZ662l0RiF0TUI9QN44n";
-        //const endpoint=  `${AppScriptUserUrl}?mode=thumbnails&folderId=${folderId}`;
+        //const endpoint="https://script.google.com/macros/s/AKfycbxrLNo-pwzQWtkfl6QBUeZDyxsAxBub-QQsW6jqMLxPz6KPV-62wb8igpgbp21FQhND/exec?mode=thumbnails&folderId=1Bnj3smPeJRXjHZ662l0RiF0TUI9QN44n";
+        const endpoint=  `${AppScriptDriveViewUserUrl}?mode=thumbnails&folderId=${folderId}`;
         try {
             const res = await fetch(endpoint);
             const json = await res.json();
@@ -1186,6 +1239,98 @@
         }
         return [];
     }
+
+    /*
+    function renderThumbnailGrid(mediaList) {
+        let html = `<div class="thumbnail-grid" style="display: flex; flex-wrap: wrap; gap: 12px;">`;
+
+        for (const item of mediaList) {
+            if (item.type === "image" && item.thumb) {
+                const originalName = item.name || "";
+                const dotIndex = originalName.lastIndexOf(".");
+
+                let base = originalName;
+                let ext = "";
+
+                if (dotIndex !== -1) {
+                    base = originalName.substring(0, dotIndex);
+                    ext = originalName.substring(dotIndex); // includes "."
+                }
+
+                // Truncate base name if too long
+                if (base.length > 10) {
+                    base = base.substring(0, 7) + "...";
+                }
+
+                const displayName = `${base}${ext}`;
+
+                html += `
+        <div style="width: 120px; border: 1px solid #ccc; padding: 6px; border-radius: 6px; text-align: center; background: #fff;">
+          <a href="${item.link}" target="_blank" title="${originalName}">
+            <img src="${item.thumb}" alt="${originalName}" style="max-width: 100%; height: auto; border-radius: 4px;" />
+            <div style="margin-top: 4px; font-size: 12px; color: #444;">${displayName}</div>
+          </a>
+        </div>`;
+            }
+        }
+
+        html += `</div>`;
+        return html;
+    }
+*/
+
+    //CMEDITY
+
+    function renderThumbnailGrid(mediaList) {
+        let html = `<div class="thumbnail-grid" style="display: flex; flex-wrap: wrap; gap: 12px;">`;
+
+        for (const item of mediaList) {
+            const originalName = item.name || "";
+            const dotIndex = originalName.lastIndexOf(".");
+            let base = originalName;
+            let ext = "";
+
+            if (dotIndex !== -1) {
+                base = originalName.substring(0, dotIndex);
+                ext = originalName.substring(dotIndex); // includes "."
+            }
+
+            // Truncate base name if too long
+            if (base.length > 15) {
+                base = base.substring(0, 12) + "...";
+            }
+
+            const displayName = `${base}${ext}`;
+            const isImage = item.type === "image";
+            const isVideo = item.type === "video";
+
+            if (isImage && item.thumb) {
+                html += `
+        <div style="width: 120px; border: 1px solid #ccc; padding: 6px; border-radius: 6px; text-align: center; background: #fff;">
+          <a href="${item.link}" target="_blank" title="${originalName}">
+            <img src="${item.thumb}" alt="${originalName}" style="max-width: 100%; height: auto; border-radius: 4px;" />
+            <div style="margin-top: 4px; font-size: 12px; color: #444;">${displayName}</div>
+          </a>
+        </div>`;
+            }
+
+            else if (isVideo) {
+                html += `
+        <div style="width: 120px; border: 1px solid #ccc; padding: 6px; border-radius: 6px; text-align: center; background: #fff;">
+          <a href="${item.link}" target="_blank" title="${originalName}">
+            <div style="width: 100%; height: 80px; display: flex; align-items: center; justify-content: center; background: #000; color: white; border-radius: 4px;">
+              ▶
+            </div>
+            <div style="margin-top: 4px; font-size: 12px; color: #444;">${displayName}</div>
+          </a>
+        </div>`;
+            }
+        }
+
+        html += `</div>`;
+        return html;
+    }
+
 
 
     function boldLeadingLabels(text) {
