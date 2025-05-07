@@ -552,7 +552,7 @@
 <script>
 
 
-    const QRTagAll_Ver_ = "3.13";
+    const QRTagAll_Ver_ = "3.14";
     let editMode = false;
     let insertAfterRow = null;
     let selectedUploadedFileLink = "";
@@ -1350,7 +1350,7 @@
                 html += `
       <div style="margin-top: 10px; display: flex; gap: 10px;">
         <button onclick="openAddModal(${index}, true)" style="font-size: 13px;">📝 Edit</button>
-        <button onclick="deleteArtifact(${index})" style="font-size: 13px;">🗑️ Delete</button>
+        <button onclick="deleteArtifact(${index}, ${type})" style="font-size: 13px;">🗑️ Delete</button>
         <button onclick="openAddModal(${index})" style="font-size: 13px;">➕ Add Below</button>
       </div>
     `;
@@ -1985,8 +1985,8 @@
     }*/
 
 
-    function deleteArtifact(rowNum) {
-        const fileType = document.querySelector(`#filetype-${rowNum}`)?.textContent || "";
+    function deleteArtifact(rowNum, fileType) {
+       // const fileType = document.querySelector(`#filetype-${rowNum}`)?.textContent || "";
 
         if (fileType.toUpperCase().includes("DRIVE")) {
             alert("❌ This item is linked to Google Drive and cannot be deleted directly.");
