@@ -552,7 +552,7 @@
 <script>
 
 
-    const QRTagAll_Ver_ = "3.12";
+    const QRTagAll_Ver_ = "3.13";
     let editMode = false;
     let insertAfterRow = null;
     let selectedUploadedFileLink = "";
@@ -1964,7 +1964,10 @@
     }
     */
 
+    /*
     function deleteArtifact(rowNum) {
+
+
         const confirmed = confirm(`Are you sure you want to delete artifact ?');//at row ${rowNum}?`);
 
         if (confirmed) {
@@ -1979,6 +1982,32 @@
                 isDelete: true
             });
         }
+    }*/
+
+
+    function deleteArtifact(rowNum) {
+        const fileType = document.querySelector(`#filetype-${rowNum}`)?.textContent || "";
+
+        if (fileType.toUpperCase().includes("DRIVE")) {
+            alert("❌ This item is linked to Google Drive and cannot be deleted directly.");
+            return;
+        }
+
+        const confirmed = confirm(`Are you sure you want to delete this artifact?`);
+
+        /*
+        if (confirmed) {
+            saveArtifactInfo({
+                startCell: rowNum + 6,  // 🧠 Asset index to sheet row mapping (because 6th row starts artifacts)
+                basicInfo: "",
+                fileType: "",
+                visibility: "",
+                linkOrText: "",
+                rawfiledata: "",
+                rawfilename: selectedUploadedFileName,
+                isDelete: true
+            });
+        }*/
     }
 
 
