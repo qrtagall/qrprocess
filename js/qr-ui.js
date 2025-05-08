@@ -546,7 +546,7 @@ async function saveDescription() {
     showSpinner(true);
 
     await saveArtifactInfo({
-        startCell: 2,  // B2 cell → row 2 for Description
+        startCell: "B2",  // B2 cell → row 2 for Description
         basicInfo: newDesc,
         fileType: "",
         visibility: "",
@@ -556,6 +556,8 @@ async function saveDescription() {
 
     // `saveArtifactInfo` already reloads the page
 }
+
+
 
 
 
@@ -885,4 +887,5 @@ async function deleteArtifact(rowNum, fileType) {
         isDelete: true
     });
 }
+
 
