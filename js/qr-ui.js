@@ -180,10 +180,15 @@ function confirmDialogx(message, titleEmoji = "⚠️", onConfirm = null) {
     modal.style.display = "flex";
 }
 
-function confirmDialogProceed() {
+async function confirmDialogProceed() {
     document.getElementById("globalConfirmModal").style.display = "none";
+
     if (typeof _pendingConfirmCallback === "function") {
-        _pendingConfirmCallback();
+        try {
+            await _pendingConfirmCallback(); // ✅ Await async callback
+        } catch (err) {
+            console.error("❌ Confirm callback failed:", err);
+        }
         _pendingConfirmCallback = null;
     }
 }
@@ -932,18 +937,19 @@ async function saveArtifactInfo({
 	*/
 	
 	
-	confirmDialogx("Are you sure you want to delete this artifact?", "🗑️", () => {
-        saveArtifactInfo({
-            startCell: rowNum + 6,
-            basicInfo: "",
-            fileType: "",
-            visibility: "",
-            linkOrText: "",
-            rawfiledata: "",
-            rawfilename: selectedUploadedFileName,
-            isDelete: true
-        });
-    });
-	
+	confirmDialog("Are you sure you want to delete this artifact?", "🗑️", async () => {
+    await saveArtifactInfo({
+        startCell: rowNum + 6,
+        basicInfo: "",
+        fileType: "",
+        visibility: "",
+        linkOrText: "",
+        rawfiledata: "",
+        rawfilename: selectedUploadedFileName,
+        isDelete: true
+		});
+	});
+
+
 }
 
