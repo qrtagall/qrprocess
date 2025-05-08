@@ -36,7 +36,7 @@ function loadProxyIframe() {
 */
 
 
-function loadProxyIframe() {
+async function loadProxyIframe() {
     return new Promise((resolve) => {
         proxyFrame = document.createElement("iframe");
         proxyFrame.style.display = "none";
