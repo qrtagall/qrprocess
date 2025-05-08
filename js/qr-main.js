@@ -15,6 +15,7 @@ let proxyLoaded = false;
  * Dynamically loads the QRTagAll proxy iframe for ID verification.
  * @returns {Promise<void>}
  */
+ /*
 function loadProxyIframe() {
     return new Promise((resolve) => {
         proxyFrame = document.createElement("iframe");
@@ -30,6 +31,30 @@ function loadProxyIframe() {
         document.body.appendChild(proxyFrame);
     });
 }
+*/
+
+function loadProxyIframe() {
+    return new Promise((resolve) => {
+        proxyFrame = document.createElement("iframe");
+        proxyFrame.style.display = "none";
+        proxyFrame.src = "https://proxy.qrtagall.com";
+
+        const readyHandler = (event) => {
+            if (event.origin !== "https://proxy.qrtagall.com") return;
+            if (event.data && event.data.type === "proxy_ready") {
+                console.log("✅ Proxy iframe reports ready");
+                window.removeEventListener("message", readyHandler);
+                proxyLoaded = true;
+                resolve();
+            }
+        };
+
+        window.addEventListener("message", readyHandler);
+        document.body.appendChild(proxyFrame);
+    });
+}
+
+
 
 
 /**
