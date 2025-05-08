@@ -536,7 +536,7 @@ function closeDescriptionModal() {
     if (modal) modal.style.display = "none";
 }
 
-function saveDescription() {
+async function saveDescription() {
     const newDesc = document.getElementById("newDescription").value.trim();
     if (!newDesc) {
         notify("⚠️ Description cannot be empty.", "info");

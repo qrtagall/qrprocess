@@ -62,7 +62,9 @@ async function fetchAssetData(id) {
 /***************************** _get method *******************/
 
 async function triggerLink_get(params, modalId = null) {
-    let baseUrl = StorageType === "LOCAL" ? AppScriptUserUrlLOCAL : AppScriptUserUrl;
+    
+	let baseUrl = StorageType === "LOCAL" ? AppScriptUserUrlLOCAL : AppScriptUserUrl;
+	
     let targetUrl = `${baseUrl}?${params}`;
     const separator = targetUrl.includes("?") ? "&" : "?";
 	
