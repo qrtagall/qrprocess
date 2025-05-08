@@ -16,6 +16,7 @@ let proxyLoaded = false;
  * @returns {Promise<void>}
  */
  
+ /*
 function loadProxyIframe() {
     return new Promise((resolve) => {
         proxyFrame = document.createElement("iframe");
@@ -32,32 +33,29 @@ function loadProxyIframe() {
     });
 }
 
+*/
 
 
-  
-/*
 function loadProxyIframe() {
     return new Promise((resolve) => {
         proxyFrame = document.createElement("iframe");
         proxyFrame.style.display = "none";
         proxyFrame.src = "https://proxy.qrtagall.com";
 
-        const readyHandler = (event) => {
-            if (event.origin !== "https://proxy.qrtagall.com") return;
-            if (event.data && event.data.type === "proxy_ready") {
-                console.log("✅ Proxy iframe reports ready");
-                window.removeEventListener("message", readyHandler);
+        proxyFrame.onload = () => {
+            console.log("✅ Proxy iframe loaded");
+
+            // ✅ Add short delay to ensure inner script is ready
+            setTimeout(() => {
                 proxyLoaded = true;
                 resolve();
-            }
+            }, 500); // ⏱️ Wait 200ms before resolving
         };
 
-        window.addEventListener("message", readyHandler);
         document.body.appendChild(proxyFrame);
     });
 }
-*/
-
+ 
 
 
 /**
