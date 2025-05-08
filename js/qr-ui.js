@@ -180,10 +180,15 @@ function confirmDialog(message, titleEmoji = "⚠️", onConfirm = null) {
     modal.style.display = "flex";
 }
 
-function confirmDialogProceed() {
+async function confirmDialogProceed() {
     document.getElementById("globalConfirmModal").style.display = "none";
+
     if (typeof _pendingConfirmCallback === "function") {
-        _pendingConfirmCallback();
+        try {
+            await _pendingConfirmCallback(); // ✅ Await async callback
+        } catch (err) {
+            console.error("❌ Confirm callback failed:", err);
+        }
         _pendingConfirmCallback = null;
     }
 }
@@ -933,7 +938,7 @@ async function saveArtifactInfo({
 	
 	
 	confirmDialog("Are you sure you want to delete this artifact?", "🗑️", () => {
-        saveArtifactInfo({
+       await saveArtifactInfo({
             startCell: rowNum + 6,
             basicInfo: "",
             fileType: "",
