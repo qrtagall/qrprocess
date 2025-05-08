@@ -874,8 +874,8 @@ async function saveArtifactInfo({
     }
 
     //const confirmed = await confirmDialog("Are you sure you want to delete this artifact?", "🗑️");
-    const confirmed = confirm(`Are you sure you want to delete this artifact?`);
-	if (!confirmed) return;
+    //const confirmed = confirm(`Are you sure you want to delete this artifact?`);
+	//if (!confirmed) return;
 
     saveArtifactInfo({
         startCell: rowNum + 6,
