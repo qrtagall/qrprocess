@@ -38,50 +38,37 @@ function loadProxyIframe() {
 
 
 
-/**
- * Verifies the signed ID by communicating with the proxy iframe.
- * @param {string} idToVerify
- * @returns {Promise<"VALID"|"INVALID">}
- */
- 
- 
-function Verifyidx(idToVerify, retries = 5, delay = 100) {
+function Verifyidx(idToVerify) {
     return new Promise((resolve, reject) => {
-        let attempts = 0;
+        const targetFrame = window.frames[0]; // GitHub-safe fallback
 
-        function trySend() {
-            if (!window.proxyFrame || !proxyFrame.contentWindow) {
-                if (attempts++ >= retries) {
-                    reject("❌ Proxy iframe not loaded (contentWindow null)");
-                    return;
-                }
-                return setTimeout(trySend, delay); // Retry
-            }
-
-            const handler = (event) => {
-                if (!event.data || (event.data.type !== "qr_verified" && event.data.type !== "qr_error")) return;
-
-                window.removeEventListener("message", handler);
-
-                if (event.data.type === "qr_verified") {
-                    resolve(event.data.result);
-                } else {
-                    reject(event.data.error || "❌ Unknown verification error");
-                }
-            };
-
-            window.addEventListener("message", handler);
-
-            console.log("📤 Sending verify message to proxy");
-            proxyFrame.contentWindow.postMessage({
-                type: "verify",
-                id: idToVerify
-            }, "*");
+        if (!targetFrame) {
+            reject("❌ No iframe found to send message.");
+            return;
         }
 
-        trySend(); // Start first attempt
+        const handler = (event) => {
+            if (!event.data || (event.data.type !== "qr_verified" && event.data.type !== "qr_error")) return;
+
+            window.removeEventListener("message", handler);
+
+            if (event.data.type === "qr_verified") {
+                resolve(event.data.result);
+            } else {
+                reject(event.data.error || "❌ Unknown verification error");
+            }
+        };
+
+        window.addEventListener("message", handler);
+
+        console.log("📤 Sending verify message via window.frames[0]");
+        targetFrame.postMessage({
+            type: "verify",
+            id: idToVerify
+        }, "*");
     });
 }
+
 
 
 
