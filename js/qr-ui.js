@@ -536,7 +536,7 @@ function closeDescriptionModal() {
     if (modal) modal.style.display = "none";
 }
 
-async function saveDescription() {
+function saveDescription() {
     const newDesc = document.getElementById("newDescription").value.trim();
     if (!newDesc) {
         notify("⚠️ Description cannot be empty.", "info");
@@ -766,7 +766,7 @@ function saveArtifact() {
     if (currentEditMode === "edit") {
         if (isText) {
             // Save all fields
-            saveArtifactInfo({
+           await saveArtifactInfo({
                 startCell: cellOffset,
                 basicInfo,
                 fileType,
@@ -777,7 +777,7 @@ function saveArtifact() {
         } else {
             // For non-TEXT, preserve original fileType and URL
             const original = assetDataList[insertAfterRow];
-            saveArtifactInfo({
+           await saveArtifactInfo({
                 startCell: cellOffset,
                 basicInfo,
                 fileType: original.type || "TEXT",
@@ -791,7 +791,7 @@ function saveArtifact() {
     // ✅ ADD MODE
     else {
         const startCell = insertAfterRow + 7;  // artifact index + 1 row offset
-        saveArtifactInfo({
+       await saveArtifactInfo({
             startCell,
             basicInfo,
             fileType,
@@ -864,7 +864,7 @@ async function saveArtifactInfo({
 
 /************* DELETE ARTIFACT *****************/
 
-async function deleteArtifact(rowNum, fileType) {
+ function deleteArtifact(rowNum, fileType) {
     const type = (fileType || "").toUpperCase();
 
     if (type.includes("DRIVE")) {
@@ -876,7 +876,7 @@ async function deleteArtifact(rowNum, fileType) {
     const confirmed = await confirmDialog("Are you sure you want to delete this artifact?", "🗑️");
     if (!confirmed) return;
 
-    saveArtifactInfo({
+   await saveArtifactInfo({
         startCell: rowNum + 6,
         basicInfo: "",
         fileType: "",
@@ -887,5 +887,4 @@ async function deleteArtifact(rowNum, fileType) {
         isDelete: true
     });
 }
-
 
