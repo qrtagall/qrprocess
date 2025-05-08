@@ -4,6 +4,135 @@
 let isOwner = false;
 let editMode = false;
 
+let proxyFrame = null;
+let proxyLoaded = false;
+
+
+
+
+
+/**
+ * Dynamically loads the QRTagAll proxy iframe for ID verification.
+ * @returns {Promise<void>}
+ */
+function loadProxyIframe() {
+    return new Promise((resolve) => {
+        proxyFrame = document.createElement("iframe");
+        proxyFrame.style.display = "none";
+        proxyFrame.src = "https://proxy.qrtagall.com";
+
+        proxyFrame.onload = () => {
+            console.log("✅ Proxy iframe loaded");
+            proxyLoaded = true;
+            resolve();
+        };
+
+        document.body.appendChild(proxyFrame);
+    });
+}
+
+
+/**
+ * Verifies the signed ID by communicating with the proxy iframe.
+ * @param {string} idToVerify
+ * @returns {Promise<"VALID"|"INVALID">}
+ */
+function Verifyidx(idToVerify) {
+    return new Promise((resolve, reject) => {
+        if (!window.proxyFrame || !window.proxyLoaded) {
+            reject("❌ Proxy iframe not loaded");
+            return;
+        }
+
+        const handler = (event) => {
+            if (!event.data || (event.data.type !== "qr_verified" && event.data.type !== "qr_error")) return;
+
+            window.removeEventListener("message", handler);
+
+            if (event.data.type === "qr_verified") {
+                resolve(event.data.result);  // "VALID"
+            } else {
+                reject(event.data.error || "❌ Unknown verification error");
+            }
+        };
+
+        window.addEventListener("message", handler);
+
+        // 🔐 Send ID to verify
+        proxyFrame.contentWindow.postMessage({
+            type: "verify",
+            id: idToVerify
+        }, "*");
+    });
+}
+
+/**
+ * Main orchestrator: validates the ID, shows QR, and fetches asset data if verified.
+ */
+async function verifyId() {
+    const id = getQueryParam("id");
+    const qrUrl = `https://process.qrtagall.com/?id=${id}`;
+
+    QRCode.toCanvas(document.getElementById("qrCanvas"), qrUrl, { width: 160 }, function (error) {
+        if (error) console.error("❌ QR code generation failed:", error);
+    });
+
+    const resultDiv = document.getElementById("result");
+    const spinner = document.getElementById("spinner");
+    const idText = document.getElementById("idText");
+    const loginSection = document.getElementById("loginSection");
+
+    if (!id) {
+        spinner.style.display = "none";
+        resultDiv.style.display = "block";
+        resultDiv.textContent = "❌ No ID provided in URL.";
+        resultDiv.style.color = "var(--error)";
+        return;
+    }
+
+    idText.textContent = id;
+
+    if (!id.includes("_")) {
+        spinner.style.display = "none";
+        resultDiv.style.display = "block";
+        resultDiv.textContent = "❌ Invalid format. Expected format: TIMESTAMP_SIGNATURE";
+        resultDiv.style.color = "var(--error)";
+        return;
+    }
+
+    const cacheKey = `verified_${id}`;
+    const cached = localStorage.getItem(cacheKey);
+
+    if (cached === "VALID") {
+        console.log("✅ ID verified from cache:", id);
+        spinner.style.display = "none";
+        await fetchAssetData(id);
+        return;
+    }
+
+    try {
+        await loadProxyIframe();
+        const result = await Verifyidx(id);
+
+        if (result === "VALID") {
+            localStorage.setItem(cacheKey, "VALID");
+            spinner.style.display = "none";
+            await fetchAssetData(id);
+        } else {
+            throw new Error("❌ Signature mismatch");
+        }
+    } catch (err) {
+        spinner.style.display = "none";
+        resultDiv.style.display = "block";
+        resultDiv.textContent = "❌ Invalid ID (Signature mismatch or tampered)";
+        resultDiv.style.color = "var(--error)";
+        loginSection.style.display = "none";
+        console.error(err);
+    }
+}
+
+
+
 /**
  * Main entry – kicks off the verification and rendering flow
  */
