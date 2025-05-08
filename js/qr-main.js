@@ -64,7 +64,7 @@ function loadProxyIframe() {
 
         // ✅ Attach event handler FIRST
         proxyFrame.onload = () => {
-            console.log("✅ Proxy iframe loaded");
+            console.log("✅ Proxy iframe loaded x");
             setTimeout(() => {
                 proxyLoaded = true;
                 resolve();
