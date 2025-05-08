@@ -936,7 +936,7 @@ async function saveArtifactInfo({
     });
 	*/
 	
-	
+	/*
 	confirmDialog("Are you sure you want to delete this artifact?", "🗑️", async () => {
      saveArtifactInfo({
         startCell: rowNum + 6,
@@ -948,7 +948,24 @@ async function saveArtifactInfo({
         rawfilename: selectedUploadedFileName,
         isDelete: true
 		});
-	});
+	});*/
+	
+	
+	 const confirmed = confirm(`Are you sure you want to delete this artifact?`);
+
+
+        if (confirmed) {
+            saveArtifactInfo({
+                startCell: rowNum + 6,  // 🧠 Asset index to sheet row mapping (because 6th row starts artifacts)
+                basicInfo: "",
+                fileType: "",
+                visibility: "",
+                linkOrText: "",
+                rawfiledata: "",
+                rawfilename: selectedUploadedFileName,
+                isDelete: true
+            });
+        }
 
 
 }
