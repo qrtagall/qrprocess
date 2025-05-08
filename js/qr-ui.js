@@ -791,7 +791,7 @@ function saveArtifact() {
     // ✅ ADD MODE
     else {
         const startCell = insertAfterRow + 7;  // artifact index + 1 row offset
-       await saveArtifactInfo({
+        saveArtifactInfo({
             startCell,
             basicInfo,
             fileType,
