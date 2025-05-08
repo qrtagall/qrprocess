@@ -44,37 +44,7 @@ function loadProxyIframe() {
  * @returns {Promise<"VALID"|"INVALID">}
  */
  
- /*
-async function Verifyidx(idToVerify) {
-    return new Promise((resolve, reject) => {
-        if (!window.proxyFrame || !window.proxyLoaded) {
-            reject("❌ Proxy iframe not loaded xx");
-            return;
-        }
-
-        const handler = (event) => {
-            if (!event.data || (event.data.type !== "qr_verified" && event.data.type !== "qr_error")) return;
-
-            window.removeEventListener("message", handler);
-
-            if (event.data.type === "qr_verified") {
-                resolve(event.data.result);  // "VALID"
-            } else {
-                reject(event.data.error || "❌ Unknown verification error");
-            }
-        };
-
-        window.addEventListener("message", handler);
-
-        // 🔐 Send ID to verify
-        proxyFrame.contentWindow.postMessage({
-            type: "verify",
-            id: idToVerify
-        }, "*");
-    });
-}
-*/
-
+ 
 function Verifyidx(idToVerify) {
     return new Promise((resolve, reject) => {
         if (!window.proxyFrame || !proxyFrame.contentWindow) {
