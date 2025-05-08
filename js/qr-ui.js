@@ -170,7 +170,9 @@ function confirmDialog(message, titleEmoji = "⚠️", onConfirm = null) {
         alert("❌ Missing confirm modal HTML");
         return;
     }
-
+	
+		
+	
     _pendingConfirmCallback = onConfirm;
     titleBox.innerText = `${titleEmoji} Confirm`;
     messageBox.innerText = message;
