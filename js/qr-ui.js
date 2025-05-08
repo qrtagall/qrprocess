@@ -536,7 +536,7 @@ function closeDescriptionModal() {
     if (modal) modal.style.display = "none";
 }
 
-async function saveDescription() {
+ function saveDescription() {
     const newDesc = document.getElementById("newDescription").value.trim();
     if (!newDesc) {
         notify("⚠️ Description cannot be empty.", "info");
@@ -545,7 +545,7 @@ async function saveDescription() {
 
     showSpinner(true);
 
-    await saveArtifactInfo({
+     saveArtifactInfo({
         startCell: "B2",  // B2 cell → row 2 for Description
         basicInfo: newDesc,
         fileType: "",
@@ -766,7 +766,7 @@ function saveArtifact() {
     if (currentEditMode === "edit") {
         if (isText) {
             // Save all fields
-           await saveArtifactInfo({
+            saveArtifactInfo({
                 startCell: cellOffset,
                 basicInfo,
                 fileType,
@@ -777,7 +777,7 @@ function saveArtifact() {
         } else {
             // For non-TEXT, preserve original fileType and URL
             const original = assetDataList[insertAfterRow];
-           await saveArtifactInfo({
+            saveArtifactInfo({
                 startCell: cellOffset,
                 basicInfo,
                 fileType: original.type || "TEXT",
@@ -876,15 +876,18 @@ async function saveArtifactInfo({
     const confirmed = await confirmDialog("Are you sure you want to delete this artifact?", "🗑️");
     if (!confirmed) return;
 
-   await saveArtifactInfo({
+    saveArtifactInfo({
         startCell: rowNum + 6,
         basicInfo: "",
         fileType: "",
         visibility: "",
         linkOrText: "",
         rawfiledata: "",
-        rawfilename: selectedUploadedFileName || "",
+        rawfilename: selectedUploadedFileName,
         isDelete: true
+		
+		
+		
     });
 }
 
