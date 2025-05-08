@@ -938,7 +938,7 @@ async function saveArtifactInfo({
 	
 	
 	confirmDialog("Are you sure you want to delete this artifact?", "🗑️", async () => {
-    await saveArtifactInfo({
+     saveArtifactInfo({
         startCell: rowNum + 6,
         basicInfo: "",
         fileType: "",
