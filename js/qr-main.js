@@ -15,7 +15,7 @@ let proxyLoaded = false;
  * Dynamically loads the QRTagAll proxy iframe for ID verification.
  * @returns {Promise<void>}
  */
- /*
+ 
 function loadProxyIframe() {
     return new Promise((resolve) => {
         proxyFrame = document.createElement("iframe");
@@ -31,8 +31,11 @@ function loadProxyIframe() {
         document.body.appendChild(proxyFrame);
     });
 }
-*/
 
+
+
+  
+/*
 function loadProxyIframe() {
     return new Promise((resolve) => {
         proxyFrame = document.createElement("iframe");
@@ -53,7 +56,7 @@ function loadProxyIframe() {
         document.body.appendChild(proxyFrame);
     });
 }
-
+*/
 
 
 
