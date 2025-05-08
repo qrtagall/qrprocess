@@ -920,7 +920,7 @@ async function saveArtifactInfo({
     //const confirmed = confirm(`Are you sure you want to delete this artifact?`);
 	//if (!confirmed) return;
 
-/*
+
     saveArtifactInfo({
         startCell: rowNum + 6,
         basicInfo: "",
@@ -934,7 +934,7 @@ async function saveArtifactInfo({
 		
 		
     });
-	*/
+	
 	
 	/*
 	confirmDialog("Are you sure you want to delete this artifact?", "🗑️", async () => {
@@ -951,21 +951,7 @@ async function saveArtifactInfo({
 	});*/
 	
 	
-	 const confirmed = confirm(`Are you sure you want to delete this artifact?`);
-
-
-        if (confirmed) {
-            saveArtifactInfo({
-                startCell: rowNum + 6,  // 🧠 Asset index to sheet row mapping (because 6th row starts artifacts)
-                basicInfo: "",
-                fileType: "",
-                visibility: "",
-                linkOrText: "",
-                rawfiledata: "",
-                rawfilename: selectedUploadedFileName,
-                isDelete: true
-            });
-        }
+	
 
 
 }

@@ -127,7 +127,14 @@ async function triggerLink_get(params, modalId = null) {
     // 🔗 Append email to URL
     targetUrl = `${targetUrl}${separator}email=${encodeURIComponent(userEmail)}`;
 	console.log("📧 GET_ Final URL>>>>:", targetUrl);
-                        
+                  
+	//special case, only for delete
+	if (targetUrl.includes("delete=1")) {
+		
+		 const confirmed = confirm(`Are you sure you want to delete this artifact?`);
+		if(!confirmed)
+			return;
+    }
 
     // 🧨 Trigger GET via Image to invoke Apps Script endpoint
     try {
