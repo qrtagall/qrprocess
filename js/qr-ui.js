@@ -161,7 +161,7 @@ function printQR() {
 
 let _pendingConfirmCallback = null;
 
-function confirmDialog(message, titleEmoji = "⚠️", onConfirm = null) {
+function confirmDialogx(message, titleEmoji = "⚠️", onConfirm = null) {
     const modal = document.getElementById("globalConfirmModal");
     const messageBox = document.getElementById("globalConfirmMessage");
     const titleBox = document.getElementById("globalConfirmTitle");
@@ -171,7 +171,7 @@ function confirmDialog(message, titleEmoji = "⚠️", onConfirm = null) {
         return;
     }
 	
-		
+	modal.style.display = "flex";
 	
     _pendingConfirmCallback = onConfirm;
     titleBox.innerText = `${titleEmoji} Confirm`;
@@ -180,15 +180,10 @@ function confirmDialog(message, titleEmoji = "⚠️", onConfirm = null) {
     modal.style.display = "flex";
 }
 
-async function confirmDialogProceed() {
+function confirmDialogProceed() {
     document.getElementById("globalConfirmModal").style.display = "none";
-
     if (typeof _pendingConfirmCallback === "function") {
-        try {
-            await _pendingConfirmCallback(); // ✅ Await async callback
-        } catch (err) {
-            console.error("❌ Confirm callback failed:", err);
-        }
+        _pendingConfirmCallback();
         _pendingConfirmCallback = null;
     }
 }
@@ -937,8 +932,8 @@ async function saveArtifactInfo({
 	*/
 	
 	
-	confirmDialog("Are you sure you want to delete this artifact?", "🗑️", () => {
-       await saveArtifactInfo({
+	confirmDialogx("Are you sure you want to delete this artifact?", "🗑️", () => {
+        saveArtifactInfo({
             startCell: rowNum + 6,
             basicInfo: "",
             fileType: "",
