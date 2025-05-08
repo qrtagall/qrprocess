@@ -45,34 +45,44 @@ function loadProxyIframe() {
  */
  
  
-function Verifyidx(idToVerify) {
+function Verifyidx(idToVerify, retries = 5, delay = 100) {
     return new Promise((resolve, reject) => {
-        if (!window.proxyFrame || !proxyFrame.contentWindow) {
-            reject("❌ Proxy iframe not ready");
-            return;
+        let attempts = 0;
+
+        function trySend() {
+            if (!window.proxyFrame || !proxyFrame.contentWindow) {
+                if (attempts++ >= retries) {
+                    reject("❌ Proxy iframe not loaded (contentWindow null)");
+                    return;
+                }
+                return setTimeout(trySend, delay); // Retry
+            }
+
+            const handler = (event) => {
+                if (!event.data || (event.data.type !== "qr_verified" && event.data.type !== "qr_error")) return;
+
+                window.removeEventListener("message", handler);
+
+                if (event.data.type === "qr_verified") {
+                    resolve(event.data.result);
+                } else {
+                    reject(event.data.error || "❌ Unknown verification error");
+                }
+            };
+
+            window.addEventListener("message", handler);
+
+            console.log("📤 Sending verify message to proxy");
+            proxyFrame.contentWindow.postMessage({
+                type: "verify",
+                id: idToVerify
+            }, "*");
         }
 
-        const handler = (event) => {
-            if (!event.data || (event.data.type !== "qr_verified" && event.data.type !== "qr_error")) return;
-
-            window.removeEventListener("message", handler);
-
-            if (event.data.type === "qr_verified") {
-                resolve(event.data.result);  // "VALID"
-            } else {
-                reject(event.data.error || "❌ Unknown verification error");
-            }
-        };
-
-        window.addEventListener("message", handler);
-
-        // ✅ Fire postMessage safely
-        proxyFrame.contentWindow.postMessage({
-            type: "verify",
-            id: idToVerify
-        }, "*");
+        trySend(); // Start first attempt
     });
 }
+
 
 
 
