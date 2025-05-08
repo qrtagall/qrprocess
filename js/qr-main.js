@@ -48,7 +48,7 @@ function loadProxyIframe() {
 async function Verifyidx(idToVerify) {
     return new Promise((resolve, reject) => {
         if (!window.proxyFrame || !window.proxyLoaded) {
-            reject("❌ Proxy iframe not loaded");
+            reject("❌ Proxy iframe not loaded xx");
             return;
         }
 
