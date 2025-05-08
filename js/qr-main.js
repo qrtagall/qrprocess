@@ -156,6 +156,21 @@ async function initQRTagAll() {
 
     // ✅ Load via proxy iframe
     await loadProxyIframe();
+	
+	   const result = await Verifyidx(id);
+
+        if (result === "VALID") {
+            localStorage.setItem(cacheKey, "VALID"); // ✅ Save for future
+            await fetchAssetData(id);
+        } else {
+            spinner.style.display = "none";
+            resultDiv.style.display = "block";
+            resultDiv.textContent = "❌ Invalid ID (Signature mismatch or tampered)";
+            resultDiv.style.color = "var(--error)";
+            loginSection.style.display = "none";
+        }
+	
+	/*
     try {
         const result = await Verifyidx(id);
         if (result === "VALID") {
@@ -171,6 +186,7 @@ async function initQRTagAll() {
         resultDiv.style.color = "var(--error)";
 		console.log("Error>>>>>",err);
     }
+	*/
 }
 
 /**
