@@ -35,7 +35,7 @@ function loadProxyIframe() {
 
 */
 
-
+/*
 async function loadProxyIframe() {
     return new Promise((resolve) => {
         proxyFrame = document.createElement("iframe");
@@ -55,7 +55,27 @@ async function loadProxyIframe() {
         document.body.appendChild(proxyFrame);
     });
 }
- 
+ */
+
+function loadProxyIframe() {
+    return new Promise((resolve) => {
+        proxyFrame = document.createElement("iframe");
+        proxyFrame.style.display = "none";
+
+        // ✅ Attach event handler FIRST
+        proxyFrame.onload = () => {
+            console.log("✅ Proxy iframe loaded");
+            setTimeout(() => {
+                proxyLoaded = true;
+                resolve();
+            }, 200); // small delay to allow script readiness
+        };
+
+        proxyFrame.src = "https://proxy.qrtagall.com";  // 👈 AFTER setting onload
+        document.body.appendChild(proxyFrame);
+    });
+}
+
 
 
 /**
