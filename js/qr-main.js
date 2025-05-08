@@ -63,7 +63,7 @@ function loadProxyIframe() {
  * @param {string} idToVerify
  * @returns {Promise<"VALID"|"INVALID">}
  */
-function Verifyidx(idToVerify) {
+async function Verifyidx(idToVerify) {
     return new Promise((resolve, reject) => {
         if (!window.proxyFrame || !window.proxyLoaded) {
             reject("❌ Proxy iframe not loaded");
@@ -92,70 +92,9 @@ function Verifyidx(idToVerify) {
     });
 }
 
-/**
- * Main orchestrator: validates the ID, shows QR, and fetches asset data if verified.
- */
-async function verifyId() {
-    const id = getQueryParam("id");
-    const qrUrl = `https://process.qrtagall.com/?id=${id}`;
 
-    QRCode.toCanvas(document.getElementById("qrCanvas"), qrUrl, { width: 160 }, function (error) {
-        if (error) console.error("❌ QR code generation failed:", error);
-    });
 
-    const resultDiv = document.getElementById("result");
-    const spinner = document.getElementById("spinner");
-    const idText = document.getElementById("idText");
-    const loginSection = document.getElementById("loginSection");
 
-    if (!id) {
-        spinner.style.display = "none";
-        resultDiv.style.display = "block";
-        resultDiv.textContent = "❌ No ID provided in URL.";
-        resultDiv.style.color = "var(--error)";
-        return;
-    }
-
-    idText.textContent = id;
-
-    if (!id.includes("_")) {
-        spinner.style.display = "none";
-        resultDiv.style.display = "block";
-        resultDiv.textContent = "❌ Invalid format. Expected format: TIMESTAMP_SIGNATURE";
-        resultDiv.style.color = "var(--error)";
-        return;
-    }
-
-    const cacheKey = `verified_${id}`;
-    const cached = localStorage.getItem(cacheKey);
-
-    if (cached === "VALID") {
-        console.log("✅ ID verified from cache:", id);
-        spinner.style.display = "none";
-        await fetchAssetData(id);
-        return;
-    }
-
-    try {
-        await loadProxyIframe();
-        const result = await Verifyidx(id);
-
-        if (result === "VALID") {
-            localStorage.setItem(cacheKey, "VALID");
-            spinner.style.display = "none";
-            await fetchAssetData(id);
-        } else {
-            throw new Error("❌ Signature mismatch");
-        }
-    } catch (err) {
-        spinner.style.display = "none";
-        resultDiv.style.display = "block";
-        resultDiv.textContent = "❌ Invalid ID (Signature mismatch or tampered)";
-        resultDiv.style.color = "var(--error)";
-        loginSection.style.display = "none";
-        console.error(err);
-    }
-}
 
 
 
@@ -210,6 +149,7 @@ async function initQRTagAll() {
         resultDiv.style.display = "block";
         resultDiv.textContent = "❌ Invalid ID or Signature Mismatch";
         resultDiv.style.color = "var(--error)";
+		console.log("Error>>>>>",err);
     }
 }
 
