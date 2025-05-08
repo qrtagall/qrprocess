@@ -16,46 +16,6 @@ let proxyLoaded = false;
  * @returns {Promise<void>}
  */
  
- /*
-function loadProxyIframe() {
-    return new Promise((resolve) => {
-        proxyFrame = document.createElement("iframe");
-        proxyFrame.style.display = "none";
-        proxyFrame.src = "https://proxy.qrtagall.com";
-
-        proxyFrame.onload = () => {
-            console.log("✅ Proxy iframe loaded");
-            proxyLoaded = true;
-            resolve();
-        };
-
-        document.body.appendChild(proxyFrame);
-    });
-}
-
-*/
-
-/*
-async function loadProxyIframe() {
-    return new Promise((resolve) => {
-        proxyFrame = document.createElement("iframe");
-        proxyFrame.style.display = "none";
-        proxyFrame.src = "https://proxy.qrtagall.com";
-
-        proxyFrame.onload = () => {
-            console.log("✅ Proxy iframe loaded");
-
-            // ✅ Add short delay to ensure inner script is ready
-            setTimeout(() => {
-                proxyLoaded = true;
-                resolve();
-            }, 2000); // ⏱️ Wait 200ms before resolving
-        };
-
-        document.body.appendChild(proxyFrame);
-    });
-}
- */
 
 function loadProxyIframe() {
     return new Promise((resolve) => {
@@ -64,7 +24,7 @@ function loadProxyIframe() {
 
         // ✅ Attach event handler FIRST
         proxyFrame.onload = () => {
-            console.log("✅ Proxy iframe loaded x");
+            console.log("xxxx Proxy iframe loaded x");
             setTimeout(() => {
                 proxyLoaded = true;
                 resolve();
