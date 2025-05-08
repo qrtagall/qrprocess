@@ -118,6 +118,7 @@ async function Verifyidx(idToVerify) {
 
 
 
+
 /**
  * Main entry – kicks off the verification and rendering flow
  */
@@ -157,20 +158,7 @@ async function initQRTagAll() {
     // ✅ Load via proxy iframe
     await loadProxyIframe();
 	
-	   const result = await Verifyidx(id);
-
-        if (result === "VALID") {
-            localStorage.setItem(cacheKey, "VALID"); // ✅ Save for future
-            await fetchAssetData(id);
-        } else {
-            spinner.style.display = "none";
-            resultDiv.style.display = "block";
-            resultDiv.textContent = "❌ Invalid ID (Signature mismatch or tampered)";
-            resultDiv.style.color = "var(--error)";
-            loginSection.style.display = "none";
-        }
 	
-	/*
     try {
         const result = await Verifyidx(id);
         if (result === "VALID") {
@@ -186,7 +174,6 @@ async function initQRTagAll() {
         resultDiv.style.color = "var(--error)";
 		console.log("Error>>>>>",err);
     }
-	*/
 }
 
 /**
@@ -281,7 +268,7 @@ function editAlert() {
 
 console.log("🔄 Verifying ID now...");
 // Init
-initQRTagAll();
+//initQRTagAll();
 
 if (document.getElementById("versionTag")) {
     document.getElementById("versionTag").textContent = `Ver-${QRTagAll_Ver_}`;
@@ -289,3 +276,9 @@ if (document.getElementById("versionTag")) {
 if (document.getElementById("versionTagx")) {
     document.getElementById("versionTagx").textContent = `Ver-${QRTagAll_Ver_}`;
 }
+
+
+document.addEventListener("DOMContentLoaded", () => {
+    console.log("🔄 DOM ready, starting verification...");
+    initQRTagAll();
+});
