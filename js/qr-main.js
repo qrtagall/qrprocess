@@ -49,7 +49,7 @@ async function loadProxyIframe() {
             setTimeout(() => {
                 proxyLoaded = true;
                 resolve();
-            }, 500); // ⏱️ Wait 200ms before resolving
+            }, 2000); // ⏱️ Wait 200ms before resolving
         };
 
         document.body.appendChild(proxyFrame);
