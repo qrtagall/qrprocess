@@ -157,6 +157,42 @@ function printQR() {
 
 /****************************************** Helper Function for below ***************************/
 
+
+
+let _pendingConfirmCallback = null;
+
+function confirmDialog(message, titleEmoji = "⚠️", onConfirm = null) {
+    const modal = document.getElementById("globalConfirmModal");
+    const messageBox = document.getElementById("globalConfirmMessage");
+    const titleBox = document.getElementById("globalConfirmTitle");
+
+    if (!modal || !messageBox || !titleBox) {
+        alert("❌ Missing confirm modal HTML");
+        return;
+    }
+
+    _pendingConfirmCallback = onConfirm;
+    titleBox.innerText = `${titleEmoji} Confirm`;
+    messageBox.innerText = message;
+
+    modal.style.display = "flex";
+}
+
+function confirmDialogProceed() {
+    document.getElementById("globalConfirmModal").style.display = "none";
+    if (typeof _pendingConfirmCallback === "function") {
+        _pendingConfirmCallback();
+        _pendingConfirmCallback = null;
+    }
+}
+
+function confirmDialogCancel() {
+    document.getElementById("globalConfirmModal").style.display = "none";
+    _pendingConfirmCallback = null;
+}
+
+
+
 /**
  * Toggles visibility of a section by ID.
  * @param {string} id - DOM element ID
@@ -877,6 +913,7 @@ async function saveArtifactInfo({
     //const confirmed = confirm(`Are you sure you want to delete this artifact?`);
 	//if (!confirmed) return;
 
+/*
     saveArtifactInfo({
         startCell: rowNum + 6,
         basicInfo: "",
@@ -890,5 +927,21 @@ async function saveArtifactInfo({
 		
 		
     });
+	*/
+	
+	
+	confirmDialog("Are you sure you want to delete this artifact?", "🗑️", () => {
+        saveArtifactInfo({
+            startCell: rowNum + 6,
+            basicInfo: "",
+            fileType: "",
+            visibility: "",
+            linkOrText: "",
+            rawfiledata: "",
+            rawfilename: selectedUploadedFileName,
+            isDelete: true
+        });
+    });
+	
 }
 
