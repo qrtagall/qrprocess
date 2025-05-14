@@ -254,6 +254,7 @@ function buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, l
     `;
 
     const wrapper = document.createElement("div");
+    wrapper.className = "asset-banner"; // use custom CSS class
     wrapper.appendChild(titleRow);
     wrapper.appendChild(infoBlock);
 
