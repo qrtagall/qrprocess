@@ -6,6 +6,7 @@ let editMode = false;
 
 let proxyFrame = null;
 let proxyLoaded = false;
+window.qrLinkSheetMap = {};
 
 
 
@@ -17,57 +18,6 @@ let proxyLoaded = false;
  */
  
 
-function loadProxyIframe() {
-    return new Promise((resolve) => {
-        proxyFrame = document.createElement("iframe");
-        proxyFrame.style.display = "none";
-
-        // ✅ Attach event handler FIRST
-        proxyFrame.onload = () => {
-            console.log("xxxx Proxy iframe loaded x");
-            setTimeout(() => {
-                proxyLoaded = true;
-                resolve();
-            }, 200); // small delay to allow script readiness
-        };
-
-        proxyFrame.src = "https://proxy.qrtagall.com";  // 👈 AFTER setting onload
-        document.body.appendChild(proxyFrame);
-    });
-}
-
-
-
-function Verifyidx(idToVerify) {
-    return new Promise((resolve, reject) => {
-        const targetFrame = window.frames[0]; // GitHub-safe fallback
-
-        if (!targetFrame) {
-            reject("❌ No iframe found to send message.");
-            return;
-        }
-
-        const handler = (event) => {
-            if (!event.data || (event.data.type !== "qr_verified" && event.data.type !== "qr_error")) return;
-
-            window.removeEventListener("message", handler);
-
-            if (event.data.type === "qr_verified") {
-                resolve(event.data.result);
-            } else {
-                reject(event.data.error || "❌ Unknown verification error");
-            }
-        };
-
-        window.addEventListener("message", handler);
-
-        console.log("📤 Sending verify message via window.frames[0]");
-        targetFrame.postMessage({
-            type: "verify",
-            id: idToVerify
-        }, "*");
-    });
-}
 
 
 
@@ -82,6 +32,7 @@ function Verifyidx(idToVerify) {
  * Main entry – kicks off the verification and rendering flow
  */
 async function initQRTagAll() {
+
     const id = getQueryParam("id");
     const resultDiv = document.getElementById("result");
     const spinner = document.getElementById("spinner");
@@ -95,7 +46,13 @@ async function initQRTagAll() {
         return;
     }
 
+    // ✅ Show QR as early as possible
+    generateQRCodeCanvas(id);
+
+
+    document.getElementById("spinner").innerText = "⏳ Verifying ID...";
     idText.textContent = id;
+
 
     if (!id.includes("_")) {
         spinner.style.display = "none";
@@ -107,6 +64,10 @@ async function initQRTagAll() {
 
     // ✅ Check local cache first
     const cacheKey = `verified_${id}`;
+
+    //CMEDIT
+
+
     if (localStorage.getItem(cacheKey) === "VALID") {
         console.log("✅ Cached VALID");
         spinner.style.display = "none";
@@ -114,10 +75,10 @@ async function initQRTagAll() {
         return;
     }
 
+
     // ✅ Load via proxy iframe
     await loadProxyIframe();
-	
-	
+
     try {
         const result = await Verifyidx(id);
         if (result === "VALID") {
@@ -138,7 +99,9 @@ async function initQRTagAll() {
 /**
  * Load and render asset information after verification
  */
-async function loadAndRenderAsset(id) {
+
+/*
+async function loadAndRenderAsset_old(id) {
     const popup = document.getElementById("popup");
     const mainContent = document.getElementById("mainContent");
     const resultDiv = document.getElementById("result");
@@ -146,8 +109,14 @@ async function loadAndRenderAsset(id) {
     const loginSection = document.getElementById("loginSection");
     const verifyingLabel = document.getElementById("verifyingLabel");
 
+    console.log(">>>>>>> Feting Asset Data");
     try {
+
+        document.getElementById("spinner").innerText = "⏳ Fetching Asset Info...";
+        showSpinner(true);
         const res = await fetchAssetData(id);
+
+
         spinner.style.display = "none";
         verifyingLabel.style.display = "none";
 
@@ -163,6 +132,7 @@ async function loadAndRenderAsset(id) {
         mainContent.style.display = "block";
         injectQRBlock(id);  // 🧠 Inject QR again
 
+        document.getElementById("spinner").innerText = "⏳ Rendering Panel ...";
         renderAssetPanel(res.data);
 
     } catch (err) {
@@ -172,20 +142,72 @@ async function loadAndRenderAsset(id) {
         spinner.style.display = "none";
     }
 }
+*/
+
+//CMEDITY
+async function loadAndRenderAsset(id) {
+
+    const popup = document.getElementById("popup");
+    const mainContent = document.getElementById("mainContent");
+    const resultDiv = document.getElementById("result");
+    const spinner = document.getElementById("spinner");
+    const loginSection = document.getElementById("loginSection");
+    const verifyingLabel = document.getElementById("verifyingLabel");
+
+
+
+
+    try {
+        popup.style.display = "block";
+        verifyingLabel.style.display="none"; //ALready verified
+        spinner.style.display = "block";    //show fetching info....
+
+        injectQRBlock(id);      //show QR Panel
+
+        spinner.innerText = "⏳ Fetching Asset Info...";
+        //showSpinner(true);
+
+
+        await renderAssetPanel(id);
+
+       // popup.style.display = "none";
+       // spinner.style.display = "none";
+       // verifyingLabel.style.display = "none";
+
+       // mainContent.style.display = "block";
+
+
+
+    } catch (err) {
+        console.error("❌ Failed to load asset:", err);
+        //resultDiv.style.display = "block";
+        resultDiv.innerText = "❌ Failed to retrieve data.";
+        spinner.style.display = "none";
+    }
+
+
+
+}
+
+
+
 
 /**
  * Renders asset panel with artifacts and title
  */
-async function renderAssetPanel(data) {
+
+
+/*
+async function renderAssetPanel_old(data) {
     const assetTitle = document.getElementById("assetTitle");
     const assetLinks = document.getElementById("assetLinks");
     const editBtn = document.getElementById("editBtn");
 
-    // Detect ownership
+
     const id = getQueryParam("id");
     isOwner = sessionEmail && sessionEmail === ownerEmail;
 
-    // Title, ID, owner info
+
     const maskedOwner = maskEmailUser(ownerEmail);
     assetTitle.innerHTML = `
       <div style="text-align: center;">
@@ -198,23 +220,222 @@ async function renderAssetPanel(data) {
       ${editMode ? `<div style="text-align:center; margin-top:5px;"><button onclick="openAddModal(-1)">➕ Add Artifact</button></div>` : ""}
     `;
 
-    // Style based on owner
+
+
     if (isOwner) {
-        updatePanelBackground("#e6ffe6");  // green
+       // updatePanelBackground("#e6ffe6");
         editBtn.innerHTML = "✏️ Edit Details";
     } else {
-        updatePanelBackground(sessionEmail ? "#ffdddd" : "#fffbe6");
+        //updatePanelBackground(sessionEmail ? "#ffdddd" : "#fffbe6");
         editBtn.innerHTML = sessionEmail ? "🔐 Log-in as Owner<br>to Edit Details" : "🔐 Log-in to Edit Details";
     }
 
-    // Render artifact block
-    assetLinks.innerHTML = await renderInfoBlock(data);
+    //console.log("Fetch started............")
 
-    // Enable edit button
+   // showSpinner(true);
+
+
+
+    //Fetch all data from ID
+    const remoteList = await fetchAllRemoteSheets(id);
+
+    remoteList.forEach(({ linkId, sheetId }) => {
+        if (linkId && sheetId) {
+            window.qrLinkSheetMap[linkId] = sheetId;
+        }
+    });
+
+    console.log("Remote List>>>>>>>", remoteList);
+
+    showSpinner(false);
+
+    //CMEDIT
+    //Render to block
+    renderMultipleRemoteBlocks(remoteList);
+
+    console.log("Fetch Enedd............")
+
     editBtn.disabled = false;
     editBtn.classList.remove("disabled-button");
     editBtn.classList.add("enabled");
+
+    editBtn.onclick = () => {
+
+        editMode = true;
+
+
+        console.log("editMode:>>>>>>>>>>>>>>>>", editMode);
+        //console.log("editActions element:", editActions);
+
+
+        renderMultipleRemoteBlocks(remoteList); // re-render with edit options
+
+
+
+    };
 }
+*/
+
+
+//CMEDITY
+async function renderAssetPanel(id) {
+
+    const popup = document.getElementById("popup");
+    const mainContent = document.getElementById("mainContent");
+    const resultDiv = document.getElementById("result");
+    const spinner = document.getElementById("spinner");
+    const loginSection = document.getElementById("loginSection");
+    const verifyingLabel = document.getElementById("verifyingLabel");
+
+
+    const assetTitle = document.getElementById("assetTitle");
+    const assetLinks = document.getElementById("assetLinks");
+    const editBtn = document.getElementById("editBtn");
+
+     spinner.style.display = "block";
+
+
+    const remoteList = await fetchAllRemoteSheets(id);
+    globalRemoteAssetList = remoteList;
+
+
+    if ((globalRemoteAssetList?.length || 0) === 0) {
+        spinner.style.display = "none";
+        console.log("No items found in asset listxxx.");
+
+        resultDiv.style.display = "block";
+        resultDiv.textContent = "This is a new and unclaimed ID!";
+        resultDiv.style.color = "forestgreen";
+        loginSection.style.display = "block";
+        return;
+
+    } else {
+        console.log(`Total items: ${globalRemoteAssetList.length}`);
+    }
+
+
+    popup.style.display = "none";
+    spinner.style.display = "none";
+    verifyingLabel.style.display = "none";
+
+    mainContent.style.display = "block";
+
+
+   // console.log("returning...");
+   // return;
+
+    isOwner = isSessionUserOwnerOfAnyBlock();
+
+    const maskedOwner = maskEmailUser(ownerEmail);
+    assetTitle.innerHTML = `
+      <div style="text-align: center;">
+        ${remoteList[0]?.description || "Verified Asset"}
+        <div style="font-size: 12px; color: gray;">
+          (${id})<br>Owner: ${maskedOwner}
+        </div>
+        ${editMode ? `<button onclick="editDescription()" style="font-size: 13px;">✏️ Edit Description</button>` : ""}
+      </div>
+      ${editMode ? `<div style="text-align:center; margin-top:5px;"><button onclick="openAddModal(-1)">➕ Add Artifact</button></div>` : ""}
+    `;
+
+    const editActions = document.getElementById("editActions");
+    if (editMode && editActions) {
+        editActions.style.display = "flex";
+    } else if (editActions) {
+        editActions.style.display = "none";
+    }
+
+    if (isOwner) {
+        editBtn.innerHTML = "✏️ Edit Details";
+    } else {
+        editBtn.innerHTML = sessionEmail ? "🔐 Log-in as Owner<br>to Edit Details" : "🔐 Log-in to Edit Details";
+    }
+
+    renderMultipleRemoteBlocks(remoteList);
+
+    editBtn.disabled = false;
+    editBtn.classList.remove("disabled-button");
+    editBtn.classList.add("enabled");
+
+    editBtn.onclick = () => {
+        editMode = true;
+        renderMultipleRemoteBlocks(remoteList);
+    };
+}
+
+
+function createAssetBlock(asset, index, isArtifactOwner) {
+    const { title, type, visibility, url } = asset;
+
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "asset-block";
+    wrapper.style.border = "1px solid #ccc";
+    wrapper.style.borderRadius = "6px";
+    wrapper.style.padding = "10px";
+    wrapper.style.margin = "10px 0";
+    wrapper.style.backgroundColor = visibility === "NOVIEW" ? "#f9f9f9" : "white";
+
+    const titleElem = document.createElement("p");
+    titleElem.innerHTML = `<b>${index + 1}. ${title}</b>`;
+    titleElem.style.marginBottom = "5px";
+    wrapper.appendChild(titleElem);
+
+    console.log(">>>>>>>>>>>>createAssetBlock>>>>>>", asset);
+
+    if (visibility === "NOVIEW" && !isArtifactOwner)
+    {
+        const hiddenMsg = document.createElement("p");
+        hiddenMsg.textContent = "🔒 Hidden from public view";
+        hiddenMsg.style.fontStyle = "italic";
+        hiddenMsg.style.color = "#777";
+        wrapper.appendChild(hiddenMsg);
+        return wrapper;
+    }
+
+    // Render based on type
+    if (type === "TEXT") {
+        const para = document.createElement("p");
+        para.textContent = url;
+        para.style.whiteSpace = "pre-wrap";
+        wrapper.appendChild(para);
+    } else if (type.includes("IMAGE")) {
+        const img = document.createElement("img");
+        img.src = url;
+        img.alt = title;
+        img.style.maxWidth = "100%";
+        img.style.borderRadius = "4px";
+        wrapper.appendChild(img);
+    } else if (type.includes("VIDEO")) {
+        const video = document.createElement("video");
+        video.src = url;
+        video.controls = true;
+        video.style.maxWidth = "100%";
+        wrapper.appendChild(video);
+    } else if (type.includes("AUDIO")) {
+        const audio = document.createElement("audio");
+        audio.src = url;
+        audio.controls = true;
+        wrapper.appendChild(audio);
+    } else if (url && url.startsWith("http")) {
+        const link = document.createElement("a");
+        link.href = url;
+        link.target = "_blank";
+        link.textContent = "Open Resource 🔗";
+        wrapper.appendChild(link);
+    } else {
+        const unknown = document.createElement("p");
+        unknown.textContent = "❓ Unknown content type";
+        wrapper.appendChild(unknown);
+    }
+
+    return wrapper;
+}
+
+
+
+
+
 
 // Edit button click handler
 function editAlert() {

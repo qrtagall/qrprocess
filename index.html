@@ -9,13 +9,13 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 
     <!-- Your CSS -->
-    <!--
+    <!-- -->
     <link rel="stylesheet" href="file:///G:/QrTagAll/git/qrprocess/css/style.css">
-    -->
-
     <!---->
+
+    <!--
     <link rel="stylesheet" href="./css/style.css">
-     <!--  -->
+       -->
 </head>
 <body>
 
@@ -31,7 +31,7 @@
         <h3>🔍 Verifying QR ID</h3>
     </div>
     <p id="idText" style="font-size:14px; color:gray;"></p>
-    <div id="spinner" style="margin-top:20px;">⏳ Please wait...</div>
+    <div id="spinner" style="margin-top:20px;">⏳ Please wait ...</div>
     <div id="result" style="display:none;"></div>
 
     <!--
@@ -117,8 +117,52 @@
 
     <hr style="border: none; height: 3px; width: 80%; background: linear-gradient(to right, orange, #ffa500); margin: 60px auto 30px auto; border-radius: 5px;">
 
+    <!-- Action buttons visible only in editMode -->
+    <!-- Action buttons visible only in editMode -->
+    <div id="editActions" style="display: none; justify-content: center; gap: 12px; margin-bottom: 25px;">
+        <button onclick="openCloneDialog()" style="background: lightcoral; color: darkblue; font-size: 12px; padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer;">
+            🔁 Clone QR
+        </button>
+        <button onclick="openTransferDialog()" style="background: lightcoral; color: darkblue; font-size: 12px; padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer;">
+            🔀 Transfer QR
+        </button>
+        <button onclick="openAddQRDialog()" style="background: lightcoral; color: darkblue; font-size: 12px; padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer;">
+            ➕ Add QR
+        </button>
+        <button onclick="openDeleteDialog()" style="background: lightcoral; color: darkred; font-size: 12px; padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer;">
+            ❌ Delete QR
+        </button>
+    </div>
+
+    <!-- Clone QR Modal -->
+    <div id="cloneQRModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#00000055; z-index:10000; justify-content:center; align-items:center;">
+        <div style="background:white; padding:20px; border-radius:10px; max-width:400px; width:90%; box-shadow:0 0 10px rgba(0,0,0,0.2); position:relative;">
+            <h3>🔁 Clone QR</h3>
+            <p>Select clone type:</p>
+            <select id="cloneTypeSelect" style="width:100%; margin-bottom:15px;">
+                <option value="Soft-Clone">Soft Clone (Only Link Info)</option>
+                <option value="Deep-Clone">Hard Clone (Full Copy)</option>
+            </select>
+
+            <label>New QR ID:</label>
+            <div style="display:flex; gap:10px; align-items:center; margin-bottom:15px;">
+                <input type="text" id="newCloneIdInput" placeholder="Enter New QR ID" style="flex:1;">
+                <button onclick="verifyQRIdFromInput('newCloneIdInput', 'qrVerifyStatus')" style="padding:6px 12px; font-size:12px;">✅ Verify</button>
+            </div>
+            <p id="qrVerifyStatus" style="font-size:13px; color:gray; margin:0;"></p>
+
+            <div style="text-align:right;">
+                <button onclick="closeCloneModal()">Cancel</button>
+                <button onclick="confirmClone()">Clone</button>
+            </div>
+        </div>
+    </div>
+
+
+
+
     <div style="display: flex; justify-content: center; margin-top: 40px;">
-        <button id="editBtn" class="enabled" onclick="editAlert()" style="text-align: center; line-height: 1.2;">
+        <button id="editBtn" class="enabled" onclick="editAlert()" style="text-align: center; line-height: 1.2; border: none; border-radius: 10px; ">
             🔐 Log-in to Edit Details
         </button>
     </div>
@@ -229,6 +273,8 @@
     </div>
 </div>
 
+
+
 <!-- ✏️ Modal to Edit Description -->
 <div id="editDescriptionModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:#00000055; z-index:10000; justify-content:center; align-items:center;">
     <div style="background:white; padding:20px; border-radius:10px; max-width:400px; width:90%; box-shadow:0 0 10px rgba(0,0,0,0.2); position:relative;">
@@ -312,23 +358,25 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "3.41";
+    const QRTagAll_Ver_ = "3.50";
 </script>
 
-<!---->
+<!--
 <script src="./js/qr-utils.js"></script>
 <script src="./js/qr-auth.js"></script>
 <script src="./js/qr-fetch.js"></script>
+<script src="./js/qr-edit.js"></script>
 <script src="./js/qr-ui.js"></script>
 <script src="./js/qr-main.js"></script>
-<!---->
-<!--
+-->
+<!-- -->
 <script src="file:///G:/QrTagAll/git/qrprocess/js/qr-utils.js"></script>
 <script src="file:///G:/QrTagAll/git/qrprocess/js/qr-auth.js"></script>
 <script src="file:///G:/QrTagAll/git/qrprocess/js/qr-fetch.js"></script>
+<script src="file:///G:/QrTagAll/git/qrprocess/js/qr-edit.js"></script>
 <script src="file:///G:/QrTagAll/git/qrprocess/js/qr-ui.js"></script>
 <script src="file:///G:/QrTagAll/git/qrprocess/js/qr-main.js"></script>
- -->
+ <!-- -->
 
 
 </body>

@@ -1,7 +1,9 @@
 // qr-auth.js
 
 // Globals (must match the main script expectations)
+
 let sessionEmail = localStorage.getItem("qr_claimed_email") || "";
+//let sessionEmail = "dev.chandan2002x@gmail.com";//localStorage.getItem("qr_claimed_email");
 //let sessionEmail = "chandan2002x@gmail.com";//localStorage.getItem("qr_claimed_email");
 
 
@@ -65,7 +67,7 @@ function toggleInfoPopup() {
 }
 
 // 🌐 Fetch user's email using OAuth token
-async function fetchUserEmail(token) {
+async function fetchUserEmail1(token) {
     try {
         const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
             headers: { Authorization: `Bearer ${token}` }
@@ -136,7 +138,7 @@ async function QRTagAllLoginNew() {
 }
 
 
-
+/*
 async function fetchUserEmail(token) {
     try {
         const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
@@ -149,4 +151,4 @@ async function fetchUserEmail(token) {
         return "";
     }
 }
-
+*/
