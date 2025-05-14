@@ -47,8 +47,13 @@ async function initQRTagAll() {
     }
 
     // ✅ Show QR as early as possible
-    generateQRCodeCanvas(id);
+    //generateQRCodeCanvas(id);
 
+    window.onload = () => {
+        generateQRCodeCanvas(id);
+    };
+
+    //return;
 
     document.getElementById("spinner").innerText = "⏳ Verifying ID...";
     idText.textContent = id;
@@ -67,14 +72,16 @@ async function initQRTagAll() {
 
     //CMEDIT
 
+    //return;
 
+/*
     if (localStorage.getItem(cacheKey) === "VALID") {
         console.log("✅ Cached VALID");
         spinner.style.display = "none";
         await loadAndRenderAsset(id);
         return;
     }
-
+*/
 
     // ✅ Load via proxy iframe
     await loadProxyIframe();

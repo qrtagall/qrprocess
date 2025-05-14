@@ -5,6 +5,8 @@ let selectedUploadedFileName = "";
 let selectedUploadedFileData = "";
 let selectedUploadedFileLink = "";
 
+
+/*
 // QR Code Generation
 function generateQRCodeCanvas(id, canvasId = "qrCanvas", size = 160) {
     const qrUrl = `https://process.qrtagall.com/?id=${id}`;
@@ -13,6 +15,38 @@ function generateQRCodeCanvas(id, canvasId = "qrCanvas", size = 160) {
         if (error) console.error("QR generation failed:", error);
     });
 }
+*/
+
+
+function generateQRCodeCanvas(id, canvasId = "qrCanvas", size = 160) {
+    window.requestAnimationFrame(() => {
+        const qrUrl = `https://process.qrtagall.com/?id=${id}`;
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) {
+            console.warn(`Canvas with id '${canvasId}' not found.`);
+            return;
+        }
+        QRCode.toCanvas(canvas, qrUrl, { width: size }, (error) => {
+            if (error) console.error("QR generation failed:", error);
+        });
+    });
+}
+
+
+/*
+function generateQRCodeCanvas(id, canvasId = "qrCanvas", size = 160) {
+    const qrUrl = `https://process.qrtagall.com/?id=${encodeURIComponent(id)}`;
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) {
+        console.warn("❌ Canvas not found:", canvasId);
+        return;
+    }
+    QRCode.toCanvas(canvas, qrUrl, { width: size }, (error) => {
+        if (error) console.error("⚠️ QR generation failed:", error);
+    });
+}
+
+ */
 
 // Update background panel color based on access type
 function updatePanelBackground(colorCode) {
