@@ -445,7 +445,7 @@ function createAssetBlock(asset, index, isArtifactOwner) {
 
 
 // Edit button click handler
-function editAlert() {
+function editAlertx() {
 
 
 
