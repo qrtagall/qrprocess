@@ -448,6 +448,8 @@ function createAssetBlock(asset, index, isArtifactOwner) {
 function editAlert() {
 
 
+    console.log("Alert Called...........");
+
     isOwner = isSessionUserOwnerOfAnyBlock();
     if (!isOwner)
     {
@@ -458,6 +460,9 @@ function editAlert() {
         enableEditMode();
     }
 }
+
+
+
 
 console.log("🔄 Verifying ID now...");
 // Init
