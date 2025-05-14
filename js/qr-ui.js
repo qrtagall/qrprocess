@@ -76,6 +76,7 @@ function showOwnerConfirmModal() {
     const heading = modal.querySelector("h3");
     const subtext = modal.querySelector("p");
 
+    console.log("showOwnerConfirmModal....");
     if (sessionEmail) {
         heading.innerHTML = `⚠️ This QR is owned by another user.`;
         subtext.innerHTML = `You are logged in as <b>${sessionEmail}</b>.<br>Would you like to switch account?`;
