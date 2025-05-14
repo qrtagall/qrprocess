@@ -450,6 +450,7 @@ function editAlert() {
 
 
     console.log("Alert Called...........");
+    /*
 try {
     isOwner = isSessionUserOwnerOfAnyBlock();
     if (!isOwner) {
@@ -462,7 +463,7 @@ try {
 }catch(err){
     console.log("Error>>>>>>>",err);
 }
-
+*/
 
 }
 
