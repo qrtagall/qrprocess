@@ -276,7 +276,12 @@
         .asset-banner {
             width: 100%;
             max-width: 720px;
-            margin: 12px auto;
+            margin: 16px auto;
+            padding: 12px 16px;
             box-sizing: border-box;
+            background-color: #fff8e1; /* soft yellow */
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
         }
 
