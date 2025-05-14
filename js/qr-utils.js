@@ -270,10 +270,7 @@ function buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, l
     const wrapper = document.createElement("div");
     wrapper.className = "asset-banner";
 
-    const innerBox = document.createElement("div");
-    innerBox.className = "asset-banner-inner";
-
-    // 🔹 Title Row
+    // Title Row
     const titleRow = document.createElement("div");
     titleRow.style.display = "flex";
     titleRow.style.justifyContent = "space-between";
@@ -288,6 +285,7 @@ function buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, l
     titleText.innerText = `${serial}. ${storageIcon} ${description || "-"}`;
     titleRow.appendChild(titleText);
 
+    // Edit button (if owner)
     if (editMode && artifactOwner) {
         const editBtn = document.createElement("button");
         editBtn.innerText = "✏️";
@@ -298,7 +296,7 @@ function buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, l
         titleRow.appendChild(editBtn);
     }
 
-    // 🔹 Info Block
+    // Info block
     const infoBlock = document.createElement("div");
     infoBlock.className = "asset-banner-info";
     infoBlock.innerHTML = `
@@ -306,13 +304,13 @@ function buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, l
         <div>🆔 ${linkId || "-"}</div>
     `;
 
-    // 🧱 Combine & Return
-    innerBox.appendChild(titleRow);
-    innerBox.appendChild(infoBlock);
-    wrapper.appendChild(innerBox);
+    // Combine and return
+    wrapper.appendChild(titleRow);
+    wrapper.appendChild(infoBlock);
 
     return wrapper;
 }
+
 
 
 

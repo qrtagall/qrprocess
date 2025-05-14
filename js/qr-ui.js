@@ -701,37 +701,31 @@ function renderMultipleRemoteBlocks(remoteList) {
             const storageIcon = storageType === "LOCAL" ? "📂" : "🌐";
             const serial = idx + 1;
 
-            const outerBlock = document.createElement("div");
-            outerBlock.className = "asset-block";
+            const headerBlock = buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, linkId, artifactOwner });
 
-            // HEADER
-            const header = buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, linkId, artifactOwner });
-            header.classList.add("asset-banner");
-
-            // DETAILS CONTAINER
             const contentDiv = document.createElement("div");
-            contentDiv.className = "asset-content";
-            contentDiv.style.display = "none"; // hidden by default
+            contentDiv.className = "remote-content";
+            contentDiv.style.display = "none"; // default collapsed
 
-            // COLOR SCHEME
+            // 🎨 Color logic
             const shadeApproved = adjustColor(BaseColorApproved, BaseColorOffset * 0);
             const shadeNotApproved = adjustColor(BaseColorNotApproved, BaseColorOffset * 0);
             const shadeDefault = adjustColor(BaseColorDefault, BaseColorOffset * 0);
 
             if (sessionEmail) {
                 if (artifactOwner) {
-                    header.style.backgroundColor = shadeApproved;
+                    headerBlock.style.backgroundColor = shadeApproved;
                     contentDiv.style.backgroundColor = shadeApproved;
                 } else {
-                    header.style.backgroundColor = shadeNotApproved;
+                    headerBlock.style.backgroundColor = shadeNotApproved;
                     contentDiv.style.backgroundColor = shadeNotApproved;
                 }
             } else {
-                header.style.backgroundColor = shadeDefault;
+                headerBlock.style.backgroundColor = shadeDefault;
                 contentDiv.style.backgroundColor = shadeDefault;
             }
 
-            // COLLAPSE TOGGLE
+            // 🤖 Logic for loading assets
             let isLoaded = false;
             const isBlockEditable = sessionEmail && email && (sessionEmail.toLowerCase() === email.toLowerCase());
 
@@ -750,39 +744,41 @@ function renderMultipleRemoteBlocks(remoteList) {
                 }, 200);
             };
 
-            // CLICK HANDLER
+            // 👇 Collapse behavior
             if (!editMode || (editMode && artifactOwner)) {
-                header.onclick = () => {
-                    const isActive = header.classList.toggle("active");
-                    contentDiv.style.display = isActive ? "block" : "none";
+                headerBlock.style.cursor = "pointer";
+                headerBlock.onclick = () => {
+                    const isActive = contentDiv.style.display === "block";
+                    contentDiv.style.display = isActive ? "none" : "block";
 
-                    if (isActive && !isLoaded) {
+                    if (!isActive && !isLoaded) {
                         loadAssets();
+                    }
+
+                    if (editMode && artifactOwner) {
+                        const editActions = document.getElementById("editActions");
+                        editActions.style.display = "none"; // or "flex" if needed
                     }
                 };
 
-                // Auto-expand if editing own asset
+                // auto-expand for editable blocks
                 if (editMode && artifactOwner) {
-                    header.onclick();
-                    document.getElementById("editActions").style.display = "none";
+                    headerBlock.onclick();
                 }
-            } else {
-                // Not allowed to edit
-                header.style.backgroundColor = "#bbb";
-                header.onclick = () => alert("You can't edit these artifacts!");
+            } else if (editMode && !artifactOwner) {
+                headerBlock.style.backgroundColor = "#bbb";
+                headerBlock.onclick = () => alert("You can't edit this Artifact!");
             }
 
-            // Auto-expand the last one in view mode
+            // 🔁 Auto-expand the last one when not in editMode
             if (!editMode && idx === remoteList.length - 1) {
-                header.classList.add("active");
                 contentDiv.style.display = "block";
                 loadAssets();
             }
 
-            // ASSEMBLE
-            outerBlock.appendChild(header);
-            outerBlock.appendChild(contentDiv);
-            assetLinks.appendChild(outerBlock);
+            // 📦 Final append
+            assetLinks.appendChild(headerBlock);
+            assetLinks.appendChild(contentDiv);
         });
 
         showSpinner(false);

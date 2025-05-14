@@ -446,7 +446,11 @@ function createAssetBlock(asset, index, isArtifactOwner) {
 
 // Edit button click handler
 function editAlert() {
-    if (!isOwner) {
+
+
+    isOwner = isSessionUserOwnerOfAnyBlock();
+    if (!isOwner)
+    {
         showOwnerConfirmModal();
     } else {
         enableEditMode();
