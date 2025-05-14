@@ -8,19 +8,20 @@
 
 
         body {
+			padding-top: 60px;
+            margin: 0;
+            padding: 0;
+            background: #f4f4f4;
+            font-family: 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            display: block;
+            overflow-y: auto;
 			
-			margin: 0;
-			background: #f4f4f4;
-			font-family: 'Segoe UI', sans-serif;
-			min-height: 100vh;
-			display: flex;
-			flex-direction: column;
-			align-items: center;
+			
 
         }
 
         #popup {
-			padding-top: 60px;
             position: relative;
             background: white;
             padding: 30px;
