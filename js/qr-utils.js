@@ -248,6 +248,7 @@ function buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, l
     const infoBlock = document.createElement("div");
     infoBlock.style.textAlign = "center";
     infoBlock.style.fontSize = "13px";
+    infoBlock.className = "asset-banner-info";
     infoBlock.innerHTML = `
         <div>👤 ${maskEmail}</div>
         <div>🆔 ${linkId || "-"}</div>

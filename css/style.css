@@ -285,3 +285,13 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.06);
         }
 
+        .asset-banner-info {
+            width: 100%;
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 4px 12px;
+            box-sizing: border-box;
+            font-size: 13px;
+            text-align: center;
+        }
+
