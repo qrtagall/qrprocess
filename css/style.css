@@ -318,3 +318,37 @@
             font-size: 13px;
             text-align: center;
         }
+
+
+
+        .asset-block {
+            width: 100%;
+            max-width: 720px;
+            margin: 12px auto;
+            box-sizing: border-box;
+        }
+
+        .asset-banner {
+            padding: 10px 14px;
+            font-size: 15px;
+            border-radius: 8px 8px 0 0;
+            border: 1px solid #aaa;
+            cursor: pointer;
+            box-sizing: border-box;
+            font-weight: bold;
+        }
+
+        .asset-banner.active {
+            border-bottom: none;
+        }
+
+        .asset-content {
+            display: none;
+            border: 1px solid #aaa;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            padding: 10px 14px;
+            box-sizing: border-box;
+            background: #fff;
+        }
+

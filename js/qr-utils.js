@@ -315,6 +315,9 @@ function buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, l
 }
 
 
+
+
+
 function getArtifactByIndex(linkId, indexInBlock) {
     const block = globalRemoteAssetList.find(b => b.linkId === linkId);
     if (!block || !block.assets || indexInBlock < 0 || indexInBlock >= block.assets.length) {

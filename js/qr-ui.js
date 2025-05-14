@@ -547,6 +547,7 @@ function renderMultipleRemoteBlocks(remoteList) {
 
 /*********************************************************************************************************/
 
+/*
 function renderMultipleRemoteBlocks(remoteList) {
     showSpinner(true);
 
@@ -571,16 +572,7 @@ function renderMultipleRemoteBlocks(remoteList) {
             const serial = idx + 1;
 
 
-            /*
-            const editDescription = document.createElement("editDescriptionModal");
-            collapsible.innerHTML = `
-        <div style="text-align: center; white-space: pre-line;line-height: 0.8;">
-            <b>${serial}. ${storageIcon} ${description || "-"}</b><br>
-            <span style="font-size: 13px;">👤 ${maskEmail}</span><br>
-            <span style="font-size: 13px;">🆔 ${linkId || "-"}</span>
-        </div>
-    `;
-            */
+
             collapsible.innerHTML = ""; // Clear old
             const headerBlock = buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, linkId, artifactOwner });
             collapsible.appendChild(headerBlock);
@@ -591,16 +583,7 @@ function renderMultipleRemoteBlocks(remoteList) {
             const contentDiv = document.createElement("div");
             contentDiv.className = "remote-content";
 
-            /*
-            if (isOwner) {
-                updatePanelBackground("#e6ffe6");
-                editBtn.innerHTML = "✏️ Edit Details";
-            } else {
-                updatePanelBackground(sessionEmail ? "#ffdddd" : "#fffbe6");
-                editBtn.innerHTML = sessionEmail ? "🔐 Log-in as Owner<br>to Edit Details" : "🔐 Log-in to Edit Details";
-            }
 
-             */
 
             const shadeApproved = adjustColor(BaseColorApproved, BaseColorOffset*0);
             const shadeNotApproved = adjustColor(BaseColorNotApproved, BaseColorOffset*0);
@@ -702,6 +685,111 @@ function renderMultipleRemoteBlocks(remoteList) {
         showSpinner(false);
     }, 50);
 }
+*/
+
+
+function renderMultipleRemoteBlocks(remoteList) {
+    showSpinner(true);
+
+    setTimeout(() => {
+        const assetLinks = document.getElementById("assetLinks");
+        assetLinks.innerHTML = "";
+
+        remoteList.forEach(({ email, storageType, assets, description, linkId }, idx) => {
+            const artifactOwner = (email === sessionEmail);
+            const maskEmail = maskEmailUser(email);
+            const storageIcon = storageType === "LOCAL" ? "📂" : "🌐";
+            const serial = idx + 1;
+
+            const outerBlock = document.createElement("div");
+            outerBlock.className = "asset-block";
+
+            // HEADER
+            const header = buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, linkId, artifactOwner });
+            header.classList.add("asset-banner");
+
+            // DETAILS CONTAINER
+            const contentDiv = document.createElement("div");
+            contentDiv.className = "asset-content";
+            contentDiv.style.display = "none"; // hidden by default
+
+            // COLOR SCHEME
+            const shadeApproved = adjustColor(BaseColorApproved, BaseColorOffset * 0);
+            const shadeNotApproved = adjustColor(BaseColorNotApproved, BaseColorOffset * 0);
+            const shadeDefault = adjustColor(BaseColorDefault, BaseColorOffset * 0);
+
+            if (sessionEmail) {
+                if (artifactOwner) {
+                    header.style.backgroundColor = shadeApproved;
+                    contentDiv.style.backgroundColor = shadeApproved;
+                } else {
+                    header.style.backgroundColor = shadeNotApproved;
+                    contentDiv.style.backgroundColor = shadeNotApproved;
+                }
+            } else {
+                header.style.backgroundColor = shadeDefault;
+                contentDiv.style.backgroundColor = shadeDefault;
+            }
+
+            // COLLAPSE TOGGLE
+            let isLoaded = false;
+            const isBlockEditable = sessionEmail && email && (sessionEmail.toLowerCase() === email.toLowerCase());
+
+            const loadAssets = () => {
+                const spinner = document.createElement("div");
+                spinner.className = "spinner";
+                contentDiv.appendChild(spinner);
+
+                setTimeout(() => {
+                    spinner.remove();
+                    assets.forEach((asset, i) => {
+                        const block = createAssetBlockFromHTML(asset, i, isBlockEditable, artifactOwner, linkId, artifactOwner);
+                        contentDiv.appendChild(block);
+                    });
+                    isLoaded = true;
+                }, 200);
+            };
+
+            // CLICK HANDLER
+            if (!editMode || (editMode && artifactOwner)) {
+                header.onclick = () => {
+                    const isActive = header.classList.toggle("active");
+                    contentDiv.style.display = isActive ? "block" : "none";
+
+                    if (isActive && !isLoaded) {
+                        loadAssets();
+                    }
+                };
+
+                // Auto-expand if editing own asset
+                if (editMode && artifactOwner) {
+                    header.onclick();
+                    document.getElementById("editActions").style.display = "none";
+                }
+            } else {
+                // Not allowed to edit
+                header.style.backgroundColor = "#bbb";
+                header.onclick = () => alert("You can't edit these artifacts!");
+            }
+
+            // Auto-expand the last one in view mode
+            if (!editMode && idx === remoteList.length - 1) {
+                header.classList.add("active");
+                contentDiv.style.display = "block";
+                loadAssets();
+            }
+
+            // ASSEMBLE
+            outerBlock.appendChild(header);
+            outerBlock.appendChild(contentDiv);
+            assetLinks.appendChild(outerBlock);
+        });
+
+        showSpinner(false);
+    }, 50);
+}
+
+
 
 
 /*************** HELPER routines ***********************/
