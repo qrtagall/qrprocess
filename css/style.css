@@ -18,7 +18,16 @@
             display: block;
             overflow-y: auto;
 
-        }
+body {
+	padding-top: 60px;
+    margin: 0;
+    background: #f4f4f4;
+    font-family: 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
 
         #popup {
             position: relative;
@@ -172,7 +181,7 @@
             max-width: 800px;
             margin: 40px auto;
             padding: 30px;
-            background-color: #ffffee;
+            background-color: white;
             border-radius: 12px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
@@ -272,36 +281,6 @@
             100% { transform: rotate(360deg); }
         }
 
-
-        .collapsible {
-            background-color: #ffa500;
-            color: darkblue;
-            cursor: pointer;
-            padding: 12px;
-            width: 100%;
-            border: none;
-            text-align: left;
-            outline: none;
-            font-size: 15px;
-            border-radius: 6px;
-            margin-top: 10px;
-        }
-        .collapsible::after {
-            content: ' ▼';
-            float: right;
-        }
-        .collapsible.active::after {
-            content: " ▲";
-        }
-        .remote-content {
-            padding: 10px;
-            display: none;
-            overflow: hidden;
-            background-color: #fff9f0;
-            border: 1px solid #ffa500;
-            border-radius: 6px;
-            margin-bottom: 15px;
-        }
-
+		
 
 
