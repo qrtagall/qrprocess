@@ -67,7 +67,7 @@ function toggleInfoPopup() {
 }
 
 // 🌐 Fetch user's email using OAuth token
-async function fetchUserEmail1(token) {
+async function fetchUserEmail(token) {
     try {
         const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
             headers: { Authorization: `Bearer ${token}` }
