@@ -272,14 +272,14 @@
         }
 
 
-
+/*
         .asset-banner {
             width: 100%;
             max-width: 720px;
             margin: 16px auto;
             padding: 12px 16px;
             box-sizing: border-box;
-            background-color: #fff8e1; /* soft yellow */
+            background-color: #fff8e1;
             border: 1px solid #ddd;
             border-radius: 8px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.06);
@@ -294,4 +294,27 @@
             font-size: 13px;
             text-align: center;
         }
+*/
 
+
+        .asset-banner {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            margin: 12px auto;
+        }
+
+        .asset-banner-inner {
+            width: 100%;
+            max-width: 720px;
+            padding: 12px;
+            background-color: #fff8e1;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        .asset-banner-info {
+            font-size: 13px;
+            text-align: center;
+        }

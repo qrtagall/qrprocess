@@ -219,7 +219,7 @@ function printQR() {
 }
 
 
-
+/*
 function buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, linkId, artifactOwner }) {
     const titleRow = document.createElement("div");
     titleRow.style.display = "flex";
@@ -258,6 +258,58 @@ function buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, l
     wrapper.className = "asset-banner"; // use custom CSS class
     wrapper.appendChild(titleRow);
     wrapper.appendChild(infoBlock);
+
+    return wrapper;
+}
+
+ */
+
+
+
+function buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, linkId, artifactOwner }) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "asset-banner";
+
+    const innerBox = document.createElement("div");
+    innerBox.className = "asset-banner-inner";
+
+    // 🔹 Title Row
+    const titleRow = document.createElement("div");
+    titleRow.style.display = "flex";
+    titleRow.style.justifyContent = "space-between";
+    titleRow.style.alignItems = "center";
+    titleRow.style.lineHeight = "1.4";
+    titleRow.style.fontWeight = "bold";
+    titleRow.style.marginBottom = "6px";
+
+    const titleText = document.createElement("div");
+    titleText.style.flexGrow = "1";
+    titleText.style.textAlign = "center";
+    titleText.innerText = `${serial}. ${storageIcon} ${description || "-"}`;
+    titleRow.appendChild(titleText);
+
+    if (editMode && artifactOwner) {
+        const editBtn = document.createElement("button");
+        editBtn.innerText = "✏️";
+        editBtn.title = "Edit Description";
+        editBtn.style.fontSize = "14px";
+        editBtn.style.marginLeft = "10px";
+        editBtn.onclick = () => editDescription(linkId, description);
+        titleRow.appendChild(editBtn);
+    }
+
+    // 🔹 Info Block
+    const infoBlock = document.createElement("div");
+    infoBlock.className = "asset-banner-info";
+    infoBlock.innerHTML = `
+        <div>👤 ${maskEmail}</div>
+        <div>🆔 ${linkId || "-"}</div>
+    `;
+
+    // 🧱 Combine & Return
+    innerBox.appendChild(titleRow);
+    innerBox.appendChild(infoBlock);
+    wrapper.appendChild(innerBox);
 
     return wrapper;
 }
