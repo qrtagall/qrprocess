@@ -6,29 +6,19 @@
         }
 
 
-
         body {
-
-			padding-top: 80px;
+            padding-top: 80px;
             margin: 0;
-            padding: 0;
             background: #f4f4f4;
             font-family: 'Segoe UI', sans-serif;
             min-height: 100vh;
-            display: block;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             overflow-y: auto;
+        }
 
-body {
-	padding-top: 60px;
-    margin: 0;
-    background: #f4f4f4;
-    font-family: 'Segoe UI', sans-serif;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
+        
         #popup {
             position: relative;
             background: white;
