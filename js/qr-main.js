@@ -364,10 +364,13 @@ async function renderAssetPanel(id) {
     editBtn.classList.remove("disabled-button");
     editBtn.classList.add("enabled");
 
+    /*
     editBtn.onclick = () => {
         editMode = true;
         renderMultipleRemoteBlocks(remoteList);
     };
+
+     */
 }
 
 
@@ -445,12 +448,12 @@ function createAssetBlock(asset, index, isArtifactOwner) {
 
 
 // Edit button click handler
-function editAlertx() {
+function editAlert() {
 
 
 
     console.log("Alert Called...........");
-    /*
+
 try {
     isOwner = isSessionUserOwnerOfAnyBlock();
     if (!isOwner) {
@@ -459,11 +462,14 @@ try {
     } else {
         console.log("owner");
         enableEditMode();
+
+
+
     }
 }catch(err){
     console.log("Error>>>>>>>",err);
 }
-*/
+
 
 }
 

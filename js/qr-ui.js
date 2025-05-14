@@ -58,8 +58,11 @@ function updatePanelBackground(colorCode) {
 function enableEditMode() {
     editMode = true;
     showSpinner(true);
-    
-	
+
+
+    renderMultipleRemoteBlocks(globalRemoteAssetList);//remoteList);
+
+    /*
 	fetchAssetData(getQueryParam("id")).then(({ data }) => {
         renderAssetPanel(data);
         showSpinner(false); // ✅ Hide it after rendering
@@ -67,6 +70,7 @@ function enableEditMode() {
         console.error("❌ Failed to fetch data in edit mode", err);
         showSpinner(false); // ✅ Hide even on error
     });
+    */
 	
 }
 
