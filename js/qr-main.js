@@ -448,17 +448,22 @@ function createAssetBlock(asset, index, isArtifactOwner) {
 function editAlert() {
 
 
-    console.log("Alert Called...........");
 
+    console.log("Alert Called...........");
+try {
     isOwner = isSessionUserOwnerOfAnyBlock();
-    if (!isOwner)
-    {
+    if (!isOwner) {
         console.log("Not owner");
         showOwnerConfirmModal();
     } else {
         console.log("owner");
         enableEditMode();
     }
+}catch(err){
+    console.log("Error>>>>>>>",err);
+}
+
+
 }
 
 
