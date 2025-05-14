@@ -451,8 +451,10 @@ function editAlert() {
     isOwner = isSessionUserOwnerOfAnyBlock();
     if (!isOwner)
     {
+        console.log("Not owner");
         showOwnerConfirmModal();
     } else {
+        console.log("owner");
         enableEditMode();
     }
 }
