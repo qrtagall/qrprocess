@@ -29,8 +29,10 @@ function handleLogout() {
 }
 */
 
-function handleLogout() {
-    // 🧹 Clear local/global state
+
+function cleandata()
+{
+
     isOwner = false;
     isArtifactOwner = false;
     sessionEmail = "";
@@ -54,6 +56,13 @@ function handleLogout() {
         GToken = null;
     }
 
+
+}
+
+function handleLogout() {
+    // 🧹 Clear local/global state
+
+    cleandata();
     alert("🔓 You have been logged out.");
 
     // ✅ Reload just content (if possible), fallback to full reload

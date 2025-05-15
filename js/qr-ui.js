@@ -91,7 +91,13 @@ function showOwnerConfirmModal() {
         localStorage.removeItem("qr_claimed_email");
         sessionStorage.removeItem("qr_claimed_email");
 
-        googleLoginForEdit(id);
+
+        cleandata();
+        setTimeout(() => {
+            googleLoginForEdit(id); // Safe, clean login with prompt
+        }, 100); // slight delay ensures storage clears
+
+
     };
 }
 
