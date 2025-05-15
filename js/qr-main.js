@@ -457,9 +457,9 @@ function editAlert() {
 
     console.log("Alert Called...........");
     isOwner = isSessionUserOwnerOfAnyBlock();
-    console.log("iSession Email>>>>>>>>>>>>>>>", sessionEmail);
-    console.log("editMode>>>>>>>>>>>>>>>", editMode);
-    return;
+    //console.log("iSession Email>>>>>>>>>>>>>>>", sessionEmail);
+    //console.log("editMode>>>>>>>>>>>>>>>", isOwner);
+    //return;
 
 try {
 
