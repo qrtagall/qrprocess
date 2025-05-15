@@ -213,7 +213,8 @@ async function triggerLink_get(params, modalId = null) {
         }
 
         alert("✅ Artifact info saved.");
-        location.reload();
+        //location.reload();
+        await loadAndRenderAsset(getQueryParam("id");
     };
 
     // ✅ Step 3: Build URL
@@ -233,7 +234,9 @@ async function triggerLink_get(params, modalId = null) {
         console.warn("⚠️ Script load failed. Assuming optimistic success.");
         delete window[callbackName];
         document.body.removeChild(script);
-        location.reload();
+        //location.reload();
+        //cmedit
+        await loadAndRenderAsset(getQueryParam("id");
     };
 
     // ⏳ Timeout fallback
@@ -241,7 +244,8 @@ async function triggerLink_get(params, modalId = null) {
         delete window[callbackName];
         if (spinner) spinner.style.display = "none";
         alert("✅ Saved (assumed). Reloading...");
-        location.reload();
+        //location.reload();
+        await loadAndRenderAsset(getQueryParam("id");
     }, 5000);
 
     // 🚀 Fire request
@@ -335,7 +339,8 @@ async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null
         const timeout = setTimeout(() => {
             if (spinner) spinner.style.display = "none";
             alert("✅ Artifact info submitted (fallback assumed success).");
-            location.reload();
+            //location.reload();
+            await loadAndRenderAsset(getQueryParam("id");
             resolve();
         }, 4000);
 
@@ -343,7 +348,8 @@ async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null
             clearTimeout(timeout);
             if (spinner) spinner.style.display = "none";
             alert("✅ Artifact info submitted.");
-            location.reload();
+            //location.reload();
+            await loadAndRenderAsset(getQueryParam("id");
             resolve();
         };
 
