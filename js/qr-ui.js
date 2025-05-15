@@ -724,6 +724,9 @@ function renderMultipleRemoteBlocks(remoteList) {
             contentDiv.className = "remote-content";
             // contentDiv.style.display = "none"; // default collapsed
 
+            console.log(">>>>>>ASSETS",assets);
+            console.log(">>>>>>ASSETS Length",assets.length);
+/*
             if (assets.length === 0 && isBlockEditable && editMode) {
                 const placeholder = document.createElement("div");
                 placeholder.className = "artifact-block";
@@ -734,7 +737,7 @@ function renderMultipleRemoteBlocks(remoteList) {
     `;
                 contentDiv.appendChild(placeholder);
             }
-
+*/
 
             // 🎨 Color logic
             const shadeApproved = adjustColor(BaseColorApproved, BaseColorOffset * 0);
