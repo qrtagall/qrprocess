@@ -451,6 +451,8 @@ function renderMultipleRemoteBlocks(remoteList) {
             contentDiv.className = "remote-content";
            // contentDiv.style.display = "none"; // default collapsed
 
+                console.log("Assests>>", assets);
+            console.log("Assests size>>", assets.length);
 
             if (assets.length === 0 && isBlockEditable && editMode) {
                 const placeholder = document.createElement("div");
@@ -463,7 +465,7 @@ function renderMultipleRemoteBlocks(remoteList) {
                 contentDiv.appendChild(placeholder);
             }
 
-            
+
             // 🎨 Color logic
             const shadeApproved = adjustColor(BaseColorApproved, BaseColorOffset * 0);
             const shadeNotApproved = adjustColor(BaseColorNotApproved, BaseColorOffset * 0);
