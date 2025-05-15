@@ -865,12 +865,12 @@ function openAddModal(afterRowNum, isEditMode = false, linkId = null) {
     // Setup insert offset
     if (afterRowNum === -1) {
         //insertAfterRow = -2;
-        insertAfterRow = 0;
+        insertAfterRow = -1;
         modalTitle.innerText = "➕ Add Artifact at Top";
     }
     /*
-    if (afterRowNum === -2) {
-        insertAfterRow = -1;
+    if (afterRowNum === -1) {
+        insertAfterRow = -2;
         modalTitle.innerText = "➕ Add Artifact at Top";
     }
       else {
@@ -878,7 +878,7 @@ function openAddModal(afterRowNum, isEditMode = false, linkId = null) {
         modalTitle.innerText = "➕ Add Artifact Info";
     }*/
     else {
-        insertAfterRow = afterRowNum+1;
+        insertAfterRow = afterRowNum;
         modalTitle.innerText = "➕ Add Artifact Info";
     }
 
