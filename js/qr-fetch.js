@@ -102,8 +102,6 @@ async function fetchAllRemoteSheets(id) {
 
 
 
-let GToken = null;
-//let GUserEmail = null;
 
 /*
 function triggerLink_get(params, modalId = null) {
