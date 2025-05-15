@@ -112,39 +112,6 @@ function triggerLink_get(params, modalId = null) {
 
 
 
-    let tokenx, userEmailx;
-    if(!GToken) {
-        try {
-            tokenx = await new Promise((resolve, reject) => {
-                const client = google.accounts.oauth2.initTokenClient({
-                    client_id: '121290253918-cae49r46mo3r9f9rhd7rq6ao9ae69jjv.apps.googleusercontent.com',
-                    scope: 'https://www.googleapis.com/auth/userinfo.email',
-                    prompt: 'consent',
-                    callback: (response) => {
-                        if (response.access_token) {
-                            resolve(response.access_token);
-                        } else {
-                            reject("❌ Failed to acquire OAuth token.");
-                        }
-                    }
-                });
-                client.requestAccessToken();
-            });
-
-            GToken = tokenx;
-            userEmailx = await fetchUserEmail(tokenx);
-            console.log("✅ Gmail user:", userEmailx);
-        } catch (e) {
-            alert("❌ Gmail authentication failed.");
-            if (spinner) spinner.style.display = "none";
-            return;
-        }
-    }
-
-
-
-
-
 
     const callbackName = `qrUpdateCallback_${Date.now()}`;
     const script = document.createElement("script");
@@ -215,46 +182,31 @@ function triggerLink_get(params, modalId = null) {
 */
 
 
+let GToken = null;
 
 async function triggerLink_get(params, modalId = null) {
     const spinner = document.getElementById("fullScreenSpinner");
     if (spinner) spinner.style.display = "flex";
 
-    // ✅ Step 1: Ensure user is authenticated
+    // 🔐 Step 1: Acquire token (reuse if already fetched)
     if (!GToken) {
         try {
-            GToken = await new Promise((resolve, reject) => {
-                const client = google.accounts.oauth2.initTokenClient({
-                    client_id: '121290253918-cae49r46mo3r9f9rhd7rq6ao9ae69jjv.apps.googleusercontent.com',
-                    scope: 'https://www.googleapis.com/auth/userinfo.email',
-                    prompt: 'consent',
-                    callback: (response) => {
-                        if (response.access_token) {
-                            resolve(response.access_token);
-                        } else {
-                            reject("❌ Failed to acquire OAuth token.");
-                        }
-                    }
-                });
-                client.requestAccessToken();
-            });
-
-            console.log("✅ Gmail access token obtained.");
-        } catch (e) {
-            alert("❌ Gmail authentication failed.");
+            GToken = await getAccessToken();
+            console.log("✅ Access token obtained.");
+        } catch (err) {
+            alert(err);
             if (spinner) spinner.style.display = "none";
             return;
         }
     }
 
-    // ✅ Step 2: Build GET request URL
+    // ✅ Step 2: Create JSONP callback
     const callbackName = `qrUpdateCallback_${Date.now()}`;
     const script = document.createElement("script");
 
     window[callbackName] = function (response) {
         delete window[callbackName];
         document.body.removeChild(script);
-
         if (spinner) spinner.style.display = "none";
 
         if (!response || !response.success) {
@@ -266,6 +218,7 @@ async function triggerLink_get(params, modalId = null) {
         location.reload();
     };
 
+    // ✅ Step 3: Build URL
     const urlParams = new URLSearchParams(params);
     const storageType = urlParams.get("storageType") || "REMOTE";
     const baseUrl = storageType === "LOCAL" ? AppScriptBaseUrl_New : AppScriptUserUrl;
@@ -276,16 +229,16 @@ async function triggerLink_get(params, modalId = null) {
     console.log("Final GET url>>>", targetUrl);
     script.src = targetUrl;
 
-    // Error handling
+    // ❗ Error fallback
     script.onerror = () => {
         if (spinner) spinner.style.display = "none";
-        console.warn("⚠️ Script load failed, assuming update was attempted.");
+        console.warn("⚠️ Script load failed. Assuming optimistic success.");
         delete window[callbackName];
         document.body.removeChild(script);
         location.reload();
     };
 
-    // Fallback timeout
+    // ⏳ Timeout fallback
     setTimeout(() => {
         delete window[callbackName];
         if (spinner) spinner.style.display = "none";
@@ -293,6 +246,7 @@ async function triggerLink_get(params, modalId = null) {
         location.reload();
     }, 5000);
 
+    // 🚀 Fire request
     document.body.appendChild(script);
 }
 
@@ -317,10 +271,27 @@ async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null
         if (modal) modal.style.display = "none";
     }
 
+
+
+
+
     const spinner = document.getElementById("fullScreenSpinner");
     if (spinner) spinner.style.display = "flex";
 
     await new Promise(resolve => setTimeout(resolve, 50)); // let spinner show
+
+
+    // ✅ Enforce Gmail auth via token (same as _get)
+    if (!GToken) {
+        try {
+            GToken = await getAccessToken();
+            console.log("✅ Gmail token verified for POST");
+        } catch (err) {
+            alert(err);
+            if (spinner) spinner.style.display = "none";
+            return;
+        }
+    }
 
     const isArtifactowner=isSessionUserOwnerOfAnyBlock();
     //const _userEmail = sessionEmail;
