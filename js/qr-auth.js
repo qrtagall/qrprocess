@@ -16,11 +16,58 @@ if (sessionEmail) {
     console.log("📧 Logged in as:", sessionEmail);
 }
 
+/*
 // 🔓 Logout handler
 function handleLogout() {
+    isOwner = false;
+    sessionEmail = "";
+    isArtifactOwner = false;
     localStorage.removeItem("qr_claimed_email");
     sessionStorage.removeItem("qr_claimed_email");
     alert("🔓 You have been logged out.");
+    window.location.reload();
+}
+*/
+
+function handleLogout() {
+    // 🧹 Clear local/global state
+    isOwner = false;
+    isArtifactOwner = false;
+    sessionEmail = "";
+
+    // 🗑️ Clear stored email/token
+    localStorage.removeItem("qr_claimed_email");
+    sessionStorage.removeItem("qr_claimed_email");
+
+    // 🔒 Attempt to revoke Gmail token (optional but good hygiene)
+    if (window.GToken) {
+        fetch(`https://oauth2.googleapis.com/revoke?token=${GToken}`, {
+            method: "POST",
+            headers: {
+                'Content-type': 'application/x-www-form-urlencoded'
+            }
+        }).then(() => {
+            console.log("🔒 Token revoked");
+        }).catch((err) => {
+            console.warn("⚠️ Token revoke failed:", err);
+        });
+        GToken = null;
+    }
+
+    alert("🔓 You have been logged out.");
+
+    // ✅ Reload just content (if possible), fallback to full reload
+    if (typeof loadAndRenderAsset === "function") {
+        const id = getQueryParam("id");
+        if (id) {
+            loadAndRenderAsset(id).then(() => {
+                console.log("✅ UI refreshed post-logout");
+            });
+            return;
+        }
+    }
+
+    // 🌐 Fallback: full reload if dynamic reload fails
     window.location.reload();
 }
 
