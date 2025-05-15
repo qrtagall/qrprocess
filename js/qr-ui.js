@@ -426,209 +426,8 @@ async function renderInfoBlock(data) {
 
 
 
-/*
-function renderMultipleRemoteBlocks(remoteList) {
-    showSpinner(true);
-
-    // Delay to allow full-screen spinner to paint
-    setTimeout(() => {
-        const assetLinks = document.getElementById("assetLinks");
-        assetLinks.innerHTML = "";
-
-        remoteList.forEach(({ email, storageType, assets }, idx) => {
-            const wrapper = document.createElement("div");
-
-            const collapsible = document.createElement("button");
-            collapsible.className = "collapsible";
-            collapsible.textContent = `Artifacts from ${email} (${storageType})`;
-            wrapper.appendChild(collapsible);
-
-            const contentDiv = document.createElement("div");
-            contentDiv.className = "remote-content";
-            wrapper.appendChild(contentDiv);
-            assetLinks.appendChild(wrapper);
-
-            let isLoaded = false;
-
-            console.log(">>>>>>ASSETS",assets);
-            function loadAssets() {
-                const spinner = document.createElement("div");
-                spinner.className = "spinner";
-                contentDiv.appendChild(spinner);
-
-                setTimeout(() => {
-                    spinner.remove();
-                    assets.forEach((asset, i) => {
-                        const block = createAssetBlockFromHTML(asset, i);
-                        contentDiv.appendChild(block);
-                    });
-                    isLoaded = true;
-                }, 200);
-            }
-
-            collapsible.onclick = function () {
-                const isActive = this.classList.toggle("active");
-                contentDiv.style.display = isActive ? "block" : "none";
-
-                if (isActive && !isLoaded) {
-                    loadAssets();
-                }
-            };
-
-            // Auto-expand last tab
-            if (idx === remoteList.length - 1) {
-                collapsible.classList.add("active");
-                contentDiv.style.display = "block";
-                loadAssets();
-            }
-        });
-
-        showSpinner(false);
-    }, 50);
-}
-*/
-
 /*********************************************************************************************************/
 
-/*
-function renderMultipleRemoteBlocks(remoteList) {
-    showSpinner(true);
-
-    setTimeout(() => {
-        const assetLinks = document.getElementById("assetLinks");
-        assetLinks.innerHTML = "";
-
-        remoteList.forEach(({ email, storageType, assets, description, linkId  }, idx) => {
-
-            let artifactOwner=false;
-            if(email=== sessionEmail)
-                artifactOwner=true;
-
-            const maskEmail=maskEmailUser(email);
-
-            const wrapper = document.createElement("div");
-
-            const collapsible = document.createElement("button");
-            collapsible.className = "collapsible";
-
-            const storageIcon = storageType === "LOCAL" ? "📂" : "🌐";
-            const serial = idx + 1;
-
-
-
-            collapsible.innerHTML = ""; // Clear old
-            const headerBlock = buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, linkId, artifactOwner });
-            collapsible.appendChild(headerBlock);
-
-
-            wrapper.appendChild(collapsible);
-
-            const contentDiv = document.createElement("div");
-            contentDiv.className = "remote-content";
-
-
-
-            const shadeApproved = adjustColor(BaseColorApproved, BaseColorOffset*0);
-            const shadeNotApproved = adjustColor(BaseColorNotApproved, BaseColorOffset*0);
-            const shadeDefault = adjustColor(BaseColorDefault, BaseColorOffset*0);
-            if(sessionEmail) {
-
-                if (artifactOwner) {
-                    collapsible.style.backgroundColor = shadeApproved;//"#e5fee5";
-                    contentDiv.style.backgroundColor = shadeApproved;//"#e6ffe6";
-                } else {
-                    collapsible.style.backgroundColor = shadeNotApproved;//"#fedcdc";
-                    contentDiv.style.backgroundColor = shadeNotApproved;//"#ffdddd";
-                }
-            }
-            else
-            {
-                collapsible.style.backgroundColor = shadeDefault;// "#fefeee";
-                contentDiv.style.backgroundColor = shadeDefault;// "#fefeee";
-            }
-
-            wrapper.appendChild(contentDiv);
-            assetLinks.appendChild(wrapper);
-
-            let isLoaded = false;
-            const isBlockEditable = sessionEmail && email && (sessionEmail.toLowerCase() === email.toLowerCase());
-
-            function loadAssets() {
-                const spinner = document.createElement("div");
-                spinner.className = "spinner";
-                contentDiv.appendChild(spinner);
-
-                setTimeout(() => {
-                    spinner.remove();
-                    assets.forEach((asset, i) => {
-                        const block = createAssetBlockFromHTML(asset, i, isBlockEditable, artifactOwner, linkId, artifactOwner);
-                        contentDiv.appendChild(block);
-                    });
-                    isLoaded = true;
-                }, 200);
-            }
-
-
-            if (!editMode || (editMode && artifactOwner))
-            {
-
-
-                collapsible.onclick = function () {
-                    const isActive = this.classList.toggle("active");
-                    contentDiv.style.display = isActive ? "block" : "none";
-
-                    if (isActive && !isLoaded) {
-
-                        loadAssets();
-
-
-                    }
-                };
-
-                if(editMode && artifactOwner)
-                {
-                    collapsible.onclick();
-                    //collapsible.classList.add("active");
-                    //contentDiv.style.display = "block";
-                    //loadAssets();
-
-                    const editActions = document.getElementById("editActions");
-                    //editActions.style.display = "flex";
-                    editActions.style.display = "none";
-
-
-
-                }
-
-
-            }
-            else if(editMode && !artifactOwner)
-            {
-                collapsible.style.backgroundColor = "#bbb";
-                collapsible.onclick = function () {
-                    alert("You Cant Edit this Artifacts!");
-
-                };
-            }
-
-
-
-
-            if (!editMode) {
-                if (idx === remoteList.length - 1) {
-                    collapsible.classList.add("active");
-                    contentDiv.style.display = "block";
-                    loadAssets();
-                }
-            }
-
-
-        });
-
-        showSpinner(false);
-    }, 50);
-}
-*/
 
 
 function renderMultipleRemoteBlocks(remoteList) {
@@ -652,6 +451,19 @@ function renderMultipleRemoteBlocks(remoteList) {
             contentDiv.className = "remote-content";
            // contentDiv.style.display = "none"; // default collapsed
 
+
+            if (assets.length === 0 && isBlockEditable && editMode) {
+                const placeholder = document.createElement("div");
+                placeholder.className = "artifact-block";
+                placeholder.style.cssText = "margin-bottom:20px; border:1px dashed #aaa; padding:16px; border-radius:8px; text-align:center; background:#fffff8;";
+                placeholder.innerHTML = `
+        <p style="font-weight: bold; color: #666;">No artifacts yet</p>
+        <button onclick="setModalLinkAndOpen(0, false, '${linkId}')">➕ Add New Artifact</button>
+    `;
+                contentDiv.appendChild(placeholder);
+            }
+
+            
             // 🎨 Color logic
             const shadeApproved = adjustColor(BaseColorApproved, BaseColorOffset * 0);
             const shadeNotApproved = adjustColor(BaseColorNotApproved, BaseColorOffset * 0);
