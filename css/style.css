@@ -383,7 +383,7 @@
 
         /* Active state shows the content */
         .asset-banner.active + .remote-content {
-            max-height: 1000px; /* large enough to fit full content */
+            max-height: none; /* large enough to fit full content */
             opacity: 1;
             visibility: visible;
             padding-top: 14px;

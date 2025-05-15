@@ -787,7 +787,15 @@ function renderMultipleRemoteBlocks(remoteList) {
             // 🔁 Auto-expand the last one when not in editMode
             if (!editMode && idx === remoteList.length - 1) {
                 //contentDiv.style.display = "block";
-                loadAssets();
+                //loadAssets();
+
+                headerBlock.classList.add("active");
+
+                // Wait a tick so DOM is ready before loading heavy content
+                requestAnimationFrame(() => {
+                    loadAssets();
+                });
+                
             }
 
             // 📦 Final append
