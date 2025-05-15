@@ -162,6 +162,7 @@ async function loadAndRenderAsset(id) {
     const verifyingLabel = document.getElementById("verifyingLabel");
 
 
+    showSpinner(true);
 
 
     try {
@@ -176,6 +177,8 @@ async function loadAndRenderAsset(id) {
 
 
         await renderAssetPanel(id);
+
+        showSpinner(false);
 
        // popup.style.display = "none";
        // spinner.style.display = "none";
