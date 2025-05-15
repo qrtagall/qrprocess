@@ -475,7 +475,7 @@ function renderMultipleRemoteBlocks(remoteList) {
                         placeholder.style.cssText = "margin-bottom:20px; border:1px dashed #aaa; padding:16px; border-radius:8px; text-align:center; background:#fffff8;";
                         placeholder.innerHTML = `
         <!--p style="font-weight: bold; color: #666;">No artifacts yet</p-->
-        <button onclick="setModalLinkAndOpen(0, false, '${linkId}')">➕ Add New Artifact</button>
+        <button onclick="setModalLinkAndOpen(-1, false, '${linkId}')">➕ Add New Artifact</button>
     `;
                         contentDiv.appendChild(placeholder);
                     }
@@ -864,16 +864,21 @@ function openAddModal(afterRowNum, isEditMode = false, linkId = null) {
 
     // Setup insert offset
     if (afterRowNum === -1) {
-        insertAfterRow = -2;
+        //insertAfterRow = -2;
+        insertAfterRow = 0;
         modalTitle.innerText = "➕ Add Artifact at Top";
     }
     /*
-    if (afterRowNum === 0) {
+    if (afterRowNum === -2) {
         insertAfterRow = -1;
         modalTitle.innerText = "➕ Add Artifact at Top";
+    }
+      else {
+        insertAfterRow = afterRowNum;
+        modalTitle.innerText = "➕ Add Artifact Info";
     }*/
     else {
-        insertAfterRow = afterRowNum;
+        insertAfterRow = afterRowNum+1;
         modalTitle.innerText = "➕ Add Artifact Info";
     }
 
@@ -938,8 +943,8 @@ function openAddModal(afterRowNum, isEditMode = false, linkId = null) {
         setFieldDisabled(visibilityInput, false);
         setFieldDisabled(uploadBtn, false);
 
-        const defaultTitle = insertAfterRow === -2 ? "New Artifact 1" : `New Artifact ${insertAfterRow + 2}`;
-        //const defaultTitle = insertAfterRow === -1 ? "New Artifact 1" : `New Artifact ${insertAfterRow + 1}`;
+        //const defaultTitle = insertAfterRow === -2 ? "New Artifact 1" : `New Artifact ${insertAfterRow + 2}`;
+        const defaultTitle = insertAfterRow === -1 ? "New Artifact 1" : `New Artifact ${insertAfterRow + 2}`;
 
         basicInfoInput.value = defaultTitle;
         textInfoInput.value = "Enter your text here...";
