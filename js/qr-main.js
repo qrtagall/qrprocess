@@ -456,9 +456,13 @@ function editAlert() {
 
 
     console.log("Alert Called...........");
+    isOwner = isSessionUserOwnerOfAnyBlock();
+    console.log("iSession Email>>>>>>>>>>>>>>>", sessionEmail);
+    console.log("editMode>>>>>>>>>>>>>>>", editMode);
+    return;
 
 try {
-    isOwner = isSessionUserOwnerOfAnyBlock();
+
     if (!isOwner) {
         console.log("Not owner");
         showOwnerConfirmModal();
@@ -472,6 +476,7 @@ try {
 }catch(err){
     console.log("Error>>>>>>>",err);
 }
+
 
 
 }
