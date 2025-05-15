@@ -775,7 +775,7 @@ function renderMultipleRemoteBlocks(remoteList) {
                     if (!headerBlock.classList.contains("asset-banner")) {
                         headerBlock.classList.add("asset-banner");
                     }
-                    
+
                     const isActive = headerBlock.classList.toggle("active"); // 🔁 Toggle active class
                     contentDiv.style.display = isActive ? "block" : "none";
 
