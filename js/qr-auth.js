@@ -91,18 +91,31 @@ function googleLoginNew() {
     window.location.href = authUrl;
 }
 
+
+
 // 🔐 Login for Edit access (separate redirect)
 function googleLoginForEdit(id) {
     const clientId = "121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com";
     const redirectUri = "https://process.qrtagall.com/oauth-callback.html";
     const scope = "https://www.googleapis.com/auth/userinfo.email";
 
+    /*
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
         `?response_type=token` +
         `&client_id=${encodeURIComponent(clientId)}` +
         `&redirect_uri=${encodeURIComponent(redirectUri)}` +
         `&scope=${encodeURIComponent(scope)}` +
         `&state=${encodeURIComponent(id)}`;
+
+    */
+
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
+        `?response_type=token` +
+        `&client_id=${encodeURIComponent(clientId)}` +
+        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+        `&scope=${encodeURIComponent(scope)}` +
+        `&state=${encodeURIComponent(id)}` +
+        `&prompt=select_account`;
 
     window.location.href = authUrl;
 }
