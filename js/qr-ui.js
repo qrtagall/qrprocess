@@ -754,21 +754,7 @@ function renderMultipleRemoteBlocks(remoteList) {
             // 👇 Collapse behavior
             if (!editMode || (editMode && artifactOwner)) {
                 headerBlock.style.cursor = "pointer";
-                /*
-                headerBlock.onclick = () => {
-                    const isActive = contentDiv.style.display === "block";
-                    contentDiv.style.display = isActive ? "none" : "block";
 
-                    if (!isActive && !isLoaded) {
-                        loadAssets();
-                    }
-
-                    if (editMode && artifactOwner) {
-                        const editActions = document.getElementById("editActions");
-                        editActions.style.display = "none"; // or "flex" if needed
-                    }
-                };
-                */
 
                 headerBlock.onclick = () => {
 
@@ -777,7 +763,7 @@ function renderMultipleRemoteBlocks(remoteList) {
                     }
 
                     const isActive = headerBlock.classList.toggle("active"); // 🔁 Toggle active class
-                    contentDiv.style.display = isActive ? "block" : "none";
+                   // contentDiv.style.display = isActive ? "block" : "none";
 
                     if (isActive && !isLoaded) {
                         loadAssets();
