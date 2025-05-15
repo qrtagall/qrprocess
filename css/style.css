@@ -362,22 +362,35 @@
             content: '▼';
         }
 
-        /* Details area (expand/collapse target) */
+        /* Expand/collapse target area */
         .remote-content {
+            max-height: 0;
+            opacity: 0;
+            visibility: hidden;
+            overflow: hidden;
+            transition: all 0.3s ease;
             width: 100%;
             max-width: 720px;
             margin: 0 auto 16px auto;
-            padding: 14px;
+            padding: 0 14px;
+            box-sizing: border-box;
+            border-radius: 0 0 10px 10px;
             background: #fff;
             border: 1px solid #ccc;
             border-top: none;
-            box-sizing: border-box;
-            border-radius: 0 0 10px 10px;
-            display: none;
             overflow-wrap: break-word;
         }
 
-        /* Optional: constrain inner items */
+        /* Active state shows the content */
+        .asset-banner.active + .remote-content {
+            max-height: 1000px; /* large enough to fit full content */
+            opacity: 1;
+            visibility: visible;
+            padding-top: 14px;
+            padding-bottom: 14px;
+        }
+
+        /* Optional: constrain long content */
         .remote-content * {
             max-width: 100%;
             box-sizing: border-box;

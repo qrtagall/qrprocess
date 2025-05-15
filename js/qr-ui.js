@@ -712,7 +712,7 @@ function renderMultipleRemoteBlocks(remoteList) {
 
             const contentDiv = document.createElement("div");
             contentDiv.className = "remote-content";
-            contentDiv.style.display = "none"; // default collapsed
+           // contentDiv.style.display = "none"; // default collapsed
 
             // 🎨 Color logic
             const shadeApproved = adjustColor(BaseColorApproved, BaseColorOffset * 0);
@@ -786,7 +786,7 @@ function renderMultipleRemoteBlocks(remoteList) {
 
             // 🔁 Auto-expand the last one when not in editMode
             if (!editMode && idx === remoteList.length - 1) {
-                contentDiv.style.display = "block";
+                //contentDiv.style.display = "block";
                 loadAssets();
             }
 
