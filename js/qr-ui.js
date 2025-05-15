@@ -862,10 +862,15 @@ function openAddModal(afterRowNum, isEditMode = false, linkId = null) {
     };
 
     // Setup insert offset
-    if (afterRowNum === -1) {
+    /*if (afterRowNum === -1) {
         insertAfterRow = -2;
         modalTitle.innerText = "➕ Add Artifact at Top";
-    } else {
+    }*/
+    if (afterRowNum === 0) {
+        insertAfterRow = -1;
+        modalTitle.innerText = "➕ Add Artifact at Top";
+    }
+    else {
         insertAfterRow = afterRowNum;
         modalTitle.innerText = "➕ Add Artifact Info";
     }
@@ -927,7 +932,9 @@ function openAddModal(afterRowNum, isEditMode = false, linkId = null) {
         setFieldDisabled(visibilityInput, false);
         setFieldDisabled(uploadBtn, false);
 
-        const defaultTitle = insertAfterRow === -2 ? "New Artifact" : `New Artifact ${insertAfterRow + 2}`;
+        //const defaultTitle = insertAfterRow === -2 ? "New Artifact" : `New Artifact ${insertAfterRow + 2}`;
+        const defaultTitle = insertAfterRow === -1 ? "New Artifact 0" : `New Artifact ${insertAfterRow + 1}`;
+
         basicInfoInput.value = defaultTitle;
         textInfoInput.value = "Enter your text here...";
         fileTypeInput.value = "TEXT";
