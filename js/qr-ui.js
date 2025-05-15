@@ -536,10 +536,14 @@ function renderMultipleRemoteBlocks(remoteList) {
                     }
 
                     if (editMode && artifactOwner) {
-                        const editActions = document.getElementById("editActions");
-                        editActions.style.display = "none"; // Set to "flex" if needed
+                        //const editActions = document.getElementById("editActions");
+                        //editActions.style.display = "none"; // Set to "flex" if needed
                     }
                 };
+
+
+                const editActions = document.getElementById("editActions");
+                editActions.style.display = "none"; // Set to "flex" if needed
 
                 // auto-expand for editable blocks
                 if (editMode && artifactOwner) {
