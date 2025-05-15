@@ -102,11 +102,49 @@ async function fetchAllRemoteSheets(id) {
 
 
 
+let GToken = null;
+//let GUserEmail = null;
 
-
+/*
 function triggerLink_get(params, modalId = null) {
     const spinner = document.getElementById("fullScreenSpinner");
     if (spinner) spinner.style.display = "flex";
+
+
+
+    let tokenx, userEmailx;
+    if(!GToken) {
+        try {
+            tokenx = await new Promise((resolve, reject) => {
+                const client = google.accounts.oauth2.initTokenClient({
+                    client_id: '121290253918-cae49r46mo3r9f9rhd7rq6ao9ae69jjv.apps.googleusercontent.com',
+                    scope: 'https://www.googleapis.com/auth/userinfo.email',
+                    prompt: 'consent',
+                    callback: (response) => {
+                        if (response.access_token) {
+                            resolve(response.access_token);
+                        } else {
+                            reject("❌ Failed to acquire OAuth token.");
+                        }
+                    }
+                });
+                client.requestAccessToken();
+            });
+
+            GToken = tokenx;
+            userEmailx = await fetchUserEmail(tokenx);
+            console.log("✅ Gmail user:", userEmailx);
+        } catch (e) {
+            alert("❌ Gmail authentication failed.");
+            if (spinner) spinner.style.display = "none";
+            return;
+        }
+    }
+
+
+
+
+
 
     const callbackName = `qrUpdateCallback_${Date.now()}`;
     const script = document.createElement("script");
@@ -146,14 +184,7 @@ function triggerLink_get(params, modalId = null) {
 
     console.log("GET Executed>>>>>>>");
 
-    /*
-    script.onerror = () => {
-        if (spinner) spinner.style.display = "none";
-        alert("❌ Failed to communicate with server.");
-        delete window[callbackName];
-        document.body.removeChild(script);
-    };
-    */
+
     script.onerror = () => {
         if (spinner) spinner.style.display = "none";
 
@@ -179,6 +210,89 @@ function triggerLink_get(params, modalId = null) {
 
 
     console.log("GET Executed passed away >>>>>>>");
+    document.body.appendChild(script);
+}
+*/
+
+
+
+async function triggerLink_get(params, modalId = null) {
+    const spinner = document.getElementById("fullScreenSpinner");
+    if (spinner) spinner.style.display = "flex";
+
+    // ✅ Step 1: Ensure user is authenticated
+    if (!GToken) {
+        try {
+            GToken = await new Promise((resolve, reject) => {
+                const client = google.accounts.oauth2.initTokenClient({
+                    client_id: '121290253918-cae49r46mo3r9f9rhd7rq6ao9ae69jjv.apps.googleusercontent.com',
+                    scope: 'https://www.googleapis.com/auth/userinfo.email',
+                    prompt: 'consent',
+                    callback: (response) => {
+                        if (response.access_token) {
+                            resolve(response.access_token);
+                        } else {
+                            reject("❌ Failed to acquire OAuth token.");
+                        }
+                    }
+                });
+                client.requestAccessToken();
+            });
+
+            console.log("✅ Gmail access token obtained.");
+        } catch (e) {
+            alert("❌ Gmail authentication failed.");
+            if (spinner) spinner.style.display = "none";
+            return;
+        }
+    }
+
+    // ✅ Step 2: Build GET request URL
+    const callbackName = `qrUpdateCallback_${Date.now()}`;
+    const script = document.createElement("script");
+
+    window[callbackName] = function (response) {
+        delete window[callbackName];
+        document.body.removeChild(script);
+
+        if (spinner) spinner.style.display = "none";
+
+        if (!response || !response.success) {
+            alert("❌ Failed to save artifact.");
+            return;
+        }
+
+        alert("✅ Artifact info saved.");
+        location.reload();
+    };
+
+    const urlParams = new URLSearchParams(params);
+    const storageType = urlParams.get("storageType") || "REMOTE";
+    const baseUrl = storageType === "LOCAL" ? AppScriptBaseUrl_New : AppScriptUserUrl;
+
+    const separator = params.includes("?") ? "&" : "?";
+    const targetUrl = `${baseUrl}?${params}${separator}callback=${callbackName}`;
+
+    console.log("Final GET url>>>", targetUrl);
+    script.src = targetUrl;
+
+    // Error handling
+    script.onerror = () => {
+        if (spinner) spinner.style.display = "none";
+        console.warn("⚠️ Script load failed, assuming update was attempted.");
+        delete window[callbackName];
+        document.body.removeChild(script);
+        location.reload();
+    };
+
+    // Fallback timeout
+    setTimeout(() => {
+        delete window[callbackName];
+        if (spinner) spinner.style.display = "none";
+        alert("✅ Saved (assumed). Reloading...");
+        location.reload();
+    }, 5000);
+
     document.body.appendChild(script);
 }
 
