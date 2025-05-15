@@ -437,8 +437,10 @@ function renderMultipleRemoteBlocks(remoteList) {
         const assetLinks = document.getElementById("assetLinks");
         assetLinks.innerHTML = "";
 
+        let artifactOwner = (email === sessionEmail);
 
-        if (sessionEmail && artifactOwner) {
+
+        if (artifactOwner) {
 
             const dummy = {
                 title: "First Artifact",
@@ -450,8 +452,9 @@ function renderMultipleRemoteBlocks(remoteList) {
             const topActionBlock = createAssetBlockFromHTML(dummy, 0, true, true, linkId);
             contentDiv.appendChild(topActionBlock);
         }
+        
                 remoteList.forEach(({ email, storageType, assets, description, linkId }, idx) => {
-            const artifactOwner = (email === sessionEmail);
+             artifactOwner = (email === sessionEmail);
             const maskEmail = maskEmailUser(email);
             const storageIcon = storageType === "LOCAL" ? "📂" : "🌐";
             const serial = idx + 1;
