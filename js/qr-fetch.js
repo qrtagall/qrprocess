@@ -214,7 +214,9 @@ async function triggerLink_get(params, modalId = null) {
 
         alert("✅ Artifact info saved.");
         //location.reload();
-        await loadAndRenderAsset(getQueryParam("id");
+        loadAndRenderAsset(getQueryParam("id")).then(() => {
+            console.log("✅ Asset re-rendered");
+        });
     };
 
     // ✅ Step 3: Build URL
@@ -239,13 +241,20 @@ async function triggerLink_get(params, modalId = null) {
         await loadAndRenderAsset(getQueryParam("id");
     };
 
+
+    loadAndRenderAsset(getQueryParam("id")).then(() => {
+        console.log("✅ Asset re-rendered");
+    });
+
     // ⏳ Timeout fallback
     setTimeout(() => {
         delete window[callbackName];
         if (spinner) spinner.style.display = "none";
         alert("✅ Saved (assumed). Reloading...");
         //location.reload();
-        await loadAndRenderAsset(getQueryParam("id");
+        loadAndRenderAsset(getQueryParam("id")).then(() => {
+            console.log("✅ Asset re-rendered");
+        });
     }, 5000);
 
     // 🚀 Fire request
@@ -340,7 +349,10 @@ async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null
             if (spinner) spinner.style.display = "none";
             alert("✅ Artifact info submitted (fallback assumed success).");
             //location.reload();
-            await loadAndRenderAsset(getQueryParam("id");
+            //await loadAndRenderAsset(getQueryParam("id");
+            loadAndRenderAsset(getQueryParam("id")).then(() => {
+                console.log("✅ Asset re-rendered");
+            });
             resolve();
         }, 4000);
 
@@ -349,7 +361,11 @@ async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null
             if (spinner) spinner.style.display = "none";
             alert("✅ Artifact info submitted.");
             //location.reload();
-            await loadAndRenderAsset(getQueryParam("id");
+            //await loadAndRenderAsset(getQueryParam("id");
+
+            loadAndRenderAsset(getQueryParam("id")).then(() => {
+                console.log("✅ Asset re-rendered");
+            });
             resolve();
         };
 
