@@ -306,9 +306,41 @@
             border: 1px solid #aaa;
             border-radius: 8px;
             background-color: #fff8e1; /* light yellow */
+
+            font-weight: bold;
+            position: relative;
+            cursor: pointer;
         }
 
         .asset-banner-info {
             font-size: 13px;
             text-align: center;
+        }
+
+
+        .remote-content {
+            width: 100%;
+            max-width: 720px;
+            margin: 0 auto 16px auto;
+            padding: 14px;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-top: none;
+            box-sizing: border-box;
+            border-radius: 0 0 10px 10px;
+            display: none;
+        }
+
+        .asset-banner::after {
+            content: '▶';
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 16px;
+            transition: transform 0.2s ease;
+        }
+
+        .asset-banner.active::after {
+            content: '▼';
         }
