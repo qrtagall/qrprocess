@@ -205,7 +205,8 @@ async function triggerLink_get(params, modalId = null) {
     window[callbackName] = function (response) {
         delete window[callbackName];
         document.body.removeChild(script);
-        if (spinner) spinner.style.display = "none";
+
+        //if (spinner) spinner.style.display = "none";
 
         if (!response || !response.success) {
             alert("❌ Failed to save artifact.");
@@ -232,7 +233,7 @@ async function triggerLink_get(params, modalId = null) {
 
     // ❗ Error fallback
     script.onerror = () => {
-        if (spinner) spinner.style.display = "none";
+       // if (spinner) spinner.style.display = "none";
         console.warn("⚠️ Script load failed. Assuming optimistic success.");
         delete window[callbackName];
         document.body.removeChild(script);
@@ -253,7 +254,7 @@ async function triggerLink_get(params, modalId = null) {
     // ⏳ Timeout fallback
     setTimeout(() => {
         delete window[callbackName];
-        if (spinner) spinner.style.display = "none";
+        //if (spinner) spinner.style.display = "none";
         alert("✅ Saved (assumed). Reloading...");
         //location.reload();
         loadAndRenderAsset(getQueryParam("id")).then(() => {
@@ -350,7 +351,7 @@ async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null
 
         // Fallback timeout in case iframe load doesn't trigger
         const timeout = setTimeout(() => {
-            if (spinner) spinner.style.display = "none";
+            //if (spinner) spinner.style.display = "none";
             alert("✅ Artifact info submitted (fallback assumed success).");
             //location.reload();
             //await loadAndRenderAsset(getQueryParam("id");
@@ -362,7 +363,7 @@ async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null
 
         iframe.onload = function () {
             clearTimeout(timeout);
-            if (spinner) spinner.style.display = "none";
+            //if (spinner) spinner.style.display = "none";
             alert("✅ Artifact info submitted.");
             //location.reload();
             //await loadAndRenderAsset(getQueryParam("id");
