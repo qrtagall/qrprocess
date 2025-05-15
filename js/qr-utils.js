@@ -357,3 +357,15 @@ function setModalLinkAndDelete(index, fileType, linkId) {
     deleteArtifact(index, fileType);
 }
 
+
+function createEmptyArtifactPrompt(index, linkId) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "artifact-block";
+    wrapper.style.cssText = "margin-bottom:20px; border:1px dashed #aaa; padding:16px; border-radius:8px; text-align:center; background:#fffff8;";
+
+    wrapper.innerHTML = `
+        <p style="font-weight: bold; color: #666;">No artifacts yet</p>
+        <button onclick="setModalLinkAndOpen(${index}, false, '${linkId}')">➕ Add New Artifact</button>
+    `;
+    return wrapper;
+}

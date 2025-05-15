@@ -700,19 +700,41 @@ function renderMultipleRemoteBlocks(remoteList) {
         const assetLinks = document.getElementById("assetLinks");
         assetLinks.innerHTML = "";
 
-        remoteList.forEach(({ email, storageType, assets, description, linkId }, idx) => {
+
+
+
+        remoteList.forEach(({email, storageType, assets, description, linkId}, idx) => {
             const artifactOwner = (email === sessionEmail);
             const maskEmail = maskEmailUser(email);
             const storageIcon = storageType === "LOCAL" ? "📂" : "🌐";
             const serial = idx + 1;
 
-            const headerBlock = buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, linkId, artifactOwner });
+            const headerBlock = buildCollapsibleHeader({
+                serial,
+                storageIcon,
+                description,
+                maskEmail,
+                linkId,
+                artifactOwner
+            });
 
             headerBlock.classList.add("asset-banner");
 
             const contentDiv = document.createElement("div");
             contentDiv.className = "remote-content";
-           // contentDiv.style.display = "none"; // default collapsed
+            // contentDiv.style.display = "none"; // default collapsed
+
+            if (assets.length === 0 && isBlockEditable && editMode) {
+                const placeholder = document.createElement("div");
+                placeholder.className = "artifact-block";
+                placeholder.style.cssText = "margin-bottom:20px; border:1px dashed #aaa; padding:16px; border-radius:8px; text-align:center; background:#fffff8;";
+                placeholder.innerHTML = `
+        <p style="font-weight: bold; color: #666;">No artifacts yet</p>
+        <button onclick="setModalLinkAndOpen(0, false, '${linkId}')">➕ Add New Artifact</button>
+    `;
+                contentDiv.appendChild(placeholder);
+            }
+
 
             // 🎨 Color logic
             const shadeApproved = adjustColor(BaseColorApproved, BaseColorOffset * 0);
@@ -763,7 +785,7 @@ function renderMultipleRemoteBlocks(remoteList) {
                     }
 
                     const isActive = headerBlock.classList.toggle("active"); // 🔁 Toggle active class
-                   // contentDiv.style.display = isActive ? "block" : "none";
+                    // contentDiv.style.display = isActive ? "block" : "none";
 
                     if (isActive && !isLoaded) {
                         loadAssets();
@@ -795,7 +817,7 @@ function renderMultipleRemoteBlocks(remoteList) {
                 requestAnimationFrame(() => {
                     loadAssets();
                 });
-                
+
             }
 
             // 📦 Final append
@@ -803,9 +825,11 @@ function renderMultipleRemoteBlocks(remoteList) {
             assetLinks.appendChild(contentDiv);
         });
 
+    }
+
         showSpinner(false);
     }, 50);
-}
+
 
 
 
@@ -1650,20 +1674,6 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
         wrapper.appendChild(mainBlock);
     }
 
-    /*
-    // ✅ Edit controls
-    if (isEditable && editMode) {
-        const actionBar = document.createElement("div");
-        const modal = document.getElementById("addArtifactModal");
-        modal.setAttribute("data-link-id", linkId);
-        actionBar.style.marginTop = "10px";
-        actionBar.innerHTML = `
-            <button onclick="openAddModal(${index}, true)">📝 Edit</button>
-            <button onclick="deleteArtifact(${index}, '${typeUpper}')">🗑️ Delete</button>
-            <button onclick="openAddModal(${index})">➕ Add Below</button>
-        `;
-        wrapper.appendChild(actionBar);
-    }*/
 
     if (isEditable && editMode) {
         const actionBar = document.createElement("div");
