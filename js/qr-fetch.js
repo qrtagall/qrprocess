@@ -238,13 +238,17 @@ async function triggerLink_get(params, modalId = null) {
         document.body.removeChild(script);
         //location.reload();
         //cmedit
-        await loadAndRenderAsset(getQueryParam("id");
+        //await loadAndRenderAsset(getQueryParam("id");
+
+        loadAndRenderAsset(getQueryParam("id")).then(() => {
+            console.log("✅ Asset re-rendered");
+        });
+
+
     };
 
 
-    loadAndRenderAsset(getQueryParam("id")).then(() => {
-        console.log("✅ Asset re-rendered");
-    });
+
 
     // ⏳ Timeout fallback
     setTimeout(() => {
