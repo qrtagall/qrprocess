@@ -708,6 +708,8 @@ function renderMultipleRemoteBlocks(remoteList) {
 
             const headerBlock = buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, linkId, artifactOwner });
 
+            headerBlock.classList.add("asset-banner");
+
             const contentDiv = document.createElement("div");
             contentDiv.className = "remote-content";
             contentDiv.style.display = "none"; // default collapsed
@@ -769,6 +771,11 @@ function renderMultipleRemoteBlocks(remoteList) {
                 */
 
                 headerBlock.onclick = () => {
+
+                    if (!headerBlock.classList.contains("asset-banner")) {
+                        headerBlock.classList.add("asset-banner");
+                    }
+                    
                     const isActive = headerBlock.classList.toggle("active"); // 🔁 Toggle active class
                     contentDiv.style.display = isActive ? "block" : "none";
 
