@@ -835,7 +835,7 @@ function onFileTypeChange() {
 
 
 
-function openAddModal(afterRowNum, isEditMode = false, linkId = null) {
+function openAddModals(afterRowNum, isEditMode = false, linkId = null) {
     selectedUploadedFileLink = "";
 
     const modal = document.getElementById("addArtifactModal");
