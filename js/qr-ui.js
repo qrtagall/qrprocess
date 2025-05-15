@@ -474,7 +474,7 @@ function renderMultipleRemoteBlocks(remoteList) {
                         placeholder.style.cssText = "margin-bottom:20px; border:1px dashed #aaa; padding:16px; border-radius:8px; text-align:center; background:#fffff8;";
                         placeholder.innerHTML = `
         <p style="font-weight: bold; color: #666;">No artifacts yet</p>
-        <button onclick="setModalLinkAndOpen(-1, false, '${linkId}')">➕ Add New Artifact</button>
+        <button onclick="setModalLinkAndOpen(0, false, '${linkId}')">➕ Add New Artifact</button>
     `;
                         contentDiv.appendChild(placeholder);
                     }
