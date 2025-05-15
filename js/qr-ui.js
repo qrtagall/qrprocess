@@ -437,7 +437,20 @@ function renderMultipleRemoteBlocks(remoteList) {
         const assetLinks = document.getElementById("assetLinks");
         assetLinks.innerHTML = "";
 
-        remoteList.forEach(({ email, storageType, assets, description, linkId }, idx) => {
+
+        if (sessionEmail && artifactOwner) {
+
+            const dummy = {
+                title: "First Artifact",
+                type: "TEXT",
+                visibility: "VIEW",
+                url: "not available",
+            };
+
+            const topActionBlock = createAssetBlockFromHTML(dummy, 0, true, true, linkId);
+            contentDiv.appendChild(topActionBlock);
+        }
+                remoteList.forEach(({ email, storageType, assets, description, linkId }, idx) => {
             const artifactOwner = (email === sessionEmail);
             const maskEmail = maskEmailUser(email);
             const storageIcon = storageType === "LOCAL" ? "📂" : "🌐";
@@ -467,7 +480,7 @@ function renderMultipleRemoteBlocks(remoteList) {
                     headerBlock.style.backgroundColor = shadeApproved;
                     contentDiv.style.backgroundColor = shadeApproved;
 
-
+/*
                     if (assets.length === 0 && editMode) {
                         const placeholder = document.createElement("div");
                         placeholder.className = "artifact-block";
@@ -478,7 +491,7 @@ function renderMultipleRemoteBlocks(remoteList) {
     `;
                         contentDiv.appendChild(placeholder);
                     }
-
+*/
 
 
 
