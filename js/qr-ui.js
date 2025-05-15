@@ -454,16 +454,6 @@ function renderMultipleRemoteBlocks(remoteList) {
                 console.log("Assests>>", assets);
             console.log("Assests size>>", assets.length);
 
-            if (assets.length === 0 && isBlockEditable && editMode) {
-                const placeholder = document.createElement("div");
-                placeholder.className = "artifact-block";
-                placeholder.style.cssText = "margin-bottom:20px; border:1px dashed #aaa; padding:16px; border-radius:8px; text-align:center; background:#fffff8;";
-                placeholder.innerHTML = `
-        <p style="font-weight: bold; color: #666;">No artifacts yet</p>
-        <button onclick="setModalLinkAndOpen(0, false, '${linkId}')">➕ Add New Artifact</button>
-    `;
-                contentDiv.appendChild(placeholder);
-            }
 
 
             // 🎨 Color logic
@@ -473,8 +463,25 @@ function renderMultipleRemoteBlocks(remoteList) {
 
             if (sessionEmail) {
                 if (artifactOwner) {
+
                     headerBlock.style.backgroundColor = shadeApproved;
                     contentDiv.style.backgroundColor = shadeApproved;
+
+                    
+                    if (assets.length === 0 && editMode) {
+                        const placeholder = document.createElement("div");
+                        placeholder.className = "artifact-block";
+                        placeholder.style.cssText = "margin-bottom:20px; border:1px dashed #aaa; padding:16px; border-radius:8px; text-align:center; background:#fffff8;";
+                        placeholder.innerHTML = `
+        <p style="font-weight: bold; color: #666;">No artifacts yet</p>
+        <button onclick="setModalLinkAndOpen(0, false, '${linkId}')">➕ Add New Artifact</button>
+    `;
+                        contentDiv.appendChild(placeholder);
+                    }
+
+
+
+
                 } else {
                     headerBlock.style.backgroundColor = shadeNotApproved;
                     contentDiv.style.backgroundColor = shadeNotApproved;
