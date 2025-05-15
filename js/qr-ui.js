@@ -18,19 +18,7 @@ function generateQRCodeCanvas(id, canvasId = "qrCanvas", size = 160) {
 */
 
 
-function generateQRCodeCanvas(id, canvasId = "qrCanvas", size = 160) {
-    window.requestAnimationFrame(() => {
-        const qrUrl = `https://process.qrtagall.com/?id=${id}`;
-        const canvas = document.getElementById(canvasId);
-        if (!canvas) {
-            console.warn(`Canvas with id '${canvasId}' not found.`);
-            return;
-        }
-        QRCode.toCanvas(canvas, qrUrl, { width: size }, (error) => {
-            if (error) console.error("QR generation failed:", error);
-        });
-    });
-}
+
 
 
 /*
@@ -107,56 +95,6 @@ function showOwnerConfirmModal() {
     };
 }
 
-// Render QR & buttons below it (Copy, Share, Download, Print)
-function injectQRBlock(id) {
-    const container = document.getElementById("mainContent");
-    const existingQRDiv = document.getElementById("qrWrapper");
-    if (existingQRDiv) existingQRDiv.remove();
-
-    const qrDiv = document.createElement("div");
-    qrDiv.id = "qrWrapper";
-    qrDiv.style.textAlign = "center";
-    qrDiv.style.marginBottom = "20px";
-
-    const qrUrl = `https://process.qrtagall.com/?id=${id}`;
-
-    const qrLabel = document.createElement("div");
-    qrLabel.textContent = "🔗 Scan this QR to access again";
-    qrLabel.style.fontSize = "14px";
-    qrLabel.style.color = "#666";
-    qrLabel.style.marginBottom = "6px";
-
-    const qrCanvas = document.createElement("canvas");
-    qrCanvas.id = "qrCanvas";
-    qrCanvas.style.border = "1px solid #ccc";
-    qrCanvas.style.padding = "6px";
-    qrCanvas.style.borderRadius = "8px";
-    qrCanvas.style.background = "#fff";
-    qrCanvas.style.width = "200px";
-    qrCanvas.style.height = "200px";
-
-    QRCode.toCanvas(qrCanvas, qrUrl, { width: 200 });
-
-    const qrLink = document.createElement("a");
-    qrLink.href = qrUrl;
-    qrLink.target = "_blank";
-    qrLink.appendChild(qrCanvas);
-
-    const qrActions = document.createElement("div");
-    qrActions.style.marginTop = "8px";
-    qrActions.innerHTML = `
-        <button onclick="downloadQR()" title="Download QR" style="font-size:14px; margin-right:10px;">⬇️</button>
-        <button onclick="printQR()" title="Print QR" style="font-size:14px; margin-right:10px;">🖨️</button>
-        <button onclick="copyQRLink()" title="Copy Link" style="font-size:14px; margin-right:10px;">📋</button>
-        <a href="https://wa.me/?text=${encodeURIComponent(`Check this QRTagAll Asset with ID-${id}\n${qrUrl}`)}"
-           target="_blank" title="Share on WhatsApp" style="font-size:14px; text-decoration:none;">📱</a>
-    `;
-
-    qrDiv.appendChild(qrLabel);
-    qrDiv.appendChild(qrLink);
-    qrDiv.appendChild(qrActions);
-    container.insertBefore(qrDiv, document.getElementById("assetTitle"));
-}
 
 /****************************************** Helper Function for below ***************************/
 
