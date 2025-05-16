@@ -192,10 +192,20 @@
     </div>
 
 
-
+    <!--
     <div style="display: flex; justify-content: center; margin-top: 40px;">
         <button id="editBtn" class="enabled" onclick="editAlert()" style="text-align: center; line-height: 1.2; border: none; border-radius: 10px; ">
             🔐 Log-in to Edit Detail-s
+        </button>
+    </div>
+    -->
+
+    <div style="display: flex; justify-content: center; gap: 12px; margin-top: 40px;">
+        <button id="editBtn" class="enabled" onclick="editAlert()" style="text-align: center; line-height: 1.2; border: none; border-radius: 10px;">
+            🔐 Log-in to Edit Detail-s
+        </button>
+        <button id="logoutBtn" class="enabled" onclick="handleLogout()" style="text-align: center; line-height: 1.2; border: none; border-radius: 10px; background: #f44336; display: none;">
+            🔓 Log Out
         </button>
     </div>
 
@@ -236,8 +246,8 @@
 <!-- Scroll Button (⬆️⬇️) -->
 <button id="scrollToggleBtn" onclick="toggleScroll()" style="
   position: fixed;
-  bottom: 80px; /* Push up above logout */
-  right: 20px;
+  bottom: 20px; /* Push up above logout */
+  right: 5px;
   background: #2196f3;
   color: white;
   border: none;
@@ -250,6 +260,7 @@
 ">⬆️ Top</button>
 
 <!-- Logout Button -->
+<!--
 <button id="logoutBtn" onclick="handleLogout()" style="
   position: fixed;
   bottom: 20px;
@@ -264,7 +275,7 @@
   display: none;
   z-index: 999;
 ">🔓 Log Out</button>
-
+-->
 
 
 
@@ -407,7 +418,7 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "3.78";
+    const QRTagAll_Ver_ = "3.80";
 </script>
 
 

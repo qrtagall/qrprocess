@@ -359,14 +359,14 @@ async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null
         // Fallback timeout in case iframe load doesn't trigger
         const timeout = setTimeout(() => {
             //if (spinner) spinner.style.display = "none";
-            alert("✅ Artifact info submitted (fallback assumed success).");
+            alert("✅ Artifact info submitting....you may try after few time.");
             //location.reload();
             //await loadAndRenderAsset(getQueryParam("id");
             loadAndRenderAsset(getQueryParam("id")).then(() => {
                 console.log("✅ Asset re-rendered");
             });
             resolve();
-        }, 4000);
+        }, 15000);
 
         iframe.onload = function () {
             clearTimeout(timeout);
