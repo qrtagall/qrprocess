@@ -469,7 +469,9 @@ function createEmptyArtifactPrompt(index, linkId) {
 
 let currentQRScanTargetInput = null;
 let qrScannerInstance = null;
+let videoTrack = null;
 
+/*
 function openQRScanModal(targetInputId) {
     const modal = document.getElementById("qrScanModal");
     currentQRScanTargetInput = document.getElementById(targetInputId);
@@ -499,6 +501,74 @@ function openQRScanModal(targetInputId) {
         modal.style.display = "none";
     });
 }
+
+ */
+
+
+
+
+async function openQRScanModal(targetInputId) {
+    const modal = document.getElementById("qrScanModal");
+    currentQRScanTargetInput = document.getElementById(targetInputId);
+    modal.style.display = "flex";
+
+    try {
+        // 🔍 1. Access camera manually to get zoom capabilities
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        videoTrack = stream.getVideoTracks()[0];
+
+        const capabilities = videoTrack.getCapabilities();
+        console.log("📷 Camera capabilities:", capabilities);
+
+        // 🔧 2. Setup zoom slider if supported
+        const zoomSlider = document.getElementById("zoomSlider");
+        if (capabilities.zoom) {
+            zoomSlider.min = capabilities.zoom.min;
+            zoomSlider.max = capabilities.zoom.max;
+            zoomSlider.step = capabilities.zoom.step || 0.1;
+            zoomSlider.value = capabilities.zoom.max;
+            zoomSlider.disabled = false;
+
+            // ✅ Auto-zoom to max
+            videoTrack.applyConstraints({
+                advanced: [{ zoom: capabilities.zoom.max }]
+            }).then(() => {
+                console.log("🔍 Auto-zoomed to max:", capabilities.zoom.max);
+            }).catch(err => {
+                console.warn("❌ Auto-zoom failed:", err);
+            });
+        } else {
+            zoomSlider.disabled = true;
+        }
+
+        // 🚀 3. Start the QR scanner with the obtained stream
+        qrScannerInstance = new Html5Qrcode("qrScanner");
+        qrScannerInstance.start(
+            stream,
+            { fps: 5 }, // full-frame mode
+            (decodedText) => {
+                console.log("✅ QR Detected:", decodedText);
+                qrScannerInstance.stop().then(() => {
+                    qrScannerInstance.clear();
+                    modal.style.display = "none";
+
+                    if (currentQRScanTargetInput) {
+                        currentQRScanTargetInput.value = extractIdFromQRString(decodedText);
+                        verifyQRIdFromInput(targetInputId, 'qrVerifyStatus');
+                    }
+                }).catch(err => console.error("Stop error", err));
+            },
+            (errorMessage) => {
+                // Optional error handler
+                console.warn("Scan error:", errorMessage);
+            }
+        );
+    } catch (err) {
+        alert("❌ Failed to access camera: " + err);
+        modal.style.display = "none";
+    }
+}
+
 
 function closeQRScanModal() {
     const modal = document.getElementById("qrScanModal");
