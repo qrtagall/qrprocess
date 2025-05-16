@@ -504,9 +504,12 @@ function closeQRScanModal() {
     const modal = document.getElementById("qrScanModal");
     if (qrScannerInstance) {
         qrScannerInstance.stop().then(() => {
+            qrScannerInstance.start(
             qrScannerInstance.clear();
             qrScannerInstance = null;
             modal.style.display = "none";
+        );
+
         }).catch(err => {
             console.warn("⚠️ Could not stop QR scanner", err);
             modal.style.display = "none";
@@ -537,5 +540,18 @@ function toggleFlashlight() {
     }).catch((err) => {
         alert("❌ Flashlight not supported on this device.");
         console.warn("Flashlight error:", err);
+    });
+}
+
+
+function setZoomLevel(level) {
+    if (!qrScannerInstance) return;
+
+    qrScannerInstance.applyVideoConstraints({
+        advanced: [{ zoom: parseFloat(level) }]
+    }).then(() => {
+        console.log("🔍 Zoom level set:", level);
+    }).catch(err => {
+        console.warn("Zoom not supported on this device:", err);
     });
 }
