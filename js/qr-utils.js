@@ -502,14 +502,12 @@ function openQRScanModal(targetInputId) {
 
 function closeQRScanModal() {
     const modal = document.getElementById("qrScanModal");
+
     if (qrScannerInstance) {
         qrScannerInstance.stop().then(() => {
-            qrScannerInstance.start(
             qrScannerInstance.clear();
             qrScannerInstance = null;
             modal.style.display = "none";
-        );
-
         }).catch(err => {
             console.warn("⚠️ Could not stop QR scanner", err);
             modal.style.display = "none";
