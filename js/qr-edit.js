@@ -133,6 +133,10 @@ function openTransferDialog() {
 }
 
 function openAddQRDialog() {
+
+    alert("Not available in Demo version.");
+    return;
+
     const newId = prompt("Enter new ID to add a new QR:");
     if (newId) {
         // You can define what Add QR means (clone empty QR?)
