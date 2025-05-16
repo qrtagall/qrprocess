@@ -471,7 +471,7 @@ let currentQRScanTargetInput = null;
 let qrScannerInstance = null;
 let videoTrack = null;
 
-/*
+
 function openQRScanModal(targetInputId) {
     const modal = document.getElementById("qrScanModal");
     currentQRScanTargetInput = document.getElementById(targetInputId);
@@ -480,7 +480,7 @@ function openQRScanModal(targetInputId) {
     qrScannerInstance = new Html5Qrcode("qrScanner");
     qrScannerInstance.start(
         { facingMode: "environment" },
-        { fps: 5 }, //, qrbox: 250 },
+        { fps: 10 }, //, qrbox: 250 },
         (decodedText) => {
             console.log("✅ QR Detected:", decodedText);
             qrScannerInstance.stop().then(() => {
@@ -502,11 +502,11 @@ function openQRScanModal(targetInputId) {
     });
 }
 
- */
 
 
 
 
+/*
 async function openQRScanModal(targetInputId) {
     const modal = document.getElementById("qrScanModal");
     currentQRScanTargetInput = document.getElementById(targetInputId);
@@ -559,7 +559,7 @@ async function openQRScanModal(targetInputId) {
         modal.style.display = "none";
     }
 }
-
+*/
 
 function closeQRScanModal() {
     const modal = document.getElementById("qrScanModal");
