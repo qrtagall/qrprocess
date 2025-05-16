@@ -614,3 +614,18 @@ function setZoomLevel(level) {
         console.warn("Zoom not supported on this device:", err);
     });
 }
+
+/*********************** Scroll up/down ***********************/
+
+function toggleScroll() {
+    const halfway = document.documentElement.scrollHeight / 2;
+    const current = window.scrollY;
+
+    if (current < halfway) {
+        // Go to bottom
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    } else {
+        // Go to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+}

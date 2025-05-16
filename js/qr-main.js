@@ -504,6 +504,18 @@ if (document.getElementById("versionTagx")) {
     document.getElementById("versionTagx").textContent = `Ver-${QRTagAll_Ver_}`;
 }
 
+window.addEventListener("scroll", () => {
+    const btn = document.getElementById("scrollToggleBtn");
+    const current = window.scrollY;
+    const halfway = document.documentElement.scrollHeight / 2;
+
+    if (current > 50 || current < document.documentElement.scrollHeight - 100) {
+        btn.style.display = "block";
+        btn.innerHTML = current < halfway ? "⬇️ Bottom" : "⬆️ Top";
+    } else {
+        btn.style.display = "none";
+    }
+});
 
 document.addEventListener("DOMContentLoaded", () => {
     console.log("🔄 DOM ready, starting verification...");
