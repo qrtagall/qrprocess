@@ -445,6 +445,7 @@ function renderMultipleRemoteBlocks(remoteList) {
 
         remoteList.forEach(({ email, storageType, assets, description, linkId }, idx) => {
             const artifactOwner = (email === sessionEmail);
+
             const maskEmail = maskEmailUser(email);
             const storageIcon = storageType === "LOCAL" ? "📂" : "🌐";
             const serial = idx + 1;
@@ -472,6 +473,7 @@ function renderMultipleRemoteBlocks(remoteList) {
 
                     headerBlock.style.backgroundColor = shadeApproved;
                     contentDiv.style.backgroundColor = shadeApproved;
+                    EditLinkID=linkId;
 
                     //assets.length === 0 &&
                     if ( editMode)
@@ -536,14 +538,14 @@ function renderMultipleRemoteBlocks(remoteList) {
                     }
 
                     if (editMode && artifactOwner) {
-                        //const editActions = document.getElementById("editActions");
-                        //editActions.style.display = "none"; // Set to "flex" if needed
+                        const editActions = document.getElementById("editActions");
+                        editActions.style.display = "flex"; // Set to "flex" if needed
                     }
                 };
 
 
-                const editActions = document.getElementById("editActions");
-                editActions.style.display = "none"; // Set to "flex" if needed
+               // const editActions = document.getElementById("editActions");
+               // editActions.style.display = "none"; // Set to "flex" if needed
 
                 // auto-expand for editable blocks
                 if (editMode && artifactOwner) {

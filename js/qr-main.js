@@ -336,10 +336,19 @@ async function renderAssetPanel(id) {
 
     isOwner = isSessionUserOwnerOfAnyBlock();
 
-    const maskedOwner = maskEmailUser(ownerEmail);
+
+    const ownerString = getMaskedOwnerList().join(", ");
+    //document.getElementById("ownerLabel").textContent = ownerString;
+    //const Gid=id;
+    //const Lid=remoteList[0].linkId;
+
+    const isCopiedQR= isCopied(id);
+    console.log("isCopiedQR>>>>>>>",isCopiedQR);
+
+    const maskedOwner = ownerString;//maskEmailUser(ownerEmail);
     assetTitle.innerHTML = `
       <div style="text-align: center;">
-        ${remoteList[0]?.description || "Verified Asset"}
+        ${remoteList[0]?.description || "Verified Asset"} ${isCopiedQR ? `<span style="color:darkred; font-size:10px;">(CLONE)</span>` : ""}
         <div style="font-size: 12px; color: gray;">
           (${id})<br>Owner: ${maskedOwner}
         </div>

@@ -16,61 +16,88 @@ function addQR() {
  */
 
 
-//<button onclick="verifyQRIdFromInput('newCloneIdInput', 'qrVerifyStatus')">✅ Verify</button>
-async function verifyQRIdFromInput(inputId, statusId) {
-    const input = document.getElementById(inputId);
-    const status = document.getElementById(statusId || "qrVerifyStatus"); // fallback ID
+let currentLinkId = null;
+let isnewQRIDVerifiedAndFree = false;
 
-    if (!input) {
-        console.warn(`❌ Input element not found for ID: ${inputId}`);
+
+//<button onclick="verifyQRIdFromInput('newCloneIdInput', 'qrVerifyStatus')">✅ Verify</button>
+async function verifyQRIdFromInput(inputId, statusId = "qrVerifyStatus") {
+    const input = document.getElementById(inputId);
+    const status = document.getElementById(statusId);
+
+    if (!input || !status) {
+        console.warn("❌ Missing input/status element");
         return;
     }
 
     const newId = input.value.trim();
-
-    console.log("Verifying QR ID:", newId);
-    if (!newId) {
-        status.textContent = "❌ Please enter a QR ID.";
-        status.style.color = "red";
-        return;
-    }
-
-    if (!/^[a-zA-Z0-9_-]{4,}$/.test(newId)) {
-        status.textContent = "❌ Invalid ID format. Use 4+ alphanumeric characters.";
-        status.style.color = "red";
-        return;
-    }
-
     status.textContent = "⏳ Verifying QR ID...";
     status.style.color = "gray";
 
+    const result = await verifyQRIdValue(newId);
+
+    status.textContent = result.message;
+    status.style.color = result.valid ? "green" : "red";
+
+    return result.valid;
+}
+
+async function isFreeQR(id) {
+    try {
+        const remoteListx = await fetchAllRemoteSheets(id);
+        return (remoteListx?.length || 0) === 0;
+    } catch (err) {
+        console.error("❌ Failed to check QR status:", err);
+        return false; // fallback: treat as claimed if verification fails
+    }
+}
+
+async function verifyQRIdValue(newId) {
+    if (!newId || typeof newId !== "string") return { valid: false, message: "Missing QR ID" };
+
+    const trimmedId = newId.trim();
+
+    if (!/^[a-zA-Z0-9_-]{4,}$/.test(trimmedId)) {
+        return { valid: false, message: "❌ Invalid ID format. Use 4+ alphanumeric characters." };
+    }
+
     try {
         if (!window.proxyLoaded) {
-            await loadProxyIframe(); // ⏎ pre-existing
+            await loadProxyIframe(); // or whatever setup is needed
         }
 
-        const result = await Verifyidx(newId);
-
+        const result = await Verifyidx(trimmedId);
         if (result === "VALID") {
-            status.textContent = "✅ QR ID is available.";
-            status.style.color = "green";
-        } else {
-            status.textContent = "❌ QR ID already claimed or invalid.";
-            status.style.color = "red";
+
+            const isFree = await isFreeQR(trimmedId);
+            if (isFree) {
+                isnewQRIDVerifiedAndFree=true;
+                return {valid: true, message: "✅ QR ID is available."};
+            }
+            else
+                return { valid: false, message: "❌ QR ID is already in use" };
+        }
+        else {
+            return { valid: false, message: "❌ QR ID already claimed or invalid." };
         }
     } catch (err) {
-        status.textContent = `❌ Verification failed. ${err}`;
-        status.style.color = "red";
-        console.error("QR ID verification error:", err);
+        return { valid: false, message: `❌ Verification failed. ${err}` };
     }
 }
 
 
 
 
+/*********************************************** Clone ***********************************/
 
 function openCloneDialog() {
+    //document.getElementById("cloneQRModal").style.display = "flex";
+    isnewQRIDVerifiedAndFree=false;
+    currentLinkId = EditLinkID;  // ✅ Set global variable
     document.getElementById("cloneQRModal").style.display = "flex";
+    document.getElementById("newCloneIdInput").value = "";     // clear any old entry
+    document.getElementById("qrVerifyStatus").textContent = ""; // clear old status
+
 }
 
 function closeCloneModal() {
@@ -81,8 +108,10 @@ function confirmClone() {
     const mode = document.getElementById("cloneTypeSelect").value;
     const newId = document.getElementById("newCloneIdInput").value.trim();
 
-    if (!newId) {
-        alert("❌ Please enter a new QR ID to proceed.");
+    //if (!newId)
+    if(!isnewQRIDVerifiedAndFree)
+    {
+        alert("❌ Verify the new QR-ID first to proceed");//Please enter a new QR ID to proceed.");
         return;
     }
 
@@ -93,10 +122,14 @@ function confirmClone() {
 }
 
 
+/*********************************************** Transfer ***********************************/
 function openTransferDialog() {
     const linkId=null;
-    const newId = prompt("Enter new ID to transfer this QR to:");
-    if (newId) triggerTransfer(linkId, newId);
+   // const newId = prompt("Enter new ID to transfer this QR to:");
+   // if (newId) triggerTransfer(linkId, newId);
+
+    alert("Not available in Demo version.");
+    return;
 }
 
 function openAddQRDialog() {
@@ -106,7 +139,13 @@ function openAddQRDialog() {
         triggerClone("", newId); // or open modal
     }
 }
+
+/*********************************************** Delete ***********************************/
 function openDeleteDialog() {
+
+    alert("Not available in Demo version.");
+    return;
+
     const expandedBlock = document.querySelector(".collapsible.active");
     if (!expandedBlock) {
         alert("❌ No QR block is currently expanded.");

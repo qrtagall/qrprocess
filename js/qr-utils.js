@@ -1,5 +1,8 @@
 // qr-utils.js
 
+let EditLinkID=null;
+
+
 const BaseColorApproved = "#e5fee5";
 const BaseColorNotApproved = "#fedcdc";
 const BaseColorDefault = "#dedede";
@@ -331,6 +334,32 @@ function isSessionUserOwnerOfAnyBlock() {
     return globalRemoteAssetList.some(block => block.email?.toLowerCase() === lowercaseSession);
 }
 
+function getMaskedOwnerList(includeSelfLabel = true) {
+    if (!globalRemoteAssetList?.length) return [];
+
+    const seen = new Set();  // avoid duplicate emails
+    const owners = [];
+
+    for (const block of globalRemoteAssetList) {
+        const email = block.email?.toLowerCase();
+        if (email && !seen.has(email)) {
+            seen.add(email);
+
+            const isSelf = email === sessionEmail?.toLowerCase();
+            const masked = maskEmailUser(email);
+            owners.push(includeSelfLabel && isSelf ? `${masked} (You)` : masked);
+        }
+    }
+
+    return owners;
+}
+
+function isCopied(id) {
+    if (!id || !globalRemoteAssetList?.length) return true; // no match = copied
+
+    return !globalRemoteAssetList.some(block => block.linkId === id);
+}
+
 function getStorageTypeByLinkId(linkId) {
     if (!linkId || !globalRemoteAssetList?.length) return "REMOTE";  // default fallback
     const block = globalRemoteAssetList.find(b => b.linkId === linkId);
@@ -435,3 +464,61 @@ function createEmptyArtifactPrompt(index, linkId) {
     `;
     return wrapper;
 }
+
+/*************************** QR Scanner *********************************/
+
+let currentQRScanTargetInput = null;
+let qrScannerInstance = null;
+
+function openQRScanModal(targetInputId) {
+    const modal = document.getElementById("qrScanModal");
+    currentQRScanTargetInput = document.getElementById(targetInputId);
+    modal.style.display = "flex";
+
+    qrScannerInstance = new Html5Qrcode("qrScanner");
+    qrScannerInstance.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 250 },
+        (decodedText) => {
+            console.log("✅ QR Detected:", decodedText);
+            qrScannerInstance.stop().then(() => {
+                qrScannerInstance.clear();
+                modal.style.display = "none";
+
+                if (currentQRScanTargetInput) {
+                    currentQRScanTargetInput.value = extractIdFromQRString(decodedText);//decodedText;
+                    verifyQRIdFromInput(targetInputId, 'qrVerifyStatus'); // auto verify
+                }
+            }).catch(err => console.error("Stop error", err));
+        },
+        (errorMessage) => {
+            // Optionally log errors
+        }
+    ).catch(err => {
+        alert("❌ Failed to access camera: " + err);
+        modal.style.display = "none";
+    });
+}
+
+function closeQRScanModal() {
+    const modal = document.getElementById("qrScanModal");
+    if (qrScannerInstance) {
+        qrScannerInstance.stop().then(() => {
+            qrScannerInstance.clear();
+            qrScannerInstance = null;
+            modal.style.display = "none";
+        }).catch(err => {
+            console.warn("⚠️ Could not stop QR scanner", err);
+            modal.style.display = "none";
+        });
+    } else {
+        modal.style.display = "none";
+    }
+}
+
+
+function extractIdFromQRString(scannedText) {
+    const match = scannedText.match(/[?&]id=([\w\-]+)/i);
+    return match ? match[1] : scannedText;
+}
+

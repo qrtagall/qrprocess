@@ -186,18 +186,6 @@ async function triggerLink_get(params, modalId = null) {
     const spinner = document.getElementById("fullScreenSpinner");
     if (spinner) spinner.style.display = "flex";
 
-    // 🔐 Step 1: Acquire token (reuse if already fetched)
-    if (!GToken) {
-        try {
-            GToken = await getAccessToken();
-            console.log("✅ Access token obtained.");
-        } catch (err) {
-            alert(err);
-            if (spinner) spinner.style.display = "none";
-            return;
-        }
-    }
-
     // ✅ Step 2: Create JSONP callback
     const callbackName = `qrUpdateCallback_${Date.now()}`;
     const script = document.createElement("script");
@@ -237,6 +225,10 @@ async function triggerLink_get(params, modalId = null) {
         console.warn("⚠️ Script load failed. Assuming optimistic success.");
         delete window[callbackName];
         document.body.removeChild(script);
+
+
+
+
         //location.reload();
         //cmedit
         //await loadAndRenderAsset(getQueryParam("id");
@@ -257,6 +249,21 @@ async function triggerLink_get(params, modalId = null) {
         //if (spinner) spinner.style.display = "none";
         alert("✅ Saved (assumed). Reloading...");
         //location.reload();
+
+        console.log("urlParams>>>",urlParams);
+        const mode = urlParams.get("mode");
+
+        if (mode === "clone")
+        {
+            //const paramMap = new URLSearchParams(params);
+            const newId = urlParams.get("newid");
+            if (newId) {
+                window.location.href = `index.html?id=${encodeURIComponent(newId)}`;
+                return; // important: stop executing further fallback
+            }
+        }
+
+
         loadAndRenderAsset(getQueryParam("id")).then(() => {
             console.log("✅ Asset re-rendered");
         });
@@ -424,7 +431,7 @@ async function fetchThumbnails(folderId) {
 
 function triggerOperation(mode, customParams = {}) {
     const id = getQueryParam("id");  // from URL
-    const storageType = "REMOTE"; // default fallback; adjust if dynamic needed
+    const storageType = "LOCAL"; // default fallback; adjust if dynamic needed
 
     const params = new URLSearchParams({
         mode,
