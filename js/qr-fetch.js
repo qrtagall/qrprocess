@@ -253,7 +253,7 @@ async function triggerLink_get(params, modalId = null) {
         console.log("urlParams>>>",urlParams);
         const mode = urlParams.get("mode");
 
-        if (mode === "clone")
+        if (mode === "clone" || mode === "hardClone" || mode === "transfer")
         {
             //const paramMap = new URLSearchParams(params);
             const newId = urlParams.get("newid");
@@ -355,6 +355,7 @@ async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null
         form.appendChild(input);
 
         document.body.appendChild(form);
+        let responseflag=false;
 
         // Fallback timeout in case iframe load doesn't trigger
         const timeout = setTimeout(() => {
@@ -362,23 +363,28 @@ async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null
             alert("✅ Artifact info submitting....you may try after few time.");
             //location.reload();
             //await loadAndRenderAsset(getQueryParam("id");
+
+                responseflag=true;
             loadAndRenderAsset(getQueryParam("id")).then(() => {
                 console.log("✅ Asset re-rendered");
             });
             resolve();
+
         }, 15000);
 
         iframe.onload = function () {
             clearTimeout(timeout);
-            //if (spinner) spinner.style.display = "none";
-            alert("✅ Artifact info submitted.");
-            //location.reload();
-            //await loadAndRenderAsset(getQueryParam("id");
+            if(!responseflag) {
+                //if (spinner) spinner.style.display = "none";
+                alert("✅ Artifact info submitted.");
+                //location.reload();
+                //await loadAndRenderAsset(getQueryParam("id");
 
-            loadAndRenderAsset(getQueryParam("id")).then(() => {
-                console.log("✅ Asset re-rendered");
-            });
-            resolve();
+                loadAndRenderAsset(getQueryParam("id")).then(() => {
+                    console.log("✅ Asset re-rendered");
+                });
+                resolve();
+            }
         };
 
         form.submit();

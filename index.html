@@ -13,14 +13,14 @@
 
 
     <!-- Your CSS -->
-    <!--
+    <!-- -->
     <link rel="stylesheet" href="file:///G:/QrTagAll/git/qrprocess/css/style.css">
-     -->
-
-
     <!-- -->
+
+
+    <!--
     <link rel="stylesheet" href="./css/style.css">
-    <!-- -->
+     -->
 
 </head>
 <body>
@@ -143,7 +143,20 @@
     <!-- Clone QR Modal -->
     <div id="cloneQRModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#00000055; z-index:10000; justify-content:center; align-items:center;">
         <div style="background:white; padding:20px; border-radius:10px; max-width:400px; width:90%; box-shadow:0 0 10px rgba(0,0,0,0.2); position:relative;">
-            <h3>🔁 Clone QR</h3>
+            <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 16px;">🔁 Clone QR</h3>
+
+            <p style="font-size: 14px; color: #333; font-weight: 500; margin-bottom: 14px; line-height: 1.0;">
+                This will copy the current QR info to new QR.
+            </p>
+
+            <p style="font-size: 12px; color: #444; margin-bottom: 10px; line-height: 0.8;">
+                <b>SOFT-CLONE:</b> Only links will be copied from the original QR.
+            </p>
+
+            <p style="font-size: 12px; color: #444; margin-bottom: 20px; line-height: 0.8;">
+                <b>DEEP-CLONE:</b> The entire data will be copied to the new QR.
+            </p>
+
             <p>Select clone type:</p>
             <select id="cloneTypeSelect" style="width:100%; margin-bottom:15px;">
                 <option value="Soft-Clone">Soft Clone (Only Link Info)</option>
@@ -423,23 +436,23 @@
 
 
 
-<!-- -->
+<!--
 <script src="./js/qr-utils.js"></script>
 <script src="./js/qr-auth.js"></script>
 <script src="./js/qr-fetch.js"></script>
 <script src="./js/qr-edit.js"></script>
 <script src="./js/qr-ui.js"></script>
 <script src="./js/qr-main.js"></script>
-<!-- -->
+-->
 
-<!--
+<!-- -->
 <script src="file:///G:/QrTagAll/git/qrprocess/js/qr-utils.js"></script>
 <script src="file:///G:/QrTagAll/git/qrprocess/js/qr-auth.js"></script>
 <script src="file:///G:/QrTagAll/git/qrprocess/js/qr-fetch.js"></script>
 <script src="file:///G:/QrTagAll/git/qrprocess/js/qr-edit.js"></script>
 <script src="file:///G:/QrTagAll/git/qrprocess/js/qr-ui.js"></script>
 <script src="file:///G:/QrTagAll/git/qrprocess/js/qr-main.js"></script>
--->
+<!-- -->
 
 
 </body>
