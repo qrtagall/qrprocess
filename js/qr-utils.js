@@ -526,17 +526,8 @@ async function openQRScanModal(targetInputId) {
             zoomSlider.min = capabilities.zoom.min;
             zoomSlider.max = capabilities.zoom.max;
             zoomSlider.step = capabilities.zoom.step || 0.1;
-            zoomSlider.value = capabilities.zoom.max;
+            zoomSlider.value = capabilities.zoom.min;
             zoomSlider.disabled = false;
-
-            // ✅ Auto-zoom to max
-            videoTrack.applyConstraints({
-                advanced: [{ zoom: capabilities.zoom.max }]
-            }).then(() => {
-                console.log("🔍 Auto-zoomed to max:", capabilities.zoom.max);
-            }).catch(err => {
-                console.warn("❌ Auto-zoom failed:", err);
-            });
         } else {
             zoomSlider.disabled = true;
         }
