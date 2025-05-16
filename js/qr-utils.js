@@ -478,7 +478,7 @@ function openQRScanModal(targetInputId) {
     qrScannerInstance = new Html5Qrcode("qrScanner");
     qrScannerInstance.start(
         { facingMode: "environment" },
-        { fps: 10, qrbox: 250 },
+        { fps: 5 }, //, qrbox: 250 },
         (decodedText) => {
             console.log("✅ QR Detected:", decodedText);
             qrScannerInstance.stop().then(() => {
@@ -522,3 +522,20 @@ function extractIdFromQRString(scannedText) {
     return match ? match[1] : scannedText;
 }
 
+/****************** FlashLight Control ************************/
+
+function toggleFlashlight() {
+    if (!qrScannerInstance) {
+        alert("⚠️ QR scanner not active.");
+        return;
+    }
+
+    qrScannerInstance.applyVideoConstraints({
+        advanced: [{ torch: true }]
+    }).then(() => {
+        console.log("🔦 Flashlight turned on.");
+    }).catch((err) => {
+        alert("❌ Flashlight not supported on this device.");
+        console.warn("Flashlight error:", err);
+    });
+}
