@@ -26,6 +26,8 @@
 <body>
 
 
+
+
 <!-- Spinner & Popup -->
 <div id="popup">
 
@@ -259,7 +261,7 @@
 <!-- Scroll Button (⬆️⬇️) -->
 <button id="scrollToggleBtn" onclick="toggleScroll()" style="
   position: fixed;
-  bottom: 20px; /* Push up above logout */
+  bottom: 50px; /* Push up above logout */
   right: 5px;
   background: #2196f3;
   color: white;
@@ -393,7 +395,7 @@
         QRTagAll
     </a>
     <span style="color: #ffffff;font-size: 15px">  Tag it. Own it. Share it.</span>
-    <span id="versionTagx" style="color: #aaaaaa;font-size: 10px"> </span>
+
 
 </div>
 
@@ -431,7 +433,7 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "3.82";
+    const QRTagAll_Ver_ = "3.83_29092025";
 </script>
 
 
@@ -454,6 +456,50 @@
 <script src="file:///G:/QrTagAll/git/qrprocess/js/qr-main.js"></script>
 -->
 
+
+<div id="bottomRibbon" style="
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background: #000;
+    color: #fff;
+    padding: 8px 16px;
+    font-size: 14px;
+    z-index: 1000;
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.3);
+    text-align: center;
+">
+    <!-- Centered content -->
+    <a href="https://qrtagall.com" target="_blank"
+       style="color: #FFA500; font-weight: bold; margin-right: 12px; text-decoration: none;">
+        https://qrtagall.com
+    </a>
+    <span style="color: #ffffff;">| Contact: </span>
+    <a href="mailto:qrtagall@gmail.com"
+       style="color: #FFA500; font-weight: bold; margin-left: 5px; text-decoration: none;">
+        qrtagall@gmail.com
+    </a>
+
+    <!-- Version pinned to right -->
+    <span id="versionTagx" style="
+        position: absolute;
+        right: 16px;
+        color: #aaaaaa;
+        font-size: 11px;
+    "></span>
+</div>
+
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const versionEl = document.getElementById("versionTagx");
+            if (versionEl) {
+                versionEl.textContent = "v" + QRTagAll_Ver_;
+            }
+        });
+    </script>
+
+</div>
 
 </body>
 </html>
