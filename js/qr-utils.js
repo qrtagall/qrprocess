@@ -221,6 +221,13 @@ function printQR() {
     `);
 }
 
+function getSoftColor(num) {
+    // Map 1–100 → 0–360 (hue)
+    const hue = (num % 100) * 3.6;
+    const saturation = 60;  // pastel
+    const lightness = 85;   // light
+    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+}
 
 /*
 function buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, linkId, artifactOwner }) {
@@ -269,7 +276,7 @@ function buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, l
 
 
 
-function buildCollapsibleHeader({ serial, storageIcon, xdescription, maskEmail, linkId, artifactOwner }) {
+function buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, linkId, artifactOwner }) {
     const wrapper = document.createElement("div");
     wrapper.className = "asset-banner";
 
@@ -287,7 +294,7 @@ function buildCollapsibleHeader({ serial, storageIcon, xdescription, maskEmail, 
   const titleText = document.createElement("div");
   titleText.style.flexGrow = "1";
   titleText.style.textAlign = "center";
-  titleText.innerText = `${serial}. ${storageIcon} ${xdescription || "-"}`;
+  titleText.innerText = `${serial}. ${storageIcon} ${description || "-"}`;
   titleRow.appendChild(titleText);
 
   // Edit button (if owner)
@@ -297,7 +304,7 @@ function buildCollapsibleHeader({ serial, storageIcon, xdescription, maskEmail, 
       editBtn.title = "Edit Description";
       editBtn.style.fontSize = "14px";
       editBtn.style.marginLeft = "10px";
-      editBtn.onclick = () => editDescription(linkId, xdescription);
+      editBtn.onclick = () => editDescription(linkId, description);
       titleRow.appendChild(editBtn);
   }
 

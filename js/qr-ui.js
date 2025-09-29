@@ -435,8 +435,185 @@ async function renderInfoBlock(data) {
 /*********************************************************************************************************/
 
 
-
 function renderMultipleRemoteBlocks(remoteList) {
+    showSpinner(true);
+
+    setTimeout(() => {
+        const assetLinks = document.getElementById("assetLinks");
+        assetLinks.innerHTML = "";
+
+        remoteList.forEach(({ email, storageType, assets, description, linkId }, idx) => {
+            const artifactOwner = (email === sessionEmail);
+
+            // ---------------------------
+            // 🔎 Description handling
+            // ---------------------------
+            const rawDescription = description || "";   // preserve original (with markers)
+            let xdescription = rawDescription;          // copy for display
+            let autoExpandFlag = false;
+            let customColor = null;
+
+            // Expand marker (<EXPAND> or <EX>)
+            if (/<\s*(EXPAND|EX)\s*>/i.test(xdescription)) {
+                autoExpandFlag = true;
+                xdescription = xdescription.replace(/<\s*(EXPAND|EX)\s*>/ig, "").trim();
+            }
+
+            // Color marker (<COLOR:X> or <COL:X>)
+            const colorMatch = xdescription.match(/<\s*COL(?:OR)?:\s*(\d{1,3})\s*>/i);
+            if (colorMatch) {
+                let colorVal = parseInt(colorMatch[1], 10);
+                if (colorVal >= 1 && colorVal <= 100) {
+                    customColor = colorVal;
+                }
+                xdescription = xdescription.replace(/<\s*COL(?:OR)?:\s*\d{1,3}\s*>/ig, "").trim();
+            }
+
+            // ---------------------------
+            // 🔎 Build header + content
+            // ---------------------------
+            const maskEmail = maskEmailUser(email);
+            const storageIcon = storageType === "LOCAL" ? "📂" : "🌐";
+            const serial = idx + 1;
+
+            const headerBlock = buildCollapsibleHeader({
+                serial,
+                storageIcon,
+                description:xdescription,
+                maskEmail,
+                linkId,
+                artifactOwner
+            });
+            headerBlock.style.marginBottom = "-3px";
+            headerBlock.classList.add("asset-banner");
+
+            // Preserve raw description for edit mode
+            headerBlock.dataset.rawDescription = rawDescription;
+
+            const contentDiv = document.createElement("div");
+            contentDiv.className = "remote-content";
+
+            // 🎨 Colors
+            const shadeApproved   = adjustColor(BaseColorApproved,  BaseColorOffset * 0);
+            const shadeNotApproved= adjustColor(BaseColorNotApproved,BaseColorOffset * 0);
+            const shadeDefault    = adjustColor(BaseColorDefault,   BaseColorOffset * 0);
+
+            let appliedColor = shadeDefault;
+            if (customColor) {
+                appliedColor = getSoftColor(customColor); // custom soft pastel
+            }
+
+            if (sessionEmail) {
+                if (artifactOwner) {
+                    headerBlock.style.backgroundColor = appliedColor || shadeApproved;
+                    contentDiv.style.backgroundColor  = appliedColor || shadeApproved;
+                    EditLinkID = linkId;
+
+                    if (editMode) {
+                        const placeholder = document.createElement("div");
+                        placeholder.className = "artifact-block";
+                        placeholder.style.cssText =
+                            "margin-bottom:20px; border:1px dashed #aaa; padding:16px; " +
+                            "border-radius:8px; text-align:center; background:#fffff8;";
+                        placeholder.innerHTML = `
+                            <button onclick="setModalLinkAndOpen(-1, false, '${linkId}')">
+                                ➕ Add New Artifact
+                            </button>
+                        `;
+                        contentDiv.appendChild(placeholder);
+                    }
+                } else {
+                    headerBlock.style.backgroundColor = appliedColor || shadeNotApproved;
+                    contentDiv.style.backgroundColor  = appliedColor || shadeNotApproved;
+                }
+            } else {
+                headerBlock.style.backgroundColor = appliedColor || shadeDefault;
+                contentDiv.style.backgroundColor  = appliedColor || shadeDefault;
+            }
+
+            // ---------------------------
+            // 🔎 Asset loading
+            // ---------------------------
+            let isLoaded = false;
+            const isBlockEditable = sessionEmail &&
+                email &&
+                (sessionEmail.toLowerCase() === email.toLowerCase());
+
+            const loadAssets = () => {
+                const spinner = document.createElement("div");
+                spinner.className = "spinner";
+                contentDiv.appendChild(spinner);
+
+                setTimeout(() => {
+                    spinner.remove();
+                    assets.forEach((asset, i) => {
+                        const block = createAssetBlockFromHTML(
+                            asset, i, isBlockEditable, artifactOwner, linkId, artifactOwner
+                        );
+                        contentDiv.appendChild(block);
+                    });
+                    isLoaded = true;
+                }, 200);
+            };
+
+            // ---------------------------
+            // 🔎 Collapse/expand logic
+            // ---------------------------
+            if (!editMode || (editMode && artifactOwner)) {
+                headerBlock.style.cursor = "pointer";
+                headerBlock.onclick = () => {
+                    if (!headerBlock.classList.contains("asset-banner")) {
+                        headerBlock.classList.add("asset-banner");
+                    }
+                    const isActive = headerBlock.classList.toggle("active");
+                    if (isActive && !isLoaded) {
+                        loadAssets();
+                    }
+                    if (editMode && artifactOwner) {
+                        const editActions = document.getElementById("editActions");
+                        editActions.style.display = "flex";
+                    }
+                };
+
+                // auto-expand for editable blocks
+                if (editMode && artifactOwner) {
+                    headerBlock.onclick();
+                }
+            } else if (editMode && !artifactOwner) {
+                headerBlock.style.backgroundColor = "#bbb";
+                headerBlock.onclick = () => alert("You can't edit this Artifact!");
+            }
+
+            // auto-expand based on description marker
+            if (autoExpandFlag) {
+                headerBlock.classList.add("active");
+                requestAnimationFrame(() => {
+                    loadAssets();
+                });
+            }
+
+            // auto-expand the last one when not in editMode
+            if (!editMode && idx === remoteList.length - 1 && !autoExpandFlag) {
+                headerBlock.classList.add("active");
+                requestAnimationFrame(() => {
+                    loadAssets();
+                });
+            }
+
+            // ---------------------------
+            // 🔎 Final append
+            // ---------------------------
+            assetLinks.appendChild(headerBlock);
+            assetLinks.appendChild(contentDiv);
+        });
+
+        showSpinner(false);
+    }, 50);
+}
+
+
+
+function renderMultipleRemoteBlocks_old(remoteList) {
     showSpinner(true);
 
     setTimeout(() => {
@@ -477,10 +654,25 @@ function renderMultipleRemoteBlocks(remoteList) {
             const storageIcon = storageType === "LOCAL" ? "📂" : "🌐";
             const serial = idx + 1;
 
+            let customColor = null;
+            //const colorMatch = xdescription.match(/<\s*COLOR:(\d{1,3})\s*>/i);
+            const colorMatch = description.match(/<\s*COL(?:OR)?:\s*(\d{1,3})\s*>/i);
+            if (colorMatch) {
+                let colorVal = parseInt(colorMatch[1], 10);
+                if (colorVal >= 1 && colorVal <= 100) {
+                    customColor = colorVal;
+                }
+                xdescription = xdescription.replace(/<\s*COL(?:OR)?:\s*\d{1,3}\s*>/ig, "").trim();
+                //xdescription = xdescription.replace(/<\s*COLOR:\d{1,3}\s*>/ig, "").trim();
+            }
+
+
+
             const headerBlock = buildCollapsibleHeader({ serial, storageIcon, xdescription, maskEmail, linkId, artifactOwner });
             headerBlock.style.marginBottom = "-3px";
 
             headerBlock.classList.add("asset-banner");
+
 
 
             const contentDiv = document.createElement("div");
@@ -494,10 +686,16 @@ function renderMultipleRemoteBlocks(remoteList) {
 
 
 
+
+
             // 🎨 Color logic
             const shadeApproved = adjustColor(BaseColorApproved, BaseColorOffset * 0);
             const shadeNotApproved = adjustColor(BaseColorNotApproved, BaseColorOffset * 0);
             const shadeDefault = adjustColor(BaseColorDefault, BaseColorOffset * 0);
+
+
+
+
 
             if (sessionEmail) {
                 if (artifactOwner) {
@@ -527,8 +725,17 @@ function renderMultipleRemoteBlocks(remoteList) {
                     contentDiv.style.backgroundColor = shadeNotApproved;
                 }
             } else {
-                headerBlock.style.backgroundColor = shadeDefault;
-                contentDiv.style.backgroundColor = shadeDefault;
+
+                if (customColor) {
+                    const softShade = getSoftColor(customColor);
+                    headerBlock.style.backgroundColor = softShade;
+                    contentDiv.style.backgroundColor = softShade;
+                } else {
+                    headerBlock.style.backgroundColor = shadeDefault;
+                    contentDiv.style.backgroundColor = shadeDefault;
+                }
+                //headerBlock.style.backgroundColor = shadeDefault;
+                //contentDiv.style.backgroundColor = shadeDefault;
             }
 
             // 🤖 Logic for loading assets
