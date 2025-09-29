@@ -435,7 +435,7 @@ async function renderInfoBlock(data) {
 /*********************************************************************************************************/
 
 
-function renderMultipleRemoteBlocks(remoteList) {
+function renderMultipleRemoteBlocks_exp(remoteList) {
     showSpinner(true);
 
     setTimeout(() => {
@@ -613,7 +613,7 @@ function renderMultipleRemoteBlocks(remoteList) {
 
 
 
-function renderMultipleRemoteBlocks_old(remoteList) {
+function renderMultipleRemoteBlocks(remoteList) {
     showSpinner(true);
 
     setTimeout(() => {
@@ -668,7 +668,13 @@ function renderMultipleRemoteBlocks_old(remoteList) {
 
 
 
-            const headerBlock = buildCollapsibleHeader({ serial, storageIcon, xdescription, maskEmail, linkId, artifactOwner });
+            const headerBlock = buildCollapsibleHeader(
+                { serial,
+                    storageIcon,
+                    description:xdescription,
+                    maskEmail,
+                    linkId,
+                    artifactOwner });
             headerBlock.style.marginBottom = "-3px";
 
             headerBlock.classList.add("asset-banner");
