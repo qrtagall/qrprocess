@@ -446,13 +446,29 @@ function renderMultipleRemoteBlocks(remoteList) {
         remoteList.forEach(({ email, storageType, assets, description, linkId }, idx) => {
             const artifactOwner = (email === sessionEmail);
 
+            // 🔎 Detect and strip <EXPAND> marker
+            let autoExpandFlag = false;
+            let xdescription=description;
+            if (xdescription && (xdescription.toUpperCase().includes("<EXPAND>") || xdescription.toUpperCase().includes("<EX>"))) {
+                autoExpandFlag = true;
+
+                // Remove both <EXPAND> and <EX> (any case)
+                xdescription = xdescription.replace(/<\s*EXPAND\s*>/ig, "")
+                    .replace(/<\s*EX\s*>/ig, "")
+                    .trim();
+            }
+
+
             const maskEmail = maskEmailUser(email);
             const storageIcon = storageType === "LOCAL" ? "📂" : "🌐";
             const serial = idx + 1;
 
-            const headerBlock = buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, linkId, artifactOwner });
+
+            const headerBlock = buildCollapsibleHeader({ serial, storageIcon, xdescription, maskEmail, linkId, artifactOwner });
+
 
             headerBlock.classList.add("asset-banner");
+
 
             const contentDiv = document.createElement("div");
             contentDiv.className = "remote-content";
@@ -519,6 +535,8 @@ function renderMultipleRemoteBlocks(remoteList) {
                 }, 200);
             };
 
+
+
             // 👇 Collapse behavior
             if (!editMode || (editMode && artifactOwner)) {
                 headerBlock.style.cursor = "pointer";
@@ -556,6 +574,7 @@ function renderMultipleRemoteBlocks(remoteList) {
                 headerBlock.onclick = () => alert("You can't edit this Artifact!");
             }
 
+
             // 🔁 Auto-expand the last one when not in editMode
             if (!editMode && idx === remoteList.length - 1) {
                 //contentDiv.style.display = "block";
@@ -569,6 +588,18 @@ function renderMultipleRemoteBlocks(remoteList) {
                 });
 
             }
+
+
+            // 🔁 Auto-expand based on flag
+            if (autoExpandFlag) {
+                headerBlock.classList.add("active");
+                requestAnimationFrame(() => {
+                    loadAssets();
+                });
+            }
+
+
+
 
             // 📦 Final append
             assetLinks.appendChild(headerBlock);
