@@ -448,15 +448,14 @@ function renderMultipleRemoteBlocks(remoteList) {
 
             // 🔎 Detect and strip <EXPAND> marker
             let autoExpandFlag = false;
-            let ydescription=description;
+            let xdescription=description || "";
 
 
-         /*   if (xdescription && xdescription.includes("<EXPAND>") ) {
+
+            if (xdescription && xdescription.includes("<EXPAND>")) {
                 autoExpandFlag = true;
-
-                xdescription = xdescription.replace("<EXPAND>", "").trim(); // remove marker
+                xdescription = xdescription.replace("<EXPAND>", "").trim();
             }
-*/
 
            //const xxdescription=xdescription;
 
@@ -478,8 +477,7 @@ function renderMultipleRemoteBlocks(remoteList) {
             const storageIcon = storageType === "LOCAL" ? "📂" : "🌐";
             const serial = idx + 1;
 
-
-            const headerBlock = buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, linkId, artifactOwner });
+            const headerBlock = buildCollapsibleHeader({ serial, storageIcon, xdescription, maskEmail, linkId, artifactOwner });
 
 
             headerBlock.classList.add("asset-banner");

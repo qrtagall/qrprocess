@@ -269,7 +269,7 @@ function buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, l
 
 
 
-function buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, linkId, artifactOwner }) {
+function buildCollapsibleHeader({ serial, storageIcon, xdescription, maskEmail, linkId, artifactOwner }) {
     const wrapper = document.createElement("div");
     wrapper.className = "asset-banner";
 
@@ -282,36 +282,38 @@ function buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, l
     titleRow.style.fontWeight = "bold";
     titleRow.style.marginBottom = "6px";
 
-    const titleText = document.createElement("div");
-    titleText.style.flexGrow = "1";
-    titleText.style.textAlign = "center";
-    titleText.innerText = `${serial}. ${storageIcon} ${description || "-"}`;
-    titleRow.appendChild(titleText);
 
-    // Edit button (if owner)
-    if (editMode && artifactOwner) {
-        const editBtn = document.createElement("button");
-        editBtn.innerText = "✏️";
-        editBtn.title = "Edit Description";
-        editBtn.style.fontSize = "14px";
-        editBtn.style.marginLeft = "10px";
-        editBtn.onclick = () => editDescription(linkId, description);
-        titleRow.appendChild(editBtn);
-    }
 
-    // Info block
-    const infoBlock = document.createElement("div");
-    infoBlock.className = "asset-banner-info";
-    infoBlock.innerHTML = `
-        <div>👤 ${maskEmail}</div>
-        <div>🆔 ${linkId || "-"}</div>
-    `;
+  const titleText = document.createElement("div");
+  titleText.style.flexGrow = "1";
+  titleText.style.textAlign = "center";
+  titleText.innerText = `${serial}. ${storageIcon} ${xdescription || "-"}`;
+  titleRow.appendChild(titleText);
 
-    // Combine and return
-    wrapper.appendChild(titleRow);
-    wrapper.appendChild(infoBlock);
+  // Edit button (if owner)
+  if (editMode && artifactOwner) {
+      const editBtn = document.createElement("button");
+      editBtn.innerText = "✏️";
+      editBtn.title = "Edit Description";
+      editBtn.style.fontSize = "14px";
+      editBtn.style.marginLeft = "10px";
+      editBtn.onclick = () => editDescription(linkId, xdescription);
+      titleRow.appendChild(editBtn);
+  }
 
-    return wrapper;
+  // Info block
+  const infoBlock = document.createElement("div");
+  infoBlock.className = "asset-banner-info";
+  infoBlock.innerHTML = `
+      <div>👤 ${maskEmail}</div>
+      <div>🆔 ${linkId || "-"}</div>
+  `;
+
+  // Combine and return
+  wrapper.appendChild(titleRow);
+  wrapper.appendChild(infoBlock);
+
+  return wrapper;
 }
 
 
@@ -320,56 +322,56 @@ function buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, l
 
 
 function getArtifactByIndex(linkId, indexInBlock) {
-    const block = globalRemoteAssetList.find(b => b.linkId === linkId);
-    if (!block || !block.assets || indexInBlock < 0 || indexInBlock >= block.assets.length) {
-        console.warn(`❌ Asset not found for linkId=${linkId} index=${indexInBlock}`);
-        return null;
-    }
-    return block.assets[indexInBlock];
+  const block = globalRemoteAssetList.find(b => b.linkId === linkId);
+  if (!block || !block.assets || indexInBlock < 0 || indexInBlock >= block.assets.length) {
+      console.warn(`❌ Asset not found for linkId=${linkId} index=${indexInBlock}`);
+      return null;
+  }
+  return block.assets[indexInBlock];
 }
 
 function isSessionUserOwnerOfAnyBlock() {
-    if (!sessionEmail || !globalRemoteAssetList?.length) return false;
-    const lowercaseSession = sessionEmail.toLowerCase();
-    return globalRemoteAssetList.some(block => block.email?.toLowerCase() === lowercaseSession);
+  if (!sessionEmail || !globalRemoteAssetList?.length) return false;
+  const lowercaseSession = sessionEmail.toLowerCase();
+  return globalRemoteAssetList.some(block => block.email?.toLowerCase() === lowercaseSession);
 }
 
 function getMaskedOwnerList(includeSelfLabel = true) {
-    if (!globalRemoteAssetList?.length) return [];
+  if (!globalRemoteAssetList?.length) return [];
 
-    const seen = new Set();  // avoid duplicate emails
-    const owners = [];
+  const seen = new Set();  // avoid duplicate emails
+  const owners = [];
 
-    for (const block of globalRemoteAssetList) {
-        const email = block.email?.toLowerCase();
-        if (email && !seen.has(email)) {
-            seen.add(email);
+  for (const block of globalRemoteAssetList) {
+      const email = block.email?.toLowerCase();
+      if (email && !seen.has(email)) {
+          seen.add(email);
 
-            const isSelf = email === sessionEmail?.toLowerCase();
-            const masked = maskEmailUser(email);
-            owners.push(includeSelfLabel && isSelf ? `${masked} (You)` : masked);
-        }
-    }
+          const isSelf = email === sessionEmail?.toLowerCase();
+          const masked = maskEmailUser(email);
+          owners.push(includeSelfLabel && isSelf ? `${masked} (You)` : masked);
+      }
+  }
 
-    return owners;
+  return owners;
 }
 
 function isCopied(id) {
-    if (!id || !globalRemoteAssetList?.length) return true; // no match = copied
+  if (!id || !globalRemoteAssetList?.length) return true; // no match = copied
 
-    return !globalRemoteAssetList.some(block => block.linkId === id);
+  return !globalRemoteAssetList.some(block => block.linkId === id);
 }
 
 function getStorageTypeByLinkId(linkId) {
-    if (!linkId || !globalRemoteAssetList?.length) return "REMOTE";  // default fallback
-    const block = globalRemoteAssetList.find(b => b.linkId === linkId);
-    return block?.storageType?.toUpperCase() || "REMOTE";
+  if (!linkId || !globalRemoteAssetList?.length) return "REMOTE";  // default fallback
+  const block = globalRemoteAssetList.find(b => b.linkId === linkId);
+  return block?.storageType?.toUpperCase() || "REMOTE";
 }
 
 function getSheetIdByLinkId(linkId) {
-    console.log("globallist", globalRemoteAssetList);
-    const block = globalRemoteAssetList.find(b => b.linkId === linkId);
-    return block?.sheetId || "";
+  console.log("globallist", globalRemoteAssetList);
+  const block = globalRemoteAssetList.find(b => b.linkId === linkId);
+  return block?.sheetId || "";
 }
 
 /************* pass linkid to openedit/delete modals modals modal */
