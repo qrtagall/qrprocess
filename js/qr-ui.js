@@ -448,23 +448,38 @@ function renderMultipleRemoteBlocks(remoteList) {
 
             // 🔎 Detect and strip <EXPAND> marker
             let autoExpandFlag = false;
-            let xdescription=description;
-            if (xdescription && (xdescription.toUpperCase().includes("<EXPAND>") || xdescription.toUpperCase().includes("<EX>"))) {
+            let ydescription=description;
+
+
+         /*   if (xdescription && xdescription.includes("<EXPAND>") ) {
                 autoExpandFlag = true;
 
-                // Remove both <EXPAND> and <EX> (any case)
-                xdescription = xdescription.replace(/<\s*EXPAND\s*>/ig, "")
-                    .replace(/<\s*EX\s*>/ig, "")
-                    .trim();
+                xdescription = xdescription.replace("<EXPAND>", "").trim(); // remove marker
             }
+*/
 
+           //const xxdescription=xdescription;
+
+
+
+            /*
+            if (xdescription) {
+                // Case-insensitive search for either <EXPAND> or <EX>
+                const expandRegex = /<\s*(EXPAND|EX)\s*>/i;
+
+                if (expandRegex.test(xdescription)) {
+                    autoExpandFlag = true;
+                    // remove only the marker, keep rest of text intact
+                    xdescription = xdescription.replace(expandRegex, "").trim();
+                }
+            }*/
 
             const maskEmail = maskEmailUser(email);
             const storageIcon = storageType === "LOCAL" ? "📂" : "🌐";
             const serial = idx + 1;
 
 
-            const headerBlock = buildCollapsibleHeader({ serial, storageIcon, xdescription, maskEmail, linkId, artifactOwner });
+            const headerBlock = buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, linkId, artifactOwner });
 
 
             headerBlock.classList.add("asset-banner");
