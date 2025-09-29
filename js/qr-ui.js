@@ -434,8 +434,7 @@ async function renderInfoBlock(data) {
 
 /*********************************************************************************************************/
 
-
-function renderMultipleRemoteBlocks_exp(remoteList) {
+function renderMultipleRemoteBlocks(remoteList) {
     showSpinner(true);
 
     setTimeout(() => {
@@ -445,68 +444,43 @@ function renderMultipleRemoteBlocks_exp(remoteList) {
         remoteList.forEach(({ email, storageType, assets, description, linkId }, idx) => {
             const artifactOwner = (email === sessionEmail);
 
-            // ---------------------------
-            // 🔎 Description handling
-            // ---------------------------
-            const rawDescription = description || "";   // preserve original (with markers)
-            let xdescription = rawDescription;          // copy for display
-            let autoExpandFlag = false;
-            let customColor = null;
+            // Keep raw for edit mode; parse for display
+            const rawDescription = description || "";
+            const parsed = parseInlineOptions(rawDescription);
+            const xdescription = parsed.cleanText || "(No Description)";
+            const autoExpandFlag = !!parsed.expand;
+            const customColorVal = parsed.color; // 1..100 or null
 
-            // Expand marker (<EXPAND> or <EX>)
-            if (/<\s*(EXPAND|EX)\s*>/i.test(xdescription)) {
-                autoExpandFlag = true;
-                xdescription = xdescription.replace(/<\s*(EXPAND|EX)\s*>/ig, "").trim();
-            }
-
-            // Color marker (<COLOR:X> or <COL:X>)
-            const colorMatch = xdescription.match(/<\s*COL(?:OR)?:\s*(\d{1,3})\s*>/i);
-            if (colorMatch) {
-                let colorVal = parseInt(colorMatch[1], 10);
-                if (colorVal >= 1 && colorVal <= 100) {
-                    customColor = colorVal;
-                }
-                xdescription = xdescription.replace(/<\s*COL(?:OR)?:\s*\d{1,3}\s*>/ig, "").trim();
-            }
-
-            // ---------------------------
-            // 🔎 Build header + content
-            // ---------------------------
             const maskEmail = maskEmailUser(email);
-            const storageIcon = storageType === "LOCAL" ? "📂" : "🌐";
+            const storageIcon = (storageType === "LOCAL") ? "📂" : "🌐";
             const serial = idx + 1;
 
             const headerBlock = buildCollapsibleHeader({
                 serial,
                 storageIcon,
-                description:xdescription,
+                description: xdescription, // cleaned for display
                 maskEmail,
                 linkId,
                 artifactOwner
             });
-            headerBlock.style.marginBottom = "-3px";
             headerBlock.classList.add("asset-banner");
-
-            // Preserve raw description for edit mode
-            headerBlock.dataset.rawDescription = rawDescription;
+            headerBlock.dataset.rawDescription = rawDescription; // preserve raw for edit UI
 
             const contentDiv = document.createElement("div");
             contentDiv.className = "remote-content";
 
-            // 🎨 Colors
-            const shadeApproved   = adjustColor(BaseColorApproved,  BaseColorOffset * 0);
-            const shadeNotApproved= adjustColor(BaseColorNotApproved,BaseColorOffset * 0);
-            const shadeDefault    = adjustColor(BaseColorDefault,   BaseColorOffset * 0);
+            // Color logic
+            const shadeApproved    = adjustColor(BaseColorApproved,    BaseColorOffset * 0);
+            const shadeNotApproved = adjustColor(BaseColorNotApproved, BaseColorOffset * 0);
+            const shadeDefault     = adjustColor(BaseColorDefault,     BaseColorOffset * 0);
 
-            let appliedColor = shadeDefault;
-            if (customColor) {
-                appliedColor = getSoftColor(customColor); // custom soft pastel
-            }
+            // If a custom color was provided, use that pastel; otherwise use your normal shades
+            const pastel = customColorVal ? getSoftColor(customColorVal) : null;
 
             if (sessionEmail) {
                 if (artifactOwner) {
-                    headerBlock.style.backgroundColor = appliedColor || shadeApproved;
-                    contentDiv.style.backgroundColor  = appliedColor || shadeApproved;
+                    headerBlock.style.backgroundColor = pastel || shadeApproved;
+                    contentDiv.style.backgroundColor  = pastel || shadeApproved;
                     EditLinkID = linkId;
 
                     if (editMode) {
@@ -516,24 +490,22 @@ function renderMultipleRemoteBlocks_exp(remoteList) {
                             "margin-bottom:20px; border:1px dashed #aaa; padding:16px; " +
                             "border-radius:8px; text-align:center; background:#fffff8;";
                         placeholder.innerHTML = `
-                            <button onclick="setModalLinkAndOpen(-1, false, '${linkId}')">
-                                ➕ Add New Artifact
-                            </button>
-                        `;
+              <button onclick="setModalLinkAndOpen(-1, false, '${linkId}')">
+                ➕ Add New Artifact
+              </button>
+            `;
                         contentDiv.appendChild(placeholder);
                     }
                 } else {
-                    headerBlock.style.backgroundColor = appliedColor || shadeNotApproved;
-                    contentDiv.style.backgroundColor  = appliedColor || shadeNotApproved;
+                    headerBlock.style.backgroundColor = pastel || shadeNotApproved;
+                    contentDiv.style.backgroundColor  = pastel || shadeNotApproved;
                 }
             } else {
-                headerBlock.style.backgroundColor = appliedColor || shadeDefault;
-                contentDiv.style.backgroundColor  = appliedColor || shadeDefault;
+                headerBlock.style.backgroundColor = pastel || shadeDefault;
+                contentDiv.style.backgroundColor  = pastel || shadeDefault;
             }
 
-            // ---------------------------
-            // 🔎 Asset loading
-            // ---------------------------
+            // Asset loading
             let isLoaded = false;
             const isBlockEditable = sessionEmail &&
                 email &&
@@ -556,9 +528,7 @@ function renderMultipleRemoteBlocks_exp(remoteList) {
                 }, 200);
             };
 
-            // ---------------------------
-            // 🔎 Collapse/expand logic
-            // ---------------------------
+            // Collapse/expand logic
             if (!editMode || (editMode && artifactOwner)) {
                 headerBlock.style.cursor = "pointer";
                 headerBlock.onclick = () => {
@@ -566,16 +536,15 @@ function renderMultipleRemoteBlocks_exp(remoteList) {
                         headerBlock.classList.add("asset-banner");
                     }
                     const isActive = headerBlock.classList.toggle("active");
-                    if (isActive && !isLoaded) {
-                        loadAssets();
-                    }
+                    if (isActive && !isLoaded) loadAssets();
+
                     if (editMode && artifactOwner) {
                         const editActions = document.getElementById("editActions");
-                        editActions.style.display = "flex";
+                        if (editActions) editActions.style.display = "flex";
                     }
                 };
 
-                // auto-expand for editable blocks
+                // Auto-expand owner’s block in edit mode
                 if (editMode && artifactOwner) {
                     headerBlock.onclick();
                 }
@@ -584,25 +553,22 @@ function renderMultipleRemoteBlocks_exp(remoteList) {
                 headerBlock.onclick = () => alert("You can't edit this Artifact!");
             }
 
-            // auto-expand based on description marker
+            // Auto-expand by inline option
             if (autoExpandFlag) {
                 headerBlock.classList.add("active");
-                requestAnimationFrame(() => {
-                    loadAssets();
-                });
+                requestAnimationFrame(() => loadAssets());
             }
 
-            // auto-expand the last one when not in editMode
-            if (!editMode && idx === remoteList.length - 1 && !autoExpandFlag) {
+            // Auto-expand the last one when not in editMode
+            if (!editMode && idx === remoteList.length - 1) {
                 headerBlock.classList.add("active");
-                requestAnimationFrame(() => {
-                    loadAssets();
-                });
+                requestAnimationFrame(() => loadAssets());
             }
 
-            // ---------------------------
-            // 🔎 Final append
-            // ---------------------------
+            // Tighten gap (your earlier tweak)
+            headerBlock.style.marginBottom = "-1px";
+
+            // Append
             assetLinks.appendChild(headerBlock);
             assetLinks.appendChild(contentDiv);
         });
@@ -613,7 +579,7 @@ function renderMultipleRemoteBlocks_exp(remoteList) {
 
 
 
-function renderMultipleRemoteBlocks(remoteList) {
+function renderMultipleRemoteBlocks_old(remoteList) {
     showSpinner(true);
 
     setTimeout(() => {

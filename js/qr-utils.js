@@ -221,13 +221,62 @@ function printQR() {
     `);
 }
 
-function getSoftColor(num) {
-    // Map 1–100 → 0–360 (hue)
-    const hue = (num % 100) * 3.6;
-    const saturation = 60;  // pastel
-    const lightness = 85;   // light
-    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+function parseInlineOptions(text) {
+    const out = { cleanText: text || "", expand: false, color: null };
+    if (!text) return out;
+
+    let clean = text;
+
+    // --- Case 1: New format <EXPAND=TRUE:COL=7>
+    const ANY_TAG = /<([^>]+)>/g;
+    clean = clean.replace(ANY_TAG, (full, inner) => {
+        if (!/[=]/.test(inner)) return full; // skip if no "="
+        if (!/(EXPAND|EX|COLOR|COL)/i.test(inner)) return full;
+
+        inner.split(/[;:,\|]/).forEach(pair => {
+            const kv = pair.split(/\s*=\s*/);
+            if (kv.length < 2) return;
+
+            const key = kv[0].trim().toUpperCase();
+            const val = kv[1].trim();
+
+            if (key === "EXPAND" || key === "EX") {
+                out.expand = ["1", "TRUE", "YES", "ON", "OPEN"].includes(val.toUpperCase());
+            } else if (key === "COLOR" || key === "COL") {
+                const n = parseInt(val, 10);
+                if (!isNaN(n)) out.color = Math.max(1, Math.min(100, n));
+            }
+        });
+
+        return ""; // strip this tag
+    });
+
+    // --- Case 2: Old simple tags (<EXPAND>, <EX>, <COLOR:7>, <COL:7>)
+    if (/<\s*(EXPAND|EX)\s*>/i.test(clean)) {
+        out.expand = true;
+        clean = clean.replace(/<\s*(EXPAND|EX)\s*>/ig, "");
+    }
+
+    const colorMatch = clean.match(/<\s*COL(?:OR)?:\s*(\d{1,3})\s*>/i);
+    if (colorMatch) {
+        const n = parseInt(colorMatch[1], 10);
+        if (!isNaN(n)) out.color = Math.max(1, Math.min(100, n));
+        clean = clean.replace(/<\s*COL(?:OR)?:\s*\d{1,3}\s*>/ig, "");
+    }
+
+    out.cleanText = clean.trim();
+    return out;
 }
+
+
+// Soft pastel HSL by number 1..100
+function getSoftColor(n) {
+    const hue = ((n - 1) % 100) * 3.6; // map 1..100 -> 0..360
+    const sat = 60;   // pastel-ish
+    const light = 85; // light background
+    return `hsl(${hue}, ${sat}%, ${light}%)`;
+}
+
 
 /*
 function buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, linkId, artifactOwner }) {
