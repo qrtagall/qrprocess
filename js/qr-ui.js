@@ -478,7 +478,7 @@ function renderMultipleRemoteBlocks(remoteList) {
             const serial = idx + 1;
 
             const headerBlock = buildCollapsibleHeader({ serial, storageIcon, xdescription, maskEmail, linkId, artifactOwner });
-
+            headerBlock.style.marginBottom = "-3px";
 
             headerBlock.classList.add("asset-banner");
 
@@ -486,8 +486,10 @@ function renderMultipleRemoteBlocks(remoteList) {
             const contentDiv = document.createElement("div");
             contentDiv.className = "remote-content";
            // contentDiv.style.display = "none"; // default collapsed
+           // contentDiv.style.marginTop = "0";
+           // contentDiv.style.paddingTop = "0";
 
-                console.log("Assests>>", assets);
+            console.log("Assests>>", assets);
             console.log("Assests size>>", assets.length);
 
 
@@ -589,7 +591,8 @@ function renderMultipleRemoteBlocks(remoteList) {
 
 
             // 🔁 Auto-expand the last one when not in editMode
-            if (!editMode && idx === remoteList.length - 1) {
+            if (!editMode && idx === remoteList.length - 1 && !autoExpandFlag)
+            {
                 //contentDiv.style.display = "block";
                 //loadAssets();
 
@@ -604,7 +607,7 @@ function renderMultipleRemoteBlocks(remoteList) {
 
 
             // 🔁 Auto-expand based on flag
-            if (autoExpandFlag) {
+            if (autoExpandFlag ) {
                 headerBlock.classList.add("active");
                 requestAnimationFrame(() => {
                     loadAssets();
