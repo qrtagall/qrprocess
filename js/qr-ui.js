@@ -933,6 +933,43 @@ function editDescription(linkId = null, currentText = "") {
         return;
     }
 
+    let rawText = currentText || "";
+
+    if (linkId) {
+        // Try to find headerBlock with this linkId
+        const headerBlock = document.querySelector(`[data-link-id="${linkId}"]`);
+        if (headerBlock) {
+            // ✅ Prefer rawDescription (contains tags)
+            rawText = headerBlock.dataset.rawDescription || currentText || "";
+        }
+
+        // Store link ID in modal attributes
+        input.value = rawText.trim();
+        modal.setAttribute("data-mode", "link");
+        modal.setAttribute("data-link-id", linkId);
+    } else {
+        // Main (global) description edit
+        const titleEl = document.getElementById("assetTitle");
+        const lines = titleEl.innerText.split("\n");
+        const current = lines[0] || "Untitled";
+        input.value = current.trim();
+        modal.setAttribute("data-mode", "main");
+        modal.removeAttribute("data-link-id");
+    }
+
+    modal.style.display = "flex";
+}
+
+
+function editDescription_old(linkId = null, currentText = "") {
+    const modal = document.getElementById("editDescriptionModal");
+    const input = document.getElementById("newDescription");
+
+    if (!modal || !input) {
+        notify("❌ Description modal components missing.", "error");
+        return;
+    }
+
     if (linkId) {
         // ✔️ Store link ID in modal attributes
         input.value = currentText || "";
@@ -949,6 +986,8 @@ function editDescription(linkId = null, currentText = "") {
 
     modal.style.display = "flex";
 }
+
+
 
 
 function closeDescriptionModal() {
