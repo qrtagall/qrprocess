@@ -275,51 +275,6 @@ function getSoftColor(n) {
 }
 
 
-/*
-function buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, linkId, artifactOwner }) {
-    const titleRow = document.createElement("div");
-    titleRow.style.display = "flex";
-    titleRow.style.justifyContent = "space-between";
-    titleRow.style.alignItems = "center";
-    titleRow.style.lineHeight = "1.4";
-
-    const titleText = document.createElement("div");
-    titleText.style.flexGrow = "1";
-    titleText.style.textAlign = "center";
-    titleText.style.fontWeight = "bold";
-    titleText.innerText = `${serial}. ${storageIcon} ${description || "-"}`;
-    titleRow.appendChild(titleText);
-
-    // ✏️ Show edit button if owner & in edit mode
-    if (editMode && artifactOwner) {
-        const editBtn = document.createElement("button");
-        editBtn.innerText = "✏️";
-        editBtn.title = "Edit Description";
-        editBtn.style.fontSize = "14px";
-        editBtn.style.marginLeft = "10px";
-        editBtn.onclick = () => editDescription(linkId, description);
-        titleRow.appendChild(editBtn);
-    }
-
-    const infoBlock = document.createElement("div");
-    infoBlock.style.textAlign = "center";
-    infoBlock.style.fontSize = "13px";
-    infoBlock.className = "asset-banner-info";
-    infoBlock.innerHTML = `
-        <div>👤 ${maskEmail}</div>
-        <div>🆔 ${linkId || "-"}</div>
-    `;
-
-    const wrapper = document.createElement("div");
-    wrapper.className = "asset-banner"; // use custom CSS class
-    wrapper.appendChild(titleRow);
-    wrapper.appendChild(infoBlock);
-
-    return wrapper;
-}
-
- */
-
 
 
 function buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, linkId, artifactOwner,hideID, hideOwner }) {
@@ -350,7 +305,7 @@ function buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, l
       editBtn.title = "Edit Description";
       editBtn.style.fontSize = "14px";
       editBtn.style.marginLeft = "10px";
-      editBtn.onclick = () => editDescription(linkId, description);
+      editBtn.onclick = () => editDescription(linkId);//, description);
       titleRow.appendChild(editBtn);
   }
 
