@@ -463,7 +463,9 @@ function renderMultipleRemoteBlocks(remoteList) {
                 description: xdescription, // cleaned for display
                 maskEmail,
                 linkId,
-                artifactOwner
+                artifactOwner,
+                hideID,
+                hideOwner
             });
             headerBlock.classList.add("asset-banner");
             headerBlock.dataset.rawDescription = rawDescription; // preserve raw for edit UI
