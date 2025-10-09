@@ -469,6 +469,7 @@ function renderMultipleRemoteBlocks(remoteList) {
             });
             headerBlock.classList.add("asset-banner");
             headerBlock.dataset.rawDescription = rawDescription; // preserve raw for edit UI
+            headerBlock.dataset.linkId = linkId;  // used later in editDescription() lookup
 
             const contentDiv = document.createElement("div");
             contentDiv.className = "remote-content";
