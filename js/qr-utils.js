@@ -221,42 +221,26 @@ function printQR() {
     `);
 }
 
+
 function parseInlineOptions(text) {
-    const out = { cleanText: text || "", expand: false, color: null };
+    const out = {
+        cleanText: text || "",
+        expand: false,
+        color: null,
+        noid: false,
+        noowner: false
+    };
     if (!text) return out;
 
     let clean = text;
 
-    // --- Case 1: New format <EXPAND=TRUE:COL=7>
-    const ANY_TAG = /<([^>]+)>/g;
-    clean = clean.replace(ANY_TAG, (full, inner) => {
-        if (!/[=]/.test(inner)) return full; // skip if no "="
-        if (!/(EXPAND|EX|COLOR|COL)/i.test(inner)) return full;
-
-        inner.split(/[;:,\|]/).forEach(pair => {
-            const kv = pair.split(/\s*=\s*/);
-            if (kv.length < 2) return;
-
-            const key = kv[0].trim().toUpperCase();
-            const val = kv[1].trim();
-
-            if (key === "EXPAND" || key === "EX") {
-                out.expand = ["1", "TRUE", "YES", "ON", "OPEN"].includes(val.toUpperCase());
-            } else if (key === "COLOR" || key === "COL") {
-                const n = parseInt(val, 10);
-                if (!isNaN(n)) out.color = Math.max(1, Math.min(100, n));
-            }
-        });
-
-        return ""; // strip this tag
-    });
-
-    // --- Case 2: Old simple tags (<EXPAND>, <EX>, <COLOR:7>, <COL:7>)
+    // --- Expand / EX ---
     if (/<\s*(EXPAND|EX)\s*>/i.test(clean)) {
         out.expand = true;
         clean = clean.replace(/<\s*(EXPAND|EX)\s*>/ig, "");
     }
 
+    // --- Color / Col ---
     const colorMatch = clean.match(/<\s*COL(?:OR)?:\s*(\d{1,3})\s*>/i);
     if (colorMatch) {
         const n = parseInt(colorMatch[1], 10);
@@ -264,9 +248,22 @@ function parseInlineOptions(text) {
         clean = clean.replace(/<\s*COL(?:OR)?:\s*\d{1,3}\s*>/ig, "");
     }
 
+    // --- Hide ID ---
+    if (/<\s*NOID\s*>/i.test(clean)) {
+        out.noid = true;
+        clean = clean.replace(/<\s*NOID\s*>/ig, "");
+    }
+
+    // --- Hide Owner ---
+    if (/<\s*NOOWNER\s*>/i.test(clean)) {
+        out.noowner = true;
+        clean = clean.replace(/<\s*NOOWNER\s*>/ig, "");
+    }
+
     out.cleanText = clean.trim();
     return out;
 }
+
 
 
 // Soft pastel HSL by number 1..100
@@ -325,7 +322,7 @@ function buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, l
 
 
 
-function buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, linkId, artifactOwner }) {
+function buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, linkId, artifactOwner,hideID, hideOwner }) {
     const wrapper = document.createElement("div");
     wrapper.className = "asset-banner";
 
@@ -360,10 +357,30 @@ function buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, l
   // Info block
   const infoBlock = document.createElement("div");
   infoBlock.className = "asset-banner-info";
+  /*
   infoBlock.innerHTML = `
       <div>👤 ${maskEmail}</div>
       <div>🆔 ${linkId || "-"}</div>
   `;
+    */
+
+    // Build inner HTML dynamically
+    let infoHTML = "";
+
+    if (!hideOwner) {
+        infoHTML += `<div>👤 ${maskEmail}</div>`;
+    }
+    if (!hideID) {
+        infoHTML += `<div>🆔 ${linkId || "-"}</div>`;
+    }
+
+// Apply final HTML (if both hidden, this will stay empty)
+    infoBlock.innerHTML = infoHTML;
+
+// Optional: hide the block completely if both are hidden
+    if (hideOwner && hideID) {
+        infoBlock.style.display = "none";
+    }
 
   // Combine and return
   wrapper.appendChild(titleRow);

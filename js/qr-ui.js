@@ -450,6 +450,8 @@ function renderMultipleRemoteBlocks(remoteList) {
             const xdescription = parsed.cleanText || "(No Description)";
             const autoExpandFlag = !!parsed.expand;
             const customColorVal = parsed.color; // 1..100 or null
+            const hideID         = parsed.noid;
+            const hideOwner      = parsed.noowner;
 
             const maskEmail = maskEmailUser(email);
             const storageIcon = (storageType === "LOCAL") ? "📂" : "🌐";

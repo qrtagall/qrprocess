@@ -107,49 +107,7 @@ async function initQRTagAll() {
  * Load and render asset information after verification
  */
 
-/*
-async function loadAndRenderAsset_old(id) {
-    const popup = document.getElementById("popup");
-    const mainContent = document.getElementById("mainContent");
-    const resultDiv = document.getElementById("result");
-    const spinner = document.getElementById("spinner");
-    const loginSection = document.getElementById("loginSection");
-    const verifyingLabel = document.getElementById("verifyingLabel");
 
-    console.log(">>>>>>> Feting Asset Data");
-    try {
-
-        document.getElementById("spinner").innerText = "⏳ Fetching Asset Info...";
-        showSpinner(true);
-        const res = await fetchAssetData(id);
-
-
-        spinner.style.display = "none";
-        verifyingLabel.style.display = "none";
-
-        if (!res.found) {
-            resultDiv.style.display = "block";
-            resultDiv.textContent = "This is a new and unclaimed ID!";
-            resultDiv.style.color = "forestgreen";
-            loginSection.style.display = "block";
-            return;
-        }
-
-        popup.style.display = "none";
-        mainContent.style.display = "block";
-        injectQRBlock(id);  // 🧠 Inject QR again
-
-        document.getElementById("spinner").innerText = "⏳ Rendering Panel ...";
-        renderAssetPanel(res.data);
-
-    } catch (err) {
-        console.error("❌ Failed to load asset:", err);
-        resultDiv.style.display = "block";
-        resultDiv.innerText = "❌ Failed to retrieve data.";
-        spinner.style.display = "none";
-    }
-}
-*/
 
 //CMEDITY
 async function loadAndRenderAsset(id) {
@@ -205,86 +163,6 @@ async function loadAndRenderAsset(id) {
 /**
  * Renders asset panel with artifacts and title
  */
-
-
-/*
-async function renderAssetPanel_old(data) {
-    const assetTitle = document.getElementById("assetTitle");
-    const assetLinks = document.getElementById("assetLinks");
-    const editBtn = document.getElementById("editBtn");
-
-
-    const id = getQueryParam("id");
-    isOwner = sessionEmail && sessionEmail === ownerEmail;
-
-
-    const maskedOwner = maskEmailUser(ownerEmail);
-    assetTitle.innerHTML = `
-      <div style="text-align: center;">
-        ${data.Description || "Verified Asset"}
-        <div style="font-size: 12px; color: gray;">
-          (${id})<br>Owner: ${maskedOwner}
-        </div>
-        ${editMode ? `<button onclick="editDescription()" style="font-size: 13px;">✏️ Edit Description</button>` : ""}
-      </div>
-      ${editMode ? `<div style="text-align:center; margin-top:5px;"><button onclick="openAddModal(-1)">➕ Add Artifact</button></div>` : ""}
-    `;
-
-
-
-    if (isOwner) {
-       // updatePanelBackground("#e6ffe6");
-        editBtn.innerHTML = "✏️ Edit Details";
-    } else {
-        //updatePanelBackground(sessionEmail ? "#ffdddd" : "#fffbe6");
-        editBtn.innerHTML = sessionEmail ? "🔐 Log-in as Owner<br>to Edit Details" : "🔐 Log-in to Edit Details";
-    }
-
-    //console.log("Fetch started............")
-
-   // showSpinner(true);
-
-
-
-    //Fetch all data from ID
-    const remoteList = await fetchAllRemoteSheets(id);
-
-    remoteList.forEach(({ linkId, sheetId }) => {
-        if (linkId && sheetId) {
-            window.qrLinkSheetMap[linkId] = sheetId;
-        }
-    });
-
-    console.log("Remote List>>>>>>>", remoteList);
-
-    showSpinner(false);
-
-    //CMEDIT
-    //Render to block
-    renderMultipleRemoteBlocks(remoteList);
-
-    console.log("Fetch Enedd............")
-
-    editBtn.disabled = false;
-    editBtn.classList.remove("disabled-button");
-    editBtn.classList.add("enabled");
-
-    editBtn.onclick = () => {
-
-        editMode = true;
-
-
-        console.log("editMode:>>>>>>>>>>>>>>>>", editMode);
-        //console.log("editActions element:", editActions);
-
-
-        renderMultipleRemoteBlocks(remoteList); // re-render with edit options
-
-
-
-    };
-}
-*/
 
 
 //CMEDITY
