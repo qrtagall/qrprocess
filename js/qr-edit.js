@@ -197,8 +197,8 @@ async function confirmAddLinkedQR() {
 
     // 🔍 Step 1: If never verified or different from cached one — verify now
     if (!lastVerifiedQR.id || lastVerifiedQR.id !== newId || !lastVerifiedQR.valid) {
-        const confirmCheck = confirm("⚠️ This QR ID is not yet verified. Verify now?");
-        if (!confirmCheck) return;
+       // const confirmCheck = confirm("⚠️ This QR ID is not yet verified. Verify now?");
+       // if (!confirmCheck) return;
 
         await verifyAddLinkedQR(); // runs async verification
         if (!lastVerifiedQR.valid) {
