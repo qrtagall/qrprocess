@@ -2,6 +2,7 @@
 
 // Globals (must match the main script expectations)
 
+
 let sessionEmail = localStorage.getItem("qr_claimed_email") || "";
 //let sessionEmail = "dev.chandan2002x@gmail.com";//localStorage.getItem("qr_claimed_email");
 //let sessionEmail = "chandan2002x@gmail.com";//localStorage.getItem("qr_claimed_email");
