@@ -169,7 +169,7 @@ function openAddQRDialog() {
     document.getElementById("addQRModal").style.display = "flex";
     document.getElementById("newLinkedQRInput").value = "";
     document.getElementById("addQRVerifyStatus").textContent = "";
-    document.getElementById("confirmAddQR").disabled = true;
+   // document.getElementById("confirmAddQR").disabled = true;
 }
 
 function closeAddQRModal() {
@@ -184,10 +184,10 @@ async function verifyAddLinkedQR() {
    // lastVerifiedQR = { id: document.getElementById("newLinkedQRInput").value.trim(), valid };
 
     const input = document.getElementById("newLinkedQRInput");
-    const btn = document.getElementById("confirmAddQR");
+   // const btn = document.getElementById("confirmAddQR");
     const valid = await verifyQRIdFromInput("newLinkedQRInput", "addQRVerifyStatus", true);
     lastVerifiedQR = { id: input.value.trim(), valid };
-    btn.disabled = !valid;
+   // btn.disabled = !valid;
 
 }
 

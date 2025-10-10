@@ -143,8 +143,13 @@
     </div>
 
     <!-- Clone QR Modal -->
-    <div id="cloneQRModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#00000055; z-index:10000; justify-content:center; align-items:center;">
-        <div style="background:white; padding:20px; border-radius:10px; max-width:400px; width:90%; box-shadow:0 0 10px rgba(0,0,0,0.2); position:relative;">
+    <!-- Clone QR Modal -->
+    <div id="cloneQRModal"
+         style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+            background:#00000055; z-index:10000; justify-content:center; align-items:center;">
+        <div style="background:white; padding:20px; border-radius:10px; max-width:400px; width:90%;
+              box-shadow:0 0 10px rgba(0,0,0,0.2); position:relative;">
+
             <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 16px;">🔁 Clone QR</h3>
 
             <p style="font-size: 14px; color: #333; font-weight: 500; margin-bottom: 14px; line-height: 1.0;">
@@ -167,26 +172,25 @@
 
             <label>New QR ID:</label>
 
-            <!--
             <div style="display:flex; gap:10px; align-items:center; margin-bottom:15px;">
                 <input type="text" id="newCloneIdInput" placeholder="Enter New QR ID" style="flex:1;">
-                <button onclick="verifyQRIdFromInput('newCloneIdInput', 'qrVerifyStatus')" style="padding:6px 12px; font-size:12px;">✅ Verify</button>
-            </div>
-            -->
-            <div style="display:flex; gap:10px; align-items:center; margin-bottom:15px;">
-                <input type="text" id="newCloneIdInput" placeholder="Enter New QR ID" style="flex:1;">
-                <button onclick="verifyQRIdFromInput('newCloneIdInput', 'qrVerifyStatus',false)" style="padding:6px 12px; font-size:12px;">✅ Verify</button>
-                <button onclick="openQRScanModal('newCloneIdInput',false)" style="padding:6px 12px; font-size:12px;">📷 Scan</button>
+                <button onclick="verifyQRIdFromInput('newCloneIdInput', 'qrVerifyStatus', false)"
+                        style="padding:6px 12px; font-size:12px;">✅ Verify</button>
+                <button onclick="openQRScanModal('newCloneIdInput', false)"
+                        style="padding:6px 12px; font-size:12px;">📷 Scan</button>
             </div>
 
             <p id="qrVerifyStatus" style="font-size:13px; color:gray; margin:0;"></p>
 
-            <div style="text-align:right;">
-                <button onclick="closeCloneModal()">Cancel</button>
-                <button onclick="confirmClone()">Clone</button>
+            <!-- ✅ Symmetric bottom buttons -->
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px;">
+                <button onclick="closeCloneModal()" style="padding:6px 12px; font-size:12px;">Cancel</button>
+                <button onclick="confirmClone()" style="padding:6px 12px; font-size:12px;">Clone</button>
             </div>
+
         </div>
     </div>
+
 
 
     <!-- Add Linked QR Modal -->
@@ -209,20 +213,21 @@
             <label>Existing QR ID:</label>
             <div style="display:flex; gap:10px; align-items:center; margin-bottom:15px;">
                 <input type="text" id="newLinkedQRInput" placeholder="Enter Existing QR ID" style="flex:1;">
-                <button onclick="verifyQRIdFromInput('newLinkedQRInput','addQRVerifyStatus',true)"
-                        style="padding:6px 12px; font-size:12px;">✅ Verify</button>
-                <button onclick="openQRScanModal('newLinkedQRInput',true)"
-                        style="padding:6px 12px; font-size:12px;">📷 Scan</button>
+                <button onclick="verifyAddLinkedQR()" style="padding:6px 12px; font-size:12px;">✅ Verify</button>
+                <button onclick="openQRScanModal('newLinkedQRInput',true)" style="padding:6px 12px; font-size:12px;">📷 Scan</button>
             </div>
 
             <p id="addQRVerifyStatus" style="font-size:13px; color:gray; margin:0;"></p>
 
-            <div style="text-align:right; margin-top:10px;">
-                <button onclick="closeAddQRModal()">Cancel</button>
-                <button id="confirmAddQR" onclick="confirmAddLinkedQR()" disabled>Add</button>
+            <!-- ✅ Bottom buttons now styled same as Verify/Scan -->
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px;">
+                <button onclick="closeAddQRModal()" style="padding:6px 12px; font-size:12px;">Cancel</button>
+                <button id="confirmAddQR" onclick="confirmAddLinkedQR()" style="padding:6px 12px; font-size:12px;">Add</button>
             </div>
+
         </div>
     </div>
+
 
 
 
@@ -487,7 +492,7 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "3.114_10102025";
+    const QRTagAll_Ver_ = "3.115_10102025";
 </script>
 
 
