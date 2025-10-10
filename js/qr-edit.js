@@ -56,6 +56,12 @@ async function verifyQRIdFromInput(inputId, statusId = "qrVerifyStatus", expectE
             status.style.color = "green";
             valid = true;
         }
+        else
+        {
+            status.textContent = "❌ ID may be Invalid ";
+            status.style.color = "red";
+            valid = false;
+        }
     } else {
         // Normal creation flow (Clone/New)
         status.textContent = result.message;
@@ -201,13 +207,20 @@ async function verifyAddLinkedQR() {
 
 }
 
-function confirmAddLinkedQR() {
+async function confirmAddLinkedQR() {
     const newId = document.getElementById("newLinkedQRInput").value.trim();
     const currentId = getQueryParam("id");
 
-    if (!lastVerifiedQR.valid || lastVerifiedQR.id !== newId) {
-        alert("⚠️ Please verify the QR ID before adding.");
-        return;
+    // 🔍 Step 1: If never verified or different from cached one — verify now
+    if (!lastVerifiedQR.id || lastVerifiedQR.id !== newId || !lastVerifiedQR.valid) {
+        const confirmCheck = confirm("⚠️ This QR ID is not yet verified. Verify now?");
+        if (!confirmCheck) return;
+
+        await verifyAddLinkedQR(); // runs async verification
+        if (!lastVerifiedQR.valid) {
+            alert("❌ New QR ID verification failed. Please try again.");
+            return;
+        }
     }
 
     closeAddQRModal();
