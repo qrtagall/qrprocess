@@ -163,13 +163,14 @@ function openAddQRDialog() {
     document.getElementById("addQRModal").style.display = "flex";
     document.getElementById("newLinkedQRInput").value = "";
     document.getElementById("addQRVerifyStatus").textContent = "";
+    document.getElementById("confirmAddQR").disabled = true;
 }
 
 function closeAddQRModal() {
     document.getElementById("addQRModal").style.display = "none";
 }
 
-
+/*
 function confirmAddLinkedQR() {
     const newId = document.getElementById("newLinkedQRInput").value.trim();
     const currentId = getQueryParam("id");
@@ -185,8 +186,35 @@ function confirmAddLinkedQR() {
 
     closeAddQRModal();
     triggerOperation("addLinkedQR", { newid: newId });
+}*/
+
+let lastVerifiedQR = { id: null, valid: false }; // global small cache
+async function verifyAddLinkedQR() {
+   // const valid = await verifyQRIdFromInput("newLinkedQRInput", "addQRVerifyStatus", true); // expectExisting=true
+   // lastVerifiedQR = { id: document.getElementById("newLinkedQRInput").value.trim(), valid };
+
+    const input = document.getElementById("newLinkedQRInput");
+    const btn = document.getElementById("confirmAddQR");
+    const valid = await verifyQRIdFromInput("newLinkedQRInput", "addQRVerifyStatus", true);
+    lastVerifiedQR = { id: input.value.trim(), valid };
+    btn.disabled = !valid;
+
 }
 
+function confirmAddLinkedQR() {
+    const newId = document.getElementById("newLinkedQRInput").value.trim();
+    const currentId = getQueryParam("id");
+
+    if (!lastVerifiedQR.valid || lastVerifiedQR.id !== newId) {
+        alert("⚠️ Please verify the QR ID before adding.");
+        return;
+    }
+
+    closeAddQRModal();
+
+    // ✅ identical call as clone
+    triggerOperation("addLinkedQR", { newid: newId });
+}
 
 
 /*********************************************** Delete ***********************************/
