@@ -21,7 +21,9 @@ let isnewQRIDVerifiedAndFree = false;
 
 
 //<button onclick="verifyQRIdFromInput('newCloneIdInput', 'qrVerifyStatus')">✅ Verify</button>
-async function verifyQRIdFromInput(inputId, statusId = "qrVerifyStatus") {
+
+
+async function verifyQRIdFromInput(inputId, statusId = "qrVerifyStatus", expectExisting = false) {
     const input = document.getElementById(inputId);
     const status = document.getElementById(statusId);
 
@@ -31,16 +33,38 @@ async function verifyQRIdFromInput(inputId, statusId = "qrVerifyStatus") {
     }
 
     const newId = input.value.trim();
+    if (!newId) {
+        status.textContent = "⚠️ Please enter a QR ID first.";
+        status.style.color = "red";
+        return false;
+    }
+
     status.textContent = "⏳ Verifying QR ID...";
     status.style.color = "gray";
 
     const result = await verifyQRIdValue(newId);
+    let valid = result.valid;
 
-    status.textContent = result.message;
-    status.style.color = result.valid ? "green" : "red";
+    if (expectExisting) {
+        // For Add-Linked-QR: must already exist
+        if (valid) {
+            status.textContent = "❌ QR not found (it should already exist)";
+            status.style.color = "red";
+            valid = false;
+        } else if (result.message.includes("already in use")) {
+            status.textContent = "✅ Existing QR ID verified and accessible";
+            status.style.color = "green";
+            valid = true;
+        }
+    } else {
+        // Normal creation flow (Clone/New)
+        status.textContent = result.message;
+        status.style.color = result.valid ? "green" : "red";
+    }
 
-    return result.valid;
+    return valid;
 }
+
 
 async function isFreeQR(id) {
     try {

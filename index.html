@@ -175,8 +175,8 @@
             -->
             <div style="display:flex; gap:10px; align-items:center; margin-bottom:15px;">
                 <input type="text" id="newCloneIdInput" placeholder="Enter New QR ID" style="flex:1;">
-                <button onclick="verifyQRIdFromInput('newCloneIdInput', 'qrVerifyStatus')" style="padding:6px 12px; font-size:12px;">✅ Verify</button>
-                <button onclick="openQRScanModal('newCloneIdInput')" style="padding:6px 12px; font-size:12px;">📷 Scan</button>
+                <button onclick="verifyQRIdFromInput('newCloneIdInput', 'qrVerifyStatus',false)" style="padding:6px 12px; font-size:12px;">✅ Verify</button>
+                <button onclick="openQRScanModal('newCloneIdInput',false)" style="padding:6px 12px; font-size:12px;">📷 Scan</button>
             </div>
 
             <p id="qrVerifyStatus" style="font-size:13px; color:gray; margin:0;"></p>
@@ -209,9 +209,9 @@
             <label>Existing QR ID:</label>
             <div style="display:flex; gap:10px; align-items:center; margin-bottom:15px;">
                 <input type="text" id="newLinkedQRInput" placeholder="Enter Existing QR ID" style="flex:1;">
-                <button onclick="verifyQRIdFromInput('newLinkedQRInput','addQRVerifyStatus')"
+                <button onclick="verifyQRIdFromInput('newLinkedQRInput','addQRVerifyStatus',true)"
                         style="padding:6px 12px; font-size:12px;">✅ Verify</button>
-                <button onclick="openQRScanModal('newLinkedQRInput')"
+                <button onclick="openQRScanModal('newLinkedQRInput',true)"
                         style="padding:6px 12px; font-size:12px;">📷 Scan</button>
             </div>
 
@@ -487,7 +487,7 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "3.109_10102025";
+    const QRTagAll_Ver_ = "3.110_10102025";
 </script>
 
 

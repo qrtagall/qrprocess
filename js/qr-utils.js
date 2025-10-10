@@ -502,7 +502,7 @@ let qrScannerInstance = null;
 let videoTrack = null;
 
 
-function openQRScanModal(targetInputId) {
+function openQRScanModal(targetInputId, isExpectingExist) {
     const modal = document.getElementById("qrScanModal");
     currentQRScanTargetInput = document.getElementById(targetInputId);
     modal.style.display = "flex";
@@ -519,7 +519,7 @@ function openQRScanModal(targetInputId) {
 
                 if (currentQRScanTargetInput) {
                     currentQRScanTargetInput.value = extractIdFromQRString(decodedText);//decodedText;
-                    verifyQRIdFromInput(targetInputId, 'qrVerifyStatus'); // auto verify
+                    verifyQRIdFromInput(targetInputId, 'qrVerifyStatus',isExpectingExist); // auto verify
                 }
             }).catch(err => console.error("Stop error", err));
         },
