@@ -176,23 +176,7 @@ function closeAddQRModal() {
     document.getElementById("addQRModal").style.display = "none";
 }
 
-/*
-function confirmAddLinkedQR() {
-    const newId = document.getElementById("newLinkedQRInput").value.trim();
-    const currentId = getQueryParam("id");
-    if (!newId) {
-        alert("Please enter a valid QR ID.");
-        return;
-    }
-    if (newId === currentId) {
-        alert("You cannot link the same QR ID.");
-        return;
-    }
-    if (!confirm(`Link QR '${newId}' with current QR '${currentId}'?`)) return;
 
-    closeAddQRModal();
-    triggerOperation("addLinkedQR", { newid: newId });
-}*/
 
 let lastVerifiedQR = { id: null, valid: false }; // global small cache
 async function verifyAddLinkedQR() {
