@@ -430,6 +430,31 @@ async function fetchThumbnails(folderId) {
     return [];
 }
 
+/************************* ADD qr *****************************/
+
+
+function openAddQRDialogTrigger() {
+    const currentId = getQueryParam("id");
+    if (!currentId) {
+        alert("No active QR ID found in URL.");
+        return;
+    }
+
+    const newId = prompt("Enter an existing QR ID to link with this one:");
+    if (!newId || !newId.trim()) return;
+
+    if (newId.trim() === currentId.trim()) {
+        alert("You cannot link the same ID.");
+        return;
+    }
+
+    if (!confirm(`Do you want to link QR '${newId}' with '${currentId}'?`)) return;
+
+    // ✅ Just use your generic dispatcher
+    triggerOperation("addLinkedQR", {
+        newid: newId,
+    });
+}
 
 
 
@@ -475,80 +500,9 @@ function triggerHardDelete(id) {
     triggerOperation("hardDelete", { id });
 }
 
-/*
-triggerClone("IN_20250511220000001_abc123", "IN_20250512000100001_xyz789");
-
-triggerHardClone("IN_20250511220000001_abc123", "IN_20250512000100001_xyz789", {
-    1: "1AbCxxxFolderID1",
-    2: "1AbCyyyFolderID2"
-});
- */
 
 
 
-/*
-function loadProxyIframe() {
-    return new Promise((resolve) => {
-        proxyFrame = document.createElement("iframe");
-        proxyFrame.style.display = "none";
-
-        // ✅ Attach event handler FIRST
-        proxyFrame.onload = () => {
-            console.log("xxxx Proxy iframe loaded x");
-            setTimeout(() => {
-                proxyLoaded = true;
-                resolve();
-            }, 100); // small delay to allow script readiness
-        };
-
-        proxyFrame.src = "https://proxy.qrtagall.com";  // 👈 AFTER setting onload
-        document.body.appendChild(proxyFrame);
-    });
-}
-
-
-
-function Verifyidx(idToVerify) {
-    return new Promise((resolve, reject) => {
-        const targetFrame = window.frames[0]; // GitHub-safe fallback
-
-        if (!targetFrame) {
-            reject("❌ No iframe found to send message.");
-            return;
-        }
-
-        console.log("idx called",idToVerify);
-
-        const handler = (event) => {
-            if (!event.data || (event.data.type !== "qr_verified" && event.data.type !== "qr_error")) return;
-
-            window.removeEventListener("message", handler);
-
-            if (event.data.type === "qr_verified") {
-                resolve(event.data.result);
-            } else {
-                reject(event.data.error || "❌ Unknown verification error");
-            }
-        };
-
-        window.addEventListener("message", handler);
-
-        console.log("📤 Sending verify message via window.frames[0]");
-        targetFrame.postMessage({
-            type: "verify",
-            id: idToVerify
-        }, "*");
-
-
-        setTimeout(() => {
-            window.removeEventListener("message", handler);
-            reject("❌ Timed out while waiting for iframe response");
-        }, 4000);
-
-
-    });
-}
-*/
 
 function loadProxyIframe() {
     return new Promise((resolve) => {
