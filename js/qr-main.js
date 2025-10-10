@@ -147,10 +147,12 @@ async function loadAndRenderAsset(id) {
 
 
     } catch (err) {
+
         console.error("❌ Failed to load asset:", err);
         //resultDiv.style.display = "block";
         resultDiv.innerText = "❌ Failed to retrieve data.";
         spinner.style.display = "none";
+        alert("❌ Failed to load asset:");
     }
 
 
