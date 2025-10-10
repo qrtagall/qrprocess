@@ -132,14 +132,38 @@ function openTransferDialog() {
     return;
 }
 
+
+/************************* ADD QR ****************************************/
+
 function openAddQRDialog() {
-
-    //alert("Not available in Demo version.");
-    //return;
-
-    openAddQRDialogTrigger();
-
+    document.getElementById("addQRModal").style.display = "flex";
+    document.getElementById("newLinkedQRInput").value = "";
+    document.getElementById("addQRVerifyStatus").textContent = "";
 }
+
+function closeAddQRModal() {
+    document.getElementById("addQRModal").style.display = "none";
+}
+
+
+function confirmAddLinkedQR() {
+    const newId = document.getElementById("newLinkedQRInput").value.trim();
+    const currentId = getQueryParam("id");
+    if (!newId) {
+        alert("Please enter a valid QR ID.");
+        return;
+    }
+    if (newId === currentId) {
+        alert("You cannot link the same QR ID.");
+        return;
+    }
+    if (!confirm(`Link QR '${newId}' with current QR '${currentId}'?`)) return;
+
+    closeAddQRModal();
+    triggerOperation("addLinkedQR", { newid: newId });
+}
+
+
 
 /*********************************************** Delete ***********************************/
 function openDeleteDialog() {

@@ -433,29 +433,7 @@ async function fetchThumbnails(folderId) {
 /************************* ADD qr *****************************/
 
 
-function openAddQRDialogTrigger() {
-    const currentId = getQueryParam("id");
-    if (!currentId) {
-        alert("No active QR ID found in URL.");
-        return;
-    }
-
-    const newId = prompt("Enter an existing QR ID to link with this one:");
-    if (!newId || !newId.trim()) return;
-
-    if (newId.trim() === currentId.trim()) {
-        alert("You cannot link the same ID.");
-        return;
-    }
-
-    if (!confirm(`Do you want to link QR '${newId}' with '${currentId}'?`)) return;
-
-    // ✅ Just use your generic dispatcher
-    triggerOperation("addLinkedQR", {
-        newid: newId,
-    });
-}
-
+//LOOK at qr-edit.js
 
 
 /************************ Clone, copy, transfer, delete **************************/
