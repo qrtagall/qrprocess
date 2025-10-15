@@ -40,17 +40,20 @@ let globalRemoteAssetList = [];
 
 
 function renderThumbnailGrid(thumbnails) {
-    return thumbnails.map(item => `
-    <div style="display:inline-block; margin:6px;">
-      <a href="${item.webViewLink}" target="_blank">
-        <img src="${item.thumbnailLink}"
-             style="width:160px; height:100px; object-fit:cover; border-radius:8px;
-                    box-shadow:0 0 4px rgba(0,0,0,0.3); transition:transform 0.2s ease;">
-      </a>
-    </div>
-  `).join('');
+    return `
+    <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;">
+      ${thumbnails.map(item => `
+        <div style="width:100px; text-align:center;">
+          <a href="${item.link}" target="_blank" style="text-decoration:none;">
+            <img src="${item.thumb}" alt="${item.name}"
+                 style="width:100%; height:100px; object-fit:cover; border-radius:6px;
+                        border:1px solid #ccc; box-shadow:0 0 4px rgba(0,0,0,0.25);
+                        transition:transform 0.2s ease;">
+          </a>
+        </div>
+      `).join('')}
+    </div>`;
 }
-
 
 
 
