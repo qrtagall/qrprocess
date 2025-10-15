@@ -2047,7 +2047,9 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
                                        sandbox="allow-scripts allow-same-origin allow-presentation"></iframe>`;
             wrapper.appendChild(mainBlock);
         }
-    } /*else if (typeUpper.includes("DRIVE") && url.includes("drive.google.com/drive/")) {
+    }
+    //XXXXXX
+    else if (typeUpper.includes("DRIVE") && url.includes("drive.google.com/drive/")) {
         const match = url.match(/\/folders\/([a-zA-Z0-9_-]{10,})/);
         const folderId = match ? match[1] : null;
         const galleryId = `thumbnailGallery_${index}`;
@@ -2068,7 +2070,7 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
                 container.innerHTML = `<p style="color:red;">❌ Failed to load thumbnails</p>`;
             });
         }
-    } */else if (url.startsWith("http")) {
+    } else if (url.startsWith("http")) {
         resolveAndRender(url, index + 1, title).then((html) => {
             const temp = document.createElement("div");
             temp.innerHTML = html;

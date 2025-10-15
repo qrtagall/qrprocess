@@ -15,7 +15,7 @@ let sheetID = "";  // populated after fetch
 let globalRemoteAssetList = [];
 
 
-		function renderThumbnailGrid(thumbnails) {
+		function renderThumbnailGridx(thumbnails) {
 			return `
 				<div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;">
 					${thumbnails.map(item => `
@@ -39,6 +39,17 @@ let globalRemoteAssetList = [];
 		}
 
 
+function renderThumbnailGrid(thumbnails) {
+    return thumbnails.map(item => `
+    <div style="display:inline-block; margin:6px;">
+      <a href="${item.webViewLink}" target="_blank">
+        <img src="${item.thumbnailLink}"
+             style="width:160px; height:100px; object-fit:cover; border-radius:8px;
+                    box-shadow:0 0 4px rgba(0,0,0,0.3); transition:transform 0.2s ease;">
+      </a>
+    </div>
+  `).join('');
+}
 
 
 
