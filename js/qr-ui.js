@@ -1099,6 +1099,7 @@ function simulateUseFile() {
 }
 
 
+/*
 function onFileTypeChange() {
     const type = document.getElementById("artifactFileType").value.toUpperCase();
     const isText = type === "TEXT";
@@ -1112,6 +1113,37 @@ function onFileTypeChange() {
         setFieldDisabled(uploadBtn, isText || disable === true);
     }
 }
+*/
+
+function onFileTypeChange() {
+    const typeEl = document.getElementById("artifactFileType");
+    if (!typeEl) return;
+
+    const selectedType = typeEl.value ? typeEl.value.toUpperCase() : "";
+
+    const textInputSection = document.getElementById("textInputSection");
+    const fileUploadSection = document.getElementById("fileUploadSection");
+
+    if (!textInputSection || !fileUploadSection) return;
+
+    // ✅ These types will show text box instead of file picker
+    const textEntryTypes = ["TEXT", "GDRIVE", "DRIVE", "URL", "LINK"];
+
+    if (textEntryTypes.includes(selectedType)) {
+        textInputSection.style.display = "block";
+        fileUploadSection.style.display = "none";
+    } else {
+        textInputSection.style.display = "none";
+        fileUploadSection.style.display = "block";
+    }
+
+    // ✅ Clear previously selected file link when switching types
+    if (selectedType !== "TEXT" && selectedType !== "GDRIVE" && selectedType !== "DRIVE") {
+        const uploadedFileLink = document.getElementById("uploadedFileLink");
+        if (uploadedFileLink) uploadedFileLink.textContent = "";
+    }
+}
+
 
 
 
