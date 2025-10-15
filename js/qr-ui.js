@@ -251,13 +251,43 @@ async function resolveAndRender(value, i, customTitle = `Link ${i}`) {
             const idMatch = value.match(/[-\w]{25,}/);
             if (idMatch) {
                 const fileId = idMatch[0];
-                // Use UC export links for better media loading
+
+                // ✅ Generate thumbnail (works for image/video)
+                const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
+
+                // ✅ For direct file viewing / playback
+                const directUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+
+                // 🧩 Check if it’s a video
                 if (/video|mp4|webm|ogg/.test(contentType) || value.toLowerCase().includes(".mp4")) {
-                    finalUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
-                } else if (/image|jpg|jpeg|png|gif|webp/.test(contentType)) {
-                    finalUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
+                    return `
+      <div style="display:inline-block; text-align:center; margin:6px;">
+        <a href="${directUrl}" target="_blank" style="text-decoration:none;">
+          <div style="position:relative; display:inline-block;">
+            <img src="${thumbUrl}" style="width:160px; height:100px; object-fit:cover; border-radius:8px; box-shadow:0 0 4px rgba(0,0,0,0.3);">
+            <div style="
+              position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+              background:rgba(0,0,0,0.5); color:white; font-size:20px;
+              border-radius:50%; width:36px; height:36px; line-height:36px; text-align:center;
+            ">▶</div>
+          </div>
+          <div style="font-size:12px; margin-top:4px; color:#0066cc;">${customTitle}</div>
+        </a>
+      </div>`;
+                }
+
+                // 🖼 For images — fallback to existing image logic
+                if (/image|jpg|jpeg|png|gif|webp/.test(contentType)) {
+                    return `
+      <div style="display:inline-block; text-align:center; margin:6px;">
+        <a href="${directUrl}" target="_blank" style="text-decoration:none;">
+          <img src="${thumbUrl}" style="width:160px; height:100px; object-fit:cover; border-radius:8px; box-shadow:0 0 4px rgba(0,0,0,0.3);">
+          <div style="font-size:12px; margin-top:4px; color:#0066cc;">${customTitle}</div>
+        </a>
+      </div>`;
                 }
             }
+
         } else {
             // For external links (not Google Drive), infer content type
             if (isFileLikely) {
