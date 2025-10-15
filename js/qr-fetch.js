@@ -62,7 +62,7 @@ function renderThumbnailGridyy(thumbnails) {
 //V3
 function renderThumbnailGrid(thumbnails) {
     return `
-    <div style="display:flex; flex-wrap:wrap; gap:10px 10px; margin-top:6px; align-items:flex-start;">
+    <div style="display:flex; flex-wrap:wrap; gap:6px 6px; margin-top:6px; align-items:flex-start;">
 
       ${thumbnails.map(item => {
         const isVideo = /\.(mp4|webm|mov|avi|mkv)$/i.test(item.name);
