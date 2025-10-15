@@ -59,6 +59,7 @@ function renderThumbnailGridyy(thumbnails) {
 }
 */
 
+/*
 //V3
 function renderThumbnailGrid(thumbnails) {
     return `
@@ -101,6 +102,77 @@ function renderThumbnailGrid(thumbnails) {
     }).join('')}
     </div>`;
 }
+*/
+
+function renderThumbnailGrid(thumbnails, batchSize = 10) {
+    // Keep a shallow copy so we can slice progressively
+    const items = [...thumbnails];
+    const galleryId = "gallery_" + Math.random().toString(36).slice(2);
+    const batches = Math.ceil(items.length / batchSize);
+
+    // 🧩 Inner function to render one batch
+    function renderBatch(batchIndex) {
+        const start = batchIndex * batchSize;
+        const end = Math.min(start + batchSize, items.length);
+        return items.slice(start, end).map(item => {
+            const isVideo = /\.(mp4|webm|mov|avi|mkv)$/i.test(item.name);
+            const thumb = item.thumb || item.thumbnailLink || item.iconLink || "";
+            const link = item.link || item.webViewLink || "#";
+
+            let displayThumb = thumb;
+            if (!displayThumb && isVideo) {
+                const idMatch = link.match(/[-\w]{25,}/);
+                if (idMatch) displayThumb = `https://drive.google.com/thumbnail?id=${idMatch[0]}&sz=w400`;
+            }
+
+            return `
+        <div style="width:100px;text-align:center;position:relative;">
+          <a href="${link}" target="_blank" style="text-decoration:none;display:inline-block;">
+            <img src="${displayThumb}" alt="${item.name}"
+                 style="width:100%;height:100px;object-fit:cover;border-radius:6px;
+                        border:1px solid #ccc;box-shadow:0 0 4px rgba(0,0,0,0.25);
+                        transition:transform 0.2s ease;">
+            ${isVideo ? `
+              <div style="
+                position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+                background:rgba(0,0,0,0.5);color:white;font-size:18px;
+                border-radius:50%;width:28px;height:28px;
+                line-height:28px;text-align:center;">▶</div>` : ""}
+          </a>
+        </div>`;
+        }).join("");
+    }
+
+    // 🧩 Base layout with Load More button
+    const initialBatch = 0;
+    return `
+    <div id="${galleryId}" style="display:flex;flex-wrap:wrap;gap:8px 8px;margin-top:6px;align-items:flex-start;">
+      ${renderBatch(initialBatch)}
+    </div>
+    ${batches > 1 ? `
+      <div style="text-align:center;margin-top:12px;">
+        <button id="${galleryId}_loadMore"
+                style="padding:6px 14px;border:none;border-radius:6px;
+                       background:#ddd;color:#333;cursor:pointer;">
+          Load More (${items.length - batchSize})
+        </button>
+      </div>` : ""}
+    <script>
+      (function(){
+        let currentBatch = 1;
+        const gallery = document.getElementById("${galleryId}");
+        const btn = document.getElementById("${galleryId}_loadMore");
+        if(!btn) return;
+        btn.addEventListener("click", () => {
+          gallery.insertAdjacentHTML("beforeend", \`${renderBatch("${"${"}currentBatch}")}\`);
+          currentBatch++;
+          const remaining = ${batches} - currentBatch;
+          if (remaining <= 0) btn.remove();
+          else btn.textContent = "Load More (" + (${items.length} - currentBatch * ${batchSize}) + ")";
+        });
+      })();
+    </script>`;
+    }
 
 
 
