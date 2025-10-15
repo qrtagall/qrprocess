@@ -1115,6 +1115,7 @@ function onFileTypeChange() {
 }
 */
 
+/*
 function onFileTypeChange() {
     const typeEl = document.getElementById("artifactFileType");
     if (!typeEl) return;
@@ -1141,6 +1142,44 @@ function onFileTypeChange() {
     if (selectedType !== "TEXT" && selectedType !== "GDRIVE" && selectedType !== "DRIVE") {
         const uploadedFileLink = document.getElementById("uploadedFileLink");
         if (uploadedFileLink) uploadedFileLink.textContent = "";
+    }
+}
+*/
+
+
+function onFileTypeChange() {
+    const typeEl = document.getElementById("artifactFileType");
+    if (!typeEl) return;
+
+    const selectedType = typeEl.value ? typeEl.value.toUpperCase() : "";
+
+    const textInputSection = document.getElementById("textInputSection");
+    const fileUploadSection = document.getElementById("fileUploadSection");
+    const textLabel = textInputSection.querySelector("label");
+    const textArea = document.getElementById("artifactTextInfo");
+
+    if (!textInputSection || !fileUploadSection || !textArea) return;
+
+    const fileUploadTypes = ["IMAGEFILE", "PDFFILE", "AUDIOFILE", "VIDEOFILE", "DOCFILE", "OTHERFILE"];
+
+    if (fileUploadTypes.includes(selectedType)) {
+        textInputSection.style.display = "none";
+        fileUploadSection.style.display = "block";
+    } else {
+        textInputSection.style.display = "block";
+        fileUploadSection.style.display = "none";
+
+        // ✅ Update label and placeholder dynamically
+        if (selectedType === "GDRIVE" || selectedType === "DRIVE") {
+            textLabel.textContent = "Google Drive Link:";
+            textArea.placeholder = "Enter Google Drive link here...";
+        } else if (selectedType === "URL" || selectedType === "LINK") {
+            textLabel.textContent = "Website / URL Link:";
+            textArea.placeholder = "Enter URL here...";
+        } else {
+            textLabel.textContent = "Text Info:";
+            textArea.placeholder = "Enter your text here...";
+        }
     }
 }
 
