@@ -14,7 +14,8 @@ let sheetID = "";  // populated after fetch
 //let assetDataList = [];
 let globalRemoteAssetList = [];
 
-
+/*
+//V1
 		function renderThumbnailGridx(thumbnails) {
 			return `
 				<div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;">
@@ -37,9 +38,11 @@ let globalRemoteAssetList = [];
 			const base = dotIndex !== -1 ? name.slice(0, dotIndex) : name;
 			return base.length > max ? base.slice(0, max) + "…" + ext : name;
 		}
+*/
 
-
-function renderThumbnailGrid(thumbnails) {
+/*
+//V2
+function renderThumbnailGridyy(thumbnails) {
     return `
     <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;">
       ${thumbnails.map(item => `
@@ -54,6 +57,50 @@ function renderThumbnailGrid(thumbnails) {
       `).join('')}
     </div>`;
 }
+*/
+
+//V3
+function renderThumbnailGrid(thumbnails) {
+    return `
+    <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;">
+      ${thumbnails.map(item => {
+        const isVideo = /\.(mp4|webm|mov|avi|mkv)$/i.test(item.name);
+        const thumb = item.thumb || item.thumbnailLink || item.iconLink || ''; // fallback handling
+        const link = item.link || item.webViewLink || '#';
+
+        // Fallback Drive video thumbnail URL if missing
+        let displayThumb = thumb;
+        if (!displayThumb && isVideo) {
+            const idMatch = link.match(/[-\w]{25,}/);
+            if (idMatch) {
+                const fileId = idMatch[0];
+                displayThumb = `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
+            }
+        }
+
+        return `
+          <div style="width:100px; text-align:center; position:relative;">
+            <a href="${link}" target="_blank" style="text-decoration:none; display:inline-block;">
+              <img src="${displayThumb}"
+                   alt="${item.name}"
+                   onerror="this.style.display='none';"
+                   style="width:100%; height:100px; object-fit:cover; border-radius:6px;
+                          border:1px solid #ccc; box-shadow:0 0 4px rgba(0,0,0,0.25);
+                          transition:transform 0.2s ease;">
+              ${isVideo ? `
+                <div style="
+                  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+                  background:rgba(0,0,0,0.5); color:white; font-size:18px;
+                  border-radius:50%; width:28px; height:28px;
+                  line-height:28px; text-align:center;">
+                  ▶
+                </div>` : ''}
+            </a>
+          </div>`;
+    }).join('')}
+    </div>`;
+}
+
 
 
 
