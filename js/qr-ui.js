@@ -1381,11 +1381,16 @@ function saveArtifact() {
 
 
 
+/*
 //defined at mainpage
 function saveArtifact() {
     const basicInfo = document.getElementById("artifactBasicInfo").value.trim();
     const fileType = document.getElementById("artifactFileType").value.toUpperCase();
     const visibility = document.getElementById("artifactOption").value.toUpperCase();
+
+
+    const textInfo = document.getElementById("artifactTextInfo").value.trim();
+    const fileLink = document.getElementById("uploadedFileLink").textContent.trim();
     const isText = fileType === "TEXT";
 
 
@@ -1450,6 +1455,84 @@ function saveArtifact() {
             rawfilename: selectedUploadedFileName,
             rawfiledata: selectedUploadedFileData,
             targetLinkId: sheetId // ✅ NEW
+        });
+    }
+
+    closeAddModal();
+}
+
+*/
+
+
+function saveArtifact() {
+    const basicInfo = document.getElementById("artifactBasicInfo").value.trim();
+    const fileType = document.getElementById("artifactFileType").value.toUpperCase();
+    const visibility = document.getElementById("artifactOption").value.toUpperCase();
+
+    const textInfo = document.getElementById("artifactTextInfo").value.trim();
+    const fileLink = document.getElementById("uploadedFileLink").textContent.trim();
+
+    // ✅ Treat GDRIVE / DRIVE / URL / TEXT as text-based inputs
+    const textBasedTypes = ["TEXT", "GDRIVE", "DRIVE", "URL", "LINK"];
+    const isText = textBasedTypes.includes(fileType);
+
+    if (!basicInfo || !fileType || !visibility) {
+        showToast("Please complete all fields.");
+        return;
+    }
+
+    if (isText) {
+        if (!textInfo) {
+            showToast("Please enter text or link info.");
+            return;
+        }
+    } else if (!fileLink && !selectedUploadedFileLink) {
+        showToast("Please upload or select a file.");
+        return;
+    }
+
+    // ✅ Pick correct input source
+    const url = isText ? textInfo : selectedUploadedFileLink || fileLink;
+
+    const modal = document.getElementById("addArtifactModal");
+    const linkId = modal.getAttribute("data-link-id");
+    const sheetId = getSheetIdByLinkId(linkId);
+
+    const cellOffset = insertAfterRow + 6;
+    const modalId = "addArtifactModal";
+
+    if (modal) modal.removeAttribute("data-link-id"); // clear modal link
+
+    // ✅ EDIT MODE
+    if (currentEditMode === "edit") {
+        const original = getArtifactByIndex(linkId, insertAfterRow);
+
+        saveArtifactInfo({
+            startCell: cellOffset,
+            basicInfo,
+            fileType: isText ? fileType : original.type || "TEXT",
+            visibility,
+            linkOrText: isText ? url : original.url || "",
+            modalId,
+            targetLinkId: sheetId
+        });
+    }
+
+    // ✅ ADD MODE
+    else {
+        const startCell = insertAfterRow + 7;
+
+        saveArtifactInfo({
+            startCell,
+            basicInfo,
+            fileType,
+            visibility,
+            linkOrText: url,
+            isInsert: true,
+            modalId,
+            rawfilename: selectedUploadedFileName,
+            rawfiledata: selectedUploadedFileData,
+            targetLinkId: sheetId
         });
     }
 
