@@ -61,6 +61,7 @@ function renderThumbnailGridyy(thumbnails) {
 
 
 
+
 //V3
 function renderThumbnailGrid(thumbnails) {
     return `
@@ -103,7 +104,6 @@ function renderThumbnailGrid(thumbnails) {
     }).join('')}
     </div>`;
 }
-
 
 
 
