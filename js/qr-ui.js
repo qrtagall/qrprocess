@@ -215,7 +215,7 @@ function setFieldDisabled(el, disabled) {
     }
 
 
-/*
+
 
 //V4
 async function resolveAndRender(value, i, customTitle = `Link ${i}`) {
@@ -309,10 +309,10 @@ async function resolveAndRender(value, i, customTitle = `Link ${i}`) {
         return `<p>⚠️ Error loading ${customTitle}</p>`;
     }
 }
-*/
 
 
 
+/*
 //V3
 async function resolveAndRender(value, i, customTitle = `Link ${i}`) {
 const isGoogleDrive = /drive\.google\.com/.test(value);
@@ -429,7 +429,7 @@ try {
     return `<p>⚠️ Error loading ${customTitle}</p>`;
 }
 }
-
+*/
 
 
 /*
