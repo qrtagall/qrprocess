@@ -925,11 +925,9 @@ function formatPhoneNumber(rawNum) {
 
 
 // Converts line breaks and URLs into HTML with clickable links
-function formatTextContent(text) {
+/*function formatTextContent(text) {
     let safeText = text.replace(/\n/g, "<br>");
-    /*safeText = safeText.replace(/<\s*(https?:\/\/[^\s<>]+)\s*>/g, (match, link) =>
-        `<a href="${link}" target="_blank" style="color: var(--primary); text-decoration: underline;">🌐 WebLink</a>`
-    );*/
+
     safeText = safeText.replace(/(https?:\/\/[^\s<]+)/g, (link) =>
         //`<a href="${link}" target="_blank" style="color: var(--primary); text-decoration: underline;">🌐 WebLink</a>`
         urlToContext(link)
@@ -937,7 +935,37 @@ function formatTextContent(text) {
     safeText = boldLeadingLabels(safeText);
     return safeText.replace(/(?:(?:\+91|0)?[\s\-]*)?(?:\d[\s\-]*){10}/g, formatPhoneNumber);
 }
+*/
 
+function formatTextContent(text) {
+    if (!text) return "";
+
+    // Split into lines first for better readability
+    const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
+
+    const formattedLines = lines.map(line => {
+        let safeLine = escapeHtml(line); // prevent accidental HTML injection
+
+        // Match valid URLs but ignore trailing symbols like ">" or ")"
+        safeLine = safeLine.replace(
+            /(https?:\/\/[^\s<>"')]+)(?=[\s<>"')]|$)/g,
+            (fullMatch, cleanUrl) => urlToContext(cleanUrl)
+        );
+
+        // Convert labels like "Phone1:" or "Phone 2:" to bold
+        safeLine = boldLeadingLabels(safeLine);
+
+        // Format Indian phone numbers with call/chat icons
+        safeLine = safeLine.replace(
+            /(?:(?:\+91|0)?[\s\-]*)?(?:\d[\s\-]*){10}/g,
+            formatPhoneNumber
+        );
+
+        return safeLine;
+    });
+
+    return formattedLines.join("<br>");
+}
 
 
 
