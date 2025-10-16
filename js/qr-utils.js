@@ -663,38 +663,65 @@ function toggleScroll() {
 
 /************************** Preview Modal *****************/
 
-// 🔹 Open preview modal for any content type
-function openPreviewModal(url, type = 'auto') {
-    const modal = document.getElementById('previewModal');
-    const inner = document.getElementById('previewInner');
+function openPreviewModal(url, type = "auto") {
+    const modal = document.getElementById("previewModal");
+    const inner = document.getElementById("previewInner");
     if (!modal || !inner) return;
 
-    inner.innerHTML = '';
+    inner.innerHTML = "";
 
-    // If type still 'auto', guess by extension (last resort)
-    if (type === 'auto') {
-        if (/\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(url)) type = 'image';
-        else if (/\.(mp4|webm|ogg|mov)(\?|$)/i.test(url)) type = 'video';
-        else if (/\.pdf(\?|$)/i.test(url)) type = 'pdf';
-        else type = 'link';
+    // Normalize and upper-case type for easy matching
+    const typeUpper = (type || "auto").toUpperCase();
+
+    // ✅ Detect Google Drive file ID (for /file/d/xxx/ or id=xxx)
+    let fileId = null;
+    const match = url.match(/\/d\/([^/]+)/) || url.match(/[?&]id=([-\w]{10,})/);
+    if (match) fileId = match[1];
+
+    let html = "";
+
+    // ✅ CASE 1: Drive-hosted file (IMAGEFILE, VIDEOFILE, PDFFILE, etc.)
+    if (typeUpper.includes("FILE") && /drive\.google\.com/.test(url) && fileId) {
+        const iframeUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+        html = `
+      <iframe src="${iframeUrl}"
+              width="90vw" height="80vh" frameborder="0"
+              allow="autoplay; encrypted-media"
+              sandbox="allow-scripts allow-same-origin allow-presentation"
+              style="border:none; border-radius:8px; background:#000;">
+      </iframe>`;
     }
 
-    // Render
-    let html = '';
-    if (type === 'image') {
+    // ✅ CASE 2: Regular image
+    else if (typeUpper === "IMAGE" || /\.(jpg|jpeg|png|gif|webp)$/i.test(url)) {
         html = `<img src="${url}" style="max-width:100%; max-height:90vh; border-radius:8px;">`;
-    } else if (type === 'video') {
-        // Google Drive preview works best inside an iframe
-        html = `<iframe src="${url}" allow="autoplay; fullscreen"
-                   style="width:90vw; height:80vh; border:none; border-radius:8px; background:#000;"></iframe>`;
-    } else if (type === 'pdf') {
+    }
+
+    // ✅ CASE 3: Regular video
+    else if (typeUpper === "VIDEO" || /\.(mp4|webm|ogg|mov)$/i.test(url)) {
+        html = `<video controls autoplay style="max-width:100%; max-height:85vh; border-radius:8px; background:#000;">
+              <source src="${url}" type="video/mp4">
+              Your browser does not support video.
+            </video>`;
+    }
+
+    // ✅ CASE 4: PDF
+    else if (typeUpper === "PDF" || /\.pdf$/i.test(url)) {
         html = `<iframe src="${url}" style="width:90vw; height:85vh; border:none; border-radius:8px; background:#fff;"></iframe>`;
-    } else {
-        html = `<a href="${url}" target="_blank" style="color:#06f; text-decoration:underline;">Open in new tab</a>`;
+    }
+
+    // ✅ CASE 5: Generic link
+    else {
+        html = `
+      <div style="color:#fff; font-size:16px; text-align:center;">
+        <p>Cannot preview this file inline.</p>
+        <a href="${url}" target="_blank"
+           style="color:#0af; text-decoration:underline;">Open in new tab</a>
+      </div>`;
     }
 
     inner.innerHTML = html;
-    modal.style.display = 'flex';
+    modal.style.display = "flex";
 }
 
 

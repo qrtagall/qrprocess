@@ -1911,7 +1911,9 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
                 ${formattedText}
             </div>`;
         wrapper.appendChild(mainBlock);
-    } else if (typeUpper.includes("FILE") && /drive\.google\.com/.test(url)) {
+    }
+    //Image and Video??
+    else if (typeUpper.includes("FILE") && /drive\.google\.com/.test(url)) {
         const match = url.match(/\/d\/([^/]+)/);
         const fileId = match ? match[1] : null;
         if (fileId) {
@@ -1923,7 +1925,7 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
             wrapper.appendChild(mainBlock);
         }
     }
-    //XXXXXX
+    //Google Drive ->>
     else if (typeUpper.includes("DRIVE") && url.includes("drive.google.com/drive/")) {
         const match = url.match(/\/folders\/([a-zA-Z0-9_-]{10,})/);
         const folderId = match ? match[1] : null;
@@ -1946,14 +1948,14 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
             });
         }
     } else if (url.startsWith("http")) {
-        /*
+
         resolveAndRender(url, index + 1, title).then((html) => {
             const temp = document.createElement("div");
             temp.innerHTML = html;
             wrapper.appendChild(temp);
         });
 
-         */
+
     } else {
         mainBlock.innerHTML = `<p><b>${index + 1}.</b> ${icon} <b>${title}</b>: ${url}</p>`;
         wrapper.appendChild(mainBlock);
