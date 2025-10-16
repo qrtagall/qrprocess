@@ -986,29 +986,29 @@ function formatTextContent(text) {
     const formattedLines = lines.map(line => {
         let safeLine = escapeHtml(line); // prevent accidental HTML injection
 
-        // --- Step 1: Safely format phone numbers only in visible text ---
-        // Prevent regex from touching inside HTML/SVG tags or attributes
-        safeLine = safeLine.replace(
-            /(?<![="'\/>])(?:(?:\+91|0)?[\s\-]*)?(?:\d[\s\-]*){10}(?![="'\/>])/g,
-            formatPhoneNumber
-        );
-
-        // --- Step 2: Detect and convert URLs to contextual icons ---
-        // Skip malformed or trailing characters like > or )
+        // Step 1: Detect and convert URLs first
         safeLine = safeLine.replace(
             /(https?:\/\/[^\s<>"')]+)(?=[\s<>"')]|$)/g,
             (fullMatch, cleanUrl) => urlToContext(cleanUrl)
         );
 
-        // --- Step 3: Make leading labels bold (e.g. Phone1:) ---
+        // Step 2: Bold leading labels like "Phone1:"
         safeLine = boldLeadingLabels(safeLine);
+
+        // Step 3: Format Indian phone numbers, but ignore inside SVG tags
+        //   -> Prevent matching numbers within <svg> or <path ...>
+        //   -> Yet keep old behavior for normal text
+        safeLine = safeLine.replace(
+            /(?<!<[^>]*)(?:(?:\+91|0)?[\s\-]*)?(?:\d[\s\-]*){10}(?![^<]*>)/g,
+            formatPhoneNumber
+        );
 
         return safeLine;
     });
 
-    // --- Step 4: Join lines with HTML line breaks ---
     return formattedLines.join("<br>");
 }
+
 
 
 
