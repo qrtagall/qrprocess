@@ -991,9 +991,9 @@ function urlToContext(url) {
         lower.includes("drive.google.com") ? "drive" :
         lower.includes("docs.google.com") ? "docs" :
         lower.includes("forms.gle") || lower.includes("google.com/forms") ? "forms" :
-        lower.includes("maps.google.") || lower.includes("maps.app.goo") ? "maps" :
+        lower.includes("maps.google.") || lower.includes("maps.app.goo") || lower.includes("/maps/") ? "Map_Locatopn" :
         lower.includes("wa.me") || lower.includes("whatsapp.com") ? "whatsapp" :
-        "generic";
+        "WebLink";
 
     const label = iconKey.charAt(0).toUpperCase() + iconKey.slice(1);
 
