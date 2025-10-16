@@ -671,14 +671,20 @@ function openPreviewModal(url, type = "auto") {
     inner.innerHTML = "";
 
     // Normalize and upper-case type for easy matching
-    const typeUpper = (type || "auto").toUpperCase();
+    let typeUpper = (type || "auto").toUpperCase();
 
     // ✅ Detect Google Drive file ID (for /file/d/xxx/ or id=xxx)
     let fileId = null;
     const match = url.match(/\/d\/([^/]+)/) || url.match(/[?&]id=([-\w]{10,})/);
     if (match) fileId = match[1];
 
+    // ✅ Auto-detect Drive file type if type === "auto"
+    if (typeUpper === "AUTO" && /drive\.google\.com\/file\//.test(url) && fileId) {
+        typeUpper = "FILE";
+    }
+
     let html = "";
+
 
     // ✅ CASE 1: Drive-hosted file (IMAGEFILE, VIDEOFILE, PDFFILE, etc.)
     if (typeUpper.includes("FILE") && /drive\.google\.com/.test(url) && fileId) {
