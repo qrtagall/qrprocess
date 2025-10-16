@@ -489,25 +489,34 @@
     </div>
 </div>
 
+
 <!-- 🌐 Universal Preview Modal -->
 <div id="previewModal"
      style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-            background:rgba(0,0,0,0.75); z-index:9999; justify-content:center; align-items:center;">
+            background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
     <div id="previewContent"
-         style="position:relative; background:#fff; border-radius:8px;
-              max-width:90%; max-height:90%; overflow:auto; padding:10px;
-              display:flex; justify-content:center; align-items:center; flex-direction:column;">
+         style="position:relative; background:#fff; border-radius:10px;
+              max-width:90%; max-height:90%; overflow:hidden;
+              box-shadow:0 0 10px rgba(0,0,0,0.5); padding:0;
+              display:flex; flex-direction:column; justify-content:center; align-items:center;">
+
         <button onclick="closePreviewModal()"
-                style="position:absolute; top:8px; right:8px; background:#222;
-                   color:#fff; border:none; border-radius:4px;
-                   padding:4px 8px; cursor:pointer; font-size:13px;">✖</button>
-        <div id="previewInner"></div>
+                style="position:absolute; top:8px; right:8px; background:#000;
+                   color:#fff; border:none; border-radius:50%;
+                   width:28px; height:28px; font-size:16px;
+                   cursor:pointer; z-index:100;">✖</button>
+
+        <div id="previewInner"
+             style="width:100%; height:100%; display:flex;
+                justify-content:center; align-items:center;
+                background:#000;"></div>
     </div>
 </div>
 
 
+
 <script>
-    const QRTagAll_Ver_ = "3.134_16102025";
+    const QRTagAll_Ver_ = "3.135_16102025";
 </script>
 
 
