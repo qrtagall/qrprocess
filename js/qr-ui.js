@@ -946,6 +946,7 @@ function escapeHtml(unsafe) {
         .replace(/'/g, "&#039;");
 }
 
+/*
 function formatTextContent(text) {
     if (!text) return "";
 
@@ -975,6 +976,40 @@ function formatTextContent(text) {
 
     return formattedLines.join("<br>");
 }
+*/
+function formatTextContent(text) {
+    if (!text) return "";
+
+    // Split into lines first for better readability
+    const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
+
+    const formattedLines = lines.map(line => {
+        let safeLine = escapeHtml(line); // prevent accidental HTML injection
+
+        // --- Step 1: Safely format phone numbers only in visible text ---
+        // Prevent regex from touching inside HTML/SVG tags or attributes
+        safeLine = safeLine.replace(
+            /(?<![="'\/>])(?:(?:\+91|0)?[\s\-]*)?(?:\d[\s\-]*){10}(?![="'\/>])/g,
+            formatPhoneNumber
+        );
+
+        // --- Step 2: Detect and convert URLs to contextual icons ---
+        // Skip malformed or trailing characters like > or )
+        safeLine = safeLine.replace(
+            /(https?:\/\/[^\s<>"')]+)(?=[\s<>"')]|$)/g,
+            (fullMatch, cleanUrl) => urlToContext(cleanUrl)
+        );
+
+        // --- Step 3: Make leading labels bold (e.g. Phone1:) ---
+        safeLine = boldLeadingLabels(safeLine);
+
+        return safeLine;
+    });
+
+    // --- Step 4: Join lines with HTML line breaks ---
+    return formattedLines.join("<br>");
+}
+
 
 
 
