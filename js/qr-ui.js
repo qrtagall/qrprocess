@@ -1414,18 +1414,68 @@ function openAddModal(afterRowNum, isEditMode = false, linkId = null) {
         linkId = modal.getAttribute("data-link-id");
 
         const item = getArtifactByIndex(linkId, insertAfterRow);
-        console.log("Detail>>>>",linkId, insertAfterRow, item);
+        //console.log("Detail>>>>",linkId, insertAfterRow, item);
 
         const fileType = (item.type || "TEXT").toUpperCase();
         const validTypes = Array.from(fileTypeInput.options).map(opt => opt.value);
         fileTypeInput.value = validTypes.includes(fileType) ? fileType : "TEXT";
 
-        modalTitle.innerText = `📝 Edit ${fileType === "TEXT" ? "Text Info" : "Artifact Visibility"}`;
+        //modalTitle.innerText = `📝 Edit ${fileType === "TEXT" ? "Text Info" : "Artifact Visibility"}`;
+
+        modalTitle.innerText = `📝 Edit ${
+            ["TEXT", "GDRIVE", "LINK", "URL"].includes(fileType)
+                ? "Artifact Info"
+                : "Artifact Visibility"
+        }`;
 
         basicInfoInput.value = item.title || "";
         visibilityInput.value = (item.visibility || "VIEW").toUpperCase();
 
-        if (fileType === "TEXT") {
+        if (["TEXT", "LINK", "URL", "GDRIVE", "DRIVE"].includes(fileType)) {
+            textInfoInput.value = item.url || "";
+            uploadedFileLink.textContent = "";
+
+            setFieldDisabled(basicInfoInput, false);
+            setFieldDisabled(fileTypeInput, false);
+            setFieldDisabled(textInfoInput, false);
+            setFieldDisabled(visibilityInput, false);
+            setFieldDisabled(uploadBtn, true);
+
+            toggleSection("textInputSection", true);
+            toggleSection("fileUploadSection", false);
+        }
+// ✅ Case 2: xxxFILE types — non-editable, only file shown
+        else if (fileType.endsWith("FILE")) {
+            textInfoInput.value = "";
+            uploadedFileLink.textContent = item.url || "";
+
+            setFieldDisabled(basicInfoInput, false);
+            setFieldDisabled(fileTypeInput, true);
+            setFieldDisabled(textInfoInput, true);
+            setFieldDisabled(visibilityInput, false);
+            setFieldDisabled(uploadBtn, true);
+
+            toggleSection("textInputSection", false);
+            toggleSection("fileUploadSection", true);
+        }
+
+        // ✅ Case 3: fallback
+        else {
+            textInfoInput.value = item.url || "";
+            uploadedFileLink.textContent = "";
+
+            setFieldDisabled(basicInfoInput, false);
+            setFieldDisabled(fileTypeInput, false);
+            setFieldDisabled(textInfoInput, false);
+            setFieldDisabled(visibilityInput, false);
+            setFieldDisabled(uploadBtn, true);
+
+            toggleSection("textInputSection", true);
+            toggleSection("fileUploadSection", false);
+        }
+
+        /*
+        else if (fileType === "TEXT") {
             textInfoInput.value = item.url || "";
             uploadedFileLink.textContent = "";
 
@@ -1450,6 +1500,8 @@ function openAddModal(afterRowNum, isEditMode = false, linkId = null) {
             toggleSection("textInputSection", false);
             toggleSection("fileUploadSection", true);
         }
+
+         */
     } else {
         currentEditMode = "add";
 
