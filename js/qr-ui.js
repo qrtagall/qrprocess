@@ -363,6 +363,101 @@ async function renderInfoBlock(data) {
 
 
 
+//V4
+async function resolveAndRender(value, i, customTitle = `Link ${i}`) {
+    const isGoogleDrive = /drive\.google\.com/.test(value);
+    const isFileLikely = /\.(jpg|jpeg|png|gif|webp|mp4|webm|ogg|pdf)$/i.test(value);
+    const icon = getIconFromTitle(customTitle);
+    let finalUrl = value;
+    let contentType = "";
+    let fileCreatedText = null;
+
+    try {
+        if (isGoogleDrive) {
+            const resolveUrl = `${AppScriptBaseUrl}?resolve=${encodeURIComponent(value)}`;
+            const res = await fetch(resolveUrl);
+            const json = await res.json();
+            if (json.error) return `<p>⚠️ Couldn’t load ${customTitle}</p>`;
+
+            finalUrl = json.resolvedUrl;
+            contentType = json.contentType;
+
+            // ✅ Extract Drive file ID
+            const idMatch = value.match(/[-\w]{25,}/);
+            const fileId = idMatch ? idMatch[0] : null;
+
+            if (fileId) {
+                const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
+                const directUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+
+                // 🖼 Image preview
+                if (/image|jpg|jpeg|png|gif|webp/.test(contentType) || value.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+                    return `
+            <div style="display:inline-block; margin:6px;">
+              <a href="${directUrl}" target="_blank">
+                <img src="${thumbUrl}"
+                     style="width:160px;height:100px;object-fit:cover;border-radius:8px;
+                            box-shadow:0 0 4px rgba(0,0,0,0.3);">
+              </a>
+            </div>`;
+                }
+
+                // 🎥 Video preview with play overlay
+                if (/video|mp4|webm|ogg/.test(contentType) || value.match(/\.(mp4|webm|ogg)$/i)) {
+                    return `
+            <div style="display:inline-block; margin:6px;">
+              <a href="${directUrl}" target="_blank" style="position:relative;display:inline-block;">
+                <img src="${thumbUrl}"
+                     style="width:160px;height:100px;object-fit:cover;border-radius:8px;
+                            box-shadow:0 0 4px rgba(0,0,0,0.3);">
+                <div style="
+                  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+                  background:rgba(0,0,0,0.5);color:white;font-size:20px;
+                  border-radius:50%;width:36px;height:36px;
+                  line-height:36px;text-align:center;">▶</div>
+              </a>
+            </div>`;
+                }
+            }
+
+        }
+
+        // 🔗 Fallbacks for non-Drive or unknown types
+        if (isFileLikely) {
+            const ext = finalUrl.split('.').pop().toLowerCase();
+            if (['jpg','jpeg','png','gif','webp'].includes(ext)) {
+                return `<div style="display:inline-block;margin:6px;">
+                  <img src="${finalUrl}" style="width:160px;height:100px;object-fit:cover;border-radius:8px;">
+                </div>`;
+            }
+            if (['mp4','webm','ogg'].includes(ext)) {
+                return `<div style="display:inline-block;margin:6px;">
+                  <video controls preload="metadata"
+                         style="width:160px;height:100px;object-fit:cover;border-radius:8px;">
+                    <source src="${finalUrl}" type="video/mp4">
+                  </video>
+                </div>`;
+            }
+        }
+
+        // Generic link (non-file)
+        const linkHost = finalUrl.match(/https?:\/\/([^/]+)/)?.[1] || "link";
+        return `
+      <div style="display:inline-block;margin:6px;">
+        <a href="${finalUrl}" target="_blank"
+           style="display:block;padding:8px 12px;border:1px solid #ccc;
+                  border-radius:6px;font-size:13px;text-decoration:none;color:var(--primary);">
+          ${icon} ${linkHost}
+        </a>
+      </div>`;
+
+    } catch (e) {
+        return `<p>⚠️ Error loading ${customTitle}</p>`;
+    }
+}
+
+
+
 
 
 /*********************************************************************************************************/
