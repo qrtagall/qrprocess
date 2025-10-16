@@ -991,7 +991,7 @@ function urlToContext(url) {
         lower.includes("drive.google.com") ? "drive" :
         lower.includes("docs.google.com") ? "docs" :
         lower.includes("forms.gle") || lower.includes("google.com/forms") ? "forms" :
-        lower.includes("maps.google.") ? "maps" :
+        lower.includes("maps.google.") || lower.includes("maps.app.goo") ? "maps" :
         lower.includes("wa.me") || lower.includes("whatsapp.com") ? "whatsapp" :
         "generic";
 
