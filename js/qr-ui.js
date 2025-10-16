@@ -1018,16 +1018,16 @@ function urlToContext(url) {
     const baseStyle = "display:inline-flex; align-items:center; gap:6px; text-decoration:none; font-weight:500; color:var(--primary);";
 
     const iconKey =
-        lower.includes("youtube") ? "youtube" :
-        lower.includes("facebook") ? "facebook" :
-        lower.includes("instagram") ? "instagram" :
-        lower.includes("linkedin") ? "linkedin" :
-        lower.includes("twitter") || lower.includes("x.com") ? "twitter" :
-        lower.includes("drive.google.com") ? "drive" :
-        lower.includes("docs.google.com") ? "docs" :
-        lower.includes("forms.gle") || lower.includes("google.com/forms") ? "forms" :
-        lower.includes("maps.google.") || lower.includes("maps.app.goo") || lower.includes("/maps/") ? "Map_Locatopn" :
-        lower.includes("wa.me") || lower.includes("whatsapp.com") ? "whatsapp" :
+        lower.includes("youtube") ? "youtube Link" :
+        lower.includes("facebook") ? "facebook Link" :
+        lower.includes("instagram") ? "instagram Link" :
+        lower.includes("linkedin") ? "linkedin Link" :
+        lower.includes("twitter") || lower.includes("x.com") ? "twitter Link" :
+        lower.includes("drive.google.com") ? "G-drive Link" :
+        lower.includes("docs.google.com/document") ? "G-doc Link" :
+        lower.includes("forms.gle") || lower.includes("docs.google.com/forms") ? "G-form Link" :
+        lower.includes("maps.google.") || lower.includes("maps.app.goo") || lower.includes("/maps/") ? "GMap Link" :
+        lower.includes("wa.me") || lower.includes("whatsapp.com") ? "Whatsapp Link" :
         "WebLink";
 
     const label = iconKey.charAt(0).toUpperCase() + iconKey.slice(1);
