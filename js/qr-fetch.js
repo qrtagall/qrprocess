@@ -61,7 +61,7 @@ function renderThumbnailGridyy(thumbnails) {
 
 
 
-/*
+
 //V3
 function renderThumbnailGrid(thumbnails) {
     return `
@@ -107,8 +107,9 @@ function renderThumbnailGrid(thumbnails) {
     }).join('')}
     </div>`;
 }
-*/
 
+
+/*
 function renderThumbnailGrid(thumbnails) {
     return `
   <div style="display:flex; flex-wrap:wrap; gap:6px 6px; margin-top:6px; align-items:flex-start;">
@@ -158,7 +159,7 @@ function renderThumbnailGrid(thumbnails) {
     }).join('')}
   </div>`;
 }
-
+*/
 
 
 
