@@ -362,7 +362,7 @@ async function renderInfoBlock(data) {
 }
 
 
-
+/*
 //V4
 async function resolveAndRender(value, i, customTitle = `Link ${i}`) {
     const isGoogleDrive = /drive\.google\.com/.test(value);
@@ -455,6 +455,71 @@ async function resolveAndRender(value, i, customTitle = `Link ${i}`) {
         return `<p>⚠️ Error loading ${customTitle}</p>`;
     }
 }
+*/
+
+
+async function resolveAndRender(value, i, customTitle = `Link ${i}`) {
+    const isGoogleDrive = /drive\.google\.com/.test(value);
+    const isFileLikely = /\.(jpg|jpeg|png|gif|webp|mp4|webm|ogg|pdf)$/i.test(value);
+    const lower = customTitle.toLowerCase();
+    const icon = getIconFromTitle(customTitle);
+    let finalUrl = value;
+    let contentType = "";
+    let fileCreatedText = null;
+
+    try {
+        // 🔁 Only resolve via Apps Script if it's a Google Drive link
+        if (isGoogleDrive) {
+            const resolveUrl = `${AppScriptBaseUrl}?resolve=${encodeURIComponent(value)}`;
+            const res = await fetch(resolveUrl);
+            const json = await res.json();
+
+            if (json.error) return `<p>⚠️ Couldn’t load ${customTitle}</p>`;
+
+            finalUrl = json.resolvedUrl;
+            contentType = json.contentType;
+
+            if (json.fileCreated) {
+                const createdDate = new Date(json.fileCreated).toLocaleDateString("en-GB", {
+                    year: 'numeric', month: 'short', day: 'numeric'
+                });
+                fileCreatedText = `📅 Created on: ${createdDate}`;
+            }
+        } else {
+            // For external links (not Google Drive), infer content type
+            if (isFileLikely) {
+                contentType = finalUrl.split('.').pop().toLowerCase();
+            }
+        }
+
+        // 📦 Now render based on contentType
+        if (/image|jpg|jpeg|png|gif|webp/.test(contentType)) {
+            return `<div><b>${icon} ${customTitle}</b><br><img src="${finalUrl}" style="max-width:100%;"></div>`;
+        } else if (/video|mp4|webm|ogg/.test(contentType)) {
+            return `<div><b>${icon} ${customTitle}</b><br><video controls width="100%"><source src="${finalUrl}"></video></div>`;
+        } else if (/pdf/.test(contentType)) {
+            return `
+              <p><b>${icon} ${customTitle}</b></p>
+              <div style="margin-left:10px; margin-bottom: 10px;">
+                <a href="${finalUrl}" target="_blank" style="color:var(--primary); text-decoration:underline;">📄 Open PDF</a>
+              </div>`;
+        } else {
+            const linkHost = finalUrl.match(/https?:\/\/([^/]+)/)?.[1] || "link";
+            return `
+              <div style="display:flex; align-items:center; border:1px solid #ddd; padding:12px; border-radius:8px; margin-bottom:10px;">
+                <img src="https://www.google.com/s2/favicons?domain=${linkHost}&sz=64" alt="favicon" style="width:32px;height:32px;margin-right:10px;">
+                <div style="flex-grow:1;">
+                  <div style="font-size:15px; font-weight:500; color:#333;">${icon} ${customTitle}</div>
+                  <a href="${finalUrl}" target="_blank" style="font-size:14px; color:var(--primary); text-decoration:none;">↗️ Visit</a>
+                </div>
+              </div>`;
+        }
+
+    } catch (e) {
+        return `<p>⚠️ Error loading ${customTitle}</p>`;
+    }
+}
+
 
 
 
