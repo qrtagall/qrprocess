@@ -699,15 +699,16 @@ function openPreviewModal(url, type = "auto") {
     // ✅ Generate content for modal
     let html = "";
     if (type === "image") {
-        html = `<img src="${url}" style="max-width:100%; max-height:85vh; border-radius:8px;">`;
+        html = `<img src="${url}" style="max-width:100%; max-height:100%; border-radius:8px;">`;
     } else if (type === "video") {
-        html = `<video controls autoplay style="max-width:100%; max-height:85vh; border-radius:8px;">
-              <source src="${url}" type="video/mp4">
-              Your browser does not support video.
-            </video>`;
+        html = `<video controls autoplay style="max-width:100%; max-height:100%; border-radius:8px; background:#000;">
+            <source src="${url}" type="video/mp4">
+            Your browser does not support video.
+          </video>`;
     } else if (type === "pdf") {
-        html = `<iframe src="${url}" style="width:85vw; height:85vh; border:none; border-radius:8px;"></iframe>`;
-    } else {
+        html = `<iframe src="${url}" style="width:90vw; height:85vh; border:none; border-radius:8px;"></iframe>`;
+    }
+    else {
         html = `<a href="${url}" target="_blank" style="color:#0066cc; text-decoration:underline;">Open link</a>`;
     }
 
