@@ -109,44 +109,39 @@ function renderThumbnailGrid(thumbnails) {
 }
 */
 
-
-//V4
-
 function renderThumbnailGrid(thumbnails) {
     return `
-  <div class="qr-gallery" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; align-items:flex-start;">
+  <div style="display:flex; flex-wrap:wrap; gap:6px 6px; margin-top:6px; align-items:flex-start;">
     ${thumbnails.map(item => {
-        const isVideo = /\.(mp4|webm|mov|avi|mkv)$/i.test(item.name);
-        const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(item.name);
-        const isPdf   = /\.pdf$/i.test(item.name);
+        const name = item.name || "";
+        const link = item.link || item.webViewLink || "#";
+        const thumb = item.thumb || item.thumbnailLink || item.iconLink || "";
 
-        const webLink = item.link || item.webViewLink || '#';
-        const idMatch = webLink.match(/[-\w]{25,}/);
-        const fileId  = idMatch ? idMatch[0] : null;
+        const isVideo = /\.(mp4|webm|mov|avi|mkv)$/i.test(name);
+        const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(name);
+        const isPDF   = /\.pdf$/i.test(name);
 
-        // direct preview link for the modal (critical)
-        let previewUrl = webLink;
-        if (fileId) {
-            if (isVideo) previewUrl = `https://drive.google.com/uc?export=preview&id=${fileId}`;
-            else if (isImage) previewUrl = `https://drive.google.com/uc?export=preview&id=${fileId}`;
-            else if (isPdf) previewUrl = `https://drive.google.com/uc?export=preview&id=${fileId}`;
+        // ✅ Determine type for modal
+        const type = isVideo ? "video" : isImage ? "image" : isPDF ? "pdf" : "link";
+
+        // ✅ Fallback Drive thumbnail for videos (when missing)
+        let displayThumb = thumb;
+        if (!displayThumb && (isVideo || isImage || isPDF)) {
+            const idMatch = link.match(/[-\\w]{25,}/);
+            if (idMatch) {
+                const fileId = idMatch[0];
+                displayThumb = `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
+            }
         }
-
-        // thumbnail (fallback if missing)
-        const thumb0 = item.thumb || item.thumbnailLink || item.iconLink || '';
-        const thumb  = thumb0 || (fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w400` : '');
-
-        const type = isVideo ? 'video' : isPdf ? 'pdf' : isImage ? 'image' : 'link';
 
         return `
         <div style="width:100px; text-align:center; position:relative;">
           <a href="javascript:void(0);"
-             class="qr-thumb"
-             data-url="${previewUrl}"
-             data-type="${type}"
+             onclick="openPreviewModal('${link}', '${type}')"
              style="text-decoration:none; display:inline-block;">
-            <img src="${thumb}"
-                 alt="${item.name}"
+            <img src="${displayThumb}"
+                 alt="${name}"
+                 onerror="this.style.display='none';"
                  style="width:100%; height:100px; object-fit:cover; border-radius:6px;
                         border:1px solid #ccc; box-shadow:0 0 4px rgba(0,0,0,0.25);
                         transition:transform 0.2s ease;">
@@ -154,13 +149,17 @@ function renderThumbnailGrid(thumbnails) {
               <div style="
                 position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
                 background:rgba(0,0,0,0.5); color:white; font-size:18px;
-                border-radius:50%; width:28px; height:28px; line-height:28px; text-align:center;">▶</div>
-            ` : ''}
+                border-radius:50%; width:28px; height:28px;
+                line-height:28px; text-align:center;">
+                ▶
+              </div>` : ''}
           </a>
         </div>`;
     }).join('')}
   </div>`;
 }
+
+
 
 
 
