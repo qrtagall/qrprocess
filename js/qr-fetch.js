@@ -130,6 +130,7 @@ function renderThumbnailGrid(thumbnails) {
         // 🔗 Direct preview link
         let directUrl = webLink;
         if (fileId) {
+            
             if (isVideo) directUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
             else if (isImage) directUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
             else if (isPDF) directUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;

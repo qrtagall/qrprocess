@@ -669,27 +669,44 @@ function openPreviewModal(url, type = "auto") {
     const inner = document.getElementById("previewInner");
     if (!modal || !inner) return;
 
-    // Clean existing content
     inner.innerHTML = "";
 
-    // Try to infer type if not explicitly passed
+    // ✅ Extract Drive file ID if link is from Google Drive
+    const driveMatch = url.match(/[-\w]{25,}/);
+    let fileId = driveMatch ? driveMatch[0] : null;
+
+    // ✅ Detect file type if not passed
     if (type === "auto") {
         if (/\.(jpg|jpeg|png|gif|webp)$/i.test(url)) type = "image";
         else if (/\.(mp4|webm|ogg)$/i.test(url)) type = "video";
         else if (/\.(pdf)$/i.test(url)) type = "pdf";
-        else type = "link";
+        else if (url.includes("drive.google.com")) {
+            // Try to guess from URL text
+            if (/\.pdf/i.test(url) || /pdf/.test(url)) type = "pdf";
+            else if (/video|mp4|mov/i.test(url)) type = "video";
+            else type = "image"; // fallback guess
+        } else type = "link";
     }
 
-    // Render based on content type
+    // ✅ Construct direct Drive preview URL if fileId found
+    if (fileId) {
+        if (type === "image" || type === "pdf")
+            url = `https://drive.google.com/uc?export=view&id=${fileId}`;
+        else if (type === "video")
+            url = `https://drive.google.com/uc?export=download&id=${fileId}`;
+    }
+
+    // ✅ Generate content for modal
     let html = "";
     if (type === "image") {
         html = `<img src="${url}" style="max-width:100%; max-height:85vh; border-radius:8px;">`;
     } else if (type === "video") {
         html = `<video controls autoplay style="max-width:100%; max-height:85vh; border-radius:8px;">
-              <source src="${url}" type="video/mp4">Your browser does not support video.
+              <source src="${url}" type="video/mp4">
+              Your browser does not support video.
             </video>`;
     } else if (type === "pdf") {
-        html = `<iframe src="${url}" style="width:80vw; height:85vh; border:none; border-radius:8px;"></iframe>`;
+        html = `<iframe src="${url}" style="width:85vw; height:85vh; border:none; border-radius:8px;"></iframe>`;
     } else {
         html = `<a href="${url}" target="_blank" style="color:#0066cc; text-decoration:underline;">Open link</a>`;
     }
@@ -697,6 +714,7 @@ function openPreviewModal(url, type = "auto") {
     inner.innerHTML = html;
     modal.style.display = "flex";
 }
+
 
 // 🔹 Close modal
 function closePreviewModal() {
