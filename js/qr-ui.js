@@ -923,17 +923,57 @@ function formatPhoneNumber(rawNum) {
     </span>`;
 }
 
+
 // Converts line breaks and URLs into HTML with clickable links
 function formatTextContent(text) {
     let safeText = text.replace(/\n/g, "<br>");
-    safeText = safeText.replace(/<\s*(https?:\/\/[^\s<>]+)\s*>/g, (match, link) =>
+    /*safeText = safeText.replace(/<\s*(https?:\/\/[^\s<>]+)\s*>/g, (match, link) =>
         `<a href="${link}" target="_blank" style="color: var(--primary); text-decoration: underline;">🌐 WebLink</a>`
-    );
+    );*/
     safeText = safeText.replace(/(https?:\/\/[^\s<]+)/g, (link) =>
-        `<a href="${link}" target="_blank" style="color: var(--primary); text-decoration: underline;">🌐 WebLink</a>`
+        //`<a href="${link}" target="_blank" style="color: var(--primary); text-decoration: underline;">🌐 WebLink</a>`
+        urlToContext(link)
     );
     safeText = boldLeadingLabels(safeText);
     return safeText.replace(/(?:(?:\+91|0)?[\s\-]*)?(?:\d[\s\-]*){10}/g, formatPhoneNumber);
+}
+
+
+
+
+function urlToContext(url) {
+    const lower = url.toLowerCase();
+
+    // Base style for all links
+    const baseStyle = "display:inline-flex; align-items:center; gap:6px; text-decoration:none; color:var(--primary);";
+
+    if (lower.includes("youtube.com") || lower.includes("youtu.be")) {
+        return `<a href="${url}" target="_blank" style="${baseStyle}">📺 YouTube</a>`;
+    }
+    if (lower.includes("facebook.com")) {
+        return `<a href="${url}" target="_blank" style="${baseStyle}">📘 Facebook</a>`;
+    }
+    if (lower.includes("instagram.com")) {
+        return `<a href="${url}" target="_blank" style="${baseStyle}">📸 Instagram</a>`;
+    }
+    if (lower.includes("linkedin.com")) {
+        return `<a href="${url}" target="_blank" style="${baseStyle}">💼 LinkedIn</a>`;
+    }
+    if (lower.includes("twitter.com") || lower.includes("x.com")) {
+        return `<a href="${url}" target="_blank" style="${baseStyle}">🐦 Twitter/X</a>`;
+    }
+    if (lower.includes("drive.google.com")) {
+        return `<a href="${url}" target="_blank" style="${baseStyle}">📁 Google Drive</a>`;
+    }
+    if (lower.includes("docs.google.com")) {
+        return `<a href="${url}" target="_blank" style="${baseStyle}">📄 Google Doc</a>`;
+    }
+    if (lower.includes("forms.gle") || lower.includes("google.com/forms")) {
+        return `<a href="${url}" target="_blank" style="${baseStyle}">📝 Google Form</a>`;
+    }
+
+    // Default web link
+    return `<a href="${url}" target="_blank" style="${baseStyle}">🌐 WebLink</a>`;
 }
 
 
