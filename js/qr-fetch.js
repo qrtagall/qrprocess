@@ -135,6 +135,8 @@ function renderThumbnailGrid(thumbnails) {
             else if (isImage) directUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
             else if (isPDF) directUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
         }
+        
+        let _type="image";
 
         // 🖼 Thumbnail (fallback)
         let displayThumb = thumb;
@@ -145,7 +147,7 @@ function renderThumbnailGrid(thumbnails) {
         return `
         <div style="width:100px; text-align:center; position:relative;">
           <a href="javascript:void(0);"
-             onclick="openPreviewModal('${directUrl}')"
+             onclick="openPreviewModal('${directUrl}','${_type}')"
              style="text-decoration:none; display:inline-block;">
             <img src="${displayThumb}" alt="${item.name}"
                  style="width:100%; height:100px; object-fit:cover; border-radius:6px;
