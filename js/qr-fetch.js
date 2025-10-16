@@ -84,7 +84,10 @@ function renderThumbnailGrid(thumbnails) {
 
         return `
           <div style="width:100px; text-align:center; position:relative;">
-            <a href="${link}" target="_blank" style="text-decoration:none; display:inline-block;">
+            <!--a href="${link}" target="_blank" style="text-decoration:none; display:inline-block;"-->
+            <a href="javascript:void(0);"
+   onclick="openPreviewModal('${link}')"
+   style="text-decoration:none; display:inline-block;">
               <img src="${displayThumb}"
                    alt="${item.name}"
                    onerror="this.style.display='none';"
