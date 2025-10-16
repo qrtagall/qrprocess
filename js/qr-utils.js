@@ -691,10 +691,17 @@ function openPreviewModal(url, type = "auto") {
         const iframeUrl = `https://drive.google.com/file/d/${fileId}/preview`;
         html = `
       <iframe src="${iframeUrl}"
-              width="90vw" height="80vh" frameborder="0"
-              allow="autoplay; encrypted-media"
+              frameborder="0"
+              allow="autoplay; encrypted-media; fullscreen"
               sandbox="allow-scripts allow-same-origin allow-presentation"
-              style="border:none; border-radius:8px; background:#000;">
+              style="
+                width:98vw;
+                height:94vh;
+                max-width:98vw;
+                max-height:94vh;
+                border:none;
+                border-radius:10px;
+                background:#000;">
       </iframe>`;
     }
 
