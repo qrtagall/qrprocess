@@ -996,7 +996,8 @@ function urlToContext(url) {
         "generic";
 
     const label = iconKey.charAt(0).toUpperCase() + iconKey.slice(1);
-    const icon = ICON_MAP[iconKey] || ICON_MAP.generic;
+
+    const iconSvg = ICON_MAP[iconKey] || ICON_MAP.generic;
 
    // return `<a href="${url}" target="_blank" style="${baseStyle}">${icon} ${label}</a>`;
     // Wrap SVG safely inside span to avoid Chrome’s inline parsing issue
