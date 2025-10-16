@@ -664,48 +664,38 @@ function toggleScroll() {
 /************************** Preview Modal *****************/
 
 // 🔹 Open preview modal for any content type
-function openPreviewModal(url, type = "auto") {
-    const modal = document.getElementById("previewModal");
-    const inner = document.getElementById("previewInner");
+function openPreviewModal(url, type = 'auto') {
+    const modal = document.getElementById('previewModal');
+    const inner = document.getElementById('previewInner');
     if (!modal || !inner) return;
 
-    inner.innerHTML = "";
+    inner.innerHTML = '';
 
-    // ✅ Extract file ID if from Google Drive
-    const driveMatch = url.match(/[-\w]{25,}/);
-    const fileId = driveMatch ? driveMatch[0] : null;
-
-    // ✅ Try to detect type
-    if (type === "auto") {
-        if (/\.(jpg|jpeg|png|gif|webp)$/i.test(url)) type = "image";
-        else if (/\.(mp4|webm|ogg)$/i.test(url)) type = "video";
-        else if (/\.(pdf)$/i.test(url)) type = "pdf";
-        else type = "link";
+    // If type still 'auto', guess by extension (last resort)
+    if (type === 'auto') {
+        if (/\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(url)) type = 'image';
+        else if (/\.(mp4|webm|ogg|mov)(\?|$)/i.test(url)) type = 'video';
+        else if (/\.pdf(\?|$)/i.test(url)) type = 'pdf';
+        else type = 'link';
     }
 
-    // ✅ Use Google Drive direct preview links if fileId found
-    if (fileId) {
-        if (type === "video" || type === "image" || type === "pdf") {
-            url = `https://drive.google.com/uc?export=preview&id=${fileId}`;
-        }
-    }
-
-    // ✅ Render modal content
-    let html = "";
-    if (type === "image") {
+    // Render
+    let html = '';
+    if (type === 'image') {
         html = `<img src="${url}" style="max-width:100%; max-height:90vh; border-radius:8px;">`;
-    } else if (type === "video") {
-        html = `<iframe src="${url}" allow="autoplay" style="width:90vw; height:80vh; border:none; border-radius:8px; background:#000;"></iframe>`;
-    } else if (type === "pdf") {
-        html = `<iframe src="${url}" style="width:90vw; height:85vh; border:none; border-radius:8px;"></iframe>`;
+    } else if (type === 'video') {
+        // Google Drive preview works best inside an iframe
+        html = `<iframe src="${url}" allow="autoplay; fullscreen"
+                   style="width:90vw; height:80vh; border:none; border-radius:8px; background:#000;"></iframe>`;
+    } else if (type === 'pdf') {
+        html = `<iframe src="${url}" style="width:90vw; height:85vh; border:none; border-radius:8px; background:#fff;"></iframe>`;
     } else {
-        html = `<a href="${url}" target="_blank" style="color:#06f;">Open in new tab</a>`;
+        html = `<a href="${url}" target="_blank" style="color:#06f; text-decoration:underline;">Open in new tab</a>`;
     }
 
     inner.innerHTML = html;
-    modal.style.display = "flex";
+    modal.style.display = 'flex';
 }
-
 
 
 // 🔹 Close modal

@@ -401,3 +401,12 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("🔄 DOM ready, starting verification...");
     initQRTagAll();
 });
+
+// open modal when any thumbnail is clicked
+document.addEventListener('click', (e) => {
+    const a = e.target.closest('a.qr-thumb');
+    if (!a) return;
+    const url  = a.getAttribute('data-url') || '';
+    const type = (a.getAttribute('data-type') || 'auto').toLowerCase();
+    openPreviewModal(url, type);
+});
