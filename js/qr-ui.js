@@ -1946,11 +1946,14 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
             });
         }
     } else if (url.startsWith("http")) {
+        /*
         resolveAndRender(url, index + 1, title).then((html) => {
             const temp = document.createElement("div");
             temp.innerHTML = html;
             wrapper.appendChild(temp);
         });
+
+         */
     } else {
         mainBlock.innerHTML = `<p><b>${index + 1}.</b> ${icon} <b>${title}</b>: ${url}</p>`;
         wrapper.appendChild(mainBlock);
