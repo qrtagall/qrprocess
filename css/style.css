@@ -396,3 +396,9 @@
             box-sizing: border-box;
             word-break: break-word;
         }
+
+        .icon svg {
+            width: 16px;
+            height: 16px;
+            vertical-align: middle;
+        }

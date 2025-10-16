@@ -998,7 +998,12 @@ function urlToContext(url) {
     const label = iconKey.charAt(0).toUpperCase() + iconKey.slice(1);
     const icon = ICON_MAP[iconKey] || ICON_MAP.generic;
 
-    return `<a href="${url}" target="_blank" style="${baseStyle}">${icon} ${label}</a>`;
+   // return `<a href="${url}" target="_blank" style="${baseStyle}">${icon} ${label}</a>`;
+    // Wrap SVG safely inside span to avoid Chrome’s inline parsing issue
+    return `<a href="${url}" target="_blank" style="${baseStyle}">
+              <span class="icon" style="width:16px;height:16px;display:inline-block;vertical-align:middle;">${iconSvg}</span>
+              <span>${label}</span>
+            </a>`;
 }
 
 
@@ -1969,17 +1974,9 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
         return wrapper;
     }
 
-    if (typeUpper === "TEXT") {
-        const formattedText = formatTextContent(url);
-        mainBlock.innerHTML = `
-            <p><b>${index + 1}.</b> ${icon} <b>${title}</b> ${visibilityIcon}</p>
-            <div style="margin-left: 10px; margin-bottom: 10px; font-size: 14px; line-height: 1.6; background: #f9f9ff; padding: 10px 12px; border-left: 4px solid #005aab; border-radius: 6px;">
-                ${formattedText}
-            </div>`;
-        wrapper.appendChild(mainBlock);
-    }
+
     //Image and Video??
-    else if (typeUpper.includes("FILE") && /drive\.google\.com/.test(url)) {
+    if (typeUpper.includes("FILE") && /drive\.google\.com/.test(url)) {
         const match = url.match(/\/d\/([^/]+)/);
         const fileId = match ? match[1] : null;
         if (fileId) {
@@ -2013,7 +2010,17 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
                 container.innerHTML = `<p style="color:red;">❌ Failed to load thumbnails</p>`;
             });
         }
-    } else if (url.startsWith("http")) {
+    }
+    else  if (typeUpper === "TEXT") {
+        const formattedText = formatTextContent(url);
+        mainBlock.innerHTML = `
+            <p><b>${index + 1}.</b> ${icon} <b>${title}</b> ${visibilityIcon}</p>
+            <div style="margin-left: 10px; margin-bottom: 10px; font-size: 14px; line-height: 1.6; background: #f9f9ff; padding: 10px 12px; border-left: 4px solid #005aab; border-radius: 6px;">
+                ${formattedText}
+            </div>`;
+        wrapper.appendChild(mainBlock);
+    }
+    else if (url.startsWith("http")) {
 
         resolveAndRender(url, index + 1, title).then((html) => {
             const temp = document.createElement("div");
