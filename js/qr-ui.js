@@ -1018,9 +1018,9 @@ function urlToContext(url) {
     const baseStyle = "display:inline-flex; align-items:center; gap:6px; text-decoration:none; font-weight:500; color:var(--primary);";
 
     const iconKey =
-        lower.includes("youtube") ? "youtube_Link" :
-        lower.includes("facebook") ? "facebook_Link" :
-        lower.includes("instagram") ? "instagram_Link" :
+        lower.includes("youtube") ? "Youtube_Link" :
+        lower.includes("facebook") ? "Facebook_Link" :
+        lower.includes("instagram") ? "Instagram_Link" :
         lower.includes("linkedin") ? "Linkedin_Link" :
         lower.includes("twitter") || lower.includes("x.com") ? "Twitter_Link" :
         lower.includes("drive.google.com") ? "Gdrive_Link" :

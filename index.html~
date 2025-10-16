@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>QRTagall | ID Verifier</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode/html5-qrcode.min.js"></script>
+
+
+
+    <!-- Your CSS -->
+    <!--
+    <link rel="stylesheet" href="file:///G:/QrTagAll/git/qrprocess/css/style.css">
+    -->
+
+
+    <!-- -->
+    <link rel="stylesheet" href="./css/style.css">
+     <!-- -->
+
+</head>
+<body>
+
+
+
+
+<!-- Spinner & Popup -->
+<div id="popup">
+
+    <div id="qrImage" style="text-align: center; margin-top: 10px;">
+        <canvas id="qrCanvas" style="padding:6px; border:1px solid #ccc; border-radius:8px; background:#fff;"></canvas>
+    </div>
+
+    <div id="verifyingLabel">
+        <h3>🔍 Verifying QR ID</h3>
+    </div>
+    <p id="idText" style="font-size:14px; color:gray;"></p>
+    <div id="spinner" style="margin-top:20px;">⏳ Please wait ...</div>
+    <div id="result" style="display:none;"></div>
+
+    <!--
+    <div id="loginSection" class="login-options" style="display:none; font-size:13.5px;">
+        <p style="font-weight: normal;">Give Asset Name and "Login" to Own this QR</p>
+
+        <input id="assetNameInput" type="text" placeholder="Enter Asset Name"
+               style="margin-bottom:10px; padding:8px; width:80%; border-radius:6px; border:1px solid #ccc; " />
+
+        <div class="auth-buttons-vertical">
+            <button class="auth-button-box enabled" onclick="googleLoginNew()">
+                <img class="auth-logo" src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo">
+                <span>Data in QRTagAll</span>
+            </button>
+            <button class="auth-button-box enabled" onclick="googleLoginNew()">
+                <img class="auth-logo" src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo">
+                <span>Data in GDrive</span>
+            </button>
+        </div>
+    </div>
+    -->
+
+    <div id="loginSection" class="login-options" style="display:none; font-size:13.5px; text-align:center;">
+        <p style="font-weight: normal;">Give Asset Name (can edit later)</p>
+
+        <!-- 👇 Asset Name Input Box -->
+        <input id="assetNameInput" type="text" placeholder="Enter Asset Name"
+               style="margin-bottom:10px; padding:8px; width:80%; border-radius:6px; border:1px solid #ccc;" />
+
+        <p style="font-weight: normal;">Select Storage space where Asset Info shall be stored:</p>
+
+        <!-- 👇 Vertical layout with floating info button -->
+        <div style="position: relative; display: inline-block;">
+
+            <button class="auth-button-box enabled" onclick="QRTagAllLoginNew()">
+                <img class="auth-logo" src="https://qrtagall.com/Logo_small_NT.png" alt="QRTagAll Logo">
+                <span>Data in QRTagAll</span>
+            </button>
+
+            <!-- ℹ️ Info Button -->
+            <button onclick="toggleInfoPopup()" title="More Info"
+                    style="position: absolute; left: 110%; transform: translate(-50%, -50%); top: 50%; margin-top: -12px;
+             background: #eee; border: 1px solid #ccc; border-radius: 50%; width: 24px; height: 24px;text-align: center;
+             padding: 0; font-size: 14px; line-height: 1; cursor: pointer;">
+                ℹ️
+            </button>
+
+            <button class="auth-button-box enabled" onclick="googleLoginNew()" style="margin-top:24px;">
+                <img class="auth-logo" src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo">
+                <span>Data in GDrive</span>
+            </button>
+        </div>
+
+        <!-- 👇 Info popup -->
+        <div id="infoPopup" style="display:none; background:#fffbe5; color:#444; padding:10px 14px; border:1px solid #aaa; border-radius:8px; margin-top:10px; width:80%; margin-left:auto; margin-right:auto; font-size:13px; text-align:justify;">
+            <b>ℹ️ What's the difference?</b><br><br>
+            - <b>QRTagAll</b>: Data shall be stored at QRTagAll's shared space. (Limited space)<br><br>
+            - <b>GDrive (Recommended)</b>: Data shall be stored in your own Google Drive. It needs exclusive permission to access your Google Drive.<br>
+            This will create the following directory in your Google Drive:<br>
+            MyDrive > QRTagAll > {ID} > {Your artifact files}<br>
+            For details, see the <a href="https://qrtagall.com/privacy.html" target="_blank" style="color:#0056b3; text-decoration:underline;">Privacy Policy</a>.<br><br>
+            Choose based on your storage preference.
+        </div>
+
+    </div>
+
+
+    <div id="versionTag"></div>
+
+</div>
+
+
+
+
+<!-- ✅ Then mainContent separately -->
+<div id="mainContent" style="display:none; padding:30px; max-width:600px; font-family:'Segoe UI', sans-serif;">
+
+    <!-- Dynamically insert QR Div here later (after tagline) -->
+
+    <h2 id="assetTitle" style="color:var(--primary); font-size:24px;"></h2>
+
+    <div id="assetLinks" style="margin-top:10px;"></div>
+
+    <hr style="border: none; height: 3px; width: 80%; background: linear-gradient(to right, orange, #ffa500); margin: 60px auto 30px auto; border-radius: 5px;">
+
+    <!-- Action buttons visible only in editMode -->
+    <!-- Action buttons visible only in editMode -->
+    <div id="editActions" style="display: none; justify-content: center; gap: 12px; margin-bottom: 25px;">
+        <button onclick="openCloneDialog()" style="background: lightcoral; color: darkblue; font-size: 12px; padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer;">
+            🔁 Clone QR
+        </button>
+        <button onclick="openTransferDialog()" style="background: lightcoral; color: darkblue; font-size: 12px; padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer;">
+            🔀 Transfer QR
+        </button>
+        <button onclick="openAddQRDialog()" style="background: lightcoral; color: darkblue; font-size: 12px; padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer;">
+            ➕ Add QR
+        </button>
+        <button onclick="openDeleteDialog()" style="background: lightcoral; color: darkred; font-size: 12px; padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer;">
+            ❌ Delete QR
+        </button>
+    </div>
+
+    <!-- Clone QR Modal -->
+    <!-- Clone QR Modal -->
+    <div id="cloneQRModal"
+         style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+            background:#00000055; z-index:10000; justify-content:center; align-items:center;">
+        <div style="background:white; padding:20px; border-radius:10px; max-width:400px; width:90%;
+              box-shadow:0 0 10px rgba(0,0,0,0.2); position:relative;">
+
+            <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 16px;">🔁 Clone QR</h3>
+
+            <p style="font-size: 14px; color: #333; font-weight: 500; margin-bottom: 14px; line-height: 1.0;">
+                This will copy the current QR info to new QR.
+            </p>
+
+            <p style="font-size: 12px; color: #444; margin-bottom: 10px; line-height: 0.8;">
+                <b>SOFT-CLONE:</b> Only links will be copied from the original QR.
+            </p>
+
+            <p style="font-size: 12px; color: #444; margin-bottom: 20px; line-height: 0.8;">
+                <b>DEEP-CLONE:</b> The entire data will be copied to the new QR.
+            </p>
+
+            <p>Select clone type:</p>
+            <select id="cloneTypeSelect" style="width:100%; margin-bottom:15px;">
+                <option value="Soft-Clone">Soft Clone (Only Link Info)</option>
+                <option value="Deep-Clone">Hard Clone (Full Copy)</option>
+            </select>
+
+            <label>New QR ID:</label>
+
+            <div style="display:flex; gap:10px; align-items:center; margin-bottom:15px;">
+                <input type="text" id="newCloneIdInput" placeholder="Enter New QR ID" style="flex:1;">
+                <button onclick="verifyQRIdFromInput('newCloneIdInput', 'qrVerifyStatus', false)"
+                        style="padding:6px 12px; font-size:12px;">✅ Verify</button>
+                <button onclick="openQRScanModal('newCloneIdInput', false)"
+                        style="padding:6px 12px; font-size:12px;">📷 Scan</button>
+            </div>
+
+            <p id="qrVerifyStatus" style="font-size:13px; color:gray; margin:0;"></p>
+
+            <!-- ✅ Symmetric bottom buttons -->
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px;">
+                <button onclick="closeCloneModal()" style="padding:6px 12px; font-size:12px;">Cancel</button>
+                <button onclick="confirmClone()" style="padding:6px 12px; font-size:12px;">Clone</button>
+            </div>
+
+        </div>
+    </div>
+
+
+
+    <!-- Add Linked QR Modal -->
+    <div id="addQRModal"
+         style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+            background:#00000055; z-index:10000; justify-content:center; align-items:center;">
+        <div style="background:white; padding:20px; border-radius:10px; max-width:400px; width:90%;
+              box-shadow:0 0 10px rgba(0,0,0,0.2); position:relative;">
+
+            <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 16px;">➕ Add Linked QR</h3>
+
+            <p style="font-size: 14px; color: #333; font-weight: 500; margin-bottom: 14px; line-height: 1.0;">
+                This will link an <b>existing QR</b> to the current QR.
+            </p>
+
+            <p style="font-size: 12px; color: #444; margin-bottom: 10px; line-height: 0.8;">
+                The selected QR’s <b>Primary Link</b> will be added as a last new-link here.
+            </p>
+
+            <label>Existing QR ID:</label>
+            <div style="display:flex; gap:10px; align-items:center; margin-bottom:15px;">
+                <input type="text" id="newLinkedQRInput" placeholder="Enter Existing QR ID" style="flex:1;">
+                <button onclick="verifyAddLinkedQR()" style="padding:6px 12px; font-size:12px;">✅ Verify</button>
+                <button onclick="openQRScanModal('newLinkedQRInput',true)" style="padding:6px 12px; font-size:12px;">📷 Scan</button>
+            </div>
+
+            <p id="addQRVerifyStatus" style="font-size:13px; color:gray; margin:0;"></p>
+
+            <!-- ✅ Bottom buttons now styled same as Verify/Scan -->
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px;">
+                <button onclick="closeAddQRModal()" style="padding:6px 12px; font-size:12px;">Cancel</button>
+                <button id="confirmAddQR" onclick="confirmAddLinkedQR()" style="padding:6px 12px; font-size:12px;">Add</button>
+            </div>
+
+        </div>
+    </div>
+
+
+
+
+
+    <!-- Scanner Modal -->
+    <div id="qrScanModal" style="
+    display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:#000000cc; z-index:10001; justify-content:center;
+    align-items:center; flex-direction:column; overflow:hidden; touch-action:manipulation;padding: 16px; ">
+        <div id="qrScanner" style="width: 100%; max-width: 500px; aspect-ratio: 1; background:#000; border-radius:10px;"></div>
+
+        <div style="margin-top:30px; display:flex; gap:16px;">
+            <button onclick="toggleFlashlight()" style="padding: 8px 16px;">💡 Flashlight</button>
+            <button onclick="closeQRScanModal()" style="padding: 8px 16px;">❌ Cancel</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <label for="zoomSlider" style="color:white;">Zoom:</label>
+            <input id="zoomSlider" type="range" min="1" max="10" step="0.1" value="1" onchange="setZoomLevel(this.value)">
+        </div>
+
+    </div>
+
+
+    <!--
+    <div style="display: flex; justify-content: center; margin-top: 40px;">
+        <button id="editBtn" class="enabled" onclick="editAlert()" style="text-align: center; line-height: 1.2; border: none; border-radius: 10px; ">
+            🔐 Log-in to Edit Detail-s
+        </button>
+    </div>
+    -->
+
+    <div style="display: flex; justify-content: center; gap: 12px; margin-top: 40px;">
+        <button id="editBtn" class="enabled" onclick="editAlert()" style="text-align: center; line-height: 1.2; border: none; border-radius: 10px;">
+            🔐 Log-in to Edit Detail-s
+        </button>
+        <button id="logoutBtn" class="enabled" onclick="handleLogout()" style="text-align: center; line-height: 1.2; border: none; border-radius: 10px; background: #f44336; display: none;">
+            🔓 Log Out
+        </button>
+    </div>
+
+</div>
+
+
+<div id="ownerConfirmModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:white; padding:30px 25px; border-radius:12px; width:90%; max-width:360px; text-align:center; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+        <h3 style="margin-top:0; font-size:18px; color:#e67e22;">⚠️ Only QR owner can edit !</h3>
+        <p style="margin-bottom:25px; font-size:15px;">Are you the owner - would you like to log in?</p>
+        <button id="ownerLoginYes" style="background-color:#005aab; color:white; padding:10px 20px; border:none; border-radius:6px; font-weight:bold; margin-right:10px; cursor:pointer;">Yes, Login</button>
+        <button id="ownerLoginCancel" style="background-color:#ccc; color:#333; padding:10px 20px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Cancel</button>
+    </div>
+</div>
+
+
+<div id="fullScreenSpinner" style="
+	  display: none;
+	  position: fixed;
+	  top: 0; left: 0; right: 0; bottom: 0;
+	  background: rgba(255, 255, 255, 0.7);
+	  z-index: 9999;
+	  justify-content: center;
+	  align-items: center;
+	">
+    <div class="spinner" style="
+		border: 8px solid #f3f3f3;
+		border-top: 8px solid #3498db;
+		border-radius: 50%;
+		width: 50px;
+		height: 50px;
+		animation: spin 1s linear infinite;
+	  "></div>
+</div>
+
+
+
+<!-- Scroll Button (⬆️⬇️) -->
+<button id="scrollToggleBtn" onclick="toggleScroll()" style="
+  position: fixed;
+  bottom: 30px; /* Push up above logout */
+  right: 5px;
+  background: #212121;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  z-index: 999;
+  display: none;
+  opacity: 0.6;   /* 🔥 40% transparent */
+">⬆️ Top</button>
+
+<!-- Logout Button -->
+<!--
+<button id="logoutBtn" onclick="handleLogout()" style="
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  display: none;
+  z-index: 999;
+">🔓 Log Out</button>
+-->
+
+
+
+<!-- 🔲 Modal for Adding Artifact -->
+<!-- 🔲 Modal for Adding Artifact -->
+<div id="addArtifactModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:#00000055; z-index:10000; justify-content:center; align-items:center;">
+    <div style="background:white; padding:20px; border-radius:10px; max-width:500px; width:90%; box-shadow:0 0 10px rgba(0,0,0,0.2); position:relative;">
+        <h3 id="addArtifactModalTitle">➕ Add Artifact Info</h3>
+
+        <!-- ✅ Basic Info Section -->
+        <div id="basicInfoSection">
+            <label>Basic Info:</label><br>
+            <input type="text" id="artifactBasicInfo" style="width:100%; margin-bottom:10px;"><br>
+        </div>
+
+        <!-- ✅ File Type Section -->
+        <div id="fileTypeSection">
+            <label>File Type:</label><br>
+            <select id="artifactFileType" style="width:100%; margin-bottom:10px;" onchange="onFileTypeChange()">
+                <option value="TEXT">TEXT</option>
+                <option value="IMAGEFILE">IMAGEFILE</option>
+                <option value="PDFFILE">PDFFILE</option>
+                <option value="AUDIOFILE">AUDIOFILE</option>
+                <option value="VIDEOFILE">VIDEOFILE</option>
+                <option value="DRIVE">GDRIVE</option>
+                <option value="OTHERS">OTHERFILE</option>
+            </select><br>
+        </div>
+
+        <!-- ✅ Visibility Section -->
+        <div id="visibilitySection">
+            <label>Visibility:</label><br>
+            <select id="artifactOption" style="width:100%; margin-bottom:10px;">
+                <option value="VIEW">VIEW</option>
+                <option value="NOVIEW">NOVIEW</option>
+            </select><br>
+        </div>
+
+        <!-- ✅ Text Info Section -->
+        <div id="textInputSection">
+            <label>Text Info:</label><br>
+            <textarea id="artifactTextInfo" style="width:100%; height:80px;"></textarea>
+        </div>
+
+        <!-- ✅ File Upload Section -->
+        <div id="fileUploadSection" style="display:none;">
+            <button onclick="openUploadModal()" style="margin-bottom:10px;">📁 Select/Upload File</button>
+            <p id="uploadedFileLink" style="font-size:14px; color:gray;"></p>
+        </div>
+
+        <div style="text-align:right; margin-top:15px;">
+            <button onclick="closeAddModal()">Cancel</button>
+            <button onclick="saveArtifact()">Save</button>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- ✏️ Modal to Edit Description -->
+<div id="editDescriptionModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:#00000055; z-index:10000; justify-content:center; align-items:center;">
+    <div style="background:white; padding:20px; border-radius:10px; max-width:400px; width:90%; box-shadow:0 0 10px rgba(0,0,0,0.2); position:relative;">
+        <h4>📝 Edit Description</h4>
+        <textarea id="newDescription" style="width:100%; height:80px; margin-bottom:10px;"></textarea>
+
+            <div id="descTagInfo" style="
+              font-size: 12px;
+              color: #666;
+              margin-top: 4px;
+              text-align: left;
+              line-height: 1.4;
+            ">
+                💡 Supported Tags:<br>
+                <code>&lt;NOID&gt;</code> – Hide ID in banner<br>
+                <code>&lt;NOOWNER&gt;</code> – Hide owner info<br>
+                <code>&lt;COL:X&gt;</code> – Soft color shade X (1-100)<br>
+                <code>&lt;EXPAND&gt;</code> – Auto-expand section
+            </div>
+        <div style="text-align:right;">
+
+            <button onclick="closeDescriptionModal()">Cancel</button>
+            <button onclick="saveDescription()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- 📤 Upload Modal -->
+<div id="uploadModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:10001; align-items:center; justify-content:center;">
+    <div style="background:white; padding:30px; border-radius:12px; width:90%; max-width:400px; text-align:center; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+        <h3 style="margin-top:0;">📤 Upload / Select File</h3>
+
+        <input type="file" id="filePicker" style="margin:20px 0; width:100%;"><br>
+
+        <div id="filePreview" style="margin:10px 0; font-size:14px; color:gray;">No file selected</div>
+
+        <div style="margin-top:20px;">
+            <button onclick="simulateUseFile()">Use Selected</button>
+            <button onclick="closeUploadModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+
+<div id="taglineWrapper" style="
+    text-align: center;
+    font-size: 20px;
+    color: #ffffff; /* Default text color: White */
+    background: #000; /* Black ribbon */
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+    padding: 10px 0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+">
+    <a href="https://qrtagall.com" target="_blank" style="color: #FFA500; font-weight: bold; text-decoration: none;">
+        QRTagAll
+    </a>
+    <span style="color: #ffffff;font-size: 15px">  Tag it. Own it. Share it.</span>
+
+
+</div>
+
+<div id="thumbnailGallery_${index}"></div>
+
+<!-- Notification Toast -->
+<div id="notifyToast" style="
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    z-index: 9999;
+    display: none;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    max-width: 90%;
+    text-align: center;
+    white-space: pre-wrap;
+"></div>
+
+<!-- 🌐 Global Confirm Modal -->
+<div id="globalConfirmModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <h3 id="globalConfirmTitle">⚠️ Confirm</h3>
+        <p id="globalConfirmMessage">Are you sure?</p>
+        <button onclick="confirmDialogProceed()">Yes</button>
+        <button onclick="confirmDialogCancel()">Cancel</button>
+    </div>
+</div>
+
+
+<!-- 🌐 Universal Preview Modal -->
+<div id="previewModal"
+     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+            background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
+    <div id="previewContent"
+         style="position:relative; background:#fff; border-radius:10px;
+              max-width:90%; max-height:90%; overflow:hidden;
+              box-shadow:0 0 10px rgba(0,0,0,0.5); padding:0;
+              display:flex; flex-direction:column; justify-content:center; align-items:center;">
+
+        <button onclick="closePreviewModal()"
+                style="position:absolute; top:8px; right:8px; background:#000;
+                   color:#fff; border:none; border-radius:50%;
+                   width:28px; height:28px; font-size:16px;
+                   cursor:pointer; z-index:100;">✖</button>
+
+        <div id="previewInner"
+             style="width:100%; height:100%; display:flex;
+                justify-content:center; align-items:center;
+                background:#000;"></div>
+    </div>
+</div>
+
+
+
+
+<script>
+    const QRTagAll_Ver_ = "3.168_16102025";
+</script>
+
+
+
+<!-- -->
+<script src="./js/qr-utils.js"></script>
+<script src="./js/qr-auth.js"></script>
+<script src="./js/qr-fetch.js"></script>
+<script src="./js/qr-edit.js"></script>
+<script src="./js/qr-ui.js"></script>
+<script src="./js/qr-main.js"></script>
+<!--   -->
+
+<!--
+<script src="file:///G:/QrTagAll/git/qrprocess/js/qr-utils.js"></script>
+<script src="file:///G:/QrTagAll/git/qrprocess/js/qr-auth.js"></script>
+<script src="file:///G:/QrTagAll/git/qrprocess/js/qr-fetch.js"></script>
+<script src="file:///G:/QrTagAll/git/qrprocess/js/qr-edit.js"></script>
+<script src="file:///G:/QrTagAll/git/qrprocess/js/qr-ui.js"></script>
+<script src="file:///G:/QrTagAll/git/qrprocess/js/qr-main.js"></script>
+-->
+
+
+<div id="bottomRibbon" style="
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background: #000;
+    color: #fff;
+    padding: 5px 10px;
+    font-size: 10px;
+    z-index: 1000;
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.3);
+    text-align: center;
+">
+    <!-- Centered content -->
+    <a href="https://qrtagall.com" target="_blank"
+       style="color: #FFA500; font-weight: bold; margin-right: 12px; text-decoration: none;">
+        https://qrtagall.com</a>
+    <!--span style="color: #ffffff;"> | Contact: </span-->
+    <!--a href="mailto:qrtagall@gmail.com"
+       style="color: #FFA500; font-weight: bold; margin-left: 5px; text-decoration: none;">
+        qrtagall@gmail.com
+    </a-->
+
+    <!-- Version pinned to right -->
+    <span id="versionTagx" style="
+        position: absolute;
+        right: 16px;
+        color: #aaaaaa;
+        font-size: 9px;
+    "></span>
+
+
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const versionEl = document.getElementById("versionTagx");
+            if (versionEl) {
+                versionEl.textContent = "v" + QRTagAll_Ver_;
+            }
+        });
+    </script>
+
+</div>
+
+</body>
+</html>
