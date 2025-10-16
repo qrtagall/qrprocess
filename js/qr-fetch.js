@@ -114,14 +114,14 @@ function renderThumbnailGrid(thumbnails) {
 //V4
 
 function renderThumbnailGrid(thumbnails) {
-    // helper: remove file extension and clean up
+    // helper: remove extension & clean up
     function baseNameNoExt(name = "") {
         const dot = name.lastIndexOf(".");
         const base = dot > 0 ? name.slice(0, dot) : name;
         return base.replace(/[_-]+/g, " ").trim();
     }
 
-    // helper: truncate text with ellipsis
+    // helper: truncate with ellipsis
     function truncateEllipsis(s, max = 18) {
         return s.length > max ? s.slice(0, max - 1) + "…" : s;
     }
@@ -131,16 +131,16 @@ function renderThumbnailGrid(thumbnails) {
       ${thumbnails.map(item => {
         const name = item.name || "";
         const isVideo = /\.(mp4|webm|mov|avi|mkv)$/i.test(name);
-        const thumb = item.thumb || item.thumbnailLink || item.iconLink || ''; // fallback handling
-        const link = item.link || item.webViewLink || '#';
+        const thumb = item.thumb || item.thumbnailLink || item.iconLink || "";
+        const link = item.link || item.webViewLink || "#";
 
-        // Extract short display name (without extension)
+        // Extract short display name (no extension)
         const caption = truncateEllipsis(baseNameNoExt(name), 18);
 
-        // Fallback Drive video thumbnail if missing
+        // ✅ Fallback Google Drive thumbnail for *any* Drive file (image/video/pdf)
         let displayThumb = thumb;
-        if (!displayThumb && isVideo) {
-            const idMatch = link.match(/[-\\w]{25,}/);
+        if (!displayThumb) {
+            const idMatch = link.match(/[-\w]{25,}/);
             if (idMatch) {
                 const fileId = idMatch[0];
                 displayThumb = `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
@@ -152,30 +152,34 @@ function renderThumbnailGrid(thumbnails) {
             <a href="javascript:void(0);"
                onclick="openPreviewModal('${link}')"
                style="text-decoration:none; display:inline-block;">
-              <img src="${displayThumb}"
-                   alt="${name}"
-                   onerror="this.style.display='none';"
-                   style="width:100%; height:100px; object-fit:cover; border-radius:6px;
-                          border:1px solid #ccc; box-shadow:0 0 4px rgba(0,0,0,0.25);
-                          transition:transform 0.2s ease;">
-              ${isVideo ? `
-                <div style="
-                  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-                  background:rgba(0,0,0,0.5); color:white; font-size:18px;
-                  border-radius:50%; width:28px; height:28px;
-                  line-height:28px; text-align:center;">
-                  ▶
-                </div>` : ''}
+              <div style="position:relative;">
+                <img src="${displayThumb}"
+                     alt="${name}"
+                     onerror="this.style.display='none';"
+                     style="width:100%; height:100px; object-fit:cover; border-radius:6px;
+                            border:1px solid #ccc; box-shadow:0 0 4px rgba(0,0,0,0.25);
+                            transition:transform 0.2s ease;">
+                ${isVideo ? `
+                  <div style="
+                    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+                    background:rgba(0,0,0,0.5); color:white; font-size:18px;
+                    border-radius:50%; width:28px; height:28px;
+                    line-height:28px; text-align:center;">
+                    ▶
+                  </div>` : ''}
+              </div>
             </a>
             ${caption ? `
-              <div style="font-size:12px; color:#555; margin-top:4px;
-                          white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+              <div style="font-size:11.5px; color:#555; margin-top:2px;
+                          white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+                          line-height:1.1em;">
                 ${caption}
               </div>` : ''}
           </div>`;
     }).join('')}
     </div>`;
 }
+
 
 
 
