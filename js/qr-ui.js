@@ -943,38 +943,27 @@ function formatTextContent(text) {
 
 function urlToContext(url) {
     const lower = url.toLowerCase();
+    const baseStyle = "display:inline-flex; align-items:center; gap:6px; text-decoration:none; font-weight:500; color:var(--primary);";
 
-    // Base style for all links
-    const baseStyle = "display:inline-flex; align-items:center; gap:6px; text-decoration:none; color:var(--primary);";
+    const iconKey =
+        lower.includes("youtube") ? "youtube" :
+        lower.includes("facebook") ? "facebook" :
+        lower.includes("instagram") ? "instagram" :
+        lower.includes("linkedin") ? "linkedin" :
+        lower.includes("twitter") || lower.includes("x.com") ? "twitter" :
+        lower.includes("drive.google.com") ? "drive" :
+        lower.includes("docs.google.com") ? "docs" :
+        lower.includes("forms.gle") || lower.includes("google.com/forms") ? "forms" :
+        lower.includes("maps.google.") ? "maps" :
+        lower.includes("wa.me") || lower.includes("whatsapp.com") ? "whatsapp" :
+        "generic";
 
-    if (lower.includes("youtube.com") || lower.includes("youtu.be")) {
-        return `<a href="${url}" target="_blank" style="${baseStyle}">📺 YouTube</a>`;
-    }
-    if (lower.includes("facebook.com")) {
-        return `<a href="${url}" target="_blank" style="${baseStyle}">📘 Facebook</a>`;
-    }
-    if (lower.includes("instagram.com")) {
-        return `<a href="${url}" target="_blank" style="${baseStyle}">📸 Instagram</a>`;
-    }
-    if (lower.includes("linkedin.com")) {
-        return `<a href="${url}" target="_blank" style="${baseStyle}">💼 LinkedIn</a>`;
-    }
-    if (lower.includes("twitter.com") || lower.includes("x.com")) {
-        return `<a href="${url}" target="_blank" style="${baseStyle}">🐦 Twitter/X</a>`;
-    }
-    if (lower.includes("drive.google.com")) {
-        return `<a href="${url}" target="_blank" style="${baseStyle}">📁 Google Drive</a>`;
-    }
-    if (lower.includes("docs.google.com")) {
-        return `<a href="${url}" target="_blank" style="${baseStyle}">📄 Google Doc</a>`;
-    }
-    if (lower.includes("forms.gle") || lower.includes("google.com/forms")) {
-        return `<a href="${url}" target="_blank" style="${baseStyle}">📝 Google Form</a>`;
-    }
+    const label = iconKey.charAt(0).toUpperCase() + iconKey.slice(1);
+    const icon = ICON_MAP[iconKey] || ICON_MAP.generic;
 
-    // Default web link
-    return `<a href="${url}" target="_blank" style="${baseStyle}">🌐 WebLink</a>`;
+    return `<a href="${url}" target="_blank" style="${baseStyle}">${icon} ${label}</a>`;
 }
+
 
 
 // Spinner toggler
