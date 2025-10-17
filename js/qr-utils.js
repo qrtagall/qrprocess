@@ -669,6 +669,94 @@ function openPreviewModal(url, type = "auto") {
     if (!modal || !inner) return;
 
     inner.innerHTML = "";
+    let html = "";
+
+    // Normalize and upper-case type
+    let typeUpper = (type || "auto").toUpperCase();
+
+    // Detect Google Drive file ID
+    let fileId = null;
+    const match = url.match(/\/d\/([^/]+)/) || url.match(/[?&]id=([-\w]{10,})/);
+    if (match) fileId = match[1];
+
+    // Auto-detect Drive file
+    if (typeUpper === "AUTO" && /drive\.google\.com\/file\//.test(url) && fileId) {
+        typeUpper = "FILE";
+    }
+
+    // ============= CASE 1: Google Drive file preview =============
+    if (typeUpper.includes("FILE") && /drive\.google\.com/.test(url) && fileId) {
+        const iframeUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+        html = `
+      <iframe src="${iframeUrl}"
+              frameborder="0"
+              allow="autoplay; encrypted-media; fullscreen"
+              sandbox="allow-scripts allow-same-origin allow-presentation"
+              style="width:98vw; height:94vh; border:none; border-radius:10px; background:#000;">
+      </iframe>`;
+    }
+
+    // ============= CASE 2: Image files =============
+    else if (typeUpper === "IMAGE" || /\.(jpg|jpeg|png|gif|webp)$/i.test(url)) {
+        html = `<img src="${url}" style="max-width:100%; max-height:90vh; border-radius:8px;">`;
+    }
+
+    // ============= CASE 3: Video files =============
+    else if (typeUpper === "VIDEO" || /\.(mp4|webm|ogg|mov)$/i.test(url)) {
+        html = `
+      <video controls autoplay style="max-width:100%; max-height:85vh; border-radius:8px; background:#000;">
+        <source src="${url}" type="video/mp4">
+        Your browser does not support video.
+      </video>`;
+    }
+
+    // ============= CASE 4: PDFs =============
+    else if (typeUpper === "PDF" || /\.pdf$/i.test(url)) {
+        html = `<iframe src="${url}" style="width:90vw; height:85vh; border:none; border-radius:8px; background:#fff;"></iframe>`;
+    }
+
+    // ============= CASE 5: YouTube / Facebook / Instagram / LinkedIn / Generic webpages =============
+    else if (/youtube\.com|youtu\.be|facebook\.com|instagram\.com|linkedin\.com|twitter\.com|maps\.google\.|wa\.me|forms\.gle/i.test(url)) {
+        // Try embedding directly via iframe
+        let safeUrl = url;
+
+        // Special handling for YouTube share links
+        const ytMatch = url.match(/(?:v=|\/)([0-9A-Za-z_-]{6,12})/);
+        if (ytMatch) {
+            safeUrl = `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1`;
+        }
+
+        html = `
+      <iframe src="${safeUrl}"
+              frameborder="0"
+              allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+              sandbox="allow-scripts allow-same-origin allow-presentation"
+              style="width:96vw; height:92vh; border:none; border-radius:10px; background:#fff;">
+      </iframe>`;
+    }
+
+    // ============= CASE 6: Fallback =============
+    else {
+        html = `
+      <div style="color:#fff; font-size:16px; text-align:center; padding-top:20px;">
+        <p>Cannot preview this file inline.</p>
+        <a href="${url}" target="_blank"
+           style="color:#0af; text-decoration:underline;">Open in new tab</a>
+      </div>`;
+    }
+
+    inner.innerHTML = html;
+    modal.style.display = "flex";
+}
+
+
+/*
+function openPreviewModal(url, type = "auto") {
+    const modal = document.getElementById("previewModal");
+    const inner = document.getElementById("previewInner");
+    if (!modal || !inner) return;
+
+    inner.innerHTML = "";
 
     // Normalize and upper-case type for easy matching
     let typeUpper = (type || "auto").toUpperCase();
@@ -736,7 +824,7 @@ function openPreviewModal(url, type = "auto") {
     inner.innerHTML = html;
     modal.style.display = "flex";
 }
-
+*/
 
 // 🔹 Close modal
 function closePreviewModal() {
