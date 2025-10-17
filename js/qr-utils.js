@@ -662,21 +662,22 @@ function toggleScroll() {
 
 
 /************************** Preview Modal *****************/
-/*
 function openPreviewModal(url, type = "auto") {
     const modal = document.getElementById("previewModal");
     const inner = document.getElementById("previewInner");
     if (!modal || !inner) return;
 
     inner.innerHTML = "";
-    let html = "";
 
     let typeUpper = (type || "auto").toUpperCase();
+    let html = "";
 
-    // Detect Drive file ID
+    // ✅ Detect Google Drive file ID
     let fileId = null;
     const match = url.match(/\/d\/([^/]+)/) || url.match(/[?&]id=([-\w]{10,})/);
     if (match) fileId = match[1];
+
+    // ✅ Auto-detect Drive file
     if (typeUpper === "AUTO" && /drive\.google\.com\/file\//.test(url) && fileId) {
         typeUpper = "FILE";
     }
@@ -685,35 +686,47 @@ function openPreviewModal(url, type = "auto") {
     if (typeUpper.includes("FILE") && /drive\.google\.com/.test(url) && fileId) {
         const iframeUrl = `https://drive.google.com/file/d/${fileId}/preview`;
         html = `
-      <iframe src="${iframeUrl}" frameborder="0"
+      <iframe src="${iframeUrl}"
+        frameborder="0"
         allow="autoplay; encrypted-media; fullscreen"
         sandbox="allow-scripts allow-same-origin allow-presentation"
-        style="width:98vw;height:94vh;border:none;border-radius:10px;background:#000;">
+        style="
+          width:98vw;
+          height:94vh;
+          max-width:98vw;
+          max-height:94vh;
+          border:none;
+          border-radius:10px;
+          background:#000;">
       </iframe>`;
     }
 
-    // === CASE 2: Images ===
+    // === CASE 2: Image ===
     else if (typeUpper === "IMAGE" || /\.(jpg|jpeg|png|gif|webp)$/i.test(url)) {
         html = `<img src="${url}" style="max-width:100%;max-height:90vh;border-radius:8px;">`;
     }
 
-    // === CASE 3: Videos ===
+    // === CASE 3: Video ===
     else if (typeUpper === "VIDEO" || /\.(mp4|webm|ogg|mov)$/i.test(url)) {
         html = `
-      <video controls autoplay style="max-width:100%;max-height:85vh;border-radius:8px;background:#000;">
+      <video controls autoplay
+        style="max-width:100%;max-height:85vh;border-radius:8px;background:#000;">
         <source src="${url}" type="video/mp4">
         Your browser does not support video.
       </video>`;
     }
 
-    // === CASE 4: PDFs ===
+    // === CASE 4: PDF ===
     else if (typeUpper === "PDF" || /\.pdf$/i.test(url)) {
-        html = `<iframe src="${url}" style="width:90vw;height:85vh;border:none;border-radius:8px;background:#fff;"></iframe>`;
+        html = `
+      <iframe src="${url}"
+        style="width:90vw;height:85vh;border:none;border-radius:8px;background:#fff;">
+      </iframe>`;
     }
 
-    // === CASE 5: WEBPAGE mode (for any regular webpage / link) ===
+    // === CASE 5: WEBPAGE (new) ===
     else if (typeUpper === "WEBPAGE" || typeUpper === "AUTO") {
-        // Convert YouTube links to embed form
+        // Convert YouTube short URLs to embed form
         let safeUrl = url;
         const ytMatch = url.match(/(?:v=|\/)([0-9A-Za-z_-]{6,12})/);
         if (ytMatch && /youtu/.test(url)) {
@@ -748,11 +761,11 @@ function openPreviewModal(url, type = "auto") {
           </a>
         </div>
 
-        <!-- Scrollable area -->
+        <!-- Scrollable iframe -->
         <div style="flex:1 1 auto;overflow:auto;background:#fff;">
           <iframe src="${safeUrl}"
             frameborder="0"
-            allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+            allow="autoplay;encrypted-media;fullscreen;picture-in-picture"
             sandbox="allow-scripts allow-same-origin allow-popups allow-presentation"
             style="width:100%;height:100%;border:none;background:#fff;">
           </iframe>
@@ -774,10 +787,8 @@ function openPreviewModal(url, type = "auto") {
     modal.style.display = "flex";
 }
 
-*/
 
-
-function openPreviewModal(url, type = "auto") {
+function openPreviewModal_working(url, type = "auto") {
     const modal = document.getElementById("previewModal");
     const inner = document.getElementById("previewInner");
     if (!modal || !inner) return;
