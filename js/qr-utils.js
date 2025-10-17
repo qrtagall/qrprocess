@@ -662,6 +662,7 @@ function toggleScroll() {
 
 
 /************************** Preview Modal *****************/
+/*
 function openPreviewModal(url, type = "auto") {
     const modal = document.getElementById("previewModal");
     const inner = document.getElementById("previewInner");
@@ -786,7 +787,7 @@ function openPreviewModal(url, type = "auto") {
     inner.innerHTML = html;
     modal.style.display = "flex";
 }
-
+*/
 
 function openPreviewModal_working(url, type = "auto") {
     const modal = document.getElementById("previewModal");

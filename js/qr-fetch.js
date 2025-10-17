@@ -203,7 +203,7 @@ function renderThumbnailGrid(thumbnails) {
         const link = item.link || item.webViewLink || '#';
 
         // Extract short display name (no extension)
-        const caption = truncateEllipsis(baseNameNoExt(name), 18);
+        const caption = truncateEllipsis(baseNameNoExt(name), 16);
 
         // ✅ Drive thumbnail fallback for both image/video
         let displayThumb = thumb;
