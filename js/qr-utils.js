@@ -671,132 +671,104 @@ function openPreviewModal(url, type = "auto") {
     inner.innerHTML = "";
     let html = "";
 
-    // Normalize and upper-case type
     let typeUpper = (type || "auto").toUpperCase();
 
-    // Detect Google Drive file ID
+    // Detect Drive file ID
     let fileId = null;
     const match = url.match(/\/d\/([^/]+)/) || url.match(/[?&]id=([-\w]{10,})/);
     if (match) fileId = match[1];
-
-    // Auto-detect Drive file
     if (typeUpper === "AUTO" && /drive\.google\.com\/file\//.test(url) && fileId) {
         typeUpper = "FILE";
     }
 
-    // ============= CASE 1: Google Drive file preview =============
+    // === CASE 1: Google Drive file ===
     if (typeUpper.includes("FILE") && /drive\.google\.com/.test(url) && fileId) {
         const iframeUrl = `https://drive.google.com/file/d/${fileId}/preview`;
         html = `
-      <iframe src="${iframeUrl}"
-              frameborder="0"
-              allow="autoplay; encrypted-media; fullscreen"
-              sandbox="allow-scripts allow-same-origin allow-presentation"
-              style="width:98vw; height:94vh; border:none; border-radius:10px; background:#000;">
+      <iframe src="${iframeUrl}" frameborder="0"
+        allow="autoplay; encrypted-media; fullscreen"
+        sandbox="allow-scripts allow-same-origin allow-presentation"
+        style="width:98vw;height:94vh;border:none;border-radius:10px;background:#000;">
       </iframe>`;
     }
 
-    // ============= CASE 2: Image files =============
+    // === CASE 2: Images ===
     else if (typeUpper === "IMAGE" || /\.(jpg|jpeg|png|gif|webp)$/i.test(url)) {
-        html = `<img src="${url}" style="max-width:100%; max-height:90vh; border-radius:8px;">`;
+        html = `<img src="${url}" style="max-width:100%;max-height:90vh;border-radius:8px;">`;
     }
 
-    // ============= CASE 3: Video files =============
+    // === CASE 3: Videos ===
     else if (typeUpper === "VIDEO" || /\.(mp4|webm|ogg|mov)$/i.test(url)) {
         html = `
-      <video controls autoplay style="max-width:100%; max-height:85vh; border-radius:8px; background:#000;">
+      <video controls autoplay style="max-width:100%;max-height:85vh;border-radius:8px;background:#000;">
         <source src="${url}" type="video/mp4">
         Your browser does not support video.
       </video>`;
     }
 
-    // ============= CASE 4: PDFs =============
+    // === CASE 4: PDFs ===
     else if (typeUpper === "PDF" || /\.pdf$/i.test(url)) {
-        html = `<iframe src="${url}" style="width:90vw; height:85vh; border:none; border-radius:8px; background:#fff;"></iframe>`;
+        html = `<iframe src="${url}" style="width:90vw;height:85vh;border:none;border-radius:8px;background:#fff;"></iframe>`;
     }
 
-    // ============= CASE 5: YouTube / Facebook / Instagram / LinkedIn / Generic webpages =============
-    /*else if (/youtube\.com|youtu\.be|facebook\.com|instagram\.com|linkedin\.com|twitter\.com|maps\.google\.|wa\.me|forms\.gle/i.test(url))
-    {
-        // Try embedding directly via iframe
+    // === CASE 5: WEBPAGE mode (for any regular webpage / link) ===
+    else if (typeUpper === "WEBPAGE" || typeUpper === "AUTO") {
+        // Convert YouTube links to embed form
         let safeUrl = url;
-
-        // Special handling for YouTube share links
-        const ytMatch = url.match(/(?:v=|\/)([0-9A-Za-z_-]{6,12})/);
-        if (ytMatch) {
-            safeUrl = `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1`;
-        }
-
-        html = `
-      <iframe src="${safeUrl}"
-              frameborder="0"
-              allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-              sandbox="allow-scripts allow-same-origin allow-presentation"
-              style="width:96vw; height:92vh; border:none; border-radius:10px; background:#fff;">
-      </iframe>`;
-    }
-
-    // ============= CASE 6: Fallback =============
-    else {
-        html = `
-      <div style="color:#fff; font-size:16px; text-align:center; padding-top:20px;">
-        <p>Cannot preview this file inline.</p>
-        <a href="${url}" target="_blank"
-           style="color:#0af; text-decoration:underline;">Open in new tab</a>
-      </div>`;
-    }
-
-     */
-    else {
-        // Default: render any webpage inside the modal (scrollable)
-        let safeUrl = url;
-
-        // Handle YouTube short/share links specially
         const ytMatch = url.match(/(?:v=|\/)([0-9A-Za-z_-]{6,12})/);
         if (ytMatch && /youtu/.test(url)) {
             safeUrl = `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1`;
         }
 
         html = `
-    <div style="
-        position:relative;
-        width:96vw;
-        height:92vh;
-        background:#fff;
-        border-radius:10px;
-        overflow:hidden;
-        display:flex;
-        flex-direction:column;
-    ">
-      <!-- Header bar with open button -->
       <div style="
-          flex:0 0 auto;
-          background:#f4f4f4;
-          padding:6px 10px;
-          border-bottom:1px solid #ddd;
+          position:relative;
+          width:96vw;
+          height:92vh;
+          background:#fff;
+          border-radius:10px;
+          overflow:hidden;
           display:flex;
-          align-items:center;
-          justify-content:space-between;
+          flex-direction:column;
       ">
-        <span style="font-weight:600;font-size:14px;color:#333;">Preview</span>
-        <a href="${url}" target="_blank"
-           style="font-size:13px;font-weight:500;text-decoration:none;color:#005AAB;">
-          🔗 Open in new tab
-        </a>
-      </div>
+        <!-- Header -->
+        <div style="
+            flex:0 0 auto;
+            background:#f5f5f5;
+            padding:6px 10px;
+            border-bottom:1px solid #ddd;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+        ">
+          <span style="font-weight:600;font-size:14px;color:#333;">Webpage Preview</span>
+          <a href="${url}" target="_blank"
+             style="font-size:13px;font-weight:500;text-decoration:none;color:#005AAB;">
+            🔗 Open in new tab
+          </a>
+        </div>
 
-      <!-- Scrollable content area -->
-      <div style="flex:1 1 auto;overflow:auto;background:#fff;">
-        <iframe src="${safeUrl}"
-                frameborder="0"
-                allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-                sandbox="allow-scripts allow-same-origin allow-popups allow-presentation"
-                style="width:100%;height:100%;border:none;background:#fff;">
-        </iframe>
-      </div>
-    </div>`;
+        <!-- Scrollable area -->
+        <div style="flex:1 1 auto;overflow:auto;background:#fff;">
+          <iframe src="${safeUrl}"
+            frameborder="0"
+            allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+            sandbox="allow-scripts allow-same-origin allow-popups allow-presentation"
+            style="width:100%;height:100%;border:none;background:#fff;">
+          </iframe>
+        </div>
+      </div>`;
     }
 
+    // === CASE 6: Fallback ===
+    else {
+        html = `
+      <div style="color:#fff;font-size:16px;text-align:center;padding-top:20px;">
+        <p>Cannot preview this file inline.</p>
+        <a href="${url}" target="_blank"
+           style="color:#0af;text-decoration:underline;">Open in new tab</a>
+      </div>`;
+    }
 
     inner.innerHTML = html;
     modal.style.display = "flex";

@@ -1030,7 +1030,7 @@ function urlToContext(url) {
     const label = iconKey.replace(/_Link$/i, "");
     const iconSvg = ICON_MAP[iconKey] || ICON_MAP.WebLink;
 
-    // --- Brand color map ---
+    // Brand colors
     const brandColors = {
         Youtube_Link: "#FF0000",
         Facebook_Link: "#1877F2",
@@ -1044,10 +1044,9 @@ function urlToContext(url) {
         Whatsapp_Link: "#25D366",
         WebLink: "#005AAB"
     };
-
     const color = brandColors[iconKey] || "#005AAB";
 
-    // --- Compact color-themed card with modal trigger ---
+    // Compact color-themed card with modal trigger for webpage view
     const cardHTML = `
     <div class="og-preview" style="
       display:flex;
@@ -1062,11 +1061,9 @@ function urlToContext(url) {
       font-size:14px;
       box-shadow:0 1px 3px rgba(0,0,0,0.05);
       transition:all 0.15s ease;
-      cursor:pointer;
     "
     onmouseover="this.style.background='${color}08';"
-    onmouseout="this.style.background='#fafafa';"
-    onclick="openPreviewModal('${url.replace(/'/g, "\\'")}', 'auto')">
+    onmouseout="this.style.background='#fafafa';">
       <div style="width:18px;height:18px;display:flex;align-items:center;justify-content:center;">
         ${iconSvg}
       </div>
@@ -1078,7 +1075,10 @@ function urlToContext(url) {
         text-decoration:underline;
         font-weight:500;
         white-space:nowrap;
-      ">View here</span>
+        cursor:pointer;
+      " onclick="event.stopPropagation(); openPreviewModal('${url.replace(/'/g, "\\'")}', 'webpage')">
+        View here
+      </span>
     </div>`;
 
     return cardHTML;
