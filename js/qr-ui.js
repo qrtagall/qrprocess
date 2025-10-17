@@ -1013,7 +1013,114 @@ function formatTextContent(text) {
 
 
 
+async function fetchOGPreview(url) {
+    try {
+        const apiUrl = `https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec?url=${encodeURIComponent(url)}`;
+        const res = await fetch(apiUrl);
+        const data = await res.json();
+        if (data.image) {
+            return `
+        <div class="og-preview" style="border:1px solid #ddd; border-radius:8px; overflow:hidden; margin-top:6px; background:#fff;">
+          <img src="${data.image}" style="width:100%; max-height:160px; object-fit:cover;">
+          <div style="padding:8px;">
+            <div style="font-weight:600;">${data.title || ''}</div>
+            <div style="font-size:12px; color:#555;">${data.desc || ''}</div>
+            <div style="font-size:11px; color:#888;">${(new URL(url)).hostname}</div>
+          </div>
+        </div>`;
+        }
+        return '';
+    } catch (err) {
+        console.error('OG fetch error', err);
+        return '';
+    }
+}
+
+
 function urlToContext(url) {
+    const lower = url.toLowerCase();
+    const baseStyle =
+        "display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-weight:500;color:var(--primary);";
+
+    const iconKey =
+        lower.includes("youtube") ? "Youtube_Link" :
+            lower.includes("facebook") ? "Facebook_Link" :
+                lower.includes("instagram") ? "Instagram_Link" :
+                    lower.includes("linkedin") ? "Linkedin_Link" :
+                        lower.includes("twitter") || lower.includes("x.com") ? "Twitter_Link" :
+                            lower.includes("drive.google.com") ? "Gdrive_Link" :
+                                lower.includes("docs.google.com/document") ? "Gdoc_Link" :
+                                    lower.includes("forms.gle") || lower.includes("docs.google.com/forms") ? "Gform_Link" :
+                                        lower.includes("maps.google.") || lower.includes("maps.app.goo") || lower.includes("/maps/") ? "Gmap_Link" :
+                                            lower.includes("wa.me") || lower.includes("whatsapp.com") ? "Whatsapp_Link" :
+                                                "WebLink";
+
+    const label = iconKey.replace(/_Link$/i, "");
+    const iconSvg = ICON_MAP[iconKey] || ICON_MAP.WebLink;
+
+    // --- create a unique id for the preview block
+    const id = "pv_" + Math.random().toString(36).slice(2);
+
+    // --- base link (immediate render)
+    const html = `
+    <div id="${id}">
+      <a href="${url}" target="_blank" style="${baseStyle}">
+        <span class="icon" style="width:16px;height:16px;display:inline-block;vertical-align:middle;">
+          ${iconSvg}
+        </span>
+        <span>${label}</span>
+      </a>
+    </div>`;
+
+    // --- queue preview render after DOM insertion
+    queueMicrotask(() => {
+        const el = document.getElementById(id);
+        if (!el) return;
+
+        // simple rules for preview image without backend
+        let previewHTML = "";
+        if (lower.includes("youtube.com/watch") || lower.includes("youtu.be/")) {
+            // extract video id
+            const vid = (url.match(/(?:v=|\/)([0-9A-Za-z_-]{6,12})/) || [])[1];
+            if (vid) {
+                const thumb = `https://img.youtube.com/vi/${vid}/hqdefault.jpg`;
+                previewHTML = `
+          <div class="og-preview" style="margin-top:6px;border:1px solid #ddd;border-radius:8px;overflow:hidden;max-width:420px;">
+            <img src="${thumb}" loading="lazy" style="width:100%;object-fit:cover;max-height:200px;">
+          </div>`;
+            }
+        } else if (lower.includes("facebook.com") && /\/v\//.test(lower)) {
+            // simple Facebook video thumbnail fallback
+            previewHTML = `
+        <div class="og-preview" style="margin-top:6px;border:1px solid #ddd;border-radius:8px;overflow:hidden;max-width:420px;">
+          <div style="background:#f5f5f5;padding:12px;font-size:12px;color:#555;">
+            Facebook video link preview unavailable (requires login)
+          </div>
+        </div>`;
+        } else if (lower.includes("instagram.com")) {
+            previewHTML = `
+        <div class="og-preview" style="margin-top:6px;border:1px solid #ddd;border-radius:8px;overflow:hidden;max-width:420px;">
+          <div style="background:#fdf6f6;padding:12px;font-size:12px;color:#e4405f;">
+            Instagram post — open to view preview.
+          </div>
+        </div>`;
+        } else if (lower.includes("drive.google.com/file/")) {
+            previewHTML = `
+        <div class="og-preview" style="margin-top:6px;border:1px solid #ddd;border-radius:8px;overflow:hidden;max-width:420px;">
+          <iframe src="${url.replace('/view','/preview')}"
+            width="100%" height="220" frameborder="0" allow="autoplay;encrypted-media"
+            style="display:block;border:0;"></iframe>
+        </div>`;
+        }
+
+        if (previewHTML) el.insertAdjacentHTML("beforeend", previewHTML);
+    });
+
+    return html;
+}
+
+
+function urlToContextXX(url) {
     const lower = url.toLowerCase();
     const baseStyle = "display:inline-flex; align-items:center; gap:6px; text-decoration:none; font-weight:500; color:var(--primary);";
 
