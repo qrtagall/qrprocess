@@ -1014,8 +1014,6 @@ function formatTextContent(text) {
 
 function urlToContext(url) {
     const lower = url.toLowerCase();
-    const baseStyle =
-        "display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-weight:500;color:var(--primary);";
 
     const iconKey =
         lower.includes("youtube") ? "Youtube_Link" :
@@ -1033,30 +1031,53 @@ function urlToContext(url) {
     const label = iconKey.replace(/_Link$/i, "");
     const iconSvg = ICON_MAP[iconKey] || ICON_MAP.WebLink;
 
-    // Simple elegant card with logo + “View here”
+    // --- Brand color map ---
+    const brandColors = {
+        Youtube_Link: "#FF0000",
+        Facebook_Link: "#1877F2",
+        Instagram_Link: "#E4405F",
+        Linkedin_Link: "#0A66C2",
+        Twitter_Link: "#1DA1F2",
+        Gdrive_Link: "#188038",
+        Gdoc_Link: "#4285F4",
+        Gform_Link: "#673AB7",
+        Gmap_Link: "#EA4335",
+        Whatsapp_Link: "#25D366",
+        WebLink: "#005AAB"
+    };
+
+    const color = brandColors[iconKey] || "#005AAB";
+
+    // --- Compact color-themed card ---
     const cardHTML = `
     <div class="og-preview" style="
-      margin-top:6px;
-      border:1px solid #ddd;
-      border-radius:8px;
-      overflow:hidden;
-      max-width:420px;
-      background:#fafafa;
-      padding:10px 12px;
       display:flex;
       align-items:center;
-      gap:10px;
-      box-shadow:0 1px 3px rgba(0,0,0,0.04);
-    ">
-      <div style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;">
+      gap:8px;
+      border:1px solid ${color}40;
+      border-left:4px solid ${color};
+      border-radius:8px;
+      background:#fafafa;
+      padding:8px 10px;
+      max-width:420px;
+      font-size:14px;
+      box-shadow:0 1px 3px rgba(0,0,0,0.05);
+      transition:all 0.15s ease;
+    "
+    onmouseover="this.style.background='${color}08';"
+    onmouseout="this.style.background='#fafafa';">
+      <div style="width:18px;height:18px;display:flex;align-items:center;justify-content:center;">
         ${iconSvg}
       </div>
-      <div style="flex:1;">
-        <div style="font-weight:600;font-size:14px;color:#202124;">${label}</div>
-        <a href="${url}" target="_blank" style="display:inline-block;margin-top:2px;font-size:12px;color:var(--primary);text-decoration:underline;">
-          View here
-        </a>
-      </div>
+      <div style="font-weight:600;color:#202124;">${label}</div>
+      <div style="flex:1;"></div>
+      <a href="${url}" target="_blank" style="
+        color:${color};
+        font-size:13px;
+        text-decoration:underline;
+        font-weight:500;
+        white-space:nowrap;
+      ">View here</a>
     </div>`;
 
     return cardHTML;
