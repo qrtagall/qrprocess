@@ -716,7 +716,8 @@ function openPreviewModal(url, type = "auto") {
     }
 
     // ============= CASE 5: YouTube / Facebook / Instagram / LinkedIn / Generic webpages =============
-    else if (/youtube\.com|youtu\.be|facebook\.com|instagram\.com|linkedin\.com|twitter\.com|maps\.google\.|wa\.me|forms\.gle/i.test(url)) {
+    /*else if (/youtube\.com|youtu\.be|facebook\.com|instagram\.com|linkedin\.com|twitter\.com|maps\.google\.|wa\.me|forms\.gle/i.test(url))
+    {
         // Try embedding directly via iframe
         let safeUrl = url;
 
@@ -744,6 +745,58 @@ function openPreviewModal(url, type = "auto") {
            style="color:#0af; text-decoration:underline;">Open in new tab</a>
       </div>`;
     }
+
+     */
+    else {
+        // Default: render any webpage inside the modal (scrollable)
+        let safeUrl = url;
+
+        // Handle YouTube short/share links specially
+        const ytMatch = url.match(/(?:v=|\/)([0-9A-Za-z_-]{6,12})/);
+        if (ytMatch && /youtu/.test(url)) {
+            safeUrl = `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1`;
+        }
+
+        html = `
+    <div style="
+        position:relative;
+        width:96vw;
+        height:92vh;
+        background:#fff;
+        border-radius:10px;
+        overflow:hidden;
+        display:flex;
+        flex-direction:column;
+    ">
+      <!-- Header bar with open button -->
+      <div style="
+          flex:0 0 auto;
+          background:#f4f4f4;
+          padding:6px 10px;
+          border-bottom:1px solid #ddd;
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+      ">
+        <span style="font-weight:600;font-size:14px;color:#333;">Preview</span>
+        <a href="${url}" target="_blank"
+           style="font-size:13px;font-weight:500;text-decoration:none;color:#005AAB;">
+          🔗 Open in new tab
+        </a>
+      </div>
+
+      <!-- Scrollable content area -->
+      <div style="flex:1 1 auto;overflow:auto;background:#fff;">
+        <iframe src="${safeUrl}"
+                frameborder="0"
+                allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                sandbox="allow-scripts allow-same-origin allow-popups allow-presentation"
+                style="width:100%;height:100%;border:none;background:#fff;">
+        </iframe>
+      </div>
+    </div>`;
+    }
+
 
     inner.innerHTML = html;
     modal.style.display = "flex";
