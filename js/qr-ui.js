@@ -1011,7 +1011,81 @@ function formatTextContent(text) {
 
 
 
+function urlToContext(url) {
+    const lower = url.toLowerCase();
 
+    const iconKey =
+        lower.includes("youtube") ? "Youtube_Link" :
+            lower.includes("facebook") ? "Facebook_Link" :
+                lower.includes("instagram") ? "Instagram_Link" :
+                    lower.includes("linkedin") ? "Linkedin_Link" :
+                        lower.includes("twitter") || lower.includes("x.com") ? "Twitter_Link" :
+                            lower.includes("drive.google.com") ? "Gdrive_Link" :
+                                lower.includes("docs.google.com/document") ? "Gdoc_Link" :
+                                    lower.includes("forms.gle") || lower.includes("docs.google.com/forms") ? "Gform_Link" :
+                                        lower.includes("maps.google.") || lower.includes("maps.app.goo") || lower.includes("/maps/") ? "Gmap_Link" :
+                                            lower.includes("wa.me") || lower.includes("whatsapp.com") ? "Whatsapp_Link" :
+                                                "WebLink";
+
+    const label = iconKey.replace(/_Link$/i, "");
+    const iconSvg = ICON_MAP[iconKey] || ICON_MAP.WebLink;
+
+    // --- Brand color map ---
+    const brandColors = {
+        Youtube_Link: "#FF0000",
+        Facebook_Link: "#1877F2",
+        Instagram_Link: "#E4405F",
+        Linkedin_Link: "#0A66C2",
+        Twitter_Link: "#1DA1F2",
+        Gdrive_Link: "#188038",
+        Gdoc_Link: "#4285F4",
+        Gform_Link: "#673AB7",
+        Gmap_Link: "#EA4335",
+        Whatsapp_Link: "#25D366",
+        WebLink: "#005AAB"
+    };
+
+    const color = brandColors[iconKey] || "#005AAB";
+
+    // --- Compact color-themed card with modal trigger ---
+    const cardHTML = `
+    <div class="og-preview" style="
+      display:flex;
+      align-items:center;
+      gap:8px;
+      border:1px solid ${color}40;
+      border-left:4px solid ${color};
+      border-radius:8px;
+      background:#fafafa;
+      padding:8px 10px;
+      max-width:420px;
+      font-size:14px;
+      box-shadow:0 1px 3px rgba(0,0,0,0.05);
+      transition:all 0.15s ease;
+      cursor:pointer;
+    "
+    onmouseover="this.style.background='${color}08';"
+    onmouseout="this.style.background='#fafafa';"
+    onclick="openPreviewModal('${url.replace(/'/g, "\\'")}', 'auto')">
+      <div style="width:18px;height:18px;display:flex;align-items:center;justify-content:center;">
+        ${iconSvg}
+      </div>
+      <div style="font-weight:600;color:#202124;">${label}</div>
+      <div style="flex:1;"></div>
+      <span style="
+        color:${color};
+        font-size:13px;
+        text-decoration:underline;
+        font-weight:500;
+        white-space:nowrap;
+      ">View here</span>
+    </div>`;
+
+    return cardHTML;
+}
+
+
+/*
 function urlToContext(url) {
     const lower = url.toLowerCase();
 
@@ -1082,7 +1156,7 @@ function urlToContext(url) {
 
     return cardHTML;
 }
-
+*/
 
 function urlToContextXX(url) {
     const lower = url.toLowerCase();
