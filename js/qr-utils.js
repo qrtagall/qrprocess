@@ -789,7 +789,7 @@ function openPreviewModal(url, type = "auto") {
 }
 */
 
-function openPreviewModal_working(url, type = "auto") {
+function openPreviewModal(url, type = "auto") {
     const modal = document.getElementById("previewModal");
     const inner = document.getElementById("previewInner");
     if (!modal || !inner) return;
