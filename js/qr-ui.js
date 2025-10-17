@@ -1010,7 +1010,7 @@ function formatTextContent(text) {
 }
 
 
-
+/*
 function urlToContext(url) {
     const lower = url.toLowerCase();
 
@@ -1083,9 +1083,9 @@ function urlToContext(url) {
 
     return cardHTML;
 }
+*/
 
 
-/*
 function urlToContext(url) {
     const lower = url.toLowerCase();
 
@@ -1156,7 +1156,7 @@ function urlToContext(url) {
 
     return cardHTML;
 }
-*/
+
 
 function urlToContextXX(url) {
     const lower = url.toLowerCase();
