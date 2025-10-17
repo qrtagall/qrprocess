@@ -112,7 +112,7 @@ function renderThumbnailGrid(thumbnails) {
 
 
 //V4
-/*
+
 function renderThumbnailGrid(thumbnails) {
     // helper: remove extension & clean up
     function baseNameNoExt(name = "") {
@@ -179,74 +179,7 @@ function renderThumbnailGrid(thumbnails) {
     }).join('')}
     </div>`;
 }
-*/
 
-function renderThumbnailGrid(thumbnails) {
-    // helper: remove extension & clean up
-    function baseNameNoExt(name = "") {
-        const dot = name.lastIndexOf(".");
-        const base = dot > 0 ? name.slice(0, dot) : name;
-        return base.replace(/[_-]+/g, " ").trim();
-    }
-
-    // helper: truncate with ellipsis
-    function truncateEllipsis(s, max = 18) {
-        return s.length > max ? s.slice(0, max - 1) + "…" : s;
-    }
-
-    return `
-    <div style="display:flex; flex-wrap:wrap; gap:6px 6px; margin-top:6px; align-items:flex-start;">
-      ${thumbnails.map(item => {
-        const name = item.name || "";
-        const isVideo = /\.(mp4|webm|mov|avi|mkv)$/i.test(name);
-        const thumb = item.thumb || item.thumbnailLink || item.iconLink || '';
-        const link = item.link || item.webViewLink || '#';
-
-        // Extract short display name (no extension)
-        const caption = truncateEllipsis(baseNameNoExt(name), 16);
-
-        // ✅ Drive thumbnail fallback for both image/video
-        let displayThumb = thumb;
-        if (!displayThumb) {
-            const idMatch = link.match(/[-\\w]{25,}/);
-            if (idMatch) {
-                const fileId = idMatch[0];
-                displayThumb = `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
-            }
-        }
-
-        return `
-          <div style="width:100px; text-align:center; display:flex; flex-direction:column; align-items:center;">
-            <a href="javascript:void(0);"
-               onclick="openPreviewModal('${link}')"
-               style="text-decoration:none; display:flex; flex-direction:column; align-items:center;">
-              <div style="position:relative; display:inline-block;">
-                <img src="${displayThumb}"
-                     alt="${name}"
-                     onerror="this.style.display='none';"
-                     style="width:100%; height:100px; object-fit:cover; border-radius:6px;
-                            border:1px solid #ccc; box-shadow:0 0 4px rgba(0,0,0,0.25);
-                            transition:transform 0.2s ease;">
-                ${isVideo ? `
-                  <div style="
-                    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-                    background:rgba(0,0,0,0.5); color:white; font-size:18px;
-                    border-radius:50%; width:28px; height:28px;
-                    line-height:28px; text-align:center;">
-                    ▶
-                  </div>` : ''}
-              </div>
-              ${caption ? `
-                <div style="font-size:11px; color:#444; margin-top:1px;
-                            white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-                            line-height:1.05em;">
-                  ${caption}
-                </div>` : ''}
-            </a>
-          </div>`;
-    }).join('')}
-    </div>`;
-}
 
 
 
