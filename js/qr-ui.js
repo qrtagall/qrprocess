@@ -1151,7 +1151,7 @@ function urlToContext(url) {
         text-decoration:underline;
         font-weight:500;
         white-space:nowrap;
-      ">View here</a>
+      ">View in new Tab</a>
     </div>`;
 
     return cardHTML;
