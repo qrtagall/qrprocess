@@ -1082,7 +1082,7 @@ function urlToContext(url) {
         font-weight:500;
         white-space:nowrap;
         margin-right:10px;
-      ">Open in new Page</a>
+      ">Open</a>
 
       <span onclick="${copyHandler}" style="
         color:${color};
@@ -1091,7 +1091,7 @@ function urlToContext(url) {
         font-weight:500;
         cursor:pointer;
         white-space:nowrap;
-      ">Copy Link</span>
+      ">Copy</span>
     </div>`;
 
     return cardHTML;
