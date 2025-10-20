@@ -1010,7 +1010,6 @@ function formatTextContent(text) {
 }
 
 
-/*
 function urlToContext(url) {
     const lower = url.toLowerCase();
 
@@ -1030,7 +1029,6 @@ function urlToContext(url) {
     const label = iconKey.replace(/_Link$/i, "");
     const iconSvg = ICON_MAP[iconKey] || ICON_MAP.WebLink;
 
-    // Brand colors
     const brandColors = {
         Youtube_Link: "#FF0000",
         Facebook_Link: "#1877F2",
@@ -1044,9 +1042,16 @@ function urlToContext(url) {
         Whatsapp_Link: "#25D366",
         WebLink: "#005AAB"
     };
+
     const color = brandColors[iconKey] || "#005AAB";
 
-    // Compact color-themed card with modal trigger for webpage view
+    // ✅ new inline copy handler
+    const copyHandler = `
+      navigator.clipboard.writeText('${url}')
+        .then(() => alert('✅ Link copied to clipboard!'))
+        .catch(() => alert('❌ Failed to copy link'));
+    `;
+
     const cardHTML = `
     <div class="og-preview" style="
       display:flex;
@@ -1069,23 +1074,31 @@ function urlToContext(url) {
       </div>
       <div style="font-weight:600;color:#202124;">${label}</div>
       <div style="flex:1;"></div>
-      <span style="
+
+      <a href="${url}" target="_blank" style="
         color:${color};
         font-size:13px;
         text-decoration:underline;
         font-weight:500;
         white-space:nowrap;
+        margin-right:10px;
+      ">Open in new Page</a>
+
+      <span onclick="${copyHandler}" style="
+        color:${color};
+        font-size:13px;
+        text-decoration:underline;
+        font-weight:500;
         cursor:pointer;
-      " onclick="event.stopPropagation(); openPreviewModal('${url.replace(/'/g, "\\'")}', 'webpage')">
-        View here
-      </span>
+        white-space:nowrap;
+      ">Copy Link</span>
     </div>`;
 
     return cardHTML;
 }
-*/
 
-
+/*
+//V2
 function urlToContext(url) {
     const lower = url.toLowerCase();
 
@@ -1156,8 +1169,10 @@ function urlToContext(url) {
 
     return cardHTML;
 }
+*/
 
-
+/*
+//V1
 function urlToContextXX(url) {
     const lower = url.toLowerCase();
     const baseStyle = "display:inline-flex; align-items:center; gap:6px; text-decoration:none; font-weight:500; color:var(--primary);";
@@ -1187,7 +1202,7 @@ function urlToContextXX(url) {
             </a>`;
 }
 
-
+*/
 
 // Spinner toggler
 function showSpinner(show) {

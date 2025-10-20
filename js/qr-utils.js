@@ -455,7 +455,7 @@ function shareOnWhatsApp(id) {
 
 
     const messageLines = [
-        "Check this QRTagAll Asset",
+        "QRTagAll Asset",
         "",
         `*${assetTitle}*`, // bold title in WhatsApp
         "",
