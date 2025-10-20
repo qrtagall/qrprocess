@@ -513,12 +513,12 @@ function injectQRBlock(id) {
         <!--button onclick="printQR()" title="Print QR" style="font-size:14px; margin-right:10px;">🖨️</button-->
         <!--button onclick="copyQRLink()" title="Copy Link" style="font-size:14px; margin-right:10px;">📋</button-->
         
-        <button onclick="downloadQR()" title="Download QR" style="background:none; border:none; cursor:pointer;">
+       <button onclick="downloadQR()" title="Download QR" style="background:none; border:none; cursor:pointer;">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22">
-              <path fill="#007bff" d="M5 20h14v-2H5v2zm7-18L5.33 9h3.67v4h6V9h3.67L12 2z"/>
+            <path fill="#007bff" d="M5 20h14v-2H5v2zm7-18v10l4-4 1.41 1.41L12 15.83l-5.41-5.42L8 8l4 4V2z"/>
           </svg>
-          </button>
-        
+        </button>
+
           <button onclick="printQR()" title="Print QR" style="background:none; border:none; cursor:pointer;">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22">
                   <path fill="#6c63ff" d="M19 8H5c-1.11 0-2 .9-2 2v6h4v4h10v-4h4v-6c0-1.1-.9-2-2-2zm-4 10H9v-4h6v4zm3-10V4H6v4h12z"/>
