@@ -509,20 +509,39 @@ function injectQRBlock(id) {
     const qrActions = document.createElement("div");
     qrActions.style.marginTop = "8px";
     qrActions.innerHTML = `
-        <button onclick="downloadQR()" title="Download QR" style="font-size:14px; margin-right:10px;">⬇️</button>
-        <button onclick="printQR()" title="Print QR" style="font-size:14px; margin-right:10px;">🖨️</button>
-        <button onclick="copyQRLink()" title="Copy Link" style="font-size:14px; margin-right:10px;">📋</button>
+        <!--button onclick="downloadQR()" title="Download QR" style="font-size:14px; margin-right:10px;">⬇️</button-->
+        <!--button onclick="printQR()" title="Print QR" style="font-size:14px; margin-right:10px;">🖨️</button-->
+        <!--button onclick="copyQRLink()" title="Copy Link" style="font-size:14px; margin-right:10px;">📋</button-->
+        
+        <button onclick="downloadQR()" title="Download QR" style="background:none; border:none; cursor:pointer;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22">
+              <path fill="#007bff" d="M5 20h14v-2H5v2zm7-18L5.33 9h3.67v4h6V9h3.67L12 2z"/>
+          </svg>
+          </button>
+        
+          <button onclick="printQR()" title="Print QR" style="background:none; border:none; cursor:pointer;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22">
+                  <path fill="#6c63ff" d="M19 8H5c-1.11 0-2 .9-2 2v6h4v4h10v-4h4v-6c0-1.1-.9-2-2-2zm-4 10H9v-4h6v4zm3-10V4H6v4h12z"/>
+              </svg>
+          </button>
+        
+          <button onclick="copyQRLink()" title="Copy Link" style="background:none; border:none; cursor:pointer;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22">
+                  <path fill="#ffb300" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v16h14c1.1 0 2-.9 2-2V5zm-2 16H8V7h9v14z"/>
+              </svg>
+          </button>
+          
         <!--a href="https://wa.me/?text=${encodeURIComponent(`Check this QRTagAll Asset with ID-${id}\n${qrUrl}`)}"
            target="_blank" title="Share on WhatsApp" style="font-size:14px; text-decoration:none;">📱</a-->
            <!--button onclick="shareOnWhatsApp('${id}')" title="Share on WhatsApp" style="font-size:14px;">📱</button-->
            <button onclick="shareOnWhatsApp('${id}')" 
-        title="Share on WhatsApp" 
-        style="background:none; border:none; cursor:pointer;">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="20" height="20">
-        <path fill="#25D366" d="M16 .5C7.439.5.5 7.439.5 16c0 2.832.744 5.488 2.041 7.813L.5 31.5l7.884-2.028A15.36 15.36 0 0 0 16 31.5C24.561 31.5 31.5 24.561 31.5 16S24.561.5 16 .5z"/>
-        <path fill="#FFF" d="M24.124 22.002c-.329.924-1.882 1.729-2.597 1.843-.67.106-1.534.152-2.48-.152-.57-.183-1.31-.427-2.259-.838-3.966-1.708-6.554-5.633-6.756-5.895-.201-.261-1.613-2.149-1.613-4.097 0-1.948 1.021-2.91 1.385-3.308.364-.397.796-.497 1.06-.497.264 0 .53.003.764.013.246.01.577-.093.905.692.329.792 1.114 2.739 1.215 2.937.101.198.167.43.031.691-.133.261-.198.43-.396.661-.198.231-.419.516-.599.693-.198.198-.405.412-.173.81.231.397 1.031 1.698 2.211 2.748 1.522 1.354 2.806 1.773 3.203 1.971.397.198.627.165.86-.099.231-.264.993-1.157 1.26-1.554.264-.397.529-.33.893-.198.364.132 2.306 1.088 2.706 1.284.397.198.661.297.757.462.099.165.099.961-.23 1.885z"/>
-    </svg>
-    </button>
+            title="Share on WhatsApp" 
+            style="background:none; border:none; cursor:pointer;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="20" height="20">
+            <path fill="#25D366" d="M16 .5C7.439.5.5 7.439.5 16c0 2.832.744 5.488 2.041 7.813L.5 31.5l7.884-2.028A15.36 15.36 0 0 0 16 31.5C24.561 31.5 31.5 24.561 31.5 16S24.561.5 16 .5z"/>
+            <path fill="#FFF" d="M24.124 22.002c-.329.924-1.882 1.729-2.597 1.843-.67.106-1.534.152-2.48-.152-.57-.183-1.31-.427-2.259-.838-3.966-1.708-6.554-5.633-6.756-5.895-.201-.261-1.613-2.149-1.613-4.097 0-1.948 1.021-2.91 1.385-3.308.364-.397.796-.497 1.06-.497.264 0 .53.003.764.013.246.01.577-.093.905.692.329.792 1.114 2.739 1.215 2.937.101.198.167.43.031.691-.133.261-.198.43-.396.661-.198.231-.419.516-.599.693-.198.198-.405.412-.173.81.231.397 1.031 1.698 2.211 2.748 1.522 1.354 2.806 1.773 3.203 1.971.397.198.627.165.86-.099.231-.264.993-1.157 1.26-1.554.264-.397.529-.33.893-.198.364.132 2.306 1.088 2.706 1.284.397.198.661.297.757.462.099.165.099.961-.23 1.885z"/>
+            </svg>
+            </button>
 
 
     `;
