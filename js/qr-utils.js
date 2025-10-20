@@ -467,79 +467,6 @@ function shareOnWhatsApp(id) {
 }
 
 
-/*
-function injectQRBlock(id) {
-    const container = document.getElementById("mainContent");
-    const existingQRDiv = document.getElementById("qrWrapper");
-    if (existingQRDiv) existingQRDiv.remove();
-
-    const qrDiv = document.createElement("div");
-    qrDiv.id = "qrWrapper";
-    qrDiv.style.textAlign = "center";
-    qrDiv.style.marginBottom = "20px";
-
-    const qrUrl = `https://process.qrtagall.com/?id=${id}`;
-
-    const qrLabel = document.createElement("div");
-    qrLabel.textContent = "🔗 Scan this QR to access again";
-    qrLabel.style.fontSize = "14px";
-    qrLabel.style.color = "#666";
-    qrLabel.style.marginBottom = "6px";
-
-    const qrCanvas = document.createElement("canvas");
-    qrCanvas.id = "qrCanvas";
-    qrCanvas.style.border = "1px solid #ccc";
-    qrCanvas.style.padding = "6px";
-    qrCanvas.style.borderRadius = "8px";
-    qrCanvas.style.background = "#fff";
-    qrCanvas.style.width = "200px";
-    qrCanvas.style.height = "200px";
-
-    QRCode.toCanvas(qrCanvas, qrUrl, { width: 200 });
-
-    const qrLink = document.createElement("a");
-    qrLink.href = qrUrl;
-    qrLink.target = "_blank";
-    qrLink.appendChild(qrCanvas);
-
-    // ✅ Get asset title text safely
-    //const assetTitleEl = document.getElementById("assetTitle");
-    //const assetTitle = assetTitleEl ? assetTitleEl.textContent.trim() : "";
-
-    // ✅ Get asset title robustly
-    let assetTitle = "";
-    const assetTitleEl = document.getElementById("assetTitle") || document.querySelector(".assetTitle") || document.querySelector(".description");
-    const assetTitleEl1 = document.querySelector(".assetTitle") ;
-    const assetTitleEl2 = document.querySelector(".description");
-
-    if (assetTitleEl) assetTitle = assetTitleEl.textContent.trim();
-    if (!assetTitle) assetTitle = "(Untitled Asset)";
-
-// ✅ Compose WhatsApp message
-    const messageLines = [
-        "Check this QRTagAll Asset",
-        assetTitle,
-        `ID-${id}`,
-        qrUrl
-    ];
-    const encodedMessage = encodeURIComponent(messageLines.join("\n"));
-    const whatsappLink = `https://wa.me/?text=${encodedMessage}`;
-
-    const qrActions = document.createElement("div");
-    qrActions.style.marginTop = "8px";
-    qrActions.innerHTML = `
-        <button onclick="downloadQR()" title="Download QR" style="font-size:14px; margin-right:10px;">⬇️</button>
-        <button onclick="printQR()" title="Print QR" style="font-size:14px; margin-right:10px;">🖨️</button>
-        <button onclick="copyQRLink()" title="Copy Link" style="font-size:14px; margin-right:10px;">📋</button>
-        <a href="${whatsappLink}" target="_blank" title="Share on WhatsApp" style="font-size:14px; text-decoration:none;">📱</a>
-    `;
-
-    qrDiv.appendChild(qrLabel);
-    qrDiv.appendChild(qrLink);
-    qrDiv.appendChild(qrActions);
-    container.insertBefore(qrDiv, document.getElementById("assetTitle"));
-}
-*/
 
 
 // Render QR & buttons below it (Copy, Share, Download, Print)
@@ -587,7 +514,16 @@ function injectQRBlock(id) {
         <button onclick="copyQRLink()" title="Copy Link" style="font-size:14px; margin-right:10px;">📋</button>
         <!--a href="https://wa.me/?text=${encodeURIComponent(`Check this QRTagAll Asset with ID-${id}\n${qrUrl}`)}"
            target="_blank" title="Share on WhatsApp" style="font-size:14px; text-decoration:none;">📱</a-->
-           <button onclick="shareOnWhatsApp('${id}')" title="Share on WhatsApp" style="font-size:14px;">📱</button>
+           <!--button onclick="shareOnWhatsApp('${id}')" title="Share on WhatsApp" style="font-size:14px;">📱</button-->
+           <button onclick="shareOnWhatsApp('${id}')" 
+        title="Share on WhatsApp" 
+        style="background:none; border:none; cursor:pointer;">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="20" height="20">
+        <path fill="#25D366" d="M16 .5C7.439.5.5 7.439.5 16c0 2.832.744 5.488 2.041 7.813L.5 31.5l7.884-2.028A15.36 15.36 0 0 0 16 31.5C24.561 31.5 31.5 24.561 31.5 16S24.561.5 16 .5z"/>
+        <path fill="#FFF" d="M24.124 22.002c-.329.924-1.882 1.729-2.597 1.843-.67.106-1.534.152-2.48-.152-.57-.183-1.31-.427-2.259-.838-3.966-1.708-6.554-5.633-6.756-5.895-.201-.261-1.613-2.149-1.613-4.097 0-1.948 1.021-2.91 1.385-3.308.364-.397.796-.497 1.06-.497.264 0 .53.003.764.013.246.01.577-.093.905.692.329.792 1.114 2.739 1.215 2.937.101.198.167.43.031.691-.133.261-.198.43-.396.661-.198.231-.419.516-.599.693-.198.198-.405.412-.173.81.231.397 1.031 1.698 2.211 2.748 1.522 1.354 2.806 1.773 3.203 1.971.397.198.627.165.86-.099.231-.264.993-1.157 1.26-1.554.264-.397.529-.33.893-.198.364.132 2.306 1.088 2.706 1.284.397.198.661.297.757.462.099.165.099.961-.23 1.885z"/>
+    </svg>
+    </button>
+
 
     `;
 
