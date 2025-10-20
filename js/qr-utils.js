@@ -433,26 +433,37 @@ function generateQRCodeCanvas(id, canvasId = "qrCanvas", size = 160) {
 
 
 function shareOnWhatsApp(id) {
-    // ✅ Get title now (when data is surely loaded)
+    // Get title text safely
     let assetTitle = "";
     const assetTitleEl = document.getElementById("assetTitle") ||
         document.querySelector(".assetTitle") ||
         document.querySelector(".description");
 
     if (assetTitleEl) assetTitle = assetTitleEl.textContent.trim();
+
+    // 🔹 Remove unwanted trailing metadata
+    if (assetTitle) {
+        // Split on newline, "(" or "Owner:" to isolate first meaningful line
+        assetTitle = assetTitle.split(/\r?\n|\(/)[0];
+        assetTitle = assetTitle.split(/Owner:/i)[0];
+        assetTitle = assetTitle.trim();
+    }
+
     if (!assetTitle) assetTitle = "(Untitled Asset)";
 
     const qrUrl = `https://process.qrtagall.com/?id=${id}`;
+
+
     const messageLines = [
         "Check this QRTagAll Asset",
-        assetTitle,
-        `ID-${id}`,
+        `*${assetTitle}*`, // bold title in WhatsApp
+        //`ID-${id}`,
         qrUrl
     ];
-
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(messageLines.join("\n"))}`;
     window.open(whatsappUrl, "_blank");
 }
+
 
 /*
 function injectQRBlock(id) {
