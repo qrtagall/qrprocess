@@ -431,6 +431,30 @@ function generateQRCodeCanvas(id, canvasId = "qrCanvas", size = 160) {
     });
 }
 
+
+function shareOnWhatsApp(id) {
+    // ✅ Get title now (when data is surely loaded)
+    let assetTitle = "";
+    const assetTitleEl = document.getElementById("assetTitle") ||
+        document.querySelector(".assetTitle") ||
+        document.querySelector(".description");
+
+    if (assetTitleEl) assetTitle = assetTitleEl.textContent.trim();
+    if (!assetTitle) assetTitle = "(Untitled Asset)";
+
+    const qrUrl = `https://process.qrtagall.com/?id=${id}`;
+    const messageLines = [
+        "Check this QRTagAll Asset",
+        assetTitle,
+        `ID-${id}`,
+        qrUrl
+    ];
+
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(messageLines.join("\n"))}`;
+    window.open(whatsappUrl, "_blank");
+}
+
+/*
 function injectQRBlock(id) {
     const container = document.getElementById("mainContent");
     const existingQRDiv = document.getElementById("qrWrapper");
@@ -502,11 +526,12 @@ function injectQRBlock(id) {
     qrDiv.appendChild(qrActions);
     container.insertBefore(qrDiv, document.getElementById("assetTitle"));
 }
+*/
 
 
 // Render QR & buttons below it (Copy, Share, Download, Print)
 //V1
-/*
+
 function injectQRBlock(id) {
     const container = document.getElementById("mainContent");
     const existingQRDiv = document.getElementById("qrWrapper");
@@ -547,15 +572,19 @@ function injectQRBlock(id) {
         <button onclick="downloadQR()" title="Download QR" style="font-size:14px; margin-right:10px;">⬇️</button>
         <button onclick="printQR()" title="Print QR" style="font-size:14px; margin-right:10px;">🖨️</button>
         <button onclick="copyQRLink()" title="Copy Link" style="font-size:14px; margin-right:10px;">📋</button>
-        <a href="https://wa.me/?text=${encodeURIComponent(`Check this QRTagAll Asset with ID-${id}\n${qrUrl}`)}"
-           target="_blank" title="Share on WhatsApp" style="font-size:14px; text-decoration:none;">📱</a>
+        <!--a href="https://wa.me/?text=${encodeURIComponent(`Check this QRTagAll Asset with ID-${id}\n${qrUrl}`)}"
+           target="_blank" title="Share on WhatsApp" style="font-size:14px; text-decoration:none;">📱</a-->
+           <button onclick="shareOnWhatsApp('${id}')" title="Share on WhatsApp" style="font-size:14px;">📱</button>
+
     `;
+
 
     qrDiv.appendChild(qrLabel);
     qrDiv.appendChild(qrLink);
     qrDiv.appendChild(qrActions);
     container.insertBefore(qrDiv, document.getElementById("assetTitle"));
-}*/
+}
+
 
 function createEmptyArtifactPrompt(index, linkId) {
     const wrapper = document.createElement("div");
