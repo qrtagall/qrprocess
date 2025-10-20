@@ -469,22 +469,17 @@ function injectQRBlock(id) {
     //const assetTitleEl = document.getElementById("assetTitle");
     //const assetTitle = assetTitleEl ? assetTitleEl.textContent.trim() : "";
 
+    // ✅ Get asset title robustly
     let assetTitle = "";
     const assetTitleEl = document.getElementById("assetTitle") || document.querySelector(".assetTitle") || document.querySelector(".description");
-
-    if (assetTitleEl) {
-        assetTitle = assetTitleEl.textContent.trim();
-    }
-
-// Fallback to placeholder if still empty
+    if (assetTitleEl) assetTitle = assetTitleEl.textContent.trim();
     if (!assetTitle) assetTitle = "(Untitled Asset)";
 
-
-    // ✅ Compose WhatsApp message with title
+// ✅ Compose WhatsApp message
     const messageLines = [
         "Check this QRTagAll Asset",
-        assetTitle ? assetTitle : "(Untitled Asset)",
-        `ID:${id}`,
+        assetTitle,
+        `ID-${id}`,
         qrUrl
     ];
     const encodedMessage = encodeURIComponent(messageLines.join("\n"));
