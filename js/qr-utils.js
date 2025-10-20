@@ -466,14 +466,25 @@ function injectQRBlock(id) {
     qrLink.appendChild(qrCanvas);
 
     // ✅ Get asset title text safely
-    const assetTitleEl = document.getElementById("assetTitle");
-    const assetTitle = assetTitleEl ? assetTitleEl.textContent.trim() : "";
+    //const assetTitleEl = document.getElementById("assetTitle");
+    //const assetTitle = assetTitleEl ? assetTitleEl.textContent.trim() : "";
+
+    let assetTitle = "";
+    const assetTitleEl = document.getElementById("assetTitle") || document.querySelector(".assetTitle") || document.querySelector(".description");
+
+    if (assetTitleEl) {
+        assetTitle = assetTitleEl.textContent.trim();
+    }
+
+// Fallback to placeholder if still empty
+    if (!assetTitle) assetTitle = "(Untitled Asset)";
+
 
     // ✅ Compose WhatsApp message with title
     const messageLines = [
         "Check this QRTagAll Asset",
         assetTitle ? assetTitle : "(Untitled Asset)",
-        `ID-${id}`,
+        `ID:${id}`,
         qrUrl
     ];
     const encodedMessage = encodeURIComponent(messageLines.join("\n"));
