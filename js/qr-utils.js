@@ -472,6 +472,9 @@ function injectQRBlock(id) {
     // ✅ Get asset title robustly
     let assetTitle = "";
     const assetTitleEl = document.getElementById("assetTitle") || document.querySelector(".assetTitle") || document.querySelector(".description");
+    const assetTitleEl1 = document.querySelector(".assetTitle") ;
+    const assetTitleEl2 = document.querySelector(".description");
+
     if (assetTitleEl) assetTitle = assetTitleEl.textContent.trim();
     if (!assetTitle) assetTitle = "(Untitled Asset)";
 
