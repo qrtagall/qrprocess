@@ -431,8 +431,73 @@ function generateQRCodeCanvas(id, canvasId = "qrCanvas", size = 160) {
     });
 }
 
+function injectQRBlock(id) {
+    const container = document.getElementById("mainContent");
+    const existingQRDiv = document.getElementById("qrWrapper");
+    if (existingQRDiv) existingQRDiv.remove();
+
+    const qrDiv = document.createElement("div");
+    qrDiv.id = "qrWrapper";
+    qrDiv.style.textAlign = "center";
+    qrDiv.style.marginBottom = "20px";
+
+    const qrUrl = `https://process.qrtagall.com/?id=${id}`;
+
+    const qrLabel = document.createElement("div");
+    qrLabel.textContent = "🔗 Scan this QR to access again";
+    qrLabel.style.fontSize = "14px";
+    qrLabel.style.color = "#666";
+    qrLabel.style.marginBottom = "6px";
+
+    const qrCanvas = document.createElement("canvas");
+    qrCanvas.id = "qrCanvas";
+    qrCanvas.style.border = "1px solid #ccc";
+    qrCanvas.style.padding = "6px";
+    qrCanvas.style.borderRadius = "8px";
+    qrCanvas.style.background = "#fff";
+    qrCanvas.style.width = "200px";
+    qrCanvas.style.height = "200px";
+
+    QRCode.toCanvas(qrCanvas, qrUrl, { width: 200 });
+
+    const qrLink = document.createElement("a");
+    qrLink.href = qrUrl;
+    qrLink.target = "_blank";
+    qrLink.appendChild(qrCanvas);
+
+    // ✅ Get asset title text safely
+    const assetTitleEl = document.getElementById("assetTitle");
+    const assetTitle = assetTitleEl ? assetTitleEl.textContent.trim() : "";
+
+    // ✅ Compose WhatsApp message with title
+    const messageLines = [
+        "Check this QRTagAll Asset",
+        assetTitle ? assetTitle : "(Untitled Asset)",
+        `ID-${id}`,
+        qrUrl
+    ];
+    const encodedMessage = encodeURIComponent(messageLines.join("\n"));
+    const whatsappLink = `https://wa.me/?text=${encodedMessage}`;
+
+    const qrActions = document.createElement("div");
+    qrActions.style.marginTop = "8px";
+    qrActions.innerHTML = `
+        <button onclick="downloadQR()" title="Download QR" style="font-size:14px; margin-right:10px;">⬇️</button>
+        <button onclick="printQR()" title="Print QR" style="font-size:14px; margin-right:10px;">🖨️</button>
+        <button onclick="copyQRLink()" title="Copy Link" style="font-size:14px; margin-right:10px;">📋</button>
+        <a href="${whatsappLink}" target="_blank" title="Share on WhatsApp" style="font-size:14px; text-decoration:none;">📱</a>
+    `;
+
+    qrDiv.appendChild(qrLabel);
+    qrDiv.appendChild(qrLink);
+    qrDiv.appendChild(qrActions);
+    container.insertBefore(qrDiv, document.getElementById("assetTitle"));
+}
+
 
 // Render QR & buttons below it (Copy, Share, Download, Print)
+//V1
+/*
 function injectQRBlock(id) {
     const container = document.getElementById("mainContent");
     const existingQRDiv = document.getElementById("qrWrapper");
@@ -481,7 +546,7 @@ function injectQRBlock(id) {
     qrDiv.appendChild(qrLink);
     qrDiv.appendChild(qrActions);
     container.insertBefore(qrDiv, document.getElementById("assetTitle"));
-}
+}*/
 
 function createEmptyArtifactPrompt(index, linkId) {
     const wrapper = document.createElement("div");
