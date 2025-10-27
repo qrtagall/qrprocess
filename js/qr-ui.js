@@ -1005,7 +1005,7 @@ function formatTextContent(text) {
         );
 
         // Step 4: Extract Drive links and captions
-        const driveRegex = /(.*?)(https?:\/\/drive\.google\.com\open\/[^\s,<>")]+)/g;
+        const driveRegex = /(.*?)(https?:\/\/drive\.google\.com\/[^\s,<>")]+)/g;
         const matches = Array.from(line.matchAll(driveRegex));
 
         if (matches.length === 0) {
