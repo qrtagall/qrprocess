@@ -979,68 +979,27 @@ function renderDrivePanel(caption, files) {
         </div>`;
 }
 
+
 function formatTextContent(text) {
     if (!text) return "";
 
-    // Split into lines first for better readability
     const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
 
-    const formattedLines = lines.map(line => {
-        let safeLine = escapeHtml(line); // prevent accidental HTML injection
+    const formattedLines = lines.map((line, lineIndex) => {
+        let safeLine = escapeHtml(line);
 
-        // Step 1: Detect and convert URLs first
+        // Step 1: Handle normal formatting (existing behavior)
         safeLine = safeLine.replace(
             /(https?:\/\/[^\s<>"')]+)(?=[\s<>"')]|$)/g,
             (fullMatch, cleanUrl) => urlToContext(cleanUrl)
         );
-
-        // Step 2: Bold leading labels like "Phone1:"
         safeLine = boldLeadingLabels(safeLine);
-
-        // Step 3: Format Indian phone numbers, but ignore inside SVG tags
-        //   -> Prevent matching numbers within <svg> or <path ...>
-        //   -> Yet keep old behavior for normal text
         safeLine = safeLine.replace(
             /(?<!<[^>]*)(?:(?:\+91|0)?[\s\-]*)?(?:\d[\s\-]*){10}(?![^<]*>)/g,
             formatPhoneNumber
         );
 
-        // Step 4: Extract and render Drive previews with captions
-        /*const driveRegex = /(.*?)(https?:\/\/drive\.google\.com\/[^\s,<>")]+)/g;
-        const matches = Array.from(line.matchAll(driveRegex));
-
-        if (matches.length > 0) {
-            let htmlOutput = "";
-            let lastCaption = "";
-
-            matches.forEach((match, i) => {
-                const preText = (match[1] || "").trim();
-                const url = match[2];
-                const fileIdMatch = url.match(/\/d\/([^/?]+)/) || url.match(/id=([^&]+)/);
-                const fileId = fileIdMatch ? fileIdMatch[1] : null;
-                if (!fileId) return;
-
-                // If there’s meaningful text before link, use as caption
-                if (preText && preText !== lastCaption) {
-                    htmlOutput += `<p style="margin:8px 0 4px 0; font-weight:600; color:#222;">${escapeHtml(preText.replace(/[:>\-]+$/, ""))}</p>`;
-                    lastCaption = preText;
-                }
-
-                const iframeUrl = `https://drive.google.com/file/d/${fileId}/preview`;
-                htmlOutput += `
-                    <div style="margin:4px 0 10px 0;">
-                        <iframe src="${iframeUrl}" 
-                                width="100%" height="380" frameborder="0"
-                                allow="autoplay; encrypted-media"
-                                sandbox="allow-scripts allow-same-origin allow-presentation"></iframe>
-                    </div>`;
-            });
-
-            return htmlOutput;
-        }
-
-         */
-
+        // Step 2: Parse Drive links from this line
         const driveRegex = /(.*?)(https?:\/\/drive\.google\.com\/[^\s,<>")]+)/g;
         const matches = Array.from(line.matchAll(driveRegex));
         if (matches.length === 0) return safeLine;
@@ -1074,12 +1033,78 @@ function formatTextContent(text) {
         return htmlOut;
     });
 
+    return formattedLines.join("<br>");
+}
+
+
+/*
+function formatTextContent(text) {
+    if (!text) return "";
+
+    // Split into lines first for better readability
+    const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
+
+    const formattedLines = lines.map(line => {
+        let safeLine = escapeHtml(line); // prevent accidental HTML injection
+
+        // Step 1: Detect and convert URLs first
+        safeLine = safeLine.replace(
+            /(https?:\/\/[^\s<>"')]+)(?=[\s<>"')]|$)/g,
+            (fullMatch, cleanUrl) => urlToContext(cleanUrl)
+        );
+
+        // Step 2: Bold leading labels like "Phone1:"
+        safeLine = boldLeadingLabels(safeLine);
+
+        // Step 3: Format Indian phone numbers, but ignore inside SVG tags
+        //   -> Prevent matching numbers within <svg> or <path ...>
+        //   -> Yet keep old behavior for normal text
+        safeLine = safeLine.replace(
+            /(?<!<[^>]*)(?:(?:\+91|0)?[\s\-]*)?(?:\d[\s\-]*){10}(?![^<]*>)/g,
+            formatPhoneNumber
+        );
+
+        // Step 4: Extract and render Drive previews with captions
+        const driveRegex = /(.*?)(https?:\/\/drive\.google\.com\/[^\s,<>")]+)/g;
+        const matches = Array.from(line.matchAll(driveRegex));
+
+        if (matches.length > 0) {
+            let htmlOutput = "";
+            let lastCaption = "";
+
+            matches.forEach((match, i) => {
+                const preText = (match[1] || "").trim();
+                const url = match[2];
+                const fileIdMatch = url.match(/\/d\/([^/?]+)/) || url.match(/id=([^&]+)/);
+                const fileId = fileIdMatch ? fileIdMatch[1] : null;
+                if (!fileId) return;
+
+                // If there’s meaningful text before link, use as caption
+                if (preText && preText !== lastCaption) {
+                    htmlOutput += `<p style="margin:8px 0 4px 0; font-weight:600; color:#222;">${escapeHtml(preText.replace(/[:>\-]+$/, ""))}</p>`;
+                    lastCaption = preText;
+                }
+
+                const iframeUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+                htmlOutput += `
+                    <div style="margin:4px 0 10px 0;">
+                        <iframe src="${iframeUrl}" 
+                                width="100%" height="380" frameborder="0"
+                                allow="autoplay; encrypted-media"
+                                sandbox="allow-scripts allow-same-origin allow-presentation"></iframe>
+                    </div>`;
+            });
+
+            return htmlOutput;
+        }
+
 
         return safeLine;
     });
 
     return formattedLines.join("<br>");
 }
+*/
 
 
 function urlToContext(url) {
