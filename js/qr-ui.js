@@ -1134,7 +1134,7 @@ function urlToContext(url) {
                 lower.includes("instagram") ? "Instagram_Link" :
                     lower.includes("linkedin") ? "Linkedin_Link" :
                         lower.includes("twitter") || lower.includes("x.com") ? "Twitter_Link" :
-                            lower.includes("drive.google.com") ? "Gdrive_Link" :
+                            lower.includes("drive.google.com/drive") ? "Gdrive_Link" :
                                 lower.includes("docs.google.com/document") ? "Gdoc_Link" :
                                     lower.includes("forms.gle") || lower.includes("docs.google.com/forms") ? "Gform_Link" :
                                         lower.includes("maps.google.") || lower.includes("maps.app.goo") || lower.includes("/maps/") ? "Gmap_Link" :
