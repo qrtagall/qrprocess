@@ -984,24 +984,28 @@ function formatTextContent(text) {
     if (!text) return "";
 
     const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
-
     const allFiles = []; // collect all GDrive file references across all lines
 
-    const formattedLines = lines.map((line, lineIndex) => {
+    // --- Step 1: Process every line normally ---
+    const formattedLines = lines.map(line => {
         let safeLine = escapeHtml(line);
 
-        // Step 1: Preserve your old formatting (URLs, labels, phones)
+        // URL → contextual icon conversion
         safeLine = safeLine.replace(
             /(https?:\/\/[^\s<>"')]+)(?=[\s<>"')]|$)/g,
             (fullMatch, cleanUrl) => urlToContext(cleanUrl)
         );
+
+        // Bold labels like "Phone:", "Email:" etc.
         safeLine = boldLeadingLabels(safeLine);
+
+        // Format Indian phone numbers (outside HTML tags)
         safeLine = safeLine.replace(
             /(?<!<[^>]*)(?:(?:\+91|0)?[\s\-]*)?(?:\d[\s\-]*){10}(?![^<]*>)/g,
             formatPhoneNumber
         );
 
-        // Step 2: Extract Drive links + captions
+        // --- Detect and extract Drive links with caption ---
         const driveRegex = /(.*?)(https?:\/\/drive\.google\.com\/[^\s,<>")]+)/g;
         const matches = Array.from(line.matchAll(driveRegex));
 
@@ -1014,14 +1018,15 @@ function formatTextContent(text) {
             allFiles.push({
                 id: fileId,
                 url,
-                caption: preText || " " // fallback to space if blank
+                caption: preText || " "
             });
         });
 
-        return safeLine; // keep non-drive text parts intact
+        // Return formatted text line (keeps existing visible text)
+        return safeLine;
     });
 
-    // Step 3: If we found any Drive files, append a single gallery panel
+    // --- Step 2: Only if Drive files exist, append gallery panel ---
     if (allFiles.length > 0) {
         const galleryHtml = allFiles
             .map(f => {
@@ -1051,8 +1056,10 @@ function formatTextContent(text) {
         `);
     }
 
+    // --- Step 3: Return combined formatted content ---
     return formattedLines.join("<br>");
 }
+
 
 
 /*
@@ -1134,7 +1141,7 @@ function urlToContext(url) {
                 lower.includes("instagram") ? "Instagram_Link" :
                     lower.includes("linkedin") ? "Linkedin_Link" :
                         lower.includes("twitter") || lower.includes("x.com") ? "Twitter_Link" :
-                            lower.includes("drive.google.com/drive") ? "Gdrive_Link" :
+                            lower.includes("drive.google.com") ? "Gdrive_Link" :
                                 lower.includes("docs.google.com/document") ? "Gdoc_Link" :
                                     lower.includes("forms.gle") || lower.includes("docs.google.com/forms") ? "Gform_Link" :
                                         lower.includes("maps.google.") || lower.includes("maps.app.goo") || lower.includes("/maps/") ? "Gmap_Link" :
