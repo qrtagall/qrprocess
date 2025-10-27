@@ -985,10 +985,12 @@ function formatTextContent(text) {
 
     const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
 
+    const allFiles = []; // collect all GDrive file references across all lines
+
     const formattedLines = lines.map((line, lineIndex) => {
         let safeLine = escapeHtml(line);
 
-        // Step 1: Handle normal formatting (existing behavior)
+        // Step 1: Preserve your old formatting (URLs, labels, phones)
         safeLine = safeLine.replace(
             /(https?:\/\/[^\s<>"')]+)(?=[\s<>"')]|$)/g,
             (fullMatch, cleanUrl) => urlToContext(cleanUrl)
@@ -999,39 +1001,55 @@ function formatTextContent(text) {
             formatPhoneNumber
         );
 
-        // Step 2: Parse Drive links from this line
+        // Step 2: Extract Drive links + captions
         const driveRegex = /(.*?)(https?:\/\/drive\.google\.com\/[^\s,<>")]+)/g;
         const matches = Array.from(line.matchAll(driveRegex));
-        if (matches.length === 0) return safeLine;
-
-        // Step 3: Group by caption
-        let htmlOut = "";
-        let lastCaption = "";
-        let currentGroup = [];
 
         matches.forEach(match => {
-            const preText = (match[1] || "").trim();
+            const preText = (match[1] || "").trim().replace(/[:>\-]+$/, "");
             const url = match[2];
             const fileIdMatch = url.match(/\/d\/([^/?]+)/) || url.match(/id=([^&]+)/);
             const fileId = fileIdMatch ? fileIdMatch[1] : null;
             if (!fileId) return;
-
-            if (preText && preText !== lastCaption && currentGroup.length) {
-                // render previous group before new caption
-                htmlOut += renderDrivePanel(lastCaption, currentGroup);
-                currentGroup = [];
-            }
-
-            if (preText && preText !== lastCaption) lastCaption = preText;
-            currentGroup.push({ id: fileId, url });
+            allFiles.push({
+                id: fileId,
+                url,
+                caption: preText || " " // fallback to space if blank
+            });
         });
 
-        if (currentGroup.length) {
-            htmlOut += renderDrivePanel(lastCaption, currentGroup);
-        }
-
-        return htmlOut;
+        return safeLine; // keep non-drive text parts intact
     });
+
+    // Step 3: If we found any Drive files, append a single gallery panel
+    if (allFiles.length > 0) {
+        const galleryHtml = allFiles
+            .map(f => {
+                const thumbUrl = `https://drive.google.com/thumbnail?id=${f.id}&sz=w400`;
+                const fileUrl = `https://drive.google.com/file/d/${f.id}/view`;
+                const captionSafe = escapeHtml(f.caption);
+
+                return `
+                    <div style="width:150px; margin:10px; text-align:center; flex:0 0 auto;">
+                        <a href="${fileUrl}" target="_blank" style="text-decoration:none; color:#222;">
+                            <img src="${thumbUrl}" 
+                                 style="width:100%; height:100px; object-fit:cover; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.15);">
+                            <div style="font-size:13px; margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                ${captionSafe}
+                            </div>
+                        </a>
+                    </div>`;
+            })
+            .join("");
+
+        formattedLines.push(`
+            <div style="background:#f9f9f9; border:1px solid #ddd; border-radius:10px; padding:10px; margin:10px 0;">
+                <div style="display:flex; flex-wrap:wrap; justify-content:flex-start;">
+                    ${galleryHtml}
+                </div>
+            </div>
+        `);
+    }
 
     return formattedLines.join("<br>");
 }
