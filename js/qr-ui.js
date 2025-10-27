@@ -1033,24 +1033,26 @@ function formatTextContent(text) {
                 // Detect likely non-image files (pdf/doc/video)
                 const isPdf = /\.(pdf)$/i.test(f.url) || captionSafe.toLowerCase().includes("pdf");
                 const isFallback = isPdf; // could expand to other file types
+                const link = `https://drive.google.com/file/d/${f.id}/view`;
 
                 const inner =
-                    isFallback
-                        ? `<iframe src="https://drive.google.com/file/d/${f.id}/preview"
-                                   style="width:150px; height:100px; border-radius:8px; border:0;"
-                                   allow="autoplay; encrypted-media"></iframe>`
-                        : `<img src="${thumbUrl}" 
-                                 style="width:100%; height:100px; object-fit:cover; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.15);">`;
+                            isFallback
+                                ? `<iframe src="https://drive.google.com/file/d/${f.id}/preview"
+                           style="width:150px; height:100px; border-radius:8px; border:0;"
+                           allow="autoplay; encrypted-media"
+                           onclick="openPreviewModal('${link}'); return false;"></iframe>`
+                                : `<img src="${thumbUrl}" 
+                         style="width:100%; height:100px; object-fit:cover; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.15); cursor:pointer;"
+                         onclick="openPreviewModal('${link}'); return false;">`;
 
-                return `
-                    <div style="width:150px; margin:10px; text-align:center; flex:0 0 auto;">
-                        <a href="${fileUrl}" target="_blank" style="text-decoration:none; color:#222;">
-                            ${inner}
-                            <div style="font-size:13px; margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                                ${captionSafe}
-                            </div>
-                        </a>
-                    </div>`;
+                        return `
+            <div style="width:150px; margin:10px; text-align:center; flex:0 0 auto;">
+                ${inner}
+                <div style="font-size:13px; margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                    ${captionSafe}
+                </div>
+            </div>`;
+
             })
             .join("");
 
