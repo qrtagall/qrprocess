@@ -947,6 +947,37 @@ function escapeHtml(unsafe) {
 }
 
 
+/**
+ * Helper: renderDrivePanel
+ * Creates a panel layout similar to your DLink gallery style
+ */
+function renderDrivePanel(caption, files) {
+    const captionClean = escapeHtml(caption.replace(/[:>\-]+$/, ""));
+    const thumbHtml = files
+        .map(f => {
+            const thumbUrl = `https://drive.google.com/thumbnail?id=${f.id}&sz=w400`;
+            const fileUrl = `https://drive.google.com/file/d/${f.id}/view`;
+            return `
+                <div style="width:150px; margin:8px; text-align:center; flex:0 0 auto;">
+                    <a href="${fileUrl}" target="_blank" style="text-decoration:none; color:#222;">
+                        <img src="${thumbUrl}" 
+                             style="width:100%; height:100px; object-fit:cover; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.15);">
+                        <div style="font-size:12px; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                            ${f.id.slice(0,8)}...
+                        </div>
+                    </a>
+                </div>`;
+        })
+        .join("");
+
+    return `
+        <div style="background:#f9f9f9; border:1px solid #ddd; border-radius:10px; padding:10px; margin:10px 0;">
+            <p style="font-weight:600; margin:0 0 8px;">${captionClean || "Drive Files"}</p>
+            <div style="display:flex; flex-wrap:wrap; gap:6px; justify-content:flex-start;">
+                ${thumbHtml}
+            </div>
+        </div>`;
+}
 
 function formatTextContent(text) {
     if (!text) return "";
@@ -975,7 +1006,7 @@ function formatTextContent(text) {
         );
 
         // Step 4: Extract and render Drive previews with captions
-        const driveRegex = /(.*?)(https?:\/\/drive\.google\.com\/[^\s,<>")]+)/g;
+        /*const driveRegex = /(.*?)(https?:\/\/drive\.google\.com\/[^\s,<>")]+)/g;
         const matches = Array.from(line.matchAll(driveRegex));
 
         if (matches.length > 0) {
@@ -1007,6 +1038,42 @@ function formatTextContent(text) {
 
             return htmlOutput;
         }
+
+         */
+
+        const driveRegex = /(.*?)(https?:\/\/drive\.google\.com\/[^\s,<>")]+)/g;
+        const matches = Array.from(line.matchAll(driveRegex));
+        if (matches.length === 0) return safeLine;
+
+        // Step 3: Group by caption
+        let htmlOut = "";
+        let lastCaption = "";
+        let currentGroup = [];
+
+        matches.forEach(match => {
+            const preText = (match[1] || "").trim();
+            const url = match[2];
+            const fileIdMatch = url.match(/\/d\/([^/?]+)/) || url.match(/id=([^&]+)/);
+            const fileId = fileIdMatch ? fileIdMatch[1] : null;
+            if (!fileId) return;
+
+            if (preText && preText !== lastCaption && currentGroup.length) {
+                // render previous group before new caption
+                htmlOut += renderDrivePanel(lastCaption, currentGroup);
+                currentGroup = [];
+            }
+
+            if (preText && preText !== lastCaption) lastCaption = preText;
+            currentGroup.push({ id: fileId, url });
+        });
+
+        if (currentGroup.length) {
+            htmlOut += renderDrivePanel(lastCaption, currentGroup);
+        }
+
+        return htmlOut;
+    });
+
 
         return safeLine;
     });
