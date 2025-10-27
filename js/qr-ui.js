@@ -983,80 +983,81 @@ function renderDrivePanel(caption, files) {
 function formatTextContent(text) {
     if (!text) return "";
 
+    // Split into lines first for better readability
     const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
-    const allFiles = []; // collect all GDrive file references across all lines
 
-    // --- Step 1: Process every line normally ---
     const formattedLines = lines.map(line => {
-        let safeLine = escapeHtml(line);
+        let safeLine = escapeHtml(line); // prevent accidental HTML injection
 
-        // URL → contextual icon conversion
+        // Step 1: Detect and convert URLs first
         safeLine = safeLine.replace(
             /(https?:\/\/[^\s<>"')]+)(?=[\s<>"')]|$)/g,
             (fullMatch, cleanUrl) => urlToContext(cleanUrl)
         );
 
-        // Bold labels like "Phone:", "Email:" etc.
+        // Step 2: Bold leading labels like "Phone1:"
         safeLine = boldLeadingLabels(safeLine);
 
-        // Format Indian phone numbers (outside HTML tags)
+        // Step 3: Format Indian phone numbers (ignore inside SVG)
         safeLine = safeLine.replace(
             /(?<!<[^>]*)(?:(?:\+91|0)?[\s\-]*)?(?:\d[\s\-]*){10}(?![^<]*>)/g,
             formatPhoneNumber
         );
 
-        // --- Detect and extract Drive links with caption ---
-        const driveRegex = /(.*?)(https?:\/\/drive\.google\.com\/[^\s,<>")]+)/g;
+        // Step 4: Extract Drive links and captions
+        const driveRegex = /(.*?)(https?:\/\/drive\.google\.com\open\/[^\s,<>")]+)/g;
         const matches = Array.from(line.matchAll(driveRegex));
 
-        matches.forEach(match => {
-            const preText = (match[1] || "").trim().replace(/[:>\-]+$/, "");
-            const url = match[2];
-            const fileIdMatch = url.match(/\/d\/([^/?]+)/) || url.match(/id=([^&]+)/);
-            const fileId = fileIdMatch ? fileIdMatch[1] : null;
-            if (!fileId) return;
-            allFiles.push({
-                id: fileId,
-                url,
-                caption: preText || " "
-            });
-        });
+        if (matches.length === 0) {
+            // ✅ No Drive links → return normal text
+            return safeLine;
+        } else {
+            // ✅ Drive links found → create gallery
+            const allFiles = [];
 
-        // Return formatted text line (keeps existing visible text)
-        return safeLine;
+            matches.forEach(match => {
+                const preText = (match[1] || "").trim();
+                const url = match[2];
+                const fileIdMatch = url.match(/\/d\/([^/?]+)/) || url.match(/id=([^&]+)/);
+                const fileId = fileIdMatch ? fileIdMatch[1] : null;
+                if (!fileId) return;
+                allFiles.push({
+                    id: fileId,
+                    url,
+                    caption: preText.replace(/[:>\-]+$/, "") || " "
+                });
+            });
+
+            // ✅ Build thumbnail gallery
+            const galleryHtml = allFiles
+                .map(f => {
+                    const thumbUrl = `https://drive.google.com/thumbnail?id=${f.id}&sz=w400`;
+                    const fileUrl = `https://drive.google.com/file/d/${f.id}/view`;
+                    const captionSafe = escapeHtml(f.caption);
+                    return `
+                        <div style="width:150px; margin:10px; text-align:center; flex:0 0 auto;">
+                            <a href="${fileUrl}" target="_blank" style="text-decoration:none; color:#222;">
+                                <img src="${thumbUrl}" 
+                                     style="width:100%; height:100px; object-fit:cover; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.15);">
+                                <div style="font-size:13px; margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                    ${captionSafe}
+                                </div>
+                            </a>
+                        </div>`;
+                })
+                .join("");
+
+            // ✅ Return panel for this line
+            return `
+                <div style="background:#f9f9f9; border:1px solid #ddd; border-radius:10px; padding:10px; margin:10px 0;">
+                    <div style="display:flex; flex-wrap:wrap; justify-content:flex-start;">
+                        ${galleryHtml}
+                    </div>
+                </div>
+            `;
+        }
     });
 
-    // --- Step 2: Only if Drive files exist, append gallery panel ---
-    if (allFiles.length > 0) {
-        const galleryHtml = allFiles
-            .map(f => {
-                const thumbUrl = `https://drive.google.com/thumbnail?id=${f.id}&sz=w400`;
-                const fileUrl = `https://drive.google.com/file/d/${f.id}/view`;
-                const captionSafe = escapeHtml(f.caption);
-
-                return `
-                    <div style="width:150px; margin:10px; text-align:center; flex:0 0 auto;">
-                        <a href="${fileUrl}" target="_blank" style="text-decoration:none; color:#222;">
-                            <img src="${thumbUrl}" 
-                                 style="width:100%; height:100px; object-fit:cover; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.15);">
-                            <div style="font-size:13px; margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                                ${captionSafe}
-                            </div>
-                        </a>
-                    </div>`;
-            })
-            .join("");
-
-        formattedLines.push(`
-            <div style="background:#f9f9f9; border:1px solid #ddd; border-radius:10px; padding:10px; margin:10px 0;">
-                <div style="display:flex; flex-wrap:wrap; justify-content:flex-start;">
-                    ${galleryHtml}
-                </div>
-            </div>
-        `);
-    }
-
-    // --- Step 3: Return combined formatted content ---
     return formattedLines.join("<br>");
 }
 
