@@ -946,37 +946,8 @@ function escapeHtml(unsafe) {
         .replace(/'/g, "&#039;");
 }
 
-/*
-function formatTextContent(text) {
-    if (!text) return "";
 
-    // Split into lines first for better readability
-    const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
 
-    const formattedLines = lines.map(line => {
-        let safeLine = escapeHtml(line); // prevent accidental HTML injection
-
-        // Match valid URLs but ignore trailing symbols like ">" or ")"
-        safeLine = safeLine.replace(
-            /(https?:\/\/[^\s<>"')]+)(?=[\s<>"')]|$)/g,
-            (fullMatch, cleanUrl) => urlToContext(cleanUrl)
-        );
-
-        // Convert labels like "Phone1:" or "Phone 2:" to bold
-        safeLine = boldLeadingLabels(safeLine);
-
-        // Format Indian phone numbers with call/chat icons
-        safeLine = safeLine.replace(
-            /(?:(?:\+91|0)?[\s\-]*)?(?:\d[\s\-]*){10}/g,
-            formatPhoneNumber
-        );
-
-        return safeLine;
-    });
-
-    return formattedLines.join("<br>");
-}
-*/
 function formatTextContent(text) {
     if (!text) return "";
 
@@ -1002,6 +973,33 @@ function formatTextContent(text) {
             /(?<!<[^>]*)(?:(?:\+91|0)?[\s\-]*)?(?:\d[\s\-]*){10}(?![^<]*>)/g,
             formatPhoneNumber
         );
+
+        // Step 4: Detect multiple Drive links and render iframes
+        // Works for comma/space separated links
+        const driveLinks = Array.from(
+            line.matchAll(/https?:\/\/drive\.google\.com\/[^\s,<>")]+/g)
+        ).map(m => m[0]);
+
+        if (driveLinks.length > 0) {
+            const iframes = driveLinks.map((url, i) => {
+                // Match both /file/d/... and open?id=... patterns
+                const fileIdMatch = url.match(/\/d\/([^/?]+)/) || url.match(/id=([^&]+)/);
+                const fileId = fileIdMatch ? fileIdMatch[1] : null;
+                if (!fileId) return "";
+
+                const iframeUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+                return `
+                    <div style="margin-top:6px;">
+                        <iframe src="${iframeUrl}" 
+                                width="100%" height="400" frameborder="0"
+                                allow="autoplay; encrypted-media"
+                                sandbox="allow-scripts allow-same-origin allow-presentation"></iframe>
+                    </div>`;
+            }).join("");
+
+            // Replace entire line content with embedded iframes
+            return iframes;
+        }
 
         return safeLine;
     });
