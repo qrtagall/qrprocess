@@ -974,31 +974,38 @@ function formatTextContent(text) {
             formatPhoneNumber
         );
 
-        // Step 4: Detect multiple Drive links and render iframes
-        // Works for comma/space separated links
-        const driveLinks = Array.from(
-            line.matchAll(/https?:\/\/drive\.google\.com\/[^\s,<>")]+/g)
-        ).map(m => m[0]);
+        // Step 4: Extract and render Drive previews with captions
+        const driveRegex = /(.*?)(https?:\/\/drive\.google\.com\/[^\s,<>")]+)/g;
+        const matches = Array.from(line.matchAll(driveRegex));
 
-        if (driveLinks.length > 0) {
-            const iframes = driveLinks.map((url, i) => {
-                // Match both /file/d/... and open?id=... patterns
+        if (matches.length > 0) {
+            let htmlOutput = "";
+            let lastCaption = "";
+
+            matches.forEach((match, i) => {
+                const preText = (match[1] || "").trim();
+                const url = match[2];
                 const fileIdMatch = url.match(/\/d\/([^/?]+)/) || url.match(/id=([^&]+)/);
                 const fileId = fileIdMatch ? fileIdMatch[1] : null;
-                if (!fileId) return "";
+                if (!fileId) return;
+
+                // If there’s meaningful text before link, use as caption
+                if (preText && preText !== lastCaption) {
+                    htmlOutput += `<p style="margin:8px 0 4px 0; font-weight:600; color:#222;">${escapeHtml(preText.replace(/[:>\-]+$/, ""))}</p>`;
+                    lastCaption = preText;
+                }
 
                 const iframeUrl = `https://drive.google.com/file/d/${fileId}/preview`;
-                return `
-                    <div style="margin-top:6px;">
+                htmlOutput += `
+                    <div style="margin:4px 0 10px 0;">
                         <iframe src="${iframeUrl}" 
-                                width="100%" height="400" frameborder="0"
+                                width="100%" height="380" frameborder="0"
                                 allow="autoplay; encrypted-media"
                                 sandbox="allow-scripts allow-same-origin allow-presentation"></iframe>
                     </div>`;
-            }).join("");
+            });
 
-            // Replace entire line content with embedded iframes
-            return iframes;
+            return htmlOutput;
         }
 
         return safeLine;
