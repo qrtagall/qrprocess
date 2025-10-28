@@ -958,7 +958,9 @@ function makeDriveThumbnailBlock(fileId, caption, url) {
         <div style="width:150px; margin:10px; text-align:center; flex:0 0 auto;">
             <div style="position:relative;">
                 <img src="${thumbUrl}"
-                     onerror="this.onerror=null; this.outerHTML='<div onclick=&quot;openPreviewModal(\\'${link}\\')&quot; style=&quot;width:100%;height:100px;display:flex;align-items:center;justify-content:center;border:1px solid #ccc;border-radius:8px;background:#fafafa;color:#555;font-weight:600;cursor:pointer;&quot;>📄 FILE</div>'"
+                     onerror="this.onerror=null; this.outerHTML='<div onclick=&quot;openPreviewModal(\\'${link}\\')&quot;
+                     style=&quot;width:100%;height:100px;display:flex;align-items:center;justify-content:center;border:1px solid #ccc;border-radius:8px;
+                     background:#fafafa;color:#555;font-weight:600;cursor:pointer;&quot;>📄 FILE</div>'"
                      style="width:100%; height:100px; object-fit:cover; border-radius:8px; 
                             box-shadow:0 1px 3px rgba(0,0,0,0.15); cursor:pointer;"
                      onclick="openPreviewModal('${link}'); return false;">
@@ -973,7 +975,7 @@ function makeDriveThumbnailBlock(fileId, caption, url) {
 function makeDriveThumbnailBlock(fileId, caption, url) {
     const link = `https://drive.google.com/file/d/${fileId}/view`;
     const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
-    const captionSafe = escapeHtml(caption || " ");
+    const captionSafe = escapeHtml(caption || "FILE");
 
     return `
         <div onclick="openPreviewModal('${link}'); return false;"
