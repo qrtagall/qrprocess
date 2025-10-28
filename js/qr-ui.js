@@ -950,7 +950,6 @@ function escapeHtml(unsafe) {
 
 
 
-
 function makeDriveThumbnailBlock(fileId, caption, url) {
     const link = `https://drive.google.com/file/d/${fileId}/view`;
     const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
@@ -958,31 +957,35 @@ function makeDriveThumbnailBlock(fileId, caption, url) {
 
     return `
         <div onclick="openPreviewModal('${link}'); return false;"
-             style="width:140px; flex:0 0 auto; margin:8px; cursor:pointer;
+             style="width:110px; flex:0 0 auto; margin:4px; cursor:pointer;
                     display:flex; flex-direction:column; align-items:center; 
                     text-align:center; transition:transform 0.15s ease;">
             
-            <div style="width:120px; height:100px; background:#fdfdfd; border-radius:8px; 
+            <div style="width:100%; height:85px; background:#fdfdfd; border-radius:6px; 
                         overflow:hidden; display:flex; align-items:center; justify-content:center; 
-                        border:1px solid #ddd; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+                        border:1px solid #ddd; box-shadow:0 1px 2px rgba(0,0,0,0.08);">
                 <img src="${thumbUrl}"
                      alt="preview"
                      onerror="this.onerror=null; 
                               this.style.display='none'; 
                               const div=document.createElement('div');
-                              div.innerHTML='FILE';
-                              div.style='font-size:12px;font-weight:600;color:#666;';
-                              div.style.textAlign='center';
-                              div.style.width='100%';
-                              div.style.height='100%';
-                              div.style.display='flex';
-                              div.style.alignItems='center';
-                              div.style.justifyContent='center';
+                              div.textContent='FILE';
+                              Object.assign(div.style, {
+                                fontSize:'11.5px',
+                                fontWeight:'600',
+                                color:'#666',
+                                textAlign:'center',
+                                width:'100%',
+                                height:'100%',
+                                display:'flex',
+                                alignItems:'center',
+                                justifyContent:'center'
+                              });
                               this.parentNode.appendChild(div);"
                      style="width:100%; height:100%; object-fit:cover; transition:transform 0.15s ease;">
             </div>
 
-            <div style="font-size:12.5px; margin-top:6px; max-width:120px; white-space:nowrap;
+            <div style="font-size:11.5px; margin-top:3px; max-width:100%; white-space:nowrap;
                         overflow:hidden; text-overflow:ellipsis; color:#333; font-weight:500;
                         line-height:1.1em;">
                 ${captionSafe}
@@ -1084,9 +1087,10 @@ function formatTextContent(text) {
 
         formattedLines.push(`
         <div style="background:#f9f9f9; border:1px solid #ddd; border-radius:10px; padding:10px; margin:10px 0;">
-            <div style="display:flex; flex-wrap:wrap; justify-content:flex-start;">
+            <div style="display:flex; flex-wrap:wrap; gap:4px 6px; justify-content:flex-start;">
                 ${galleryHtml}
             </div>
+
         </div>
     `);
 
