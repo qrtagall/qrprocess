@@ -947,34 +947,51 @@ function escapeHtml(unsafe) {
 }
 
 
-/**
- * Helper: renderDrivePanel
- * Creates a panel layout similar to your DLink gallery style
- */
-function renderDrivePanel(caption, files) {
-    const captionClean = escapeHtml(caption.replace(/[:>\-]+$/, ""));
-    const thumbHtml = files
-        .map(f => {
-            const thumbUrl = `https://drive.google.com/thumbnail?id=${f.id}&sz=w400`;
-            const fileUrl = `https://drive.google.com/file/d/${f.id}/view`;
-            return `
-                <div style="width:150px; margin:8px; text-align:center; flex:0 0 auto;">
-                    <a href="${fileUrl}" target="_blank" style="text-decoration:none; color:#222;">
-                        <img src="${thumbUrl}" 
-                             style="width:100%; height:100px; object-fit:cover; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.15);">
-                        <div style="font-size:12px; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                            ${f.id.slice(0,8)}...
-                        </div>
-                    </a>
-                </div>`;
-        })
-        .join("");
+
+
+function makeDriveThumbnailBlock(fileId, caption, url) {
+    const link = `https://drive.google.com/file/d/${fileId}/view`;
+    const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
+    const captionSafe = escapeHtml(caption || " ");
+
+    // Detect type from caption or URL
+    const lowerCap = captionSafe.toLowerCase();
+    const isPdf = lowerCap.includes("pdf") || /\.pdf/i.test(url);
+    const isDoc = lowerCap.includes("doc") || /\.docx?/i.test(url);
+    const isVid = lowerCap.includes("mp4") || /\.mp4/i.test(url);
+    const isImg = !isPdf && !isDoc && !isVid;
+
+    let inner = "";
+
+    if (isImg) {
+        inner = `
+            <img src="${thumbUrl}" 
+                 style="width:100%; height:100px; object-fit:cover; border-radius:8px; 
+                        box-shadow:0 1px 3px rgba(0,0,0,0.15); cursor:pointer;"
+                 onclick="openPreviewModal('${link}'); return false;">`;
+    } else {
+        // Show a nice label placeholder if no real preview
+        const label = isPdf ? "📄 PDF" : isDoc ? "📘 DOC" : isVid ? "🎞 Video" : "📁 File";
+        const bg =
+            isPdf ? "#ffecec" :
+                isDoc ? "#e6f0ff" :
+                    isVid ? "#fff8e1" : "#f9f9f9";
+
+        inner = `
+            <div onclick="openPreviewModal('${link}'); return false;"
+                 style="width:100%; height:100px; border-radius:8px; 
+                        display:flex; align-items:center; justify-content:center; 
+                        background:${bg}; color:#333; font-weight:600; 
+                        border:1px solid #ccc; cursor:pointer;">
+                ${label}
+            </div>`;
+    }
 
     return `
-        <div style="background:#f9f9f9; border:1px solid #ddd; border-radius:10px; padding:10px; margin:10px 0;">
-            <p style="font-weight:600; margin:0 0 8px;">${captionClean || "Drive Files"}</p>
-            <div style="display:flex; flex-wrap:wrap; gap:6px; justify-content:flex-start;">
-                ${thumbHtml}
+        <div style="width:150px; margin:10px; text-align:center; flex:0 0 auto;">
+            ${inner}
+            <div style="font-size:13px; margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                ${captionSafe}
             </div>
         </div>`;
 }
@@ -1024,6 +1041,7 @@ function formatTextContent(text) {
 
     // Step 3: Render single combined panel (if any Drive links)
     if (allFiles.length > 0) {
+        /*
         const galleryHtml = allFiles
             .map(f => {
                 const thumbUrl = `https://drive.google.com/thumbnail?id=${f.id}&sz=w400`;
@@ -1033,6 +1051,7 @@ function formatTextContent(text) {
                 // Detect likely non-image files (pdf/doc/video)
                 const isPdf = /\.(pdf)$/i.test(f.url) || captionSafe.toLowerCase().includes("pdf");
                 const isFallback = isPdf; // could expand to other file types
+
                 const link = `https://drive.google.com/file/d/${f.id}/view`;
 
                 const inner =
@@ -1063,6 +1082,18 @@ function formatTextContent(text) {
                 </div>
             </div>
         `);
+        */
+
+        const galleryHtml = allFiles.map(f => makeDriveThumbnailBlock(f.id, f.caption, f.url)).join("");
+
+        formattedLines.push(`
+        <div style="background:#f9f9f9; border:1px solid #ddd; border-radius:10px; padding:10px; margin:10px 0;">
+            <div style="display:flex; flex-wrap:wrap; justify-content:flex-start;">
+                ${galleryHtml}
+            </div>
+        </div>
+    `);
+
     }
 
     // Step 4: Return full formatted text with single gallery panel
