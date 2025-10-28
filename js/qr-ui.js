@@ -948,29 +948,8 @@ function escapeHtml(unsafe) {
 
 
 
-/*
-function makeDriveThumbnailBlock(fileId, caption, url) {
-    const link = `https://drive.google.com/file/d/${fileId}/view`;
-    const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
-    const captionSafe = escapeHtml(caption || " ");
 
-    return `
-        <div style="width:150px; margin:10px; text-align:center; flex:0 0 auto;">
-            <div style="position:relative;">
-                <img src="${thumbUrl}"
-                     onerror="this.onerror=null; this.outerHTML='<div onclick=&quot;openPreviewModal(\\'${link}\\')&quot;
-                     style=&quot;width:100%;height:100px;display:flex;align-items:center;justify-content:center;border:1px solid #ccc;border-radius:8px;
-                     background:#fafafa;color:#555;font-weight:600;cursor:pointer;&quot;>📄 FILE</div>'"
-                     style="width:100%; height:100px; object-fit:cover; border-radius:8px; 
-                            box-shadow:0 1px 3px rgba(0,0,0,0.15); cursor:pointer;"
-                     onclick="openPreviewModal('${link}'); return false;">
-            </div>
-            <div style="font-size:13px; margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                ${captionSafe}
-            </div>
-        </div>`;
-}
-*/
+
 
 function makeDriveThumbnailBlock(fileId, caption, url) {
     const link = `https://drive.google.com/file/d/${fileId}/view`;
@@ -979,25 +958,38 @@ function makeDriveThumbnailBlock(fileId, caption, url) {
 
     return `
         <div onclick="openPreviewModal('${link}'); return false;"
-             style="width:160px; flex:0 0 auto; margin:10px; cursor:pointer; 
+             style="width:140px; flex:0 0 auto; margin:8px; cursor:pointer;
                     display:flex; flex-direction:column; align-items:center; 
                     text-align:center; transition:transform 0.15s ease;">
             
-            <div style="width:160px; height:120px; background:#fafafa; border-radius:10px; 
+            <div style="width:120px; height:100px; background:#fdfdfd; border-radius:8px; 
                         overflow:hidden; display:flex; align-items:center; justify-content:center; 
-                        box-shadow:0 1px 4px rgba(0,0,0,0.1);">
+                        border:1px solid #ddd; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
                 <img src="${thumbUrl}"
-                     onerror="this.onerror=null; this.src='https://ssl.gstatic.com/docs/doclist/images/mediatype/icon_1_generic_x128.png'; 
-                              this.style.objectFit='contain'; this.style.background='#f8f8f8';"
+                     alt="preview"
+                     onerror="this.onerror=null; 
+                              this.style.display='none'; 
+                              const div=document.createElement('div');
+                              div.innerHTML='FILE';
+                              div.style='font-size:12px;font-weight:600;color:#666;';
+                              div.style.textAlign='center';
+                              div.style.width='100%';
+                              div.style.height='100%';
+                              div.style.display='flex';
+                              div.style.alignItems='center';
+                              div.style.justifyContent='center';
+                              this.parentNode.appendChild(div);"
                      style="width:100%; height:100%; object-fit:cover; transition:transform 0.15s ease;">
             </div>
 
-            <div style="font-size:13px; margin-top:8px; max-width:150px; white-space:nowrap; 
-                        overflow:hidden; text-overflow:ellipsis; color:#222; font-weight:500;">
+            <div style="font-size:12.5px; margin-top:6px; max-width:120px; white-space:nowrap;
+                        overflow:hidden; text-overflow:ellipsis; color:#333; font-weight:500;
+                        line-height:1.1em;">
                 ${captionSafe}
             </div>
         </div>`;
 }
+
 
 
 
