@@ -948,7 +948,7 @@ function escapeHtml(unsafe) {
 
 
 
-
+/*
 function makeDriveThumbnailBlock(fileId, caption, url) {
     const link = `https://drive.google.com/file/d/${fileId}/view`;
     const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
@@ -964,6 +964,34 @@ function makeDriveThumbnailBlock(fileId, caption, url) {
                      onclick="openPreviewModal('${link}'); return false;">
             </div>
             <div style="font-size:13px; margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                ${captionSafe}
+            </div>
+        </div>`;
+}
+*/
+
+function makeDriveThumbnailBlock(fileId, caption, url) {
+    const link = `https://drive.google.com/file/d/${fileId}/view`;
+    const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
+    const captionSafe = escapeHtml(caption || " ");
+
+    return `
+        <div onclick="openPreviewModal('${link}'); return false;"
+             style="width:160px; flex:0 0 auto; margin:10px; cursor:pointer; 
+                    display:flex; flex-direction:column; align-items:center; 
+                    text-align:center; transition:transform 0.15s ease;">
+            
+            <div style="width:160px; height:120px; background:#fafafa; border-radius:10px; 
+                        overflow:hidden; display:flex; align-items:center; justify-content:center; 
+                        box-shadow:0 1px 4px rgba(0,0,0,0.1);">
+                <img src="${thumbUrl}"
+                     onerror="this.onerror=null; this.src='https://ssl.gstatic.com/docs/doclist/images/mediatype/icon_1_generic_x128.png'; 
+                              this.style.objectFit='contain'; this.style.background='#f8f8f8';"
+                     style="width:100%; height:100%; object-fit:cover; transition:transform 0.15s ease;">
+            </div>
+
+            <div style="font-size:13px; margin-top:8px; max-width:150px; white-space:nowrap; 
+                        overflow:hidden; text-overflow:ellipsis; color:#222; font-weight:500;">
                 ${captionSafe}
             </div>
         </div>`;
