@@ -1086,13 +1086,15 @@ function formatTextContent(text) {
         const galleryHtml = allFiles.map(f => makeDriveThumbnailBlock(f.id, f.caption, f.url)).join("");
 
         formattedLines.push(`
-        <div style="background:#f9f9f9; border:1px solid #ddd; border-radius:10px; padding:10px; margin:10px 0;">
-            <div style="display:flex; flex-wrap:wrap; gap:4px 6px; justify-content:flex-start;">
-                ${galleryHtml}
-            </div>
+              <div style="background:#f9f9f9; border:1px solid #ddd; border-radius:10px;
+                          padding:10px; margin:10px 0;">
+                <div style="display:flex; flex-wrap:wrap; justify-content:center;
+                            gap:6px 8px; padding:6px 0;">
+                  ${galleryHtml}
+                </div>
+              </div>
+            `);
 
-        </div>
-    `);
 
     }
 
