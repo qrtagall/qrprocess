@@ -954,47 +954,21 @@ function makeDriveThumbnailBlock(fileId, caption, url) {
     const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
     const captionSafe = escapeHtml(caption || " ");
 
-    // Detect type from caption or URL
-    const lowerCap = captionSafe.toLowerCase();
-    const isPdf = lowerCap.includes("pdf") || /\.pdf/i.test(url);
-    const isDoc = lowerCap.includes("doc") || /\.docx?/i.test(url);
-    const isVid = lowerCap.includes("mp4") || /\.mp4/i.test(url);
-    const isImg = !isPdf && !isDoc && !isVid;
-
-    let inner = "";
-
-    if (isImg) {
-        inner = `
-            <img src="${thumbUrl}" 
-                 style="width:100%; height:100px; object-fit:cover; border-radius:8px; 
-                        box-shadow:0 1px 3px rgba(0,0,0,0.15); cursor:pointer;"
-                 onclick="openPreviewModal('${link}'); return false;">`;
-    } else {
-        // Show a nice label placeholder if no real preview
-        const label = isPdf ? "📄 PDF" : isDoc ? "📘 DOC" : isVid ? "🎞 Video" : "📁 File";
-        const bg =
-            isPdf ? "#ffecec" :
-                isDoc ? "#e6f0ff" :
-                    isVid ? "#fff8e1" : "#f9f9f9";
-
-        inner = `
-            <div onclick="openPreviewModal('${link}'); return false;"
-                 style="width:100%; height:100px; border-radius:8px; 
-                        display:flex; align-items:center; justify-content:center; 
-                        background:${bg}; color:#333; font-weight:600; 
-                        border:1px solid #ccc; cursor:pointer;">
-                ${label}
-            </div>`;
-    }
-
     return `
         <div style="width:150px; margin:10px; text-align:center; flex:0 0 auto;">
-            ${inner}
+            <div style="position:relative;">
+                <img src="${thumbUrl}"
+                     onerror="this.onerror=null; this.outerHTML='<div onclick=&quot;openPreviewModal(\\'${link}\\')&quot; style=&quot;width:100%;height:100px;display:flex;align-items:center;justify-content:center;border:1px solid #ccc;border-radius:8px;background:#fafafa;color:#555;font-weight:600;cursor:pointer;&quot;>📄 FILE</div>'"
+                     style="width:100%; height:100px; object-fit:cover; border-radius:8px; 
+                            box-shadow:0 1px 3px rgba(0,0,0,0.15); cursor:pointer;"
+                     onclick="openPreviewModal('${link}'); return false;">
+            </div>
             <div style="font-size:13px; margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                 ${captionSafe}
             </div>
         </div>`;
 }
+
 
 
 function formatTextContent(text) {
