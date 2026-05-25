@@ -24,9 +24,13 @@ let sheetID = "";  // populated after fetch
 //let assetDataList = [];
 let globalRemoteAssetList = [];
 
-/** GDrive / REMOTE — deploy GS/QRTagAll_ClaimHandler.txt */
+/**
+ * All claims run on MultiSheet (anonymous-friendly).
+ * ClaimHandler / SelfClaim URLs require Google login when called from the browser — do not use for claim.
+ */
+const QRTAGALL_CLAIM_URL = AppScriptBaseUrl_New;
+/** @deprecated Use QRTAGALL_CLAIM_URL — kept for reference / save operations */
 const QRTAGALL_CLAIM_HANDLER_URL = AppScriptUserUrl;
-/** QRTagAll shared storage / LOCAL — deploy GS/SelfClaim.txt */
 const QRTAGALL_CLAIM_HANDLER_LOCAL_URL = AppScriptUserUrlLOCAL;
 
 /**
@@ -69,8 +73,8 @@ function requestClaimViaJsonp({ id, asset, email, storageType, claimScriptUrl })
         const timeout = setTimeout(() => {
             delete window[cb];
             if (script.parentNode) script.parentNode.removeChild(script);
-            reject(new Error("Claim request timed out"));
-        }, 45000);
+            reject(new Error("Claim request timed out (deploy QRTagAll_MultiSheet with initClaim + Anyone access)"));
+        }, 120000);
 
         window[cb] = function (data) {
             clearTimeout(timeout);
@@ -90,7 +94,7 @@ function requestClaimViaJsonp({ id, asset, email, storageType, claimScriptUrl })
             reject(new Error("Failed to reach claim script"));
         };
 
-        const base = claimScriptUrl || QRTAGALL_CLAIM_HANDLER_URL;
+        const base = claimScriptUrl || QRTAGALL_CLAIM_URL;
         script.src =
             `${base}?initClaim=${encodeURIComponent(id)}` +
             `&asset=${encodeURIComponent(asset || "Unnamed Asset")}` +
@@ -114,9 +118,14 @@ async function waitForClaimedAsset(id, maxAttempts = 10, delayMs = 2000) {
  * Full claim flow: call ClaimHandler, register master row, poll until fetch sees data.
  * @param {"LOCAL"|"REMOTE"} storageType
  */
-async function completeQRClaim({ id, assetName, email, storageType }) {
-    const claimScriptUrl =
-        storageType === "LOCAL" ? QRTAGALL_CLAIM_HANDLER_LOCAL_URL : QRTAGALL_CLAIM_HANDLER_URL;
+async function completeQRClaim({ id, assetName, email, storageType, onStatus }) {
+    const claimScriptUrl = QRTAGALL_CLAIM_URL;
+    const notify = (msg) => {
+        if (typeof onStatus === "function") onStatus(msg);
+        console.log("[claim]", msg);
+    };
+
+    notify("Contacting registry…");
 
     let claimResult = null;
     try {
@@ -127,8 +136,10 @@ async function completeQRClaim({ id, assetName, email, storageType }) {
             storageType,
             claimScriptUrl
         });
+        notify("Claim accepted, loading asset…");
     } catch (jsonpErr) {
         console.warn("JSONP claim failed, using beacon fallback:", jsonpErr);
+        notify("Retrying claim (fallback)…");
         const beaconUrl =
             `${claimScriptUrl}?initClaim=${encodeURIComponent(id)}` +
             `&asset=${encodeURIComponent(assetName || "Unnamed Asset")}` +
@@ -141,7 +152,8 @@ async function completeQRClaim({ id, assetName, email, storageType }) {
         await registerClaimOnMaster(id, email, claimResult.spreadsheetUrl, storageType);
     }
 
-    return waitForClaimedAsset(id);
+    notify("Waiting for asset data…");
+    return waitForClaimedAsset(id, 15, 2000);
 }
 
 

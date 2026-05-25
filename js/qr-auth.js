@@ -241,7 +241,11 @@ async function QRTagAllLoginNew() {
             id,
             assetName,
             email: userEmail,
-            storageType: "LOCAL"
+            storageType: "LOCAL",
+            onStatus: (msg) => {
+                if (spinner) spinner.style.display = "flex";
+                console.log("[QRTagAll claim]", msg);
+            }
         });
 
         spinner.style.display = "none";

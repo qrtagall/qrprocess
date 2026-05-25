@@ -80,7 +80,8 @@
           id,
           assetName: asset || "Unnamed Asset",
           email: email.toLowerCase(),
-          storageType: "REMOTE"
+          storageType: "REMOTE",
+          onStatus: (msg) => { statusEl.textContent = "⏳ " + msg; }
         });
 
         const finalRedirectUrl =
