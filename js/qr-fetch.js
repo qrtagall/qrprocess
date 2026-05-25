@@ -67,24 +67,16 @@ function clearStoredAccessTokens() {
     window.GToken = null;
 }
 
-/** True if token is valid for our OAuth client (GIS access tokens). */
+/** True if token can load userinfo (same check the server uses). */
 async function isAccessTokenValid(token) {
     if (!token) return false;
     try {
-        const res = await fetch(
-            "https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=" +
-                encodeURIComponent(token)
-        );
+        const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+            headers: { Authorization: `Bearer ${token}` },
+        });
         if (!res.ok) return false;
         const data = await res.json();
-        if (data.error) return false;
-        const clientId =
-            typeof QRTAGALL_OAUTH_CLIENT_ID !== "undefined"
-                ? QRTAGALL_OAUTH_CLIENT_ID
-                : "121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com";
-        const presenter = data.aud || data.azp || "";
-        if (presenter && presenter !== clientId) return false;
-        return true;
+        return !!data.email;
     } catch (e) {
         console.warn("isAccessTokenValid:", e);
         return false;
@@ -107,10 +99,20 @@ async function ensureAccessTokenForMutation() {
     throw new Error("Please sign in with Google first.");
 }
 
+/** Parameter name for Apps Script (avoid access_token — may be stripped on script.google.com redirects). */
+const QRTAGALL_AUTH_PARAM = "authToken";
+
+function appendAuthToUrlParams(urlParams, token) {
+    if (token) {
+        urlParams.set(QRTAGALL_AUTH_PARAM, token);
+    }
+    return urlParams;
+}
+
 function withAccessTokenQuery(params) {
     const token = getStoredAccessToken();
     const p = new URLSearchParams(params);
-    if (token) p.set("access_token", token);
+    appendAuthToUrlParams(p, token);
     return p.toString();
 }
 
@@ -222,6 +224,34 @@ async function invokeSaveRequest(targetUrl, callbackName) {
     }
 }
 
+/**
+ * POST save via form payload (same as file upload — works with Apps Script doPost).
+ * Token stays in payload JSON, not in redirect URL.
+ */
+async function invokeAppsScriptPostJson(payload) {
+    const url = getArtifactSaveScriptUrl();
+    const body = new URLSearchParams();
+    body.set("payload", JSON.stringify(payload));
+
+    const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: body.toString(),
+        cache: "no-store",
+        redirect: "follow",
+    });
+    const text = (await res.text()) || "";
+    const trimmed = text.trim();
+    if (trimmed.startsWith("{")) {
+        try {
+            return JSON.parse(trimmed);
+        } catch (e) {
+            console.warn("invokeAppsScriptPostJson parse:", e);
+        }
+    }
+    return { success: false, message: "Invalid server response" };
+}
+
 function parseRemoteSheetsPayload(data) {
     if (!data || !data.found || !data.data || !data.data.assets) {
         return [];
@@ -278,7 +308,7 @@ function buildInitClaimUrl({ id, asset, email, storageType, claimScriptUrl, call
         url += `&email=${encodeURIComponent(email)}`;
     }
     if (token) {
-        url += `&access_token=${encodeURIComponent(token)}`;
+        url += `&${QRTAGALL_AUTH_PARAM}=${encodeURIComponent(token)}`;
     }
     if (callbackName) {
         url += `&callback=${encodeURIComponent(callbackName)}`;
@@ -629,10 +659,62 @@ async function triggerLink_get(params, modalId = null) {
 
     let urlParams = new URLSearchParams(params);
     const mode = urlParams.get("mode");
+
+    if (mode === "updateCellsNew") {
+        const finishPostSave = async (result) => {
+            if (spinner) spinner.style.display = "none";
+            if (modalId) {
+                const modal = document.getElementById(modalId);
+                if (modal) modal.style.display = "none";
+            }
+            const qrId = getQueryParam("id");
+            if (result?.success) {
+                if (typeof notify === "function") notify("Artifact saved.", "success");
+                else alert("✅ Artifact info saved.");
+                await loadAndRenderAsset(qrId);
+                return;
+            }
+            const msg = result?.message || "Save rejected by server.";
+            if (typeof notify === "function") notify(msg, "error");
+            else alert("❌ " + msg);
+        };
+
+        try {
+            let token = await ensureAccessTokenForMutation();
+            const buildPayload = () => {
+                const payload = Object.fromEntries(urlParams.entries());
+                payload[QRTAGALL_AUTH_PARAM] = token;
+                payload.access_token = token;
+                return payload;
+            };
+
+            let result = await invokeAppsScriptPostJson(buildPayload());
+            const authMsg = result?.message || "";
+            if (
+                !result?.success &&
+                /authentication required/i.test(authMsg) &&
+                !window.__qrSaveAuthRetried
+            ) {
+                window.__qrSaveAuthRetried = true;
+                clearStoredAccessTokens();
+                token = await getAccessToken();
+                result = await invokeAppsScriptPostJson(buildPayload());
+                window.__qrSaveAuthRetried = false;
+            }
+            await finishPostSave(result);
+        } catch (authErr) {
+            if (spinner) spinner.style.display = "none";
+            const msg = authErr.message || "Sign in required.";
+            if (typeof notify === "function") notify(msg, "error");
+            else alert("❌ " + msg);
+        }
+        return;
+    }
+
     if (mode && QRTAGALL_MUTATING_MODES.has(mode)) {
         try {
             const token = await ensureAccessTokenForMutation();
-            urlParams.set("access_token", token);
+            appendAuthToUrlParams(urlParams, token);
             params = urlParams.toString();
             urlParams = new URLSearchParams(params);
         } catch (authErr) {
@@ -709,7 +791,7 @@ async function triggerLink_get(params, modalId = null) {
                 try {
                     clearStoredAccessTokens();
                     const freshToken = await getAccessToken();
-                    urlParams.set("access_token", freshToken);
+                    appendAuthToUrlParams(urlParams, freshToken);
                     params = urlParams.toString();
                     const retryResult = await invokeSaveRequest(buildSaveUrl(), callbackName);
                     window.__qrSaveAuthRetried = false;
@@ -807,6 +889,7 @@ async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null
 
     const payload = {
         ...Object.fromEntries(new URLSearchParams(params)),
+        [QRTAGALL_AUTH_PARAM]: token,
         access_token: token,
         rawfiledata,
         rawfilename: rawfilename || ""

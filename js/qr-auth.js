@@ -12,11 +12,12 @@ const QR_ACCESS_TOKEN_KEY = "qr_access_token";
 async function validateStoredAccessToken(token) {
     if (!token) return false;
     try {
-        const res = await fetch(
-            "https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=" +
-                encodeURIComponent(token)
-        );
-        return res.ok;
+        const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return false;
+        const data = await res.json();
+        return !!data.email;
     } catch (e) {
         return false;
     }
