@@ -34,6 +34,11 @@ const QRTAGALL_CLAIM_URL = AppScriptBaseUrl_New;
 const QRTAGALL_CLAIM_HANDLER_URL = AppScriptUserUrl;
 const QRTAGALL_CLAIM_HANDLER_LOCAL_URL = AppScriptUserUrlLOCAL;
 
+/** Saves (updateCellsNew) — always MultiSheet; ClaimHandler URL requires Google login for JSONP. */
+function getArtifactSaveScriptUrl() {
+    return AppScriptBaseUrl_New;
+}
+
 /**
  * Registers claim on the same master sheet that fetchAllRemoteSheets reads (AppScriptBaseUrl_New).
  */
@@ -447,90 +452,77 @@ async function triggerLink_get(params, modalId = null) {
     const spinner = document.getElementById("fullScreenSpinner");
     if (spinner) spinner.style.display = "flex";
 
-    // ✅ Step 2: Create JSONP callback
+    const urlParams = new URLSearchParams(params);
     const callbackName = `qrUpdateCallback_${Date.now()}`;
     const script = document.createElement("script");
+    let finished = false;
 
-    window[callbackName] = function (response) {
+    const cleanup = () => {
         delete window[callbackName];
-        document.body.removeChild(script);
-
-        //if (spinner) spinner.style.display = "none";
-
-        if (!response || !response.success) {
-            alert("❌ Failed to save artifact.");
-            return;
+        if (script.parentNode) script.parentNode.removeChild(script);
+        if (spinner) spinner.style.display = "none";
+        if (modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) modal.style.display = "none";
         }
-
-        alert("✅ Artifact info saved.");
-        //location.reload();
-        loadAndRenderAsset(getQueryParam("id")).then(() => {
-            console.log("✅ Asset re-rendered");
-        });
     };
 
-    // ✅ Step 3: Build URL
-    const urlParams = new URLSearchParams(params);
-    const storageType = urlParams.get("storageType") || "REMOTE";
-    const baseUrl = storageType === "LOCAL" ? AppScriptBaseUrl_New : AppScriptUserUrl;
+    const afterSave = (ok, message) => {
+        if (finished) return;
+        finished = true;
+        clearTimeout(timeoutId);
+        cleanup();
 
-    const separator = params.includes("?") ? "&" : "?";
-    const targetUrl = `${baseUrl}?${params}${separator}callback=${callbackName}`;
-
-    console.log("Final GET url>>>", targetUrl);
-    script.src = targetUrl;
-
-    // ❗ Error fallback
-    script.onerror = () => {
-       // if (spinner) spinner.style.display = "none";
-        console.warn("⚠️ Script load failed. Assuming optimistic success.");
-        delete window[callbackName];
-        document.body.removeChild(script);
-
-
-
-
-        //location.reload();
-        //cmedit
-        //await loadAndRenderAsset(getQueryParam("id");
-
-        loadAndRenderAsset(getQueryParam("id")).then(() => {
-            console.log("✅ Asset re-rendered");
-        });
-
-
-    };
-
-
-
-
-    // ⏳ Timeout fallback
-    setTimeout(() => {
-        delete window[callbackName];
-        //if (spinner) spinner.style.display = "none";
-        alert("✅ Saved (assumed). Reloading...");
-        //location.reload();
-
-        console.log("urlParams>>>",urlParams);
         const mode = urlParams.get("mode");
-
-        if (mode === "clone" || mode === "hardClone" || mode === "transfer")
-        {
-            //const paramMap = new URLSearchParams(params);
+        if (ok && (mode === "clone" || mode === "hardClone" || mode === "transfer")) {
             const newId = urlParams.get("newid");
             if (newId) {
                 window.location.href = `index.html?id=${encodeURIComponent(newId)}`;
-                return; // important: stop executing further fallback
+                return;
             }
         }
 
+        const qrId = getQueryParam("id");
+        if (ok) {
+            if (typeof notify === "function") {
+                notify(message || "Artifact saved.", "success");
+            } else {
+                alert("✅ " + (message || "Artifact info saved."));
+            }
+            loadAndRenderAsset(qrId).then(() => console.log("✅ Asset re-rendered"));
+        } else {
+            const errMsg = message || "Failed to save artifact.";
+            if (typeof notify === "function") {
+                notify(errMsg, "error");
+            } else {
+                alert("❌ " + errMsg);
+            }
+        }
+    };
 
-        loadAndRenderAsset(getQueryParam("id")).then(() => {
-            console.log("✅ Asset re-rendered");
-        });
-    }, 5000);
+    window[callbackName] = function (response) {
+        if (!response || !response.success) {
+            afterSave(false, response?.message || response?.error || "Save rejected by server.");
+            return;
+        }
+        afterSave(true);
+    };
 
-    // 🚀 Fire request
+    const baseUrl = getArtifactSaveScriptUrl();
+    const separator = params.includes("?") ? "&" : "?";
+    const targetUrl = `${baseUrl}?${params}${separator}callback=${callbackName}`;
+
+    console.log("Final GET save url>>>", targetUrl);
+    script.src = targetUrl;
+
+    script.onerror = () => {
+        afterSave(false, "Could not reach save service. Check Apps Script deployment (Anyone access).");
+    };
+
+    const timeoutId = setTimeout(() => {
+        afterSave(false, "Save timed out. If using GDrive storage, redeploy QRTagAll_MultiSheet.txt.");
+    }, 30000);
+
     document.body.appendChild(script);
 }
 
@@ -543,12 +535,7 @@ async function triggerLink_get(params, modalId = null) {
 async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null) {
 
 
-    const urlParams = new URLSearchParams(params);
-    const storageType = urlParams.get("storageType") || "REMOTE";
-
-    const baseUrl = storageType === "LOCAL" ? AppScriptBaseUrl_New : AppScriptUserUrl;
-
-    //const baseUrl = StorageType === "LOCAL" ? AppScriptBaseUrl_New : AppScriptUserUrl;
+    const baseUrl = getArtifactSaveScriptUrl();
 
     if (modalId) {
         const modal = document.getElementById(modalId);
@@ -618,34 +605,29 @@ async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null
         document.body.appendChild(form);
         let responseflag=false;
 
-        // Fallback timeout in case iframe load doesn't trigger
-        const timeout = setTimeout(() => {
-            //if (spinner) spinner.style.display = "none";
-            alert("✅ Artifact info submitting....you may try after few time.");
-            //location.reload();
-            //await loadAndRenderAsset(getQueryParam("id");
-
-                responseflag=true;
-            loadAndRenderAsset(getQueryParam("id")).then(() => {
-                console.log("✅ Asset re-rendered");
-            });
+        const finishPost = (ok, msg) => {
+            if (responseflag) return;
+            responseflag = true;
+            clearTimeout(timeout);
+            if (spinner) spinner.style.display = "none";
+            const qrId = getQueryParam("id");
+            if (ok) {
+                if (typeof notify === "function") notify(msg || "File saved.", "success");
+                else alert("✅ " + (msg || "Artifact info submitted."));
+                loadAndRenderAsset(qrId).then(() => console.log("✅ Asset re-rendered"));
+            } else {
+                if (typeof notify === "function") notify(msg || "Upload failed.", "error");
+                else alert("❌ " + (msg || "Failed to submit file."));
+            }
             resolve();
+        };
 
-        }, 15000);
+        const timeout = setTimeout(() => {
+            finishPost(false, "Upload timed out.");
+        }, 45000);
 
         iframe.onload = function () {
-            clearTimeout(timeout);
-            if(!responseflag) {
-                //if (spinner) spinner.style.display = "none";
-                alert("✅ Artifact info submitted.");
-                //location.reload();
-                //await loadAndRenderAsset(getQueryParam("id");
-
-                loadAndRenderAsset(getQueryParam("id")).then(() => {
-                    console.log("✅ Asset re-rendered");
-                });
-                resolve();
-            }
+            finishPost(true);
         };
 
         form.submit();
