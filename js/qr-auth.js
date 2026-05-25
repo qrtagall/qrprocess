@@ -236,31 +236,31 @@ async function QRTagAllLoginNew() {
 
     persistAuthSession(userEmail, token);
 
-    const claimUrl = `https://script.google.com/macros/s/AKfycbxoAVj1O4ZAaaDRCzp3-sNaS_v1XmwQbO7oCWWi8ZnauoidAaXj0E1zZGVnIcKEg8JfQQ/exec` +
-        `?initClaim=${encodeURIComponent(id)}` +
-        `&asset=${encodeURIComponent(assetName)}` +
-        `&email=${encodeURIComponent(userEmail)}`;
-
     try {
-        const img = new Image();
-        img.style.display = "none";
-        img.src = claimUrl;
-        document.body.appendChild(img);
+        const list = await completeQRClaim({
+            id,
+            assetName,
+            email: userEmail,
+            storageType: "LOCAL"
+        });
 
-        setTimeout(() => {
-            if (img && img.parentNode) img.parentNode.removeChild(img);
-        }, 4000);
+        spinner.style.display = "none";
 
-        setTimeout(() => {
-            spinner.style.display = "none";
+        if (list.length > 0) {
             alert("✅ QR Claimed!");
+            window.location.href =
+                `index.html?id=${encodeURIComponent(id)}&email=${encodeURIComponent(userEmail)}`;
+        } else {
+            alert(
+                "⚠️ Claim was sent but the asset is not visible yet.\n" +
+                "Wait a few seconds and refresh. If it persists, redeploy Apps Script (see GS folder)."
+            );
             location.reload();
-        }, 10000);
-
+        }
     } catch (e) {
         spinner.style.display = "none";
-        console.error("❌ Self-claim failed:", e);
-        alert("❌ Claim failed. Try again.");
+        console.error("❌ QRTagAll claim failed:", e);
+        alert(`❌ Claim failed: ${e.message || e}`);
     }
 }
 

@@ -185,9 +185,14 @@ async function renderAssetPanel(id) {
      spinner.style.display = "block";
 
 
-    const remoteList = await fetchAllRemoteSheets(id);
-    globalRemoteAssetList = remoteList;
+    let remoteList = await fetchAllRemoteSheets(id);
 
+    if ((remoteList?.length || 0) === 0 && getQueryParam("claimed") === "1") {
+        console.log("⏳ claimed=1 but no data yet — polling master registry…");
+        remoteList = await waitForClaimedAsset(id, 12, 2000);
+    }
+
+    globalRemoteAssetList = remoteList;
 
     if ((globalRemoteAssetList?.length || 0) === 0) {
         spinner.style.display = "none";

@@ -27,27 +27,25 @@
       margin-top: 10px;
     }
   </style>
+  <script src="./js/qr-utils.js"></script>
+  <script src="./js/qr-fetch.js"></script>
+  <script src="./js/qr-auth.js"></script>
 </head>
 <body>
-  <h2>🔐 Finalizing QR Claim (v-17)</h2>
-  <p class="info" id="status">Just a moment while we make something spectacular for you...</p>
+  <h2>🔐 Finalizing QR Claim</h2>
+  <p class="info" id="status">Just a moment while we register your QR...</p>
   <div class="spinner">⏳</div>
 
   <script>
     async function finalizeQRClaim() {
-      //const hashParams = new URLSearchParams(window.location.hash.slice(1));
-      //const accessToken = hashParams.get("access_token");
-      //const id = hashParams.get("state");
-      //const asset = hashParams.get("asset");
-      //const statusEl = document.getElementById("status");
-
       const hashParams = new URLSearchParams(window.location.hash.slice(1));
       const accessToken = hashParams.get("access_token");
-      const rawState = hashParams.get("state");  // This is a JSON string
-      
+      const rawState = hashParams.get("state");
+      const statusEl = document.getElementById("status");
+
       let id = null;
       let asset = null;
-      
+
       try {
         const stateObj = JSON.parse(rawState);
         id = stateObj.id;
@@ -55,21 +53,18 @@
       } catch (err) {
         console.error("❌ Failed to parse state:", err);
       }
-      
-      const statusEl = document.getElementById("status");
 
-       if (!accessToken) {
+      if (!accessToken) {
         statusEl.textContent = "❌ Missing access token.";
         return;
       }
-      
-      if ( !id) {
-        statusEl.textContent = "❌ MissingQR ID.";
+
+      if (!id) {
+        statusEl.textContent = "❌ Missing QR ID.";
         return;
       }
 
       try {
-        // ✅ Get user's email
         const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
@@ -77,36 +72,27 @@
         const email = userInfo.email;
 
         if (!email) throw new Error("No email received from Google.");
-        console.log("📧 Email fetched:", email);
 
-        // ✅ Store email + token locally before leaving this page
-        localStorage.setItem("qr_claimed_email", email.toLowerCase());
-        localStorage.setItem("qr_access_token", accessToken);
+        persistAuthSession(email, accessToken);
+        statusEl.textContent = "⏳ Registering claim (GDrive storage)…";
 
-        const backendUrl = `https://script.google.com/macros/s/AKfycbzlXNlTnCL9MWYfu6ejMBXfSzhQp0SPTjL5YzmKiXTG7-3Lk4GhuBi-A8gzgf05WJdo/exec`;
-        const finalRedirectUrl = `${window.location.origin}/?id=${encodeURIComponent(id)}&claimed=1&email=${encodeURIComponent(email)}`;
-        const claimUrl = `${backendUrl}?initClaim=${encodeURIComponent(id)}&asset=${encodeURIComponent(asset || "Unnamed Asset")}&email=${encodeURIComponent(email)}`;
+        const list = await completeQRClaim({
+          id,
+          assetName: asset || "Unnamed Asset",
+          email: email.toLowerCase(),
+          storageType: "REMOTE"
+        });
 
-        console.log("📡 Registering claim (beacon):", claimUrl);
-        statusEl.textContent = "✅ Claiming QR… redirecting shortly.";
+        const finalRedirectUrl =
+          `${window.location.origin}/?id=${encodeURIComponent(id)}&claimed=1&email=${encodeURIComponent(email)}`;
 
-        // Beacon claim so we stay on this origin long enough to keep localStorage
-        const img = new Image();
-        img.style.display = "none";
-        img.src = claimUrl;
-        document.body.appendChild(img);
-
-        setTimeout(() => {
-          if (img.parentNode) img.parentNode.removeChild(img);
-        }, 5000);
-
-        setTimeout(() => {
+        if (list.length > 0) {
+          statusEl.textContent = "✅ Claim complete. Redirecting…";
           window.location.replace(finalRedirectUrl);
-        }, 2500);
-  
-        
-        
-
+        } else {
+          statusEl.textContent = "⚠️ Claim sent; opening QR (may need refresh)…";
+          setTimeout(() => window.location.replace(finalRedirectUrl), 2000);
+        }
       } catch (err) {
         console.error("❌ Error:", err);
         statusEl.textContent = `❌ Error: ${err.message}`;

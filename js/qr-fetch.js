@@ -1,11 +1,21 @@
 // qr-fetch.js
+//
+// GS deployment map (source of truth: Cursor_code/GS/)
+// | GS file                  | Constant                 | Role                                      |
+// |--------------------------|--------------------------|-------------------------------------------|
+// | QRTagAll_MultiSheet.txt  | AppScriptBaseUrl_New     | Fetch assets, logClaim, clone, save       |
+// | QRTagall.txt             | AppScriptBaseUrl         | resolve URLs, legacy logClaim             |
+// | QRTagAll_ClaimHandler.txt| AppScriptUserUrl         | GDrive claim (initClaim, REMOTE)          |
+// | SelfClaim.txt            | AppScriptUserUrlLOCAL    | QRTagAll storage claim (LOCAL)            |
+// | QRTagAll_viewDrive.txt   | AppScriptDriveViewUserUrl| Drive thumbnails                          |
+// | QRTagAll_GenVerQR.txt    | (proxy iframe)           | QR ID verify generate                     |
 
-// Constants for your Apps Script endpoints
 const AppScriptBaseUrl = "https://script.google.com/macros/s/AKfycby4lP7EpKCXew58BDqgZn39yxg_FmT1VilLPP0pthiDuTV2k6KCoOrSvbkM8mEBJvLUww/exec";
 const AppScriptUserUrl = "https://script.google.com/macros/s/AKfycbzlXNlTnCL9MWYfu6ejMBXfSzhQp0SPTjL5YzmKiXTG7-3Lk4GhuBi-A8gzgf05WJdo/exec";
 const AppScriptUserUrlLOCAL = "https://script.google.com/macros/s/AKfycbxoAVj1O4ZAaaDRCzp3-sNaS_v1XmwQbO7oCWWi8ZnauoidAaXj0E1zZGVnIcKEg8JfQQ/exec";
 const AppScriptDriveViewUserUrl = "https://script.google.com/macros/s/AKfycbxrLNo-pwzQWtkfl6QBUeZDyxsAxBub-QQsW6jqMLxPz6KPV-62wb8igpgbp21FQhND/exec";
 
+/** Master registry + fetch — deploy GS/QRTagAll_MultiSheet.txt here */
 const AppScriptBaseUrl_New = "https://script.google.com/macros/s/AKfycbytl1ePW3PbGoAUlnwBtCvKruI5SMQUcYxypyK399mjau981sjwtyEcSzMkYSTlOLmY/exec";
 
 // Global to hold asset metadata
@@ -13,6 +23,126 @@ let sheetID = "";  // populated after fetch
 //let StorageType = ""; // "GDRIVE" or "LOCAL" //Defined at auth??
 //let assetDataList = [];
 let globalRemoteAssetList = [];
+
+/** GDrive / REMOTE — deploy GS/QRTagAll_ClaimHandler.txt */
+const QRTAGALL_CLAIM_HANDLER_URL = AppScriptUserUrl;
+/** QRTagAll shared storage / LOCAL — deploy GS/SelfClaim.txt */
+const QRTAGALL_CLAIM_HANDLER_LOCAL_URL = AppScriptUserUrlLOCAL;
+
+/**
+ * Registers claim on the same master sheet that fetchAllRemoteSheets reads (AppScriptBaseUrl_New).
+ */
+function registerClaimOnMaster(id, email, spreadsheetUrl, storageType) {
+    if (!id || !email || !spreadsheetUrl) {
+        return Promise.resolve(false);
+    }
+    const sheetPayload = `${email}||${spreadsheetUrl}||${storageType || "REMOTE"}`;
+    const url = `${AppScriptBaseUrl_New}?logClaim=1&id=${encodeURIComponent(id)}&sheet=${encodeURIComponent(sheetPayload)}`;
+
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve(true);
+        img.onerror = () => resolve(false);
+        img.src = url;
+        setTimeout(() => resolve(true), 4000);
+    });
+}
+
+function fireClaimBeacon(claimUrl) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve();
+        img.onerror = () => resolve();
+        img.src = claimUrl;
+        document.body.appendChild(img);
+        setTimeout(() => {
+            if (img.parentNode) img.parentNode.removeChild(img);
+            resolve();
+        }, 5000);
+    });
+}
+
+function requestClaimViaJsonp({ id, asset, email, storageType, claimScriptUrl }) {
+    return new Promise((resolve, reject) => {
+        const cb = `claimCallback_${Date.now()}`;
+        const script = document.createElement("script");
+        const timeout = setTimeout(() => {
+            delete window[cb];
+            if (script.parentNode) script.parentNode.removeChild(script);
+            reject(new Error("Claim request timed out"));
+        }, 45000);
+
+        window[cb] = function (data) {
+            clearTimeout(timeout);
+            delete window[cb];
+            if (script.parentNode) script.parentNode.removeChild(script);
+
+            if (!data || !data.success) {
+                reject(new Error(data?.message || data?.error || data?.details || "Claim failed"));
+                return;
+            }
+            resolve(data);
+        };
+
+        script.onerror = () => {
+            clearTimeout(timeout);
+            delete window[cb];
+            reject(new Error("Failed to reach claim script"));
+        };
+
+        const base = claimScriptUrl || QRTAGALL_CLAIM_HANDLER_URL;
+        script.src =
+            `${base}?initClaim=${encodeURIComponent(id)}` +
+            `&asset=${encodeURIComponent(asset || "Unnamed Asset")}` +
+            `&email=${encodeURIComponent(email)}` +
+            `&storageType=${encodeURIComponent(storageType || "REMOTE")}` +
+            `&callback=${cb}`;
+        document.body.appendChild(script);
+    });
+}
+
+async function waitForClaimedAsset(id, maxAttempts = 10, delayMs = 2000) {
+    for (let i = 0; i < maxAttempts; i++) {
+        const list = await fetchAllRemoteSheets(id);
+        if (list?.length > 0) return list;
+        await new Promise((r) => setTimeout(r, delayMs));
+    }
+    return [];
+}
+
+/**
+ * Full claim flow: call ClaimHandler, register master row, poll until fetch sees data.
+ * @param {"LOCAL"|"REMOTE"} storageType
+ */
+async function completeQRClaim({ id, assetName, email, storageType }) {
+    const claimScriptUrl =
+        storageType === "LOCAL" ? QRTAGALL_CLAIM_HANDLER_LOCAL_URL : QRTAGALL_CLAIM_HANDLER_URL;
+
+    let claimResult = null;
+    try {
+        claimResult = await requestClaimViaJsonp({
+            id,
+            asset: assetName,
+            email,
+            storageType,
+            claimScriptUrl
+        });
+    } catch (jsonpErr) {
+        console.warn("JSONP claim failed, using beacon fallback:", jsonpErr);
+        const beaconUrl =
+            `${claimScriptUrl}?initClaim=${encodeURIComponent(id)}` +
+            `&asset=${encodeURIComponent(assetName || "Unnamed Asset")}` +
+            `&email=${encodeURIComponent(email)}` +
+            `&storageType=${encodeURIComponent(storageType || "REMOTE")}`;
+        await fireClaimBeacon(beaconUrl);
+    }
+
+    if (claimResult?.spreadsheetUrl) {
+        await registerClaimOnMaster(id, email, claimResult.spreadsheetUrl, storageType);
+    }
+
+    return waitForClaimedAsset(id);
+}
 
 
 
