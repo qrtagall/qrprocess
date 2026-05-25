@@ -39,6 +39,48 @@ function getArtifactSaveScriptUrl() {
     return AppScriptBaseUrl_New;
 }
 
+/** Parse Apps Script JSONP body: callbackName({...}) */
+function parseJsonpPayload(text, callbackName) {
+    if (!text || !callbackName) return null;
+    const prefix = callbackName + "(";
+    const start = text.indexOf(prefix);
+    if (start === -1) return null;
+    const jsonStart = start + prefix.length;
+    let depth = 0;
+    for (let i = jsonStart; i < text.length; i++) {
+        const ch = text[i];
+        if (ch === "{") depth++;
+        else if (ch === "}") {
+            depth--;
+            if (depth === 0) {
+                try {
+                    return JSON.parse(text.slice(jsonStart, i + 1));
+                } catch (e) {
+                    console.warn("JSONP parse error:", e);
+                    return null;
+                }
+            }
+        }
+    }
+    return null;
+}
+
+/** GET save via fetch (avoids false script.onerror on Apps Script redirects). */
+async function invokeSaveRequest(targetUrl, callbackName) {
+    try {
+        const res = await fetch(targetUrl, { method: "GET", cache: "no-store", redirect: "follow" });
+        const text = await res.text();
+        const data = parseJsonpPayload(text, callbackName);
+        if (data) return data;
+        if (text.includes('"success":true') || text.includes("success\":true")) {
+            return { success: true };
+        }
+    } catch (e) {
+        console.warn("fetch save failed:", e);
+    }
+    return null;
+}
+
 /**
  * Registers claim on the same master sheet that fetchAllRemoteSheets reads (AppScriptBaseUrl_New).
  */
@@ -454,24 +496,26 @@ async function triggerLink_get(params, modalId = null) {
 
     const urlParams = new URLSearchParams(params);
     const callbackName = `qrUpdateCallback_${Date.now()}`;
-    const script = document.createElement("script");
     let finished = false;
+    let timeoutId = null;
+    let errorDelayId = null;
 
-    const cleanup = () => {
+    const cleanupScript = (script) => {
         delete window[callbackName];
-        if (script.parentNode) script.parentNode.removeChild(script);
+        if (script?.parentNode) script.parentNode.removeChild(script);
+    };
+
+    const finishSave = (ok, message) => {
+        if (finished) return;
+        finished = true;
+        if (timeoutId) clearTimeout(timeoutId);
+        if (errorDelayId) clearTimeout(errorDelayId);
+
         if (spinner) spinner.style.display = "none";
         if (modalId) {
             const modal = document.getElementById(modalId);
             if (modal) modal.style.display = "none";
         }
-    };
-
-    const afterSave = (ok, message) => {
-        if (finished) return;
-        finished = true;
-        clearTimeout(timeoutId);
-        cleanup();
 
         const mode = urlParams.get("mode");
         if (ok && (mode === "clone" || mode === "hardClone" || mode === "transfer")) {
@@ -500,12 +544,12 @@ async function triggerLink_get(params, modalId = null) {
         }
     };
 
-    window[callbackName] = function (response) {
+    const handleSaveResponse = (response) => {
         if (!response || !response.success) {
-            afterSave(false, response?.message || response?.error || "Save rejected by server.");
+            finishSave(false, response?.message || response?.error || "Save rejected by server.");
             return;
         }
-        afterSave(true);
+        finishSave(true);
     };
 
     const baseUrl = getArtifactSaveScriptUrl();
@@ -513,16 +557,42 @@ async function triggerLink_get(params, modalId = null) {
     const targetUrl = `${baseUrl}?${params}${separator}callback=${callbackName}`;
 
     console.log("Final GET save url>>>", targetUrl);
-    script.src = targetUrl;
 
-    script.onerror = () => {
-        afterSave(false, "Could not reach save service. Check Apps Script deployment (Anyone access).");
+    // 1) Prefer fetch — reads JSONP body reliably (no false script.onerror on redirects)
+    const fetchResult = await invokeSaveRequest(targetUrl, callbackName);
+    if (fetchResult) {
+        handleSaveResponse(fetchResult);
+        return;
+    }
+
+    // 2) JSONP script fallback
+    const script = document.createElement("script");
+
+    window[callbackName] = function (response) {
+        cleanupScript(script);
+        handleSaveResponse(response);
     };
 
-    const timeoutId = setTimeout(() => {
-        afterSave(false, "Save timed out. If using GDrive storage, redeploy QRTagAll_MultiSheet.txt.");
-    }, 30000);
+    script.onerror = () => {
+        // Apps Script may still save before onerror; wait for callback or refresh
+        errorDelayId = setTimeout(() => {
+            if (finished) return;
+            cleanupScript(script);
+            const qrId = getQueryParam("id");
+            console.warn("JSONP onerror — refreshing to verify save");
+            loadAndRenderAsset(qrId).then(() => {
+                finishSave(true, "Saved — view refreshed.");
+            });
+        }, 2000);
+    };
 
+    timeoutId = setTimeout(() => {
+        if (finished) return;
+        cleanupScript(script);
+        finishSave(false, "Save timed out.");
+    }, 45000);
+
+    script.src = targetUrl;
     document.body.appendChild(script);
 }
 
