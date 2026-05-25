@@ -146,37 +146,30 @@
                 <h3>🔁 Clone QR</h3>
             </div>
 
-            <p style="font-size: 14px; color: #333; font-weight: 500; margin-bottom: 14px; line-height: 1.0;">
-                This will copy the current QR info to new QR.
-            </p>
+            <p class="qrt-modal-body-text">This will copy the current QR info to a new QR.</p>
 
-            <p style="font-size: 12px; color: #444; margin-bottom: 10px; line-height: 0.8;">
-                <b>SOFT-CLONE:</b> Only links will be copied from the original QR.
-            </p>
+            <p class="qrt-modal-hint"><b>Soft clone:</b> Only links are copied from the original QR.</p>
+            <p class="qrt-modal-hint"><b>Deep clone:</b> The entire data is copied to the new QR.</p>
 
-            <p style="font-size: 12px; color: #444; margin-bottom: 20px; line-height: 0.8;">
-                <b>DEEP-CLONE:</b> The entire data will be copied to the new QR.
-            </p>
-
-            <p>Select clone type:</p>
-            <select id="cloneTypeSelect" style="width:100%; margin-bottom:15px;">
+            <label class="qrt-label">Clone type</label>
+            <select id="cloneTypeSelect" class="qrt-field">
                 <option value="Soft-Clone">Soft Clone (Only Link Info)</option>
                 <option value="Deep-Clone">Hard Clone (Full Copy)</option>
             </select>
 
-            <label>New QR ID:</label>
+            <label class="qrt-label">New QR ID</label>
 
             <div class="qrt-input-row">
                 <input type="text" id="newCloneIdInput" class="qrt-input" placeholder="Enter New QR ID">
-                <button type="button" class="qrt-btn qrt-btn-secondary" onclick="verifyQRIdFromInput('newCloneIdInput', 'qrVerifyStatus', false)">✅ Verify</button>
-                <button type="button" class="qrt-btn qrt-btn-secondary" onclick="openQRScanModal('newCloneIdInput', false)">📷 Scan</button>
+                <button type="button" class="qrt-btn qrt-btn-secondary qrt-btn-lg" onclick="verifyQRIdFromInput('newCloneIdInput', 'qrVerifyStatus', false)">✅ Verify</button>
+                <button type="button" class="qrt-btn qrt-btn-secondary qrt-btn-lg" onclick="openQRScanModal('newCloneIdInput', false)">📷 Scan</button>
             </div>
 
             <p id="qrVerifyStatus" class="qrt-status-line"></p>
 
             <div class="qrt-modal-actions">
-                <button type="button" class="qrt-btn qrt-btn-secondary" onclick="closeCloneModal()">Cancel</button>
-                <button type="button" class="qrt-btn qrt-btn-primary" onclick="confirmClone()">Clone</button>
+                <button type="button" class="qrt-btn qrt-btn-secondary qrt-btn-lg" onclick="closeCloneModal()">Cancel</button>
+                <button type="button" class="qrt-btn qrt-btn-primary qrt-btn-lg" onclick="confirmClone()">Clone</button>
             </div>
 
         </div>
@@ -186,30 +179,26 @@
 
     <!-- Add Linked QR Modal -->
     <div id="addQRModal" class="qrt-modal" style="display:none;">
-        <div class="qrt-modal-panel">
+        <div class="qrt-modal-panel qrt-modal-panel-artifact">
+            <div class="qrt-modal-header-stripe qrt-stripe-addqr">
+                <h3>➕ Add Linked QR</h3>
+            </div>
 
-            <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 16px;">➕ Add Linked QR</h3>
+            <p class="qrt-modal-body-text">This will link an <b>existing QR</b> to the current QR.</p>
+            <p class="qrt-modal-hint">The selected QR’s <b>primary link</b> will be added as a new link here.</p>
 
-            <p style="font-size: 14px; color: #333; font-weight: 500; margin-bottom: 14px; line-height: 1.0;">
-                This will link an <b>existing QR</b> to the current QR.
-            </p>
-
-            <p style="font-size: 12px; color: #444; margin-bottom: 10px; line-height: 0.8;">
-                The selected QR’s <b>Primary Link</b> will be added as a last new-link here.
-            </p>
-
-            <label>Existing QR ID:</label>
+            <label class="qrt-label">Existing QR ID</label>
             <div class="qrt-input-row">
                 <input type="text" id="newLinkedQRInput" class="qrt-input" placeholder="Enter Existing QR ID">
-                <button type="button" class="qrt-btn qrt-btn-secondary" onclick="verifyAddLinkedQR()">✅ Verify</button>
-                <button type="button" class="qrt-btn qrt-btn-secondary" onclick="openQRScanModal('newLinkedQRInput',true)">📷 Scan</button>
+                <button type="button" class="qrt-btn qrt-btn-secondary qrt-btn-lg" onclick="verifyAddLinkedQR()">✅ Verify</button>
+                <button type="button" class="qrt-btn qrt-btn-secondary qrt-btn-lg" onclick="openQRScanModal('newLinkedQRInput',true)">📷 Scan</button>
             </div>
 
             <p id="addQRVerifyStatus" class="qrt-status-line"></p>
 
             <div class="qrt-modal-actions">
-                <button type="button" class="qrt-btn qrt-btn-secondary" onclick="closeAddQRModal()">Cancel</button>
-                <button type="button" id="confirmAddQR" class="qrt-btn qrt-btn-primary" onclick="confirmAddLinkedQR()">Add</button>
+                <button type="button" class="qrt-btn qrt-btn-secondary qrt-btn-lg" onclick="closeAddQRModal()">Cancel</button>
+                <button type="button" id="confirmAddQR" class="qrt-btn qrt-btn-primary qrt-btn-lg" onclick="confirmAddLinkedQR()">Add</button>
             </div>
 
         </div>
@@ -220,20 +209,18 @@
 
 
     <!-- Scanner Modal -->
-    <div id="qrScanModal" style="
-    display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:#000000cc; z-index:10001; justify-content:center;
-    align-items:center; flex-direction:column; overflow:hidden; touch-action:manipulation;padding: 16px; ">
-        <div id="qrScanner" style="width: 100%; max-width: 500px; aspect-ratio: 1; background:#000; border-radius:10px;"></div>
+    <div id="qrScanModal" class="qrt-modal qrt-modal-scan" style="display:none;">
+        <p class="qrt-scan-title">📷 Scan QR code</p>
+        <div id="qrScanner" class="qrt-scan-viewport"></div>
 
-        <div style="margin-top:30px; display:flex; gap:16px;">
-            <button onclick="toggleFlashlight()" style="padding: 8px 16px;">💡 Flashlight</button>
-            <button onclick="closeQRScanModal()" style="padding: 8px 16px;">❌ Cancel</button>
+        <div class="qrt-scan-controls">
+            <button type="button" class="qrt-btn qrt-btn-secondary qrt-btn-lg" onclick="toggleFlashlight()">💡 Flashlight</button>
+            <button type="button" class="qrt-btn qrt-btn-primary qrt-btn-lg" onclick="closeQRScanModal()">❌ Cancel</button>
         </div>
-        <div style="margin-top: 10px;">
-            <label for="zoomSlider" style="color:white;">Zoom:</label>
+        <div class="qrt-scan-zoom">
+            <label for="zoomSlider" class="qrt-scan-zoom-label">Zoom</label>
             <input id="zoomSlider" type="range" min="1" max="10" step="0.1" value="1" onchange="setZoomLevel(this.value)">
         </div>
-
     </div>
 
 
@@ -254,12 +241,14 @@
 
 
 <div id="ownerConfirmModal" class="qrt-modal" style="display:none;">
-    <div class="qrt-modal-panel qrt-modal-panel-center">
-        <h3 class="qrt-modal-title-warn">⚠️ Only QR owner can edit!</h3>
-        <p>Are you the owner — would you like to log in?</p>
+    <div class="qrt-modal-panel qrt-modal-panel-center qrt-modal-panel-owner">
+        <div class="qrt-modal-header-stripe qrt-stripe-warn">
+            <h3>⚠️ Only QR owner can edit</h3>
+        </div>
+        <p class="qrt-modal-body-text">Are you the owner? Would you like to log in?</p>
         <div class="qrt-modal-actions qrt-modal-actions-center">
-            <button type="button" id="ownerLoginYes" class="qrt-btn qrt-btn-primary">Yes, Login</button>
-            <button type="button" id="ownerLoginCancel" class="qrt-btn qrt-btn-secondary">Cancel</button>
+            <button type="button" id="ownerLoginYes" class="qrt-btn qrt-btn-primary qrt-btn-lg">Yes, Login</button>
+            <button type="button" id="ownerLoginCancel" class="qrt-btn qrt-btn-secondary qrt-btn-lg">Cancel</button>
         </div>
     </div>
 </div>
@@ -371,8 +360,8 @@
         </div>
 
         <div class="qrt-modal-actions qrt-modal-actions-artifact">
-            <button type="button" class="qrt-btn qrt-btn-secondary" onclick="closeAddModal()">Cancel</button>
-            <button type="button" class="qrt-btn qrt-btn-primary" onclick="saveArtifact()">Save</button>
+            <button type="button" class="qrt-btn qrt-btn-secondary qrt-btn-lg" onclick="closeAddModal()">Cancel</button>
+            <button type="button" class="qrt-btn qrt-btn-primary qrt-btn-lg" onclick="saveArtifact()">Save</button>
         </div>
     </div>
 </div>
@@ -398,26 +387,29 @@
                 <code>&lt;EXPAND&gt;</code> – Auto-expand section
             </div>
         <div class="qrt-modal-actions">
-            <button type="button" class="qrt-btn qrt-btn-secondary" onclick="closeDescriptionModal()">Cancel</button>
-            <button type="button" class="qrt-btn qrt-btn-primary" onclick="saveDescription()">Save</button>
+            <button type="button" class="qrt-btn qrt-btn-secondary qrt-btn-lg" onclick="closeDescriptionModal()">Cancel</button>
+            <button type="button" class="qrt-btn qrt-btn-primary qrt-btn-lg" onclick="saveDescription()">Save</button>
         </div>
     </div>
 </div>
 
 <!-- 📤 Upload Modal -->
-<div id="uploadModal" class="qrt-modal" style="display:none; z-index:10001;">
+<div id="uploadModal" class="qrt-modal qrt-modal-upload-layer" style="display:none;">
     <div class="qrt-modal-panel qrt-modal-panel-center qrt-modal-panel-upload">
         <div class="qrt-modal-header-stripe qrt-stripe-upload">
             <h3>📤 Upload / Select File</h3>
         </div>
 
-        <input type="file" id="filePicker" class="qrt-file-picker">
+        <div class="qrt-upload-zone">
+            <p class="qrt-modal-body-text qrt-upload-hint">Choose a photo, PDF, audio, video, or other file.<br>Maximum size: <strong>10 MB</strong>.</p>
+            <label for="filePicker" id="filePickerLabel" class="qrt-choose-file-btn">📂 Choose File</label>
+            <input type="file" id="filePicker" class="qrt-file-picker-hidden" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt,.zip">
+            <div id="filePreview" class="qrt-file-preview-box is-empty" role="status" aria-live="polite">No file selected</div>
+        </div>
 
-        <div id="filePreview" class="qrt-file-status">No file selected</div>
-
-        <div class="qrt-modal-actions qrt-modal-actions-center">
-            <button type="button" class="qrt-btn qrt-btn-primary" onclick="simulateUseFile()">Use Selected</button>
-            <button type="button" class="qrt-btn qrt-btn-secondary" onclick="closeUploadModal()">Cancel</button>
+        <div class="qrt-modal-actions qrt-modal-actions-center qrt-modal-actions-upload">
+            <button type="button" class="qrt-btn qrt-btn-primary qrt-btn-lg" onclick="simulateUseFile()">✅ Use Selected File</button>
+            <button type="button" class="qrt-btn qrt-btn-secondary qrt-btn-lg" onclick="closeUploadModal()">Cancel</button>
         </div>
     </div>
 </div>
@@ -466,12 +458,14 @@
 
 <!-- 🌐 Global Confirm Modal -->
 <div id="globalConfirmModal" class="qrt-modal modal" style="display: none;">
-    <div class="qrt-modal-panel qrt-modal-panel-center modal-content">
-        <h3 id="globalConfirmTitle">⚠️ Confirm</h3>
-        <p id="globalConfirmMessage">Are you sure?</p>
+    <div class="qrt-modal-panel qrt-modal-panel-center modal-content qrt-modal-panel-confirm">
+        <div class="qrt-modal-header-stripe qrt-stripe-warn">
+            <h3 id="globalConfirmTitle">⚠️ Confirm</h3>
+        </div>
+        <p id="globalConfirmMessage" class="qrt-modal-body-text">Are you sure?</p>
         <div class="qrt-modal-actions qrt-modal-actions-center">
-            <button type="button" class="qrt-btn qrt-btn-primary" onclick="confirmDialogProceed()">Yes</button>
-            <button type="button" class="qrt-btn qrt-btn-secondary" onclick="confirmDialogCancel()">Cancel</button>
+            <button type="button" class="qrt-btn qrt-btn-primary qrt-btn-lg" onclick="confirmDialogProceed()">Yes</button>
+            <button type="button" class="qrt-btn qrt-btn-secondary qrt-btn-lg" onclick="confirmDialogCancel()">Cancel</button>
         </div>
     </div>
 </div>
@@ -481,11 +475,7 @@
 <div id="previewModal" class="qrt-modal qrt-modal-preview" style="display:none;">
     <div id="previewContent" class="qrt-preview-panel">
 
-        <button onclick="closePreviewModal()"
-                style="position:absolute; top:8px; right:8px; background:#000;
-                   color:#fff; border:none; border-radius:50%;
-                   width:28px; height:28px; font-size:16px;
-                   cursor:pointer; z-index:100;">✖</button>
+        <button type="button" class="qrt-preview-close" onclick="closePreviewModal()" aria-label="Close preview">✖</button>
 
         <div id="previewInner"
              style="width:100%; height:100%; display:flex;
@@ -498,7 +488,7 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "3.44";
+    const QRTagAll_Ver_ = "3.45";
 </script>
 
 

@@ -1479,14 +1479,57 @@ function saveDescription() {
 
 /****************************** ADD ARTIFACT **********************/
 
+function initUploadModalUi() {
+    const fp = document.getElementById("filePicker");
+    if (!fp || fp.dataset.bound === "1") return;
+    fp.dataset.bound = "1";
+    fp.addEventListener("change", updateFilePickerPreview);
+}
+
+function updateFilePickerPreview() {
+    const fileInput = document.getElementById("filePicker");
+    const preview = document.getElementById("filePreview");
+    const label = document.getElementById("filePickerLabel");
+    if (!preview) return;
+
+    const file = fileInput?.files?.[0];
+    preview.classList.remove("is-selected", "is-empty");
+    preview.replaceChildren();
+
+    if (!file) {
+        preview.textContent = "No file selected";
+        preview.classList.add("is-empty");
+        if (label) label.textContent = "📂 Choose File";
+        return;
+    }
+
+    const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+    const strong = document.createElement("strong");
+    strong.textContent = file.name;
+    const meta = document.createElement("span");
+    meta.className = "qrt-file-meta";
+    meta.textContent = `${sizeMb} MB${file.type ? " · " + file.type : ""}`;
+    preview.appendChild(strong);
+    preview.appendChild(document.createElement("br"));
+    preview.appendChild(meta);
+    preview.classList.add("is-selected");
+    if (label) label.textContent = "📂 Change File";
+}
+
 function openUploadModal() {
+    initUploadModalUi();
     document.getElementById("uploadModal").style.display = "flex";
-    document.getElementById("filePicker").value = "";
-    document.getElementById("filePreview").textContent = "";
+    const fileInput = document.getElementById("filePicker");
+    if (fileInput) fileInput.value = "";
+    updateFilePickerPreview();
 }
 
 function closeUploadModal() {
     document.getElementById("uploadModal").style.display = "none";
+}
+
+if (typeof document !== "undefined") {
+    document.addEventListener("DOMContentLoaded", initUploadModalUi);
 }
 
 /** Update file status line styling in Add Artifact modal */
@@ -1522,14 +1565,13 @@ function simulateUseFile() {
     const file = fileInput.files[0];
 
     if (!file) {
-        notify("❌ No file selected.", "error");
-        closeUploadModal();
+        notify("❌ Please choose a file first.", "error");
+        updateFilePickerPreview();
         return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-        notify("⚠️ File size exceeds 10MB. Please select a smaller file.", "error");
-        closeUploadModal();
+        notify("⚠️ File size exceeds 10 MB. Please select a smaller file.", "error");
         return;
     }
 
