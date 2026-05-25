@@ -2,14 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>QRTagAll – Claiming QR...</title>
+  <link rel="stylesheet" href="./css/style.css" />
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
       background: #f4f4f4;
       text-align: center;
-      padding-top: 80px;
+      padding: max(80px, 12vh) 16px max(24px, env(safe-area-inset-bottom));
       color: #333;
+      margin: 0;
+      box-sizing: border-box;
     }
     .spinner {
       margin-top: 20px;

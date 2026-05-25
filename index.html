@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>QRTagall | ID Verifier</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -74,22 +74,16 @@
         <p id="claimStatusLine" style="display:none; font-size:13px; color:#555; margin:8px auto; max-width:90%;"></p>
 
         <!-- 👇 Vertical layout with floating info button -->
-        <div id="claimButtonsWrap" style="position: relative; display: inline-block;">
+        <div id="claimButtonsWrap" class="claim-buttons-wrap">
 
             <button id="btnClaimQRTagAll" class="auth-button-box enabled" type="button" onclick="QRTagAllLoginNew()">
                 <img class="auth-logo" src="https://qrtagall.com/Logo_small_NT.png" alt="QRTagAll Logo">
                 <span>Data in QRTagAll</span>
             </button>
 
-            <!-- ℹ️ Info Button -->
-            <button onclick="toggleInfoPopup()" title="More Info"
-                    style="position: absolute; left: 110%; transform: translate(-50%, -50%); top: 50%; margin-top: -12px;
-             background: #eee; border: 1px solid #ccc; border-radius: 50%; width: 24px; height: 24px;text-align: center;
-             padding: 0; font-size: 14px; line-height: 1; cursor: pointer;">
-                ℹ️
-            </button>
+            <button type="button" class="claim-info-btn" onclick="toggleInfoPopup()" title="More Info" aria-label="Storage options info">ℹ️</button>
 
-            <button id="btnClaimGDrive" class="auth-button-box enabled" type="button" onclick="googleLoginNew()" style="margin-top:24px;">
+            <button id="btnClaimGDrive" class="auth-button-box enabled" type="button" onclick="googleLoginNew()">
                 <img class="auth-logo" src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo">
                 <span>Data in GDrive</span>
             </button>
@@ -117,7 +111,7 @@
 
 
 <!-- ✅ Then mainContent separately -->
-<div id="mainContent" style="display:none; padding:30px; max-width:600px; font-family:'Segoe UI', sans-serif;">
+<div id="mainContent" style="display:none;">
 
     <!-- Dynamically insert QR Div here later (after tagline) -->
 
@@ -129,7 +123,7 @@
 
     <!-- Action buttons visible only in editMode -->
     <!-- Action buttons visible only in editMode -->
-    <div id="editActions" style="display: none; justify-content: center; gap: 12px; margin-bottom: 25px;">
+    <div id="editActions" class="edit-actions-bar" style="display: none;">
         <button onclick="openCloneDialog()" style="background: lightcoral; color: darkblue; font-size: 12px; padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer;">
             🔁 Clone QR
         </button>
@@ -146,11 +140,8 @@
 
     <!-- Clone QR Modal -->
     <!-- Clone QR Modal -->
-    <div id="cloneQRModal"
-         style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-            background:#00000055; z-index:10000; justify-content:center; align-items:center;">
-        <div style="background:white; padding:20px; border-radius:10px; max-width:400px; width:90%;
-              box-shadow:0 0 10px rgba(0,0,0,0.2); position:relative;">
+    <div id="cloneQRModal" class="qrt-modal" style="display:none;">
+        <div class="qrt-modal-panel">
 
             <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 16px;">🔁 Clone QR</h3>
 
@@ -174,20 +165,17 @@
 
             <label>New QR ID:</label>
 
-            <div style="display:flex; gap:10px; align-items:center; margin-bottom:15px;">
-                <input type="text" id="newCloneIdInput" placeholder="Enter New QR ID" style="flex:1;">
-                <button onclick="verifyQRIdFromInput('newCloneIdInput', 'qrVerifyStatus', false)"
-                        style="padding:6px 12px; font-size:12px;">✅ Verify</button>
-                <button onclick="openQRScanModal('newCloneIdInput', false)"
-                        style="padding:6px 12px; font-size:12px;">📷 Scan</button>
+            <div class="qrt-input-row">
+                <input type="text" id="newCloneIdInput" class="qrt-input" placeholder="Enter New QR ID">
+                <button type="button" class="qrt-btn qrt-btn-secondary" onclick="verifyQRIdFromInput('newCloneIdInput', 'qrVerifyStatus', false)">✅ Verify</button>
+                <button type="button" class="qrt-btn qrt-btn-secondary" onclick="openQRScanModal('newCloneIdInput', false)">📷 Scan</button>
             </div>
 
-            <p id="qrVerifyStatus" style="font-size:13px; color:gray; margin:0;"></p>
+            <p id="qrVerifyStatus" class="qrt-status-line"></p>
 
-            <!-- ✅ Symmetric bottom buttons -->
-            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px;">
-                <button onclick="closeCloneModal()" style="padding:6px 12px; font-size:12px;">Cancel</button>
-                <button onclick="confirmClone()" style="padding:6px 12px; font-size:12px;">Clone</button>
+            <div class="qrt-modal-actions">
+                <button type="button" class="qrt-btn qrt-btn-secondary" onclick="closeCloneModal()">Cancel</button>
+                <button type="button" class="qrt-btn qrt-btn-primary" onclick="confirmClone()">Clone</button>
             </div>
 
         </div>
@@ -196,11 +184,8 @@
 
 
     <!-- Add Linked QR Modal -->
-    <div id="addQRModal"
-         style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-            background:#00000055; z-index:10000; justify-content:center; align-items:center;">
-        <div style="background:white; padding:20px; border-radius:10px; max-width:400px; width:90%;
-              box-shadow:0 0 10px rgba(0,0,0,0.2); position:relative;">
+    <div id="addQRModal" class="qrt-modal" style="display:none;">
+        <div class="qrt-modal-panel">
 
             <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 16px;">➕ Add Linked QR</h3>
 
@@ -213,18 +198,17 @@
             </p>
 
             <label>Existing QR ID:</label>
-            <div style="display:flex; gap:10px; align-items:center; margin-bottom:15px;">
-                <input type="text" id="newLinkedQRInput" placeholder="Enter Existing QR ID" style="flex:1;">
-                <button onclick="verifyAddLinkedQR()" style="padding:6px 12px; font-size:12px;">✅ Verify</button>
-                <button onclick="openQRScanModal('newLinkedQRInput',true)" style="padding:6px 12px; font-size:12px;">📷 Scan</button>
+            <div class="qrt-input-row">
+                <input type="text" id="newLinkedQRInput" class="qrt-input" placeholder="Enter Existing QR ID">
+                <button type="button" class="qrt-btn qrt-btn-secondary" onclick="verifyAddLinkedQR()">✅ Verify</button>
+                <button type="button" class="qrt-btn qrt-btn-secondary" onclick="openQRScanModal('newLinkedQRInput',true)">📷 Scan</button>
             </div>
 
-            <p id="addQRVerifyStatus" style="font-size:13px; color:gray; margin:0;"></p>
+            <p id="addQRVerifyStatus" class="qrt-status-line"></p>
 
-            <!-- ✅ Bottom buttons now styled same as Verify/Scan -->
-            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px;">
-                <button onclick="closeAddQRModal()" style="padding:6px 12px; font-size:12px;">Cancel</button>
-                <button id="confirmAddQR" onclick="confirmAddLinkedQR()" style="padding:6px 12px; font-size:12px;">Add</button>
+            <div class="qrt-modal-actions">
+                <button type="button" class="qrt-btn qrt-btn-secondary" onclick="closeAddQRModal()">Cancel</button>
+                <button type="button" id="confirmAddQR" class="qrt-btn qrt-btn-primary" onclick="confirmAddLinkedQR()">Add</button>
             </div>
 
         </div>
@@ -260,24 +244,22 @@
     </div>
     -->
 
-    <div style="display: flex; justify-content: center; gap: 12px; margin-top: 40px;">
-        <button id="editBtn" class="enabled" onclick="editAlert()" style="text-align: center; line-height: 1.2; border: none; border-radius: 10px;">
-            🔐 Log-in to Edit Detail-s
-        </button>
-        <button id="logoutBtn" class="enabled" onclick="handleLogout()" style="text-align: center; line-height: 1.2; border: none; border-radius: 10px; background: #f44336; display: none;">
-            🔓 Log Out
-        </button>
+    <div class="main-action-buttons">
+        <button id="editBtn" class="enabled qrt-btn-main" type="button" onclick="editAlert()">🔐 Log-in to Edit Detail-s</button>
+        <button id="logoutBtn" class="enabled qrt-btn-main qrt-btn-logout" type="button" onclick="handleLogout()" style="display: none;">🔓 Log Out</button>
     </div>
 
 </div>
 
 
-<div id="ownerConfirmModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:9999; align-items:center; justify-content:center;">
-    <div style="background:white; padding:30px 25px; border-radius:12px; width:90%; max-width:360px; text-align:center; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
-        <h3 style="margin-top:0; font-size:18px; color:#e67e22;">⚠️ Only QR owner can edit !</h3>
-        <p style="margin-bottom:25px; font-size:15px;">Are you the owner - would you like to log in?</p>
-        <button id="ownerLoginYes" style="background-color:#005aab; color:white; padding:10px 20px; border:none; border-radius:6px; font-weight:bold; margin-right:10px; cursor:pointer;">Yes, Login</button>
-        <button id="ownerLoginCancel" style="background-color:#ccc; color:#333; padding:10px 20px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Cancel</button>
+<div id="ownerConfirmModal" class="qrt-modal" style="display:none;">
+    <div class="qrt-modal-panel qrt-modal-panel-center">
+        <h3 class="qrt-modal-title-warn">⚠️ Only QR owner can edit!</h3>
+        <p>Are you the owner — would you like to log in?</p>
+        <div class="qrt-modal-actions qrt-modal-actions-center">
+            <button type="button" id="ownerLoginYes" class="qrt-btn qrt-btn-primary">Yes, Login</button>
+            <button type="button" id="ownerLoginCancel" class="qrt-btn qrt-btn-secondary">Cancel</button>
+        </div>
     </div>
 </div>
 
@@ -287,7 +269,7 @@
 	  position: fixed;
 	  top: 0; left: 0; right: 0; bottom: 0;
 	  background: rgba(255, 255, 255, 0.7);
-	  z-index: 9999;
+	  z-index: 10003;
 	  justify-content: center;
 	  align-items: center;
 	">
@@ -342,8 +324,8 @@
 
 <!-- 🔲 Modal for Adding Artifact -->
 <!-- 🔲 Modal for Adding Artifact -->
-<div id="addArtifactModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:#00000055; z-index:10000; justify-content:center; align-items:center;">
-    <div style="background:white; padding:20px; border-radius:10px; max-width:500px; width:90%; box-shadow:0 0 10px rgba(0,0,0,0.2); position:relative;">
+<div id="addArtifactModal" class="qrt-modal" style="display:none;">
+    <div class="qrt-modal-panel qrt-modal-panel-wide">
         <h3 id="addArtifactModalTitle">➕ Add Artifact Info</h3>
 
         <!-- ✅ Basic Info Section -->
@@ -387,9 +369,9 @@
             <p id="uploadedFileLink" style="font-size:14px; color:gray;"></p>
         </div>
 
-        <div style="text-align:right; margin-top:15px;">
-            <button onclick="closeAddModal()">Cancel</button>
-            <button onclick="saveArtifact()">Save</button>
+        <div class="qrt-modal-actions">
+            <button type="button" class="qrt-btn qrt-btn-secondary" onclick="closeAddModal()">Cancel</button>
+            <button type="button" class="qrt-btn qrt-btn-primary" onclick="saveArtifact()">Save</button>
         </div>
     </div>
 </div>
@@ -397,8 +379,8 @@
 
 
 <!-- ✏️ Modal to Edit Description -->
-<div id="editDescriptionModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:#00000055; z-index:10000; justify-content:center; align-items:center;">
-    <div style="background:white; padding:20px; border-radius:10px; max-width:400px; width:90%; box-shadow:0 0 10px rgba(0,0,0,0.2); position:relative;">
+<div id="editDescriptionModal" class="qrt-modal" style="display:none;">
+    <div class="qrt-modal-panel">
         <h4>📝 Edit Description</h4>
         <textarea id="newDescription" style="width:100%; height:80px; margin-bottom:10px;"></textarea>
 
@@ -415,26 +397,25 @@
                 <code>&lt;COL:X&gt;</code> – Soft color shade X (1-100)<br>
                 <code>&lt;EXPAND&gt;</code> – Auto-expand section
             </div>
-        <div style="text-align:right;">
-
-            <button onclick="closeDescriptionModal()">Cancel</button>
-            <button onclick="saveDescription()">Save</button>
+        <div class="qrt-modal-actions">
+            <button type="button" class="qrt-btn qrt-btn-secondary" onclick="closeDescriptionModal()">Cancel</button>
+            <button type="button" class="qrt-btn qrt-btn-primary" onclick="saveDescription()">Save</button>
         </div>
     </div>
 </div>
 
 <!-- 📤 Upload Modal -->
-<div id="uploadModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:10001; align-items:center; justify-content:center;">
-    <div style="background:white; padding:30px; border-radius:12px; width:90%; max-width:400px; text-align:center; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+<div id="uploadModal" class="qrt-modal" style="display:none; z-index:10001;">
+    <div class="qrt-modal-panel qrt-modal-panel-center">
         <h3 style="margin-top:0;">📤 Upload / Select File</h3>
 
         <input type="file" id="filePicker" style="margin:20px 0; width:100%;"><br>
 
         <div id="filePreview" style="margin:10px 0; font-size:14px; color:gray;">No file selected</div>
 
-        <div style="margin-top:20px;">
-            <button onclick="simulateUseFile()">Use Selected</button>
-            <button onclick="closeUploadModal()">Cancel</button>
+        <div class="qrt-modal-actions qrt-modal-actions-center">
+            <button type="button" class="qrt-btn qrt-btn-primary" onclick="simulateUseFile()">Use Selected</button>
+            <button type="button" class="qrt-btn qrt-btn-secondary" onclick="closeUploadModal()">Cancel</button>
         </div>
     </div>
 </div>
@@ -482,25 +463,21 @@
 "></div>
 
 <!-- 🌐 Global Confirm Modal -->
-<div id="globalConfirmModal" class="modal" style="display: none;">
-    <div class="modal-content">
+<div id="globalConfirmModal" class="qrt-modal modal" style="display: none;">
+    <div class="qrt-modal-panel qrt-modal-panel-center modal-content">
         <h3 id="globalConfirmTitle">⚠️ Confirm</h3>
         <p id="globalConfirmMessage">Are you sure?</p>
-        <button onclick="confirmDialogProceed()">Yes</button>
-        <button onclick="confirmDialogCancel()">Cancel</button>
+        <div class="qrt-modal-actions qrt-modal-actions-center">
+            <button type="button" class="qrt-btn qrt-btn-primary" onclick="confirmDialogProceed()">Yes</button>
+            <button type="button" class="qrt-btn qrt-btn-secondary" onclick="confirmDialogCancel()">Cancel</button>
+        </div>
     </div>
 </div>
 
 
 <!-- 🌐 Universal Preview Modal -->
-<div id="previewModal"
-     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-            background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
-    <div id="previewContent"
-         style="position:relative; background:#fff; border-radius:10px;
-              max-width:90%; max-height:90%; overflow:hidden;
-              box-shadow:0 0 10px rgba(0,0,0,0.5); padding:0;
-              display:flex; flex-direction:column; justify-content:center; align-items:center;">
+<div id="previewModal" class="qrt-modal qrt-modal-preview" style="display:none;">
+    <div id="previewContent" class="qrt-preview-panel">
 
         <button onclick="closePreviewModal()"
                 style="position:absolute; top:8px; right:8px; background:#000;
@@ -519,7 +496,7 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "3.42";
+    const QRTagAll_Ver_ = "3.43";
 </script>
 
 
