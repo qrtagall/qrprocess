@@ -17,6 +17,7 @@ let globalRemoteAssetList = [];
 
 
 
+
 //V4
 /*
 function renderThumbnailGrid(thumbnails) {
@@ -298,7 +299,8 @@ function triggerLink_get(params, modalId = null) {
 */
 
 
-let GToken = null;
+let GToken = localStorage.getItem("qr_access_token") || null;
+window.GToken = GToken;
 
 async function triggerLink_get(params, modalId = null) {
     const spinner = document.getElementById("fullScreenSpinner");
@@ -514,16 +516,51 @@ async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null
 
 
 
-// 🔐 Get new OAuth token
+// 🔐 Reuse stored token or request a new one (same OAuth client as claim/edit redirects)
 async function getAccessToken() {
+    const stored = localStorage.getItem("qr_access_token");
+    if (stored) {
+        try {
+            const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+                headers: { Authorization: `Bearer ${stored}` }
+            });
+            if (res.ok) {
+                GToken = stored;
+                window.GToken = stored;
+                return stored;
+            }
+        } catch (e) {
+            console.warn("Stored token invalid, requesting new token:", e);
+            localStorage.removeItem("qr_access_token");
+        }
+    }
+
+    const clientId =
+        typeof QRTAGALL_OAUTH_CLIENT_ID !== "undefined"
+            ? QRTAGALL_OAUTH_CLIENT_ID
+            : "121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com";
+
     return new Promise((resolve, reject) => {
         const client = google.accounts.oauth2.initTokenClient({
-            client_id: '121290253918-cae49r46mo3r9f9rhd7rq6ao9ae69jjv.apps.googleusercontent.com',
-            scope: 'https://www.googleapis.com/auth/userinfo.email',
-            prompt: 'consent',
+            client_id: clientId,
+            scope: "https://www.googleapis.com/auth/userinfo.email",
+            prompt: "",
             callback: (resp) => {
-                if (resp.access_token) resolve(resp.access_token);
-                else reject("❌ OAuth token failed");
+                if (resp.access_token) {
+                    localStorage.setItem("qr_access_token", resp.access_token);
+                    GToken = resp.access_token;
+                    window.GToken = resp.access_token;
+                    if (typeof fetchUserEmail === "function") {
+                        fetchUserEmail(resp.access_token).then((email) => {
+                            if (email && typeof persistAuthSession === "function") {
+                                persistAuthSession(email, resp.access_token);
+                            }
+                        });
+                    }
+                    resolve(resp.access_token);
+                } else {
+                    reject("❌ OAuth token failed");
+                }
             }
         });
         client.requestAccessToken();

@@ -2116,7 +2116,7 @@ async function saveArtifactInfo({
 
     if (isInsert) query.append("insert", "1");
     if (isDelete) query.append("delete", "1");
-    query.append("email", encodeURIComponent(userEmail));
+    if (userEmail) query.set("email", userEmail);
 
     const queryString = query.toString();
 

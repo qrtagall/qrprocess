@@ -2,8 +2,61 @@
 
 // Globals (must match the main script expectations)
 
+/** Web OAuth client used for redirect + GIS token flows (must match Google Cloud console). */
+const QRTAGALL_OAUTH_CLIENT_ID =
+    "121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com";
 
-let sessionEmail = localStorage.getItem("qr_claimed_email") || "";
+const QR_CLAIMED_EMAIL_KEY = "qr_claimed_email";
+const QR_ACCESS_TOKEN_KEY = "qr_access_token";
+
+/** Reload sessionEmail / GToken from storage (call after OAuth redirect or claim). */
+function syncSessionFromStorage() {
+    const stored = localStorage.getItem(QR_CLAIMED_EMAIL_KEY) || "";
+    sessionEmail = stored ? stored.toLowerCase() : "";
+
+    const storedToken = localStorage.getItem(QR_ACCESS_TOKEN_KEY);
+    if (storedToken) {
+        window.GToken = storedToken;
+    }
+
+    const logoutBtn = document.getElementById("logoutBtn");
+    if (logoutBtn) {
+        logoutBtn.style.display = sessionEmail ? "block" : "none";
+    }
+
+    if (sessionEmail) {
+        console.log("📧 Session synced:", sessionEmail);
+    }
+}
+
+/** Persist email (+ optional OAuth access token) after successful Google sign-in. */
+function persistAuthSession(email, accessToken) {
+    if (!email) return;
+    const normalized = String(email).toLowerCase();
+    localStorage.setItem(QR_CLAIMED_EMAIL_KEY, normalized);
+    sessionEmail = normalized;
+
+    if (accessToken) {
+        localStorage.setItem(QR_ACCESS_TOKEN_KEY, accessToken);
+        window.GToken = accessToken;
+    }
+
+    const logoutBtn = document.getElementById("logoutBtn");
+    if (logoutBtn) logoutBtn.style.display = "block";
+}
+
+/** Apply ?email= from claim redirect when localStorage was cleared (e.g. Safari ITP). */
+function initSessionFromUrlAndStorage() {
+    const emailFromUrl = getQueryParam("email");
+    if (emailFromUrl) {
+        persistAuthSession(decodeURIComponent(emailFromUrl), null);
+    } else {
+        syncSessionFromStorage();
+    }
+}
+
+let sessionEmail = localStorage.getItem(QR_CLAIMED_EMAIL_KEY) || "";
+if (sessionEmail) sessionEmail = sessionEmail.toLowerCase();
 //let sessionEmail = "dev.chandan2002x@gmail.com";//localStorage.getItem("qr_claimed_email");
 //let sessionEmail = "chandan2002x@gmail.com";//localStorage.getItem("qr_claimed_email");
 
@@ -39,7 +92,9 @@ function cleandata()
     sessionEmail = "";
 
     // 🗑️ Clear stored email/token
-    localStorage.removeItem("qr_claimed_email");
+    localStorage.removeItem(QR_CLAIMED_EMAIL_KEY);
+    localStorage.removeItem(QR_ACCESS_TOKEN_KEY);
+    sessionStorage.removeItem(QR_CLAIMED_EMAIL_KEY);
     sessionStorage.removeItem("qr_claimed_email");
 
     // 🔒 Attempt to revoke Gmail token (optional but good hygiene)
@@ -86,7 +141,7 @@ function googleLoginNew() {
     const id = getQueryParam("id");
     let assetName = document.getElementById("assetNameInput")?.value.trim() || "Unnamed Asset";
 
-    const clientId = "121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com";
+    const clientId = QRTAGALL_OAUTH_CLIENT_ID;
     const redirectUri = "https://process.qrtagall.com/oauth-claim-callback.html";
     const scope = "https://www.googleapis.com/auth/userinfo.email";
 
@@ -105,7 +160,7 @@ function googleLoginNew() {
 
 // 🔐 Login for Edit access (separate redirect)
 function googleLoginForEdit(id) {
-    const clientId = "121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com";
+    const clientId = QRTAGALL_OAUTH_CLIENT_ID;
     const redirectUri = "https://process.qrtagall.com/oauth-callback.html";
     const scope = "https://www.googleapis.com/auth/userinfo.email";
 
@@ -158,7 +213,7 @@ async function QRTagAllLoginNew() {
 
     const token = await new Promise((resolve, reject) => {
         const client = google.accounts.oauth2.initTokenClient({
-            client_id: '121290253918-cae49r46mo3r9f9rhd7rq6ao9ae69jjv.apps.googleusercontent.com',
+            client_id: QRTAGALL_OAUTH_CLIENT_ID,
             scope: 'https://www.googleapis.com/auth/userinfo.email',
             prompt: 'consent',
             callback: (response) => {
@@ -178,6 +233,8 @@ async function QRTagAllLoginNew() {
         alert("❌ Could not retrieve your email address.");
         return;
     }
+
+    persistAuthSession(userEmail, token);
 
     const claimUrl = `https://script.google.com/macros/s/AKfycbxoAVj1O4ZAaaDRCzp3-sNaS_v1XmwQbO7oCWWi8ZnauoidAaXj0E1zZGVnIcKEg8JfQQ/exec` +
         `?initClaim=${encodeURIComponent(id)}` +
@@ -207,6 +264,12 @@ async function QRTagAllLoginNew() {
     }
 }
 
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initSessionFromUrlAndStorage);
+} else {
+    initSessionFromUrlAndStorage();
+}
 
 /*
 async function fetchUserEmail(token) {

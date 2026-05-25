@@ -21,12 +21,12 @@
         const email = profile.email;
         console.log("✅ Logged in as:", email);
 
-        // Store email
-        localStorage.setItem("qr_claimed_email", email);
-         localStorage.setItem("qr_access_token", token);
+        // Store email + token (owner edit flow)
+        localStorage.setItem("qr_claimed_email", (email || "").toLowerCase());
+        localStorage.setItem("qr_access_token", token);
 
         // Redirect back to main page
-        const redirectUrl = `https://process.qrtagall.com/?id=${encodeURIComponent(state)}&verified=1`;
+        const redirectUrl = `https://process.qrtagall.com/?id=${encodeURIComponent(state)}&verified=1&email=${encodeURIComponent(email || "")}`;
         window.location.href = redirectUrl;
       })
       .catch(err => {
