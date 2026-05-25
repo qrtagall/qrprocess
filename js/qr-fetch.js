@@ -65,20 +65,111 @@ function parseJsonpPayload(text, callbackName) {
     return null;
 }
 
+/**
+ * Call Apps Script web app (GET + JSONP callback).
+ * Uses fetch first — works on mobile Firefox where <script> JSONP often fails.
+ */
+async function invokeAppsScriptGet(url, callbackName, options = {}) {
+    const { timeoutMs = 90000, softFail = false } = options;
+
+    try {
+        const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+        const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
+
+        const res = await fetch(url, {
+            method: "GET",
+            cache: "no-store",
+            redirect: "follow",
+            signal: controller?.signal,
+        });
+        if (timer) clearTimeout(timer);
+
+        const text = await res.text();
+        let data = parseJsonpPayload(text, callbackName);
+        if (!data) {
+            const trimmed = (text || "").trim();
+            if (trimmed.startsWith("{")) {
+                try {
+                    data = JSON.parse(trimmed);
+                } catch (e) { /* ignore */ }
+            }
+        }
+        if (data) return data;
+    } catch (e) {
+        console.warn("invokeAppsScriptGet fetch:", e);
+    }
+
+    return new Promise((resolve, reject) => {
+        let done = false;
+        const script = document.createElement("script");
+        let timeoutId = null;
+        let errorDelayId = null;
+
+        const finish = (data, err) => {
+            if (done) return;
+            done = true;
+            if (timeoutId) clearTimeout(timeoutId);
+            if (errorDelayId) clearTimeout(errorDelayId);
+            delete window[callbackName];
+            if (script.parentNode) script.parentNode.removeChild(script);
+            if (err) {
+                if (softFail) resolve(null);
+                else reject(err);
+            } else {
+                resolve(data);
+            }
+        };
+
+        window[callbackName] = (data) => finish(data, null);
+
+        script.onerror = () => {
+            errorDelayId = setTimeout(() => {
+                finish(null, new Error("Failed to load JSONP script."));
+            }, 2500);
+        };
+
+        timeoutId = setTimeout(() => {
+            finish(null, new Error("Apps Script request timed out."));
+        }, timeoutMs);
+
+        script.src = url;
+        document.body.appendChild(script);
+    });
+}
+
 /** GET save via fetch (avoids false script.onerror on Apps Script redirects). */
 async function invokeSaveRequest(targetUrl, callbackName) {
     try {
-        const res = await fetch(targetUrl, { method: "GET", cache: "no-store", redirect: "follow" });
-        const text = await res.text();
-        const data = parseJsonpPayload(text, callbackName);
-        if (data) return data;
-        if (text.includes('"success":true') || text.includes("success\":true")) {
-            return { success: true };
-        }
+        return await invokeAppsScriptGet(targetUrl, callbackName, { timeoutMs: 60000, softFail: true });
     } catch (e) {
-        console.warn("fetch save failed:", e);
+        console.warn("invokeSaveRequest:", e);
+        return null;
     }
-    return null;
+}
+
+function parseRemoteSheetsPayload(data) {
+    if (!data || !data.found || !data.data || !data.data.assets) {
+        return [];
+    }
+
+    const groupedAssets = data.data.assets;
+    const result = [];
+
+    for (const [linkKey, linkBlock] of Object.entries(groupedAssets)) {
+        if (!linkBlock || !Array.isArray(linkBlock.items)) continue;
+
+        const meta = linkBlock.metadata || {};
+        result.push({
+            email: meta.source || "unknown@user",
+            storageType: meta.storageType || "UNKNOWN",
+            linkId: meta.id || "",
+            description: meta.description || "",
+            sheetId: meta.sheetId || "",
+            assets: linkBlock.items,
+        });
+    }
+
+    return result;
 }
 
 /**
@@ -114,43 +205,32 @@ function fireClaimBeacon(claimUrl) {
     });
 }
 
-function requestClaimViaJsonp({ id, asset, email, storageType, claimScriptUrl }) {
-    return new Promise((resolve, reject) => {
-        const cb = `claimCallback_${Date.now()}`;
-        const script = document.createElement("script");
-        const timeout = setTimeout(() => {
-            delete window[cb];
-            if (script.parentNode) script.parentNode.removeChild(script);
-            reject(new Error("Claim request timed out (deploy QRTagAll_MultiSheet with initClaim + Anyone access)"));
-        }, 120000);
+function buildInitClaimUrl({ id, asset, email, storageType, claimScriptUrl, callbackName }) {
+    const base = claimScriptUrl || QRTAGALL_CLAIM_URL;
+    let url =
+        `${base}?initClaim=${encodeURIComponent(id)}` +
+        `&asset=${encodeURIComponent(asset || "Unnamed Asset")}` +
+        `&email=${encodeURIComponent(email)}` +
+        `&storageType=${encodeURIComponent(storageType || "REMOTE")}`;
+    if (callbackName) {
+        url += `&callback=${encodeURIComponent(callbackName)}`;
+    }
+    return url;
+}
 
-        window[cb] = function (data) {
-            clearTimeout(timeout);
-            delete window[cb];
-            if (script.parentNode) script.parentNode.removeChild(script);
+async function requestClaimViaJsonp({ id, asset, email, storageType, claimScriptUrl }) {
+    const cb = `claimCallback_${Date.now()}`;
+    const url = buildInitClaimUrl({ id, asset, email, storageType, claimScriptUrl, callbackName: cb });
 
-            if (!data || !data.success) {
-                reject(new Error(data?.message || data?.error || data?.details || "Claim failed"));
-                return;
-            }
-            resolve(data);
-        };
+    const data = await invokeAppsScriptGet(url, cb, { timeoutMs: 120000, softFail: true });
 
-        script.onerror = () => {
-            clearTimeout(timeout);
-            delete window[cb];
-            reject(new Error("Failed to reach claim script"));
-        };
-
-        const base = claimScriptUrl || QRTAGALL_CLAIM_URL;
-        script.src =
-            `${base}?initClaim=${encodeURIComponent(id)}` +
-            `&asset=${encodeURIComponent(asset || "Unnamed Asset")}` +
-            `&email=${encodeURIComponent(email)}` +
-            `&storageType=${encodeURIComponent(storageType || "REMOTE")}` +
-            `&callback=${cb}`;
-        document.body.appendChild(script);
-    });
+    if (!data) {
+        throw new Error("Could not reach claim service. Check network or try again.");
+    }
+    if (!data.success) {
+        throw new Error(data?.message || data?.error || data?.details || "Claim failed");
+    }
+    return data;
 }
 
 async function waitForClaimedAsset(id, maxAttempts = 10, delayMs = 2000) {
@@ -186,13 +266,15 @@ async function completeQRClaim({ id, assetName, email, storageType, onStatus }) 
         });
         notify("Claim accepted, loading asset…");
     } catch (jsonpErr) {
-        console.warn("JSONP claim failed, using beacon fallback:", jsonpErr);
+        console.warn("Claim request failed, using beacon fallback:", jsonpErr);
         notify("Retrying claim (fallback)…");
-        const beaconUrl =
-            `${claimScriptUrl}?initClaim=${encodeURIComponent(id)}` +
-            `&asset=${encodeURIComponent(assetName || "Unnamed Asset")}` +
-            `&email=${encodeURIComponent(email)}` +
-            `&storageType=${encodeURIComponent(storageType || "REMOTE")}`;
+        const beaconUrl = buildInitClaimUrl({
+            id,
+            asset: assetName,
+            email,
+            storageType,
+            claimScriptUrl,
+        });
         await fireClaimBeacon(beaconUrl);
     }
 
@@ -352,54 +434,23 @@ function renderThumbnailGrid(thumbnails) {
 
 
 async function fetchAllRemoteSheets(id) {
-    return new Promise((resolve, reject) => {
-        const callbackName = "handleQRTagAllResponse_" + Date.now();
+    const callbackName = "handleQRTagAllResponse_" + Date.now();
+    const url = `${AppScriptBaseUrl_New}?id=${encodeURIComponent(id)}&callback=${callbackName}`;
 
-
-
-        window[callbackName] = function (data) {
-            delete window[callbackName];
-            document.body.removeChild(script);
-
-            if (!data || !data.found || !data.data || !data.data.assets) {
-                console.warn("❌ Invalid or missing data in JSONP response");
-                resolve([]);
-                return;
-            }
-
-            const groupedAssets = data.data.assets;
-            const result = [];
-
-           // console.log(">>> Raw response data:", data);
-
-            for (const [linkKey, linkBlock] of Object.entries(groupedAssets)) {
-                if (!linkBlock || !Array.isArray(linkBlock.items)) continue;
-
-                const meta = linkBlock.metadata || {};
-                result.push({
-                    email: meta.source || "unknown@user",
-                    storageType: meta.storageType || "UNKNOWN",
-                    linkId: meta.id || "",
-                    description: meta.description || "",
-                    sheetId: meta.sheetId || "",
-                    assets: linkBlock.items
-                });
-            }
-
-           // console.log("✅ Parsed Remote Result:", result);
-            resolve(result);
-        };
-
-
-        const script = document.createElement("script");
-        script.src = `${AppScriptBaseUrl_New}?id=${encodeURIComponent(id)}&callback=${callbackName}`;
-        script.onerror = () => {
-            delete window[callbackName];
-            reject(new Error("❌ Failed to load JSONP script."));
-        };
-
-        document.body.appendChild(script);
-    });
+    try {
+        const data = await invokeAppsScriptGet(url, callbackName, {
+            timeoutMs: 60000,
+            softFail: true,
+        });
+        if (!data) {
+            console.warn("fetchAllRemoteSheets: no response");
+            return [];
+        }
+        return parseRemoteSheetsPayload(data);
+    } catch (e) {
+        console.warn("fetchAllRemoteSheets:", e);
+        return [];
+    }
 }
 
 
@@ -558,42 +609,18 @@ async function triggerLink_get(params, modalId = null) {
 
     console.log("Final GET save url>>>", targetUrl);
 
-    // 1) Prefer fetch — reads JSONP body reliably (no false script.onerror on redirects)
-    const fetchResult = await invokeSaveRequest(targetUrl, callbackName);
-    if (fetchResult) {
-        handleSaveResponse(fetchResult);
-        return;
+    try {
+        const fetchResult = await invokeSaveRequest(targetUrl, callbackName);
+        if (fetchResult) {
+            handleSaveResponse(fetchResult);
+            return;
+        }
+        finishSave(false, "Could not reach save service.");
+    } catch (e) {
+        const qrId = getQueryParam("id");
+        console.warn("Save error, refreshing:", e);
+        loadAndRenderAsset(qrId).then(() => finishSave(true, "Saved — view refreshed."));
     }
-
-    // 2) JSONP script fallback
-    const script = document.createElement("script");
-
-    window[callbackName] = function (response) {
-        cleanupScript(script);
-        handleSaveResponse(response);
-    };
-
-    script.onerror = () => {
-        // Apps Script may still save before onerror; wait for callback or refresh
-        errorDelayId = setTimeout(() => {
-            if (finished) return;
-            cleanupScript(script);
-            const qrId = getQueryParam("id");
-            console.warn("JSONP onerror — refreshing to verify save");
-            loadAndRenderAsset(qrId).then(() => {
-                finishSave(true, "Saved — view refreshed.");
-            });
-        }, 2000);
-    };
-
-    timeoutId = setTimeout(() => {
-        if (finished) return;
-        cleanupScript(script);
-        finishSave(false, "Save timed out.");
-    }, 45000);
-
-    script.src = targetUrl;
-    document.body.appendChild(script);
 }
 
 
