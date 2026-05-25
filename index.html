@@ -141,9 +141,10 @@
     <!-- Clone QR Modal -->
     <!-- Clone QR Modal -->
     <div id="cloneQRModal" class="qrt-modal" style="display:none;">
-        <div class="qrt-modal-panel">
-
-            <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 16px;">🔁 Clone QR</h3>
+        <div class="qrt-modal-panel qrt-modal-panel-artifact">
+            <div class="qrt-modal-header-stripe qrt-stripe-clone">
+                <h3>🔁 Clone QR</h3>
+            </div>
 
             <p style="font-size: 14px; color: #333; font-weight: 500; margin-bottom: 14px; line-height: 1.0;">
                 This will copy the current QR info to new QR.
@@ -325,19 +326,19 @@
 <!-- 🔲 Modal for Adding Artifact -->
 <!-- 🔲 Modal for Adding Artifact -->
 <div id="addArtifactModal" class="qrt-modal" style="display:none;">
-    <div class="qrt-modal-panel qrt-modal-panel-wide">
-        <h3 id="addArtifactModalTitle">➕ Add Artifact Info</h3>
-
-        <!-- ✅ Basic Info Section -->
-        <div id="basicInfoSection">
-            <label>Basic Info:</label><br>
-            <input type="text" id="artifactBasicInfo" style="width:100%; margin-bottom:10px;"><br>
+    <div class="qrt-modal-panel qrt-modal-panel-wide qrt-modal-panel-artifact">
+        <div class="qrt-modal-header-stripe qrt-stripe-artifact">
+            <h3 id="addArtifactModalTitle">➕ Add Artifact Info</h3>
         </div>
 
-        <!-- ✅ File Type Section -->
-        <div id="fileTypeSection">
-            <label>File Type:</label><br>
-            <select id="artifactFileType" style="width:100%; margin-bottom:10px;" onchange="onFileTypeChange()">
+        <div id="basicInfoSection" class="qrt-form-section qrt-section-basic">
+            <label class="qrt-label">Basic Info</label>
+            <input type="text" id="artifactBasicInfo" class="qrt-field" placeholder="Title or short description">
+        </div>
+
+        <div id="fileTypeSection" class="qrt-form-section qrt-section-type">
+            <label class="qrt-label">File Type</label>
+            <select id="artifactFileType" class="qrt-field" onchange="onFileTypeChange()">
                 <option value="TEXT">TEXT</option>
                 <option value="IMAGEFILE">IMAGEFILE</option>
                 <option value="PDFFILE">PDFFILE</option>
@@ -345,31 +346,31 @@
                 <option value="VIDEOFILE">VIDEOFILE</option>
                 <option value="DRIVE">GDRIVE</option>
                 <option value="OTHERS">OTHERFILE</option>
-            </select><br>
+            </select>
         </div>
 
-        <!-- ✅ Visibility Section -->
-        <div id="visibilitySection">
-            <label>Visibility:</label><br>
-            <select id="artifactOption" style="width:100%; margin-bottom:10px;">
+        <div id="visibilitySection" class="qrt-form-section qrt-section-visibility">
+            <label class="qrt-label">Visibility</label>
+            <select id="artifactOption" class="qrt-field">
                 <option value="VIEW">VIEW</option>
                 <option value="NOVIEW">NOVIEW</option>
-            </select><br>
+            </select>
         </div>
 
-        <!-- ✅ Text Info Section -->
-        <div id="textInputSection">
-            <label>Text Info:</label><br>
-            <textarea id="artifactTextInfo" style="width:100%; height:80px;"></textarea>
+        <div id="textInputSection" class="qrt-form-section qrt-section-text">
+            <label class="qrt-label">Text Info</label>
+            <textarea id="artifactTextInfo" class="qrt-field qrt-textarea" placeholder="Enter your text here..."></textarea>
         </div>
 
-        <!-- ✅ File Upload Section -->
-        <div id="fileUploadSection" style="display:none;">
-            <button onclick="openUploadModal()" style="margin-bottom:10px;">📁 Select/Upload File</button>
-            <p id="uploadedFileLink" style="font-size:14px; color:gray;"></p>
+        <div id="fileUploadSection" class="qrt-form-section qrt-section-upload" style="display:none;">
+            <label class="qrt-label">Attach a file</label>
+            <button type="button" id="btnSelectUploadFile" class="qrt-upload-btn" onclick="openUploadModal()">
+                📁 Select / Upload File
+            </button>
+            <p id="uploadedFileLink" class="qrt-file-status" aria-live="polite">No file selected yet.</p>
         </div>
 
-        <div class="qrt-modal-actions">
+        <div class="qrt-modal-actions qrt-modal-actions-artifact">
             <button type="button" class="qrt-btn qrt-btn-secondary" onclick="closeAddModal()">Cancel</button>
             <button type="button" class="qrt-btn qrt-btn-primary" onclick="saveArtifact()">Save</button>
         </div>
@@ -380,17 +381,16 @@
 
 <!-- ✏️ Modal to Edit Description -->
 <div id="editDescriptionModal" class="qrt-modal" style="display:none;">
-    <div class="qrt-modal-panel">
-        <h4>📝 Edit Description</h4>
-        <textarea id="newDescription" style="width:100%; height:80px; margin-bottom:10px;"></textarea>
+    <div class="qrt-modal-panel qrt-modal-panel-desc">
+        <div class="qrt-modal-header-stripe qrt-stripe-desc">
+            <h4>📝 Edit Description</h4>
+        </div>
+        <div class="qrt-form-section qrt-section-text">
+            <label class="qrt-label">Description</label>
+            <textarea id="newDescription" class="qrt-field qrt-textarea"></textarea>
+        </div>
 
-            <div id="descTagInfo" style="
-              font-size: 12px;
-              color: #666;
-              margin-top: 4px;
-              text-align: left;
-              line-height: 1.4;
-            ">
+            <div id="descTagInfo" class="qrt-hint-box">
                 💡 Supported Tags:<br>
                 <code>&lt;NOID&gt;</code> – Hide ID in banner<br>
                 <code>&lt;NOOWNER&gt;</code> – Hide owner info<br>
@@ -406,12 +406,14 @@
 
 <!-- 📤 Upload Modal -->
 <div id="uploadModal" class="qrt-modal" style="display:none; z-index:10001;">
-    <div class="qrt-modal-panel qrt-modal-panel-center">
-        <h3 style="margin-top:0;">📤 Upload / Select File</h3>
+    <div class="qrt-modal-panel qrt-modal-panel-center qrt-modal-panel-upload">
+        <div class="qrt-modal-header-stripe qrt-stripe-upload">
+            <h3>📤 Upload / Select File</h3>
+        </div>
 
-        <input type="file" id="filePicker" style="margin:20px 0; width:100%;"><br>
+        <input type="file" id="filePicker" class="qrt-file-picker">
 
-        <div id="filePreview" style="margin:10px 0; font-size:14px; color:gray;">No file selected</div>
+        <div id="filePreview" class="qrt-file-status">No file selected</div>
 
         <div class="qrt-modal-actions qrt-modal-actions-center">
             <button type="button" class="qrt-btn qrt-btn-primary" onclick="simulateUseFile()">Use Selected</button>
@@ -496,7 +498,7 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "3.43";
+    const QRTagAll_Ver_ = "3.44";
 </script>
 
 
