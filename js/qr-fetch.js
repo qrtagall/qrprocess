@@ -682,7 +682,11 @@ async function triggerLink_get(params, modalId = null) {
                 await loadAndRenderAsset(qrId);
                 return;
             }
-            const msg = result?.message || "Save rejected by server.";
+            let msg = result?.message || "Save rejected by server.";
+            if (result?.hint) {
+                console.warn("Save hint:", result.hint);
+                msg += " (" + result.hint + ")";
+            }
             if (typeof notify === "function") notify(msg, "error");
             else alert("❌ " + msg);
         };
