@@ -2072,8 +2072,6 @@ async function saveArtifactInfo({
 
 
     const sheetId = targetLinkId ;//|| sheetID;
-    const secretKey = "optional_static_key";
-
 
     console.log("id>>>>",id, targetLinkId, sheetId);
 
@@ -2108,7 +2106,6 @@ async function saveArtifactInfo({
         sheetId,
         range: startCell,
         values: finalValues,
-        secret_key: secretKey,
         storageType: storageType
     });
 

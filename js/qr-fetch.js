@@ -39,6 +39,49 @@ function getArtifactSaveScriptUrl() {
     return AppScriptBaseUrl_New;
 }
 
+const QRTAGALL_MUTATING_MODES = new Set([
+    "updateCellsNew",
+    "updateCells",
+    "clone",
+    "hardClone",
+    "transfer",
+    "softDelete",
+    "hardDelete",
+    "addLinkedQR",
+]);
+
+const QRTAGALL_PROXY_ORIGIN = "https://proxy.qrtagall.com";
+
+function getStoredAccessToken() {
+    return (
+        window.GToken ||
+        localStorage.getItem("qr_access_token") ||
+        sessionStorage.getItem("qr_access_token") ||
+        ""
+    );
+}
+
+/** Attach OAuth token to mutating API calls (required by MultiSheet P0 auth). */
+async function ensureAccessTokenForMutation() {
+    let token = getStoredAccessToken();
+    if (token) {
+        window.GToken = token;
+        return token;
+    }
+    if (typeof getAccessToken === "function") {
+        token = await getAccessToken();
+        if (token) return token;
+    }
+    throw new Error("Please sign in with Google first.");
+}
+
+function withAccessTokenQuery(params) {
+    const token = getStoredAccessToken();
+    const p = new URLSearchParams(params);
+    if (token) p.set("access_token", token);
+    return p.toString();
+}
+
 /** Parse Apps Script JSONP body: callbackName({...}) */
 function parseJsonpPayload(text, callbackName) {
     if (!text || !callbackName) return null;
@@ -172,23 +215,10 @@ function parseRemoteSheetsPayload(data) {
     return result;
 }
 
-/**
- * Registers claim on the same master sheet that fetchAllRemoteSheets reads (AppScriptBaseUrl_New).
- */
-function registerClaimOnMaster(id, email, spreadsheetUrl, storageType) {
-    if (!id || !email || !spreadsheetUrl) {
-        return Promise.resolve(false);
-    }
-    const sheetPayload = `${email}||${spreadsheetUrl}||${storageType || "REMOTE"}`;
-    const url = `${AppScriptBaseUrl_New}?logClaim=1&id=${encodeURIComponent(id)}&sheet=${encodeURIComponent(sheetPayload)}`;
-
-    return new Promise((resolve) => {
-        const img = new Image();
-        img.onload = () => resolve(true);
-        img.onerror = () => resolve(false);
-        img.src = url;
-        setTimeout(() => resolve(true), 4000);
-    });
+/** @deprecated Public logClaim is disabled server-side; initClaim registers the master row. */
+function registerClaimOnMaster() {
+    console.warn("registerClaimOnMaster is disabled (use initClaim only).");
+    return Promise.resolve(false);
 }
 
 function fireClaimBeacon(claimUrl) {
@@ -205,13 +235,19 @@ function fireClaimBeacon(claimUrl) {
     });
 }
 
-function buildInitClaimUrl({ id, asset, email, storageType, claimScriptUrl, callbackName }) {
+function buildInitClaimUrl({ id, asset, email, storageType, claimScriptUrl, callbackName, accessToken }) {
     const base = claimScriptUrl || QRTAGALL_CLAIM_URL;
+    const token = accessToken || getStoredAccessToken();
     let url =
         `${base}?initClaim=${encodeURIComponent(id)}` +
         `&asset=${encodeURIComponent(asset || "Unnamed Asset")}` +
-        `&email=${encodeURIComponent(email)}` +
         `&storageType=${encodeURIComponent(storageType || "REMOTE")}`;
+    if (email) {
+        url += `&email=${encodeURIComponent(email)}`;
+    }
+    if (token) {
+        url += `&access_token=${encodeURIComponent(token)}`;
+    }
     if (callbackName) {
         url += `&callback=${encodeURIComponent(callbackName)}`;
     }
@@ -219,8 +255,17 @@ function buildInitClaimUrl({ id, asset, email, storageType, claimScriptUrl, call
 }
 
 async function requestClaimViaJsonp({ id, asset, email, storageType, claimScriptUrl }) {
+    const accessToken = await ensureAccessTokenForMutation();
     const cb = `claimCallback_${Date.now()}`;
-    const url = buildInitClaimUrl({ id, asset, email, storageType, claimScriptUrl, callbackName: cb });
+    const url = buildInitClaimUrl({
+        id,
+        asset,
+        email,
+        storageType,
+        claimScriptUrl,
+        callbackName: cb,
+        accessToken,
+    });
 
     const data = await invokeAppsScriptGet(url, cb, { timeoutMs: 120000, softFail: true });
 
@@ -266,6 +311,10 @@ async function completeQRClaim({ id, assetName, email, storageType, onStatus }) 
         });
         notify("Claim accepted, loading asset…");
     } catch (jsonpErr) {
+        const token = getStoredAccessToken();
+        if (!token) {
+            throw jsonpErr;
+        }
         console.warn("Claim request failed, using beacon fallback:", jsonpErr);
         notify("Retrying claim (fallback)…");
         const beaconUrl = buildInitClaimUrl({
@@ -274,6 +323,7 @@ async function completeQRClaim({ id, assetName, email, storageType, onStatus }) 
             email,
             storageType,
             claimScriptUrl,
+            accessToken: token,
         });
         await fireClaimBeacon(beaconUrl);
     }
@@ -545,7 +595,23 @@ async function triggerLink_get(params, modalId = null) {
     const spinner = document.getElementById("fullScreenSpinner");
     if (spinner) spinner.style.display = "flex";
 
-    const urlParams = new URLSearchParams(params);
+    let urlParams = new URLSearchParams(params);
+    const mode = urlParams.get("mode");
+    if (mode && QRTAGALL_MUTATING_MODES.has(mode)) {
+        try {
+            const token = await ensureAccessTokenForMutation();
+            urlParams.set("access_token", token);
+            params = urlParams.toString();
+            urlParams = new URLSearchParams(params);
+        } catch (authErr) {
+            if (spinner) spinner.style.display = "none";
+            const msg = authErr.message || "Sign in required.";
+            if (typeof notify === "function") notify(msg, "error");
+            else alert("❌ " + msg);
+            return;
+        }
+    }
+
     const callbackName = `qrUpdateCallback_${Date.now()}`;
     let finished = false;
     let timeoutId = null;
@@ -671,8 +737,20 @@ async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null
         return;
     }
 
+    let token = getStoredAccessToken();
+    if (!token) {
+        try {
+            token = await ensureAccessTokenForMutation();
+        } catch (authErr) {
+            if (spinner) spinner.style.display = "none";
+            alert(authErr.message || "Please sign in with Google first.");
+            return;
+        }
+    }
+
     const payload = {
         ...Object.fromEntries(new URLSearchParams(params)),
+        access_token: token,
         rawfiledata,
         rawfilename: rawfilename || ""
     };
@@ -738,7 +816,9 @@ async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null
 
 // 🔐 Reuse stored token or request a new one (same OAuth client as claim/edit redirects)
 async function getAccessToken() {
-    const stored = localStorage.getItem("qr_access_token");
+    const stored =
+        localStorage.getItem("qr_access_token") ||
+        sessionStorage.getItem("qr_access_token");
     if (stored) {
         try {
             const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
@@ -752,6 +832,7 @@ async function getAccessToken() {
         } catch (e) {
             console.warn("Stored token invalid, requesting new token:", e);
             localStorage.removeItem("qr_access_token");
+            sessionStorage.removeItem("qr_access_token");
         }
     }
 
@@ -813,7 +894,7 @@ async function fetchThumbnails(folderId) {
 
 /************************ Clone, copy, transfer, delete **************************/
 
-function triggerOperation(mode, customParams = {}) {
+async function triggerOperation(mode, customParams = {}) {
     const id = getQueryParam("id");  // from URL
     const storageType = "LOCAL"; // default fallback; adjust if dynamic needed
 
@@ -824,7 +905,7 @@ function triggerOperation(mode, customParams = {}) {
         storageType
     });
 
-    triggerLink_get(params.toString());
+    await triggerLink_get(params.toString());
 }
 
 
@@ -900,6 +981,7 @@ function Verifyidx(idToVerify) {
         }
 
         const handler = (event) => {
+            if (event.origin !== QRTAGALL_PROXY_ORIGIN) return;
             if (!event.data || (event.data.type !== "qr_verified" && event.data.type !== "qr_error")) return;
 
             window.removeEventListener("message", handler);
@@ -914,10 +996,13 @@ function Verifyidx(idToVerify) {
         window.addEventListener("message", handler);
 
         console.log("📤 Sending verify message via proxyFrame");
-        targetFrame.postMessage({
-            type: "verify",
-            id: idToVerify
-        }, "*");
+        targetFrame.postMessage(
+            {
+                type: "verify",
+                id: idToVerify
+            },
+            QRTAGALL_PROXY_ORIGIN
+        );
     });
 }
 

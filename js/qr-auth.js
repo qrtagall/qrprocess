@@ -11,10 +11,15 @@ const QR_ACCESS_TOKEN_KEY = "qr_access_token";
 
 /** Reload sessionEmail / GToken from storage (call after OAuth redirect or claim). */
 function syncSessionFromStorage() {
-    const stored = localStorage.getItem(QR_CLAIMED_EMAIL_KEY) || "";
+    const stored =
+        localStorage.getItem(QR_CLAIMED_EMAIL_KEY) ||
+        sessionStorage.getItem(QR_CLAIMED_EMAIL_KEY) ||
+        "";
     sessionEmail = stored ? stored.toLowerCase() : "";
 
-    const storedToken = localStorage.getItem(QR_ACCESS_TOKEN_KEY);
+    const storedToken =
+        localStorage.getItem(QR_ACCESS_TOKEN_KEY) ||
+        sessionStorage.getItem(QR_ACCESS_TOKEN_KEY);
     if (storedToken) {
         window.GToken = storedToken;
     }
@@ -34,10 +39,12 @@ function persistAuthSession(email, accessToken) {
     if (!email) return;
     const normalized = String(email).toLowerCase();
     localStorage.setItem(QR_CLAIMED_EMAIL_KEY, normalized);
+    sessionStorage.setItem(QR_CLAIMED_EMAIL_KEY, normalized);
     sessionEmail = normalized;
 
     if (accessToken) {
         localStorage.setItem(QR_ACCESS_TOKEN_KEY, accessToken);
+        sessionStorage.setItem(QR_ACCESS_TOKEN_KEY, accessToken);
         window.GToken = accessToken;
     }
 
@@ -102,14 +109,26 @@ function redirectAfterClaim(id, email) {
     window.location.replace(url);
 }
 
-/** Apply ?email= from claim redirect when localStorage was cleared (e.g. Safari ITP). */
+/**
+ * Restore session from storage. ?email= in URL is only trusted when it matches a verified OAuth token.
+ */
 function initSessionFromUrlAndStorage() {
+    syncSessionFromStorage();
+
     const emailFromUrl = getQueryParam("email");
-    if (emailFromUrl) {
-        persistAuthSession(decodeURIComponent(emailFromUrl), null);
-    } else {
-        syncSessionFromStorage();
-    }
+    if (!emailFromUrl) return;
+
+    const urlEmail = decodeURIComponent(emailFromUrl).toLowerCase();
+    const token =
+        localStorage.getItem(QR_ACCESS_TOKEN_KEY) ||
+        sessionStorage.getItem(QR_ACCESS_TOKEN_KEY);
+    if (!token) return;
+
+    fetchUserEmail(token).then((verified) => {
+        if (verified && verified === urlEmail) {
+            persistAuthSession(urlEmail, token);
+        }
+    });
 }
 
 let sessionEmail = localStorage.getItem(QR_CLAIMED_EMAIL_KEY) || "";
@@ -152,6 +171,7 @@ function cleandata()
     localStorage.removeItem(QR_CLAIMED_EMAIL_KEY);
     localStorage.removeItem(QR_ACCESS_TOKEN_KEY);
     sessionStorage.removeItem(QR_CLAIMED_EMAIL_KEY);
+    sessionStorage.removeItem(QR_ACCESS_TOKEN_KEY);
     sessionStorage.removeItem("qr_claimed_email");
 
     // 🔒 Attempt to revoke Gmail token (optional but good hygiene)
