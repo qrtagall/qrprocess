@@ -1479,6 +1479,118 @@ function saveDescription() {
 
 /****************************** ADD ARTIFACT **********************/
 
+/** UI copy + accept filters per artifact file type */
+const ARTIFACT_UPLOAD_UI = {
+    IMAGEFILE: {
+        sectionLabel: "Attach an image",
+        mainBtn: "📷 Select / Upload Image",
+        modalTitle: "📤 Upload Image",
+        hint: "Choose a photo or image file (JPG, PNG, GIF, WebP, etc.).<br>Maximum size: <strong>10 MB</strong>.",
+        accept: "image/*",
+        pickLabel: "📷 Choose Image",
+        changeLabel: "📷 Change Image",
+        emptyPreview: "No image selected",
+        pickError: "Please choose an image first.",
+    },
+    PDFFILE: {
+        sectionLabel: "Attach a PDF",
+        mainBtn: "📄 Select / Upload PDF",
+        modalTitle: "📤 Upload PDF",
+        hint: "Choose a PDF document.<br>Maximum size: <strong>10 MB</strong>.",
+        accept: "application/pdf,.pdf",
+        pickLabel: "📄 Choose PDF",
+        changeLabel: "📄 Change PDF",
+        emptyPreview: "No PDF selected",
+        pickError: "Please choose a PDF first.",
+    },
+    AUDIOFILE: {
+        sectionLabel: "Attach an audio file",
+        mainBtn: "🎵 Select / Upload Audio",
+        modalTitle: "📤 Upload Audio",
+        hint: "Choose an audio file (MP3, WAV, M4A, OGG, etc.).<br>Maximum size: <strong>10 MB</strong>.",
+        accept: "audio/*",
+        pickLabel: "🎵 Choose Audio",
+        changeLabel: "🎵 Change Audio",
+        emptyPreview: "No audio file selected",
+        pickError: "Please choose an audio file first.",
+    },
+    VIDEOFILE: {
+        sectionLabel: "Attach a video",
+        mainBtn: "🎬 Select / Upload Video",
+        modalTitle: "📤 Upload Video",
+        hint: "Choose a video file (MP4, MOV, WebM, etc.).<br>Maximum size: <strong>10 MB</strong>.",
+        accept: "video/*",
+        pickLabel: "🎬 Choose Video",
+        changeLabel: "🎬 Change Video",
+        emptyPreview: "No video selected",
+        pickError: "Please choose a video first.",
+    },
+    DOCFILE: {
+        sectionLabel: "Attach a document",
+        mainBtn: "📝 Select / Upload Document",
+        modalTitle: "📤 Upload Document",
+        hint: "Choose a Word or text document (.doc, .docx, .txt).<br>Maximum size: <strong>10 MB</strong>.",
+        accept: ".doc,.docx,.txt,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain",
+        pickLabel: "📝 Choose Document",
+        changeLabel: "📝 Change Document",
+        emptyPreview: "No document selected",
+        pickError: "Please choose a document first.",
+    },
+    OTHERFILE: {
+        sectionLabel: "Attach a file",
+        mainBtn: "📁 Select / Upload File",
+        modalTitle: "📤 Upload File",
+        hint: "Choose any supported file type.<br>Maximum size: <strong>10 MB</strong>.",
+        accept: "*/*",
+        pickLabel: "📁 Choose File",
+        changeLabel: "📁 Change File",
+        emptyPreview: "No file selected",
+        pickError: "Please choose a file first.",
+    },
+};
+
+function normalizeArtifactFileType(fileType) {
+    const t = String(fileType || "").toUpperCase();
+    if (t === "OTHERS") return "OTHERFILE";
+    return t;
+}
+
+function getCurrentArtifactFileType() {
+    return document.getElementById("artifactFileType")?.value || "OTHERFILE";
+}
+
+function getArtifactUploadUi(fileType) {
+    const key = normalizeArtifactFileType(fileType);
+    if (ARTIFACT_UPLOAD_UI[key]) return ARTIFACT_UPLOAD_UI[key];
+    if (isUploadBasedArtifactType(key)) return ARTIFACT_UPLOAD_UI.OTHERFILE;
+    return ARTIFACT_UPLOAD_UI.OTHERFILE;
+}
+
+function applyArtifactUploadUi(fileType) {
+    const cfg = getArtifactUploadUi(fileType);
+    const titleEl = document.getElementById("uploadModalTitle");
+    const hintEl = document.getElementById("uploadModalHint");
+    const pickLabelEl = document.getElementById("filePickerLabel");
+    const fileInput = document.getElementById("filePicker");
+    const mainBtn = document.getElementById("btnSelectUploadFile");
+    const sectionLabel = document.getElementById("fileUploadSectionLabel");
+    const preview = document.getElementById("filePreview");
+
+    if (titleEl) titleEl.textContent = cfg.modalTitle;
+    if (hintEl) hintEl.innerHTML = cfg.hint;
+    if (fileInput) fileInput.accept = cfg.accept;
+    if (mainBtn) mainBtn.textContent = cfg.mainBtn;
+    if (sectionLabel) sectionLabel.textContent = cfg.sectionLabel;
+
+    const hasFile = !!(fileInput?.files?.[0]);
+    if (pickLabelEl && !hasFile) pickLabelEl.textContent = cfg.pickLabel;
+    else if (pickLabelEl && hasFile) pickLabelEl.textContent = cfg.changeLabel;
+
+    if (preview?.classList.contains("is-empty")) {
+        preview.textContent = cfg.emptyPreview;
+    }
+}
+
 function initUploadModalUi() {
     const fp = document.getElementById("filePicker");
     if (!fp || fp.dataset.bound === "1") return;
@@ -1492,14 +1604,15 @@ function updateFilePickerPreview() {
     const label = document.getElementById("filePickerLabel");
     if (!preview) return;
 
+    const cfg = getArtifactUploadUi(getCurrentArtifactFileType());
     const file = fileInput?.files?.[0];
     preview.classList.remove("is-selected", "is-empty");
     preview.replaceChildren();
 
     if (!file) {
-        preview.textContent = "No file selected";
+        preview.textContent = cfg.emptyPreview;
         preview.classList.add("is-empty");
-        if (label) label.textContent = "📂 Choose File";
+        if (label) label.textContent = cfg.pickLabel;
         return;
     }
 
@@ -1513,11 +1626,12 @@ function updateFilePickerPreview() {
     preview.appendChild(document.createElement("br"));
     preview.appendChild(meta);
     preview.classList.add("is-selected");
-    if (label) label.textContent = "📂 Change File";
+    if (label) label.textContent = cfg.changeLabel;
 }
 
 function openUploadModal() {
     initUploadModalUi();
+    applyArtifactUploadUi(getCurrentArtifactFileType());
     document.getElementById("uploadModal").style.display = "flex";
     const fileInput = document.getElementById("filePicker");
     if (fileInput) fileInput.value = "";
@@ -1565,7 +1679,8 @@ function simulateUseFile() {
     const file = fileInput.files[0];
 
     if (!file) {
-        notify("❌ Please choose a file first.", "error");
+        const cfg = getArtifactUploadUi(getCurrentArtifactFileType());
+        notify(`❌ ${cfg.pickError}`, "error");
         updateFilePickerPreview();
         return;
     }
@@ -1653,8 +1768,12 @@ function onFileTypeChange() {
     if (fileUploadTypes.includes(selectedType)) {
         textInputSection.style.display = "none";
         fileUploadSection.style.display = "block";
+        applyArtifactUploadUi(selectedType);
         if (currentEditMode !== "edit") {
             setUploadedFileStatus("No file selected yet.", "empty");
+            selectedUploadedFileData = "";
+            selectedUploadedFileName = "";
+            selectedUploadedFileLink = "";
         }
     } else {
         textInputSection.style.display = "block";
@@ -1789,6 +1908,7 @@ function openAddModal(afterRowNum, isEditMode = false, linkId = null) {
 
             toggleSection("textInputSection", false);
             toggleSection("fileUploadSection", true);
+            applyArtifactUploadUi(fileType);
         }
 
         // ✅ Case 3: fallback

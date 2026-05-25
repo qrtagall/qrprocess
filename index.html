@@ -352,7 +352,7 @@
         </div>
 
         <div id="fileUploadSection" class="qrt-form-section qrt-section-upload" style="display:none;">
-            <label class="qrt-label">Attach a file</label>
+            <label id="fileUploadSectionLabel" class="qrt-label">Attach a file</label>
             <button type="button" id="btnSelectUploadFile" class="qrt-upload-btn" onclick="openUploadModal()">
                 📁 Select / Upload File
             </button>
@@ -397,13 +397,13 @@
 <div id="uploadModal" class="qrt-modal qrt-modal-upload-layer" style="display:none;">
     <div class="qrt-modal-panel qrt-modal-panel-center qrt-modal-panel-upload">
         <div class="qrt-modal-header-stripe qrt-stripe-upload">
-            <h3>📤 Upload / Select File</h3>
+            <h3 id="uploadModalTitle">📤 Upload / Select File</h3>
         </div>
 
         <div class="qrt-upload-zone">
-            <p class="qrt-modal-body-text qrt-upload-hint">Choose a photo, PDF, audio, video, or other file.<br>Maximum size: <strong>10 MB</strong>.</p>
+            <p id="uploadModalHint" class="qrt-modal-body-text qrt-upload-hint">Choose a file to attach.<br>Maximum size: <strong>10 MB</strong>.</p>
             <label for="filePicker" id="filePickerLabel" class="qrt-choose-file-btn">📂 Choose File</label>
-            <input type="file" id="filePicker" class="qrt-file-picker-hidden" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt,.zip">
+            <input type="file" id="filePicker" class="qrt-file-picker-hidden" accept="*/*">
             <div id="filePreview" class="qrt-file-preview-box is-empty" role="status" aria-live="polite">No file selected</div>
         </div>
 
@@ -488,7 +488,7 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "3.45";
+    const QRTagAll_Ver_ = "3.46";
 </script>
 
 
