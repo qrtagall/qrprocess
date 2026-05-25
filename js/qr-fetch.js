@@ -230,8 +230,16 @@ async function invokeSaveRequest(targetUrl, callbackName) {
  */
 async function invokeAppsScriptPostJson(payload) {
     const url = getArtifactSaveScriptUrl();
+    const token = payload[QRTAGALL_AUTH_PARAM] || payload.access_token || getStoredAccessToken();
+    const payloadForJson = { ...payload };
+    delete payloadForJson[QRTAGALL_AUTH_PARAM];
+    delete payloadForJson.access_token;
+
     const body = new URLSearchParams();
-    body.set("payload", JSON.stringify(payload));
+    body.set("payload", JSON.stringify(payloadForJson));
+    if (token) {
+        body.set(QRTAGALL_AUTH_PARAM, token);
+    }
 
     const res = await fetch(url, {
         method: "POST",
@@ -889,14 +897,11 @@ async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null
 
     const payload = {
         ...Object.fromEntries(new URLSearchParams(params)),
-        [QRTAGALL_AUTH_PARAM]: token,
-        access_token: token,
         rawfiledata,
         rawfilename: rawfilename || ""
     };
 
     console.log("🚀 Submitting to:", baseUrl);
-    console.log("📦 Payload:", payload);
 
     return new Promise((resolve) => {
         const iframeName = "hidden_iframe_" + Math.random().toString(36).substring(2);
@@ -909,13 +914,18 @@ async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null
         form.method = "POST";
         form.action = baseUrl;
         form.target = iframeName;
-        //form.enctype = "text/plain"; // ensures Apps Script reads `e.parameter.payload`
 
         const input = document.createElement("input");
         input.type = "hidden";
         input.name = "payload";
         input.value = JSON.stringify(payload);
         form.appendChild(input);
+
+        const authInput = document.createElement("input");
+        authInput.type = "hidden";
+        authInput.name = QRTAGALL_AUTH_PARAM;
+        authInput.value = token;
+        form.appendChild(authInput);
 
         document.body.appendChild(form);
         let responseflag=false;
