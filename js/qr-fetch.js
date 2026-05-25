@@ -148,9 +148,7 @@ async function completeQRClaim({ id, assetName, email, storageType, onStatus }) 
         await fireClaimBeacon(beaconUrl);
     }
 
-    if (claimResult?.spreadsheetUrl) {
-        await registerClaimOnMaster(id, email, claimResult.spreadsheetUrl, storageType);
-    }
+    // handleInitClaim already calls handleLogClaim on the server — do not logClaim again from the browser.
 
     notify("Waiting for asset data…");
     return waitForClaimedAsset(id, 15, 2000);
