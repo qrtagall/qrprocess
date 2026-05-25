@@ -237,9 +237,9 @@ async function renderAssetPanel(id) {
         <div style="font-size: 12px; color: gray;">
           (${id})<br>Owner: ${maskedOwner}
         </div>
-        ${editMode ? `<button onclick="editDescription()" style="font-size: 13px;">✏️ Edit Description</button>` : ""}
+        ${editMode ? `<div class="qrt-title-edit-actions"><button type="button" class="qrt-artifact-btn qrt-artifact-btn-edit qrt-artifact-btn-inline" onclick="editDescription()"><span class="qrt-artifact-btn-icon" aria-hidden="true">✏️</span><span class="qrt-artifact-btn-label">Edit Description</span></button></div>` : ""}
       </div>
-      ${editMode ? `<div style="text-align:center; margin-top:5px;"><button onclick="openAddModal(-1)">➕ Add Artifact</button></div>` : ""}
+      ${editMode ? `<div class="qrt-artifact-add-slot qrt-artifact-add-slot-top">${getAddArtifactTopButtonMarkup()}</div>` : ""}
     `;
 
     const editActions = document.getElementById("editActions");

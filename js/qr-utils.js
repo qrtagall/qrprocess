@@ -554,14 +554,61 @@ function injectQRBlock(id) {
 }
 
 
+/** Centered per-artifact action bar (Edit / Delete / Add Below) */
+function getArtifactActionBarMarkup(index, opts = {}) {
+    const { linkId = "", typeUpper = "", legacy = false } = opts;
+    const safeType = String(typeUpper).replace(/'/g, "\\'");
+    const safeLinkId = String(linkId).replace(/'/g, "\\'");
+
+    const editOnclick = legacy
+        ? `openAddModal(${index}, true)`
+        : `setModalLinkAndOpen(${index}, true, '${safeLinkId}')`;
+    const deleteOnclick = legacy
+        ? `deleteArtifact(${index}, '${safeType}')`
+        : `setModalLinkAndDelete(${index}, '${safeType}', '${safeLinkId}')`;
+    const addOnclick = legacy
+        ? `openAddModal(${index})`
+        : `setModalLinkAndOpen(${index}, false, '${safeLinkId}')`;
+
+    return `<div class="qrt-artifact-actions" role="group" aria-label="Artifact actions">
+        <button type="button" class="qrt-artifact-btn qrt-artifact-btn-edit" onclick="${editOnclick}">
+            <span class="qrt-artifact-btn-icon" aria-hidden="true">📝</span>
+            <span class="qrt-artifact-btn-label">Edit</span>
+        </button>
+        <button type="button" class="qrt-artifact-btn qrt-artifact-btn-delete" onclick="${deleteOnclick}">
+            <span class="qrt-artifact-btn-icon" aria-hidden="true">🗑️</span>
+            <span class="qrt-artifact-btn-label">Delete</span>
+        </button>
+        <button type="button" class="qrt-artifact-btn qrt-artifact-btn-add" onclick="${addOnclick}">
+            <span class="qrt-artifact-btn-icon" aria-hidden="true">➕</span>
+            <span class="qrt-artifact-btn-label">Add Below</span>
+        </button>
+    </div>`;
+}
+
+function getAddNewArtifactButtonMarkup(linkId, index = -1) {
+    const safeLinkId = String(linkId).replace(/'/g, "\\'");
+    return `<button type="button" class="qrt-artifact-btn qrt-artifact-btn-new" onclick="setModalLinkAndOpen(${index}, false, '${safeLinkId}')">
+        <span class="qrt-artifact-btn-icon" aria-hidden="true">➕</span>
+        <span class="qrt-artifact-btn-label">Add New Artifact</span>
+    </button>`;
+}
+
+/** Add Artifact at top of asset (no link context yet) */
+function getAddArtifactTopButtonMarkup() {
+    return `<button type="button" class="qrt-artifact-btn qrt-artifact-btn-new" onclick="openAddModal(-1)">
+        <span class="qrt-artifact-btn-icon" aria-hidden="true">➕</span>
+        <span class="qrt-artifact-btn-label">Add Artifact</span>
+    </button>`;
+}
+
 function createEmptyArtifactPrompt(index, linkId) {
     const wrapper = document.createElement("div");
-    wrapper.className = "artifact-block";
-    wrapper.style.cssText = "margin-bottom:20px; border:1px dashed #aaa; padding:16px; border-radius:8px; text-align:center; background:#fffff8;";
+    wrapper.className = "artifact-block qrt-artifact-add-slot";
 
     wrapper.innerHTML = `
-        <p style="font-weight: bold; color: #666;">No artifacts yet</p>
-        <button onclick="setModalLinkAndOpen(${index}, false, '${linkId}')">➕ Add New Artifact</button>
+        <p class="qrt-artifact-add-slot-title">No artifacts yet</p>
+        ${getAddNewArtifactButtonMarkup(linkId, index)}
     `;
     return wrapper;
 }

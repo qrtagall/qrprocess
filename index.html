@@ -124,17 +124,17 @@
     <!-- Action buttons visible only in editMode -->
     <!-- Action buttons visible only in editMode -->
     <div id="editActions" class="edit-actions-bar" style="display: none;">
-        <button onclick="openCloneDialog()" style="background: lightcoral; color: darkblue; font-size: 12px; padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer;">
-            🔁 Clone QR
+        <button type="button" class="qrt-edit-qr-btn qrt-edit-qr-btn-clone" onclick="openCloneDialog()">
+            <span class="qrt-edit-qr-btn-icon" aria-hidden="true">🔁</span><span>Clone QR</span>
         </button>
-        <button onclick="openTransferDialog()" style="background: lightcoral; color: darkblue; font-size: 12px; padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer;">
-            🔀 Transfer QR
+        <button type="button" class="qrt-edit-qr-btn qrt-edit-qr-btn-transfer" onclick="openTransferDialog()">
+            <span class="qrt-edit-qr-btn-icon" aria-hidden="true">🔀</span><span>Transfer QR</span>
         </button>
-        <button onclick="openAddQRDialog()" style="background: lightcoral; color: darkblue; font-size: 12px; padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer;">
-            ➕ Add QR
+        <button type="button" class="qrt-edit-qr-btn qrt-edit-qr-btn-addqr" onclick="openAddQRDialog()">
+            <span class="qrt-edit-qr-btn-icon" aria-hidden="true">➕</span><span>Add QR</span>
         </button>
-        <button onclick="openDeleteDialog()" style="background: lightcoral; color: darkred; font-size: 12px; padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer;">
-            ❌ Delete QR
+        <button type="button" class="qrt-edit-qr-btn qrt-edit-qr-btn-delete" onclick="openDeleteDialog()">
+            <span class="qrt-edit-qr-btn-icon" aria-hidden="true">❌</span><span>Delete QR</span>
         </button>
     </div>
 
@@ -488,7 +488,7 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "3.46";
+    const QRTagAll_Ver_ = "3.47";
 </script>
 
 

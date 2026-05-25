@@ -348,11 +348,10 @@ async function renderInfoBlock(data) {
         }
 
         if (editMode) {
-            html += `<div style="margin-top:10px;">
-                        <button onclick="openAddModal(${index}, true)">📝 Edit</button>
-                        <button onclick="deleteArtifact(${index}, '${type}')">🗑️ Delete</button>
-                        <button onclick="openAddModal(${index})">➕ Add Below</button>
-                     </div>`;
+            html += getArtifactActionBarMarkup(index, {
+                typeUpper: type,
+                legacy: true,
+            });
         }
 
         html += `</div>`;
@@ -583,15 +582,8 @@ function renderMultipleRemoteBlocks(remoteList) {
 
                     if (editMode) {
                         const placeholder = document.createElement("div");
-                        placeholder.className = "artifact-block";
-                        placeholder.style.cssText =
-                            "margin-bottom:20px; border:1px dashed #aaa; padding:16px; " +
-                            "border-radius:8px; text-align:center; background:#fffff8;";
-                        placeholder.innerHTML = `
-              <button onclick="setModalLinkAndOpen(-1, false, '${linkId}')">
-                ➕ Add New Artifact
-              </button>
-            `;
+                        placeholder.className = "artifact-block qrt-artifact-add-slot";
+                        placeholder.innerHTML = getAddNewArtifactButtonMarkup(linkId, -1);
                         contentDiv.appendChild(placeholder);
                     }
                 } else {
@@ -778,12 +770,8 @@ function renderMultipleRemoteBlocks_old(remoteList) {
                     if ( editMode)
                     {
                         const placeholder = document.createElement("div");
-                        placeholder.className = "artifact-block";
-                        placeholder.style.cssText = "margin-bottom:20px; border:1px dashed #aaa; padding:16px; border-radius:8px; text-align:center; background:#fffff8;";
-                        placeholder.innerHTML = `
-        <!--p style="font-weight: bold; color: #666;">No artifacts yet</p-->
-        <button onclick="setModalLinkAndOpen(-1, false, '${linkId}')">➕ Add New Artifact</button>
-    `;
+                        placeholder.className = "artifact-block qrt-artifact-add-slot";
+                        placeholder.innerHTML = getAddNewArtifactButtonMarkup(linkId, -1);
                         contentDiv.appendChild(placeholder);
                     }
 
@@ -2570,15 +2558,10 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
 
     if (isEditable && editMode) {
         const actionBar = document.createElement("div");
-        actionBar.style.marginTop = "10px";
-
-        actionBar.innerHTML = `
-        <button onclick="setModalLinkAndOpen(${index}, true, '${linkId}')">📝 Edit</button>
-        <button onclick="setModalLinkAndDelete(${index}, '${typeUpper}', '${linkId}')">🗑️ Delete</button>
-        <button onclick="setModalLinkAndOpen(${index}, false, '${linkId}')">➕ Add Below</button>
-    `;
-
-
+        actionBar.innerHTML = getArtifactActionBarMarkup(index, {
+            linkId,
+            typeUpper,
+        });
         wrapper.appendChild(actionBar);
     }
 

@@ -485,12 +485,181 @@ body {
     width: 100%;
 }
 
-.edit-actions-bar button {
+/* Per-artifact row actions: Edit / Delete / Add Below */
+.qrt-artifact-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: stretch;
+    gap: 10px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid #dce4ec;
+    width: 100%;
+}
+
+.qrt-artifact-btn {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    flex: 1 1 100px;
+    min-width: 92px;
+    max-width: 140px;
+    min-height: 52px;
+    padding: 10px 10px 8px;
+    font-family: inherit;
+    font-weight: 600;
+    line-height: 1.2;
+    border-radius: 10px;
+    border: 1px solid #b8c9d6;
+    background: #fff;
+    color: #1a3a52;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    box-shadow: 0 1px 4px rgba(0, 60, 100, 0.08);
+    box-sizing: border-box;
+}
+
+.qrt-artifact-btn:active {
+    transform: scale(0.98);
+}
+
+.qrt-artifact-btn-icon {
+    font-size: 24px;
+    line-height: 1;
+}
+
+.qrt-artifact-btn-label {
+    font-size: 15px;
+    letter-spacing: 0.01em;
+}
+
+.qrt-artifact-btn-edit {
+    border-color: #7eb8e0;
+    background: linear-gradient(180deg, #f5faff 0%, #eef6fc 100%);
+    color: #005aab;
+}
+
+.qrt-artifact-btn-delete {
+    border-color: #e0a0a0;
+    background: linear-gradient(180deg, #fffafa 0%, #fff0f0 100%);
+    color: #b71c1c;
+}
+
+.qrt-artifact-btn-add {
+    border-color: #8ecf9a;
+    background: linear-gradient(180deg, #f8fff9 0%, #eefaf0 100%);
+    color: #1b5e20;
+}
+
+.qrt-artifact-btn-new {
+    flex-direction: row;
+    flex: 0 1 auto;
+    max-width: 100%;
+    min-width: 200px;
+    min-height: 52px;
+    padding: 12px 20px;
+    gap: 10px;
+    border-color: #8ecf9a;
+    background: linear-gradient(180deg, #f8fff9 0%, #eefaf0 100%);
+    color: #1b5e20;
+}
+
+.qrt-artifact-btn-inline {
+    flex-direction: row;
+    max-width: 220px;
+    min-height: 48px;
+    margin: 10px auto 0;
+    padding: 10px 16px;
+    gap: 8px;
+}
+
+.qrt-artifact-add-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    padding: 18px 14px;
+    border: 1px dashed #b8c9d6;
+    border-radius: 10px;
+    text-align: center;
+    background: #fafcfe;
+}
+
+.qrt-artifact-add-slot-top {
+    margin-top: 12px;
+    margin-bottom: 8px;
+}
+
+.qrt-artifact-add-slot-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #5a6c7d;
+    margin: 0 0 12px;
+}
+
+.qrt-title-edit-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 8px;
+}
+
+/* QR-level edit toolbar (Clone / Transfer / …) */
+.qrt-edit-qr-btn {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
     flex: 1 1 calc(50% - 10px);
     min-width: 130px;
-    min-height: 44px;
-    font-size: 13px !important;
-    padding: 10px 12px !important;
+    min-height: 52px;
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.25;
+    border-radius: 10px;
+    border: 1px solid #c5b8e0;
+    background: #faf8ff;
+    color: #3d2d6b;
+    cursor: pointer;
+    touch-action: manipulation;
+    box-shadow: 0 1px 4px rgba(60, 40, 100, 0.08);
+    box-sizing: border-box;
+}
+
+.qrt-edit-qr-btn-icon {
+    font-size: 22px;
+    line-height: 1;
+}
+
+.qrt-edit-qr-btn-delete {
+    border-color: #e0a0a0;
+    background: linear-gradient(180deg, #fffafa 0%, #fff0f0 100%);
+    color: #b71c1c;
+}
+
+.qrt-edit-qr-btn-clone {
+    border-color: #e8b88a;
+    background: linear-gradient(180deg, #fffaf5 0%, #fff3e8 100%);
+    color: #8b4513;
+}
+
+.qrt-edit-qr-btn-transfer {
+    border-color: #9ecae8;
+    background: linear-gradient(180deg, #f5faff 0%, #eef6fc 100%);
+    color: #005aab;
+}
+
+.qrt-edit-qr-btn-addqr {
+    border-color: #8ecf9a;
+    background: linear-gradient(180deg, #f8fff9 0%, #eefaf0 100%);
+    color: #1b5e20;
 }
 
 .main-action-buttons {
@@ -1130,8 +1299,34 @@ body {
         max-width: 100%;
     }
 
-    .edit-actions-bar button {
+    .edit-actions-bar .qrt-edit-qr-btn {
+        flex: 1 1 calc(50% - 5px);
+        min-width: 0;
+    }
+
+    .qrt-artifact-actions {
+        gap: 8px;
+    }
+
+    .qrt-artifact-btn {
+        flex: 1 1 calc(33.333% - 6px);
+        min-width: 0;
+        max-width: none;
+        min-height: 56px;
+    }
+
+    .qrt-artifact-btn-icon {
+        font-size: 26px;
+    }
+
+    .qrt-artifact-btn-label {
+        font-size: 16px;
+    }
+
+    .qrt-artifact-btn-new,
+    .qrt-artifact-btn-inline {
         flex: 1 1 100%;
+        max-width: 100%;
     }
 
     .qrt-input-row .qrt-btn {
