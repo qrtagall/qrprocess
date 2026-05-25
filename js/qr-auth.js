@@ -9,6 +9,19 @@ const QRTAGALL_OAUTH_CLIENT_ID =
 const QR_CLAIMED_EMAIL_KEY = "qr_claimed_email";
 const QR_ACCESS_TOKEN_KEY = "qr_access_token";
 
+async function validateStoredAccessToken(token) {
+    if (!token) return false;
+    try {
+        const res = await fetch(
+            "https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=" +
+                encodeURIComponent(token)
+        );
+        return res.ok;
+    } catch (e) {
+        return false;
+    }
+}
+
 /** Reload sessionEmail / GToken from storage (call after OAuth redirect or claim). */
 function syncSessionFromStorage() {
     const stored =
@@ -22,6 +35,14 @@ function syncSessionFromStorage() {
         sessionStorage.getItem(QR_ACCESS_TOKEN_KEY);
     if (storedToken) {
         window.GToken = storedToken;
+        validateStoredAccessToken(storedToken).then((valid) => {
+            if (!valid) {
+                localStorage.removeItem(QR_ACCESS_TOKEN_KEY);
+                sessionStorage.removeItem(QR_ACCESS_TOKEN_KEY);
+                window.GToken = null;
+                maybeRefreshTokenForSession();
+            }
+        });
     }
 
     const logoutBtn = document.getElementById("logoutBtn");
@@ -110,25 +131,55 @@ function redirectAfterClaim(id, email) {
 }
 
 /**
+ * Logged-in UI uses sessionEmail, but saves need a valid OAuth token.
+ * Silently refresh when email is known but token is missing/expired.
+ */
+function maybeRefreshTokenForSession() {
+    if (!sessionEmail) return;
+    const existing =
+        localStorage.getItem(QR_ACCESS_TOKEN_KEY) ||
+        sessionStorage.getItem(QR_ACCESS_TOKEN_KEY);
+    if (existing) return;
+    if (!window.google?.accounts?.oauth2) return;
+
+    requestGoogleEmailToken()
+        .then(async (token) => {
+            const verified = await fetchUserEmail(token);
+            return { token, verified };
+        })
+        .then(({ token, verified }) => {
+            if (verified && verified === sessionEmail.toLowerCase()) {
+                persistAuthSession(verified, token);
+                console.log("🔐 OAuth token refreshed for", verified);
+            }
+        })
+        .catch(() => {
+            /* user may dismiss GIS prompt */
+        });
+}
+
+/**
  * Restore session from storage. ?email= in URL is only trusted when it matches a verified OAuth token.
  */
 function initSessionFromUrlAndStorage() {
     syncSessionFromStorage();
 
     const emailFromUrl = getQueryParam("email");
-    if (!emailFromUrl) return;
-
-    const urlEmail = decodeURIComponent(emailFromUrl).toLowerCase();
-    const token =
-        localStorage.getItem(QR_ACCESS_TOKEN_KEY) ||
-        sessionStorage.getItem(QR_ACCESS_TOKEN_KEY);
-    if (!token) return;
-
-    fetchUserEmail(token).then((verified) => {
-        if (verified && verified === urlEmail) {
-            persistAuthSession(urlEmail, token);
+    if (emailFromUrl) {
+        const urlEmail = decodeURIComponent(emailFromUrl).toLowerCase();
+        const token =
+            localStorage.getItem(QR_ACCESS_TOKEN_KEY) ||
+            sessionStorage.getItem(QR_ACCESS_TOKEN_KEY);
+        if (token) {
+            fetchUserEmail(token).then((verified) => {
+                if (verified && verified === urlEmail) {
+                    persistAuthSession(urlEmail, token);
+                }
+            });
         }
-    });
+    }
+
+    maybeRefreshTokenForSession();
 }
 
 let sessionEmail = localStorage.getItem(QR_CLAIMED_EMAIL_KEY) || "";

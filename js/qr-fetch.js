@@ -61,13 +61,45 @@ function getStoredAccessToken() {
     );
 }
 
+function clearStoredAccessTokens() {
+    localStorage.removeItem("qr_access_token");
+    sessionStorage.removeItem("qr_access_token");
+    window.GToken = null;
+}
+
+/** True if token is valid for our OAuth client (GIS access tokens). */
+async function isAccessTokenValid(token) {
+    if (!token) return false;
+    try {
+        const res = await fetch(
+            "https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=" +
+                encodeURIComponent(token)
+        );
+        if (!res.ok) return false;
+        const data = await res.json();
+        if (data.error) return false;
+        const clientId =
+            typeof QRTAGALL_OAUTH_CLIENT_ID !== "undefined"
+                ? QRTAGALL_OAUTH_CLIENT_ID
+                : "121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com";
+        const presenter = data.aud || data.azp || "";
+        if (presenter && presenter !== clientId) return false;
+        return true;
+    } catch (e) {
+        console.warn("isAccessTokenValid:", e);
+        return false;
+    }
+}
+
 /** Attach OAuth token to mutating API calls (required by MultiSheet P0 auth). */
 async function ensureAccessTokenForMutation() {
     let token = getStoredAccessToken();
-    if (token) {
+    if (token && (await isAccessTokenValid(token))) {
         window.GToken = token;
         return token;
     }
+    if (token) clearStoredAccessTokens();
+
     if (typeof getAccessToken === "function") {
         token = await getAccessToken();
         if (token) return token;
@@ -661,17 +693,42 @@ async function triggerLink_get(params, modalId = null) {
         }
     };
 
-    const handleSaveResponse = (response) => {
+    const baseUrl = getArtifactSaveScriptUrl();
+    const buildSaveUrl = () => {
+        const sep = params.includes("?") ? "&" : "?";
+        return `${baseUrl}?${params}${sep}callback=${callbackName}`;
+    };
+
+    const handleSaveResponse = async (response) => {
         if (!response || !response.success) {
-            finishSave(false, response?.message || response?.error || "Save rejected by server.");
+            const msg = response?.message || response?.error || "Save rejected by server.";
+            const authFailed =
+                /authentication required/i.test(msg) || /sign in with google/i.test(msg);
+            if (authFailed && !window.__qrSaveAuthRetried) {
+                window.__qrSaveAuthRetried = true;
+                try {
+                    clearStoredAccessTokens();
+                    const freshToken = await getAccessToken();
+                    urlParams.set("access_token", freshToken);
+                    params = urlParams.toString();
+                    const retryResult = await invokeSaveRequest(buildSaveUrl(), callbackName);
+                    window.__qrSaveAuthRetried = false;
+                    if (retryResult?.success) {
+                        finishSave(true);
+                        return;
+                    }
+                } catch (retryErr) {
+                    console.warn("Save auth retry failed:", retryErr);
+                }
+                window.__qrSaveAuthRetried = false;
+            }
+            finishSave(false, msg);
             return;
         }
         finishSave(true);
     };
 
-    const baseUrl = getArtifactSaveScriptUrl();
-    const separator = params.includes("?") ? "&" : "?";
-    const targetUrl = `${baseUrl}?${params}${separator}callback=${callbackName}`;
+    const targetUrl = buildSaveUrl();
 
     console.log("Final GET save url>>>", targetUrl);
 
