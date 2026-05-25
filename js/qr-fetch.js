@@ -324,7 +324,53 @@ function buildInitClaimUrl({ id, asset, email, storageType, claimScriptUrl, call
     return url;
 }
 
+/** POST initClaim — authToken in form body (reliable; GET may strip token on redirect). */
+async function requestClaimViaPost({ id, asset, email, storageType, claimScriptUrl }) {
+    const accessToken = await ensureAccessTokenForMutation();
+    const base = claimScriptUrl || QRTAGALL_CLAIM_URL;
+    const payload = {
+        initClaim: id,
+        asset: asset || "Unnamed Asset",
+        storageType: storageType || "REMOTE",
+        email: (email || "").toLowerCase(),
+    };
+    const body = new URLSearchParams();
+    body.set("payload", JSON.stringify(payload));
+    body.set(QRTAGALL_AUTH_PARAM, accessToken);
+
+    const res = await fetch(base, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: body.toString(),
+        cache: "no-store",
+        redirect: "follow",
+    });
+    const text = (await res.text()) || "";
+    const trimmed = text.trim();
+    let data = null;
+    if (trimmed.startsWith("{")) {
+        try {
+            data = JSON.parse(trimmed);
+        } catch (e) {
+            console.warn("requestClaimViaPost parse:", e);
+        }
+    }
+    if (!data) {
+        throw new Error("Could not reach claim service. Check network or try again.");
+    }
+    if (!data.success) {
+        throw new Error(data?.message || data?.error || data?.hint || "Claim failed");
+    }
+    return data;
+}
+
 async function requestClaimViaJsonp({ id, asset, email, storageType, claimScriptUrl }) {
+    try {
+        return await requestClaimViaPost({ id, asset, email, storageType, claimScriptUrl });
+    } catch (postErr) {
+        console.warn("Claim POST failed, trying GET:", postErr);
+    }
+
     const accessToken = await ensureAccessTokenForMutation();
     const cb = `claimCallback_${Date.now()}`;
     const url = buildInitClaimUrl({
