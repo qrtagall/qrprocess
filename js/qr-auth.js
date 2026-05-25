@@ -45,6 +45,63 @@ function persistAuthSession(email, accessToken) {
     if (logoutBtn) logoutBtn.style.display = "block";
 }
 
+/** Status text while claiming (Data in QRTagAll on main page). */
+function setClaimStatus(message, isError) {
+    const el = document.getElementById("claimStatusLine");
+    if (!el) return;
+    if (!message) {
+        el.style.display = "none";
+        el.textContent = "";
+        return;
+    }
+    el.style.display = "block";
+    el.textContent = message;
+    el.style.color = isError ? "#b91c1c" : "#555";
+}
+
+function setClaimButtonsEnabled(enabled) {
+    ["btnClaimQRTagAll", "btnClaimGDrive"].forEach((id) => {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        btn.disabled = !enabled;
+        btn.classList.toggle("disabled-button", !enabled);
+        btn.classList.toggle("enabled", enabled);
+        btn.style.opacity = enabled ? "1" : "0.55";
+        btn.style.pointerEvents = enabled ? "auto" : "none";
+    });
+}
+
+/** Google Identity Services — email scope only (QRTagAll shared storage claim). */
+function requestGoogleEmailToken() {
+    return new Promise((resolve, reject) => {
+        if (!window.google?.accounts?.oauth2) {
+            reject(new Error("Google sign-in library not loaded. Refresh the page."));
+            return;
+        }
+        const client = google.accounts.oauth2.initTokenClient({
+            client_id: QRTAGALL_OAUTH_CLIENT_ID,
+            scope: "https://www.googleapis.com/auth/userinfo.email",
+            prompt: "",
+            callback: (response) => {
+                if (response.error) {
+                    reject(new Error(response.error_description || response.error));
+                    return;
+                }
+                if (response.access_token) resolve(response.access_token);
+                else reject(new Error("Failed to acquire access token."));
+            },
+        });
+        client.requestAccessToken();
+    });
+}
+
+function redirectAfterClaim(id, email) {
+    const url =
+        `${window.location.origin}${window.location.pathname}` +
+        `?id=${encodeURIComponent(id)}&claimed=1&email=${encodeURIComponent(email)}`;
+    window.location.replace(url);
+}
+
 /** Apply ?email= from claim redirect when localStorage was cleared (e.g. Safari ITP). */
 function initSessionFromUrlAndStorage() {
     const emailFromUrl = getQueryParam("email");
@@ -205,36 +262,42 @@ async function fetchUserEmail(token) {
     }
 }
 
-// 🚀 Claim via QRTagAll Shared Storage (non-GDrive)
+// 🚀 Claim via QRTagAll Shared Storage (same registry API as GDrive, storageType LOCAL)
 async function QRTagAllLoginNew() {
     const id = getQueryParam("id");
+    if (!id) {
+        alert("❌ No QR ID in URL.");
+        return;
+    }
+
     const assetName = document.getElementById("assetNameInput")?.value.trim() || "Unnamed Asset";
     const spinner = document.getElementById("fullScreenSpinner");
 
-    const token = await new Promise((resolve, reject) => {
-        const client = google.accounts.oauth2.initTokenClient({
-            client_id: QRTAGALL_OAUTH_CLIENT_ID,
-            scope: 'https://www.googleapis.com/auth/userinfo.email',
-            prompt: 'consent',
-            callback: (response) => {
-                if (response.access_token) resolve(response.access_token);
-                else reject("❌ Failed to acquire access token.");
-            },
-        });
-        client.requestAccessToken();
-    });
+    setClaimButtonsEnabled(false);
+    setClaimStatus("Opening Google sign-in…");
+
+    let token;
+    try {
+        token = await requestGoogleEmailToken();
+    } catch (e) {
+        setClaimButtonsEnabled(true);
+        setClaimStatus(e.message || "Sign-in cancelled.", true);
+        return;
+    }
 
     if (spinner) spinner.style.display = "flex";
-    await new Promise(r => setTimeout(r, 100));
+    setClaimStatus("Verifying your email…");
 
     const userEmail = await fetchUserEmail(token);
     if (!userEmail) {
-        spinner.style.display = "none";
-        alert("❌ Could not retrieve your email address.");
+        if (spinner) spinner.style.display = "none";
+        setClaimButtonsEnabled(true);
+        setClaimStatus("Could not read your Gmail address.", true);
         return;
     }
 
     persistAuthSession(userEmail, token);
+    setClaimStatus("Registering claim (QRTagAll storage)…");
 
     try {
         const list = await completeQRClaim({
@@ -242,29 +305,24 @@ async function QRTagAllLoginNew() {
             assetName,
             email: userEmail,
             storageType: "LOCAL",
-            onStatus: (msg) => {
-                if (spinner) spinner.style.display = "flex";
-                console.log("[QRTagAll claim]", msg);
-            }
+            onStatus: (msg) => setClaimStatus("⏳ " + msg),
         });
 
-        spinner.style.display = "none";
+        if (spinner) spinner.style.display = "none";
 
         if (list.length > 0) {
-            alert("✅ QR Claimed!");
-            window.location.href =
-                `index.html?id=${encodeURIComponent(id)}&email=${encodeURIComponent(userEmail)}`;
-        } else {
-            alert(
-                "⚠️ Claim was sent but the asset is not visible yet.\n" +
-                "Wait a few seconds and refresh. If it persists, redeploy Apps Script (see GS folder)."
-            );
-            location.reload();
+            setClaimStatus("✅ Claim complete. Redirecting…");
+            redirectAfterClaim(id, userEmail);
+            return;
         }
+
+        setClaimStatus("Claim sent; loading QR…");
+        redirectAfterClaim(id, userEmail);
     } catch (e) {
-        spinner.style.display = "none";
+        if (spinner) spinner.style.display = "none";
+        setClaimButtonsEnabled(true);
         console.error("❌ QRTagAll claim failed:", e);
-        alert(`❌ Claim failed: ${e.message || e}`);
+        setClaimStatus(`Claim failed: ${e.message || e}`, true);
     }
 }
 

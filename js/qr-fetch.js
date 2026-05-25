@@ -5,8 +5,9 @@
 // |--------------------------|--------------------------|-------------------------------------------|
 // | QRTagAll_MultiSheet.txt  | AppScriptBaseUrl_New     | Fetch assets, logClaim, clone, save       |
 // | QRTagall.txt             | AppScriptBaseUrl         | resolve URLs, legacy logClaim             |
-// | QRTagAll_ClaimHandler.txt| AppScriptUserUrl         | GDrive claim (initClaim, REMOTE)          |
-// | SelfClaim.txt            | AppScriptUserUrlLOCAL    | QRTagAll storage claim (LOCAL)            |
+// | QRTagAll_ClaimHandler.txt| AppScriptUserUrl         | Legacy; saves only — not used for claim     |
+// | SelfClaim.txt            | AppScriptUserUrlLOCAL    | Legacy; not used for claim                  |
+// | (claim)                  | AppScriptBaseUrl_New     | initClaim LOCAL + REMOTE via handleInitClaim|
 // | QRTagAll_viewDrive.txt   | AppScriptDriveViewUserUrl| Drive thumbnails                          |
 // | QRTagAll_GenVerQR.txt    | (proxy iframe)           | QR ID verify generate                     |
 

@@ -71,10 +71,12 @@
 
         <p style="font-weight: normal;">Select Storage space where Asset Info shall be stored:</p>
 
-        <!-- 👇 Vertical layout with floating info button -->
-        <div style="position: relative; display: inline-block;">
+        <p id="claimStatusLine" style="display:none; font-size:13px; color:#555; margin:8px auto; max-width:90%;"></p>
 
-            <button class="auth-button-box enabled" onclick="QRTagAllLoginNew()">
+        <!-- 👇 Vertical layout with floating info button -->
+        <div id="claimButtonsWrap" style="position: relative; display: inline-block;">
+
+            <button id="btnClaimQRTagAll" class="auth-button-box enabled" type="button" onclick="QRTagAllLoginNew()">
                 <img class="auth-logo" src="https://qrtagall.com/Logo_small_NT.png" alt="QRTagAll Logo">
                 <span>Data in QRTagAll</span>
             </button>
@@ -87,7 +89,7 @@
                 ℹ️
             </button>
 
-            <button class="auth-button-box enabled" onclick="googleLoginNew()" style="margin-top:24px;">
+            <button id="btnClaimGDrive" class="auth-button-box enabled" type="button" onclick="googleLoginNew()" style="margin-top:24px;">
                 <img class="auth-logo" src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo">
                 <span>Data in GDrive</span>
             </button>
@@ -517,7 +519,7 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "3.33_25052026";
+    const QRTagAll_Ver_ = "3.33";
 </script>
 
 
