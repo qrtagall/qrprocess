@@ -406,6 +406,40 @@ async function requestClaimViaJsonp({ id, asset, email, storageType, claimScript
     return data;
 }
 
+/**
+ * GDrive claim: form POST to ClaimHandler (Execute as user). Token stays in body, not URL.
+ */
+function submitRemoteClaimFormPost({ id, assetName, email, claimScriptUrl, authToken, redirect }) {
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = claimScriptUrl || QRTAGALL_CLAIM_URL_REMOTE;
+    form.target = "_self";
+    form.style.display = "none";
+
+    const payload = {
+        initClaim: id,
+        asset: assetName || "Unnamed Asset",
+        storageType: "REMOTE",
+        email: (email || "").toLowerCase(),
+        redirect: redirect || "",
+    };
+
+    const payloadInput = document.createElement("input");
+    payloadInput.type = "hidden";
+    payloadInput.name = "payload";
+    payloadInput.value = JSON.stringify(payload);
+    form.appendChild(payloadInput);
+
+    const tokenInput = document.createElement("input");
+    tokenInput.type = "hidden";
+    tokenInput.name = QRTAGALL_AUTH_PARAM;
+    tokenInput.value = authToken || "";
+    form.appendChild(tokenInput);
+
+    document.body.appendChild(form);
+    form.submit();
+}
+
 async function waitForClaimedAsset(id, maxAttempts = 10, delayMs = 2000) {
     for (let i = 0; i < maxAttempts; i++) {
         const list = await fetchAllRemoteSheets(id);
@@ -427,22 +461,20 @@ async function completeQRClaim({ id, assetName, email, storageType, onStatus }) 
         console.log("[claim]", msg);
     };
 
-    // GDrive: open ClaimHandler in-browser so DriveApp runs in the user's My Drive
+    // GDrive: POST to ClaimHandler (avoids huge authToken in GET URL) — runs as user, registers via MultiSheet
     if (storage === "REMOTE") {
-        const token = getStoredAccessToken() || (await ensureAccessTokenForMutation().catch(() => null));
+        const token = await ensureAccessTokenForMutation();
         const redirect = `${window.location.origin}/?id=${encodeURIComponent(id)}&claimed=1&email=${encodeURIComponent(email)}`;
-        let url = buildInitClaimUrl({
+        notify("Creating QRTagAll folder in your Google Drive…");
+        submitRemoteClaimFormPost({
             id,
-            asset: assetName,
+            assetName,
             email,
-            storageType: "REMOTE",
             claimScriptUrl,
-            accessToken: token,
+            authToken: token,
+            redirect,
         });
-        url += `&redirect=${encodeURIComponent(redirect)}`;
-        notify("Setting up your Google Drive folder…");
-        window.location.replace(url);
-        return [];
+        return new Promise(() => {});
     }
 
     notify("Contacting registry (QRTagAll storage)…");
