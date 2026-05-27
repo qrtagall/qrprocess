@@ -25,19 +25,31 @@ let sheetID = "";  // populated after fetch
 //let assetDataList = [];
 let globalRemoteAssetList = [];
 
-/**
- * All claims run on MultiSheet (anonymous-friendly).
- * ClaimHandler / SelfClaim URLs require Google login when called from the browser — do not use for claim.
- */
-const QRTAGALL_CLAIM_URL = AppScriptBaseUrl_New;
-/** @deprecated Use QRTAGALL_CLAIM_URL — kept for reference / save operations */
+/** LOCAL (QRTagAll shared space) — MultiSheet, Execute as Me */
+const QRTAGALL_CLAIM_URL_LOCAL = AppScriptBaseUrl_New;
+/** REMOTE (user GDrive) — ClaimHandler, Execute as User accessing the web app */
+const QRTAGALL_CLAIM_URL_REMOTE = AppScriptUserUrl;
+
+function normalizeStorageType(storageType) {
+    const t = String(storageType || "").toUpperCase();
+    return t === "LOCAL" ? "LOCAL" : "REMOTE";
+}
+
+function getClaimScriptUrl(storageType) {
+    return normalizeStorageType(storageType) === "LOCAL"
+        ? QRTAGALL_CLAIM_URL_LOCAL
+        : QRTAGALL_CLAIM_URL_REMOTE;
+}
+
+/** Artifact saves: LOCAL → MultiSheet shared Drive; REMOTE → user's Drive via ClaimHandler */
+function getArtifactSaveScriptUrl(storageType) {
+    return getClaimScriptUrl(storageType);
+}
+
+/** @deprecated Use getClaimScriptUrl(storageType) */
+const QRTAGALL_CLAIM_URL = QRTAGALL_CLAIM_URL_LOCAL;
 const QRTAGALL_CLAIM_HANDLER_URL = AppScriptUserUrl;
 const QRTAGALL_CLAIM_HANDLER_LOCAL_URL = AppScriptUserUrlLOCAL;
-
-/** Saves (updateCellsNew) — always MultiSheet; ClaimHandler URL requires Google login for JSONP. */
-function getArtifactSaveScriptUrl() {
-    return AppScriptBaseUrl_New;
-}
 
 const QRTAGALL_MUTATING_MODES = new Set([
     "updateCellsNew",
@@ -228,8 +240,8 @@ async function invokeSaveRequest(targetUrl, callbackName) {
  * POST save via form payload (same as file upload — works with Apps Script doPost).
  * Token stays in payload JSON, not in redirect URL.
  */
-async function invokeAppsScriptPostJson(payload) {
-    const url = getArtifactSaveScriptUrl();
+async function invokeAppsScriptPostJson(payload, scriptUrl) {
+    const url = scriptUrl || getArtifactSaveScriptUrl(payload.storageType);
     const token = payload[QRTAGALL_AUTH_PARAM] || payload.access_token || getStoredAccessToken();
     const payloadForJson = { ...payload };
     delete payloadForJson[QRTAGALL_AUTH_PARAM];
@@ -306,7 +318,7 @@ function fireClaimBeacon(claimUrl) {
 }
 
 function buildInitClaimUrl({ id, asset, email, storageType, claimScriptUrl, callbackName, accessToken }) {
-    const base = claimScriptUrl || QRTAGALL_CLAIM_URL;
+    const base = claimScriptUrl || QRTAGALL_CLAIM_URL_LOCAL;
     const token = accessToken || getStoredAccessToken();
     let url =
         `${base}?initClaim=${encodeURIComponent(id)}` +
@@ -327,7 +339,7 @@ function buildInitClaimUrl({ id, asset, email, storageType, claimScriptUrl, call
 /** POST initClaim — authToken in form body (reliable; GET may strip token on redirect). */
 async function requestClaimViaPost({ id, asset, email, storageType, claimScriptUrl }) {
     const accessToken = await ensureAccessTokenForMutation();
-    const base = claimScriptUrl || QRTAGALL_CLAIM_URL;
+    const base = claimScriptUrl || QRTAGALL_CLAIM_URL_LOCAL;
     const payload = {
         initClaim: id,
         asset: asset || "Unnamed Asset",
@@ -408,22 +420,40 @@ async function waitForClaimedAsset(id, maxAttempts = 10, delayMs = 2000) {
  * @param {"LOCAL"|"REMOTE"} storageType
  */
 async function completeQRClaim({ id, assetName, email, storageType, onStatus }) {
-    const claimScriptUrl = QRTAGALL_CLAIM_URL;
+    const storage = normalizeStorageType(storageType);
+    const claimScriptUrl = getClaimScriptUrl(storage);
     const notify = (msg) => {
         if (typeof onStatus === "function") onStatus(msg);
         console.log("[claim]", msg);
     };
 
-    notify("Contacting registry…");
-
-    let claimResult = null;
-    try {
-        claimResult = await requestClaimViaJsonp({
+    // GDrive: open ClaimHandler in-browser so DriveApp runs in the user's My Drive
+    if (storage === "REMOTE") {
+        const token = getStoredAccessToken() || (await ensureAccessTokenForMutation().catch(() => null));
+        const redirect = `${window.location.origin}/?id=${encodeURIComponent(id)}&claimed=1&email=${encodeURIComponent(email)}`;
+        let url = buildInitClaimUrl({
             id,
             asset: assetName,
             email,
-            storageType,
-            claimScriptUrl
+            storageType: "REMOTE",
+            claimScriptUrl,
+            accessToken: token,
+        });
+        url += `&redirect=${encodeURIComponent(redirect)}`;
+        notify("Setting up your Google Drive folder…");
+        window.location.replace(url);
+        return [];
+    }
+
+    notify("Contacting registry (QRTagAll storage)…");
+
+    try {
+        await requestClaimViaJsonp({
+            id,
+            asset: assetName,
+            email,
+            storageType: "LOCAL",
+            claimScriptUrl,
         });
         notify("Claim accepted, loading asset…");
     } catch (jsonpErr) {
@@ -437,14 +467,12 @@ async function completeQRClaim({ id, assetName, email, storageType, onStatus }) 
             id,
             asset: assetName,
             email,
-            storageType,
+            storageType: "LOCAL",
             claimScriptUrl,
             accessToken: token,
         });
         await fireClaimBeacon(beaconUrl);
     }
-
-    // handleInitClaim already calls handleLogClaim on the server — do not logClaim again from the browser.
 
     notify("Waiting for asset data…");
     return waitForClaimedAsset(id, 15, 2000);
@@ -833,7 +861,8 @@ async function triggerLink_get(params, modalId = null) {
         }
     };
 
-    const baseUrl = getArtifactSaveScriptUrl();
+    const storageType = urlParams.get("storageType") || "REMOTE";
+    const baseUrl = getArtifactSaveScriptUrl(storageType);
     const buildSaveUrl = () => {
         const sep = params.includes("?") ? "&" : "?";
         return `${baseUrl}?${params}${sep}callback=${callbackName}`;
@@ -893,9 +922,8 @@ async function triggerLink_get(params, modalId = null) {
 
 
 async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null) {
-
-
-    const baseUrl = getArtifactSaveScriptUrl();
+    const paramStorage = new URLSearchParams(params).get("storageType") || "REMOTE";
+    const baseUrl = getArtifactSaveScriptUrl(paramStorage);
 
     if (modalId) {
         const modal = document.getElementById(modalId);
