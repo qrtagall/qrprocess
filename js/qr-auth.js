@@ -272,7 +272,11 @@ function googleLoginNew() {
 
     const clientId = QRTAGALL_OAUTH_CLIENT_ID;
     const redirectUri = "https://process.qrtagall.com/oauth-claim-callback.html";
-    const scope = "https://www.googleapis.com/auth/userinfo.email";
+    const scope = [
+        "https://www.googleapis.com/auth/userinfo.email",
+        "https://www.googleapis.com/auth/drive.file",
+        "https://www.googleapis.com/auth/spreadsheets",
+    ].join(" ");
 
     const state = encodeURIComponent(JSON.stringify({ id, asset: assetName }));
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth` +

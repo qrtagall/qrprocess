@@ -297,10 +297,179 @@ function parseRemoteSheetsPayload(data) {
     return result;
 }
 
-/** @deprecated Public logClaim is disabled server-side; initClaim registers the master row. */
-function registerClaimOnMaster() {
-    console.warn("registerClaimOnMaster is disabled (use initClaim only).");
-    return Promise.resolve(false);
+async function driveApiRequest(token, url, options = {}) {
+    const res = await fetch(url, {
+        ...options,
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            ...(options.headers || {}),
+        },
+    });
+    const text = await res.text();
+    let data = null;
+    if (text) {
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            data = { raw: text };
+        }
+    }
+    if (!res.ok) {
+        const msg =
+            data?.error?.message ||
+            data?.error_description ||
+            `Drive API error (${res.status})`;
+        throw new Error(msg);
+    }
+    return data;
+}
+
+async function findOrCreateDriveFolder(token, name, parentId) {
+    const parentClause = parentId ? `'${parentId}' in parents` : "'root' in parents";
+    const q = encodeURIComponent(
+        `name='${name.replace(/'/g, "\\'")}' and mimeType='application/vnd.google-apps.folder' and trashed=false and ${parentClause}`
+    );
+    const list = await driveApiRequest(
+        token,
+        `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&pageSize=1`
+    );
+    if (list?.files?.[0]?.id) return list.files[0].id;
+
+    const created = await driveApiRequest(token, "https://www.googleapis.com/drive/v3/files", {
+        method: "POST",
+        body: JSON.stringify({
+            name,
+            mimeType: "application/vnd.google-apps.folder",
+            parents: parentId ? [parentId] : undefined,
+        }),
+    });
+    return created.id;
+}
+
+async function createClaimSpreadsheetInFolder(token, folderId, qrId, assetName) {
+    const created = await driveApiRequest(token, "https://www.googleapis.com/drive/v3/files", {
+        method: "POST",
+        body: JSON.stringify({
+            name: "QRTagAll",
+            mimeType: "application/vnd.google-apps.spreadsheet",
+            parents: [folderId],
+        }),
+    });
+    const spreadsheetId = created.id;
+
+    await driveApiRequest(
+        token,
+        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`,
+        {
+            method: "POST",
+            body: JSON.stringify({
+                requests: [
+                    {
+                        updateSheetProperties: {
+                            properties: { sheetId: 0, title: "MasterSheet" },
+                            fields: "title",
+                        },
+                    },
+                ],
+            }),
+        }
+    );
+
+    await driveApiRequest(
+        token,
+        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/MasterSheet!A1:E5?valueInputOption=USER_ENTERED`,
+        {
+            method: "PUT",
+            body: JSON.stringify({
+                values: [
+                    ["ID", qrId],
+                    ["Description", assetName || ""],
+                    ["", ""],
+                    ["", ""],
+                    ["Basic Info", "FileType", "Options", "Local Link", "DateTime"],
+                ],
+            }),
+        }
+    );
+
+    await driveApiRequest(
+        token,
+        `https://www.googleapis.com/drive/v3/files/${spreadsheetId}/permissions`,
+        {
+            method: "POST",
+            body: JSON.stringify({ role: "reader", type: "anyone" }),
+        }
+    );
+
+    return {
+        spreadsheetId,
+        url: `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`,
+    };
+}
+
+/** Register GDrive claim in master registry (browser POST — same auth as LOCAL). */
+async function registerClaimOnMasterFetch({ id, sheetLink, token }) {
+    const body = new URLSearchParams();
+    body.set(
+        "payload",
+        JSON.stringify({
+            registerClaim: true,
+            id,
+            sheet: sheetLink,
+        })
+    );
+    body.set(QRTAGALL_AUTH_PARAM, token);
+
+    const res = await fetch(QRTAGALL_CLAIM_URL_LOCAL, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: body.toString(),
+        cache: "no-store",
+        redirect: "follow",
+    });
+    const text = (await res.text()) || "";
+    const trimmed = text.trim();
+    if (trimmed.startsWith("{")) {
+        const data = JSON.parse(trimmed);
+        if (!data.success) {
+            throw new Error(data.message || data.error || "Registry rejected claim");
+        }
+        return data;
+    }
+    throw new Error("Invalid registry response. Redeploy MultiSheet and try again.");
+}
+
+/**
+ * GDrive claim entirely in the browser (Drive + Sheets API).
+ * Avoids loading script.google.com/ClaimHandler in an iframe (refused to connect).
+ */
+async function completeRemoteClaimViaDriveApi({ id, assetName, email, onStatus }) {
+    const notify = (msg) => {
+        if (typeof onStatus === "function") onStatus(msg);
+        console.log("[gdrive-claim]", msg);
+    };
+
+    const token = getStoredAccessToken() || (await ensureAccessTokenForMutation());
+    const normalizedEmail = (email || "").toLowerCase().trim();
+
+    notify("Creating QRTagAll folder in your Google Drive…");
+    const baseFolderId = await findOrCreateDriveFolder(token, "QRTagAll", null);
+    const qrFolderId = await findOrCreateDriveFolder(token, id, baseFolderId);
+
+    notify("Creating MasterSheet spreadsheet…");
+    const { url: publicLink } = await createClaimSpreadsheetInFolder(
+        token,
+        qrFolderId,
+        id,
+        assetName
+    );
+
+    const sheetLink = `${normalizedEmail}||${publicLink}||REMOTE`;
+    notify("Registering claim…");
+    await registerClaimOnMasterFetch({ id, sheetLink, token });
+
+    return { publicLink, sheetLink };
 }
 
 function fireClaimBeacon(claimUrl) {
@@ -461,20 +630,11 @@ async function completeQRClaim({ id, assetName, email, storageType, onStatus }) 
         console.log("[claim]", msg);
     };
 
-    // GDrive: POST to ClaimHandler (avoids huge authToken in GET URL) — runs as user, registers via MultiSheet
+    // GDrive: create folder + sheet in user's Drive via Google APIs (stays on process.qrtagall.com)
     if (storage === "REMOTE") {
-        const token = await ensureAccessTokenForMutation();
-        const redirect = `${window.location.origin}/?id=${encodeURIComponent(id)}&claimed=1&email=${encodeURIComponent(email)}`;
-        notify("Creating QRTagAll folder in your Google Drive…");
-        submitRemoteClaimFormPost({
-            id,
-            assetName,
-            email,
-            claimScriptUrl,
-            authToken: token,
-            redirect,
-        });
-        return new Promise(() => {});
+        await completeRemoteClaimViaDriveApi({ id, assetName, email, onStatus });
+        notify("Waiting for asset data…");
+        return waitForClaimedAsset(id, 15, 2000);
     }
 
     notify("Contacting registry (QRTagAll storage)…");
@@ -1011,62 +1171,29 @@ async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null
         rawfilename: rawfilename || ""
     };
 
-    console.log("🚀 Submitting to:", baseUrl);
+    console.log("🚀 Submitting file upload to:", baseUrl);
 
-    return new Promise((resolve) => {
-        const iframeName = "hidden_iframe_" + Math.random().toString(36).substring(2);
-        const iframe = document.createElement("iframe");
-        iframe.name = iframeName;
-        iframe.style.display = "none";
-        document.body.appendChild(iframe);
-
-        const form = document.createElement("form");
-        form.method = "POST";
-        form.action = baseUrl;
-        form.target = iframeName;
-
-        const input = document.createElement("input");
-        input.type = "hidden";
-        input.name = "payload";
-        input.value = JSON.stringify(payload);
-        form.appendChild(input);
-
-        const authInput = document.createElement("input");
-        authInput.type = "hidden";
-        authInput.name = QRTAGALL_AUTH_PARAM;
-        authInput.value = token;
-        form.appendChild(authInput);
-
-        document.body.appendChild(form);
-        let responseflag=false;
-
-        const finishPost = (ok, msg) => {
-            if (responseflag) return;
-            responseflag = true;
-            clearTimeout(timeout);
-            if (spinner) spinner.style.display = "none";
-            const qrId = getQueryParam("id");
-            if (ok) {
-                if (typeof notify === "function") notify(msg || "File saved.", "success");
-                else alert("✅ " + (msg || "Artifact info submitted."));
-                loadAndRenderAsset(qrId).then(() => console.log("✅ Asset re-rendered"));
-            } else {
-                if (typeof notify === "function") notify(msg || "Upload failed.", "error");
-                else alert("❌ " + (msg || "Failed to submit file."));
-            }
-            resolve();
-        };
-
-        const timeout = setTimeout(() => {
-            finishPost(false, "Upload timed out.");
-        }, 45000);
-
-        iframe.onload = function () {
-            finishPost(true);
-        };
-
-        form.submit();
-    });
+    try {
+        payload[QRTAGALL_AUTH_PARAM] = token;
+        payload.access_token = token;
+        const result = await invokeAppsScriptPostJson(payload, baseUrl);
+        if (spinner) spinner.style.display = "none";
+        const qrId = getQueryParam("id");
+        if (result?.success) {
+            if (typeof notify === "function") notify("File saved.", "success");
+            else alert("✅ Artifact info submitted.");
+            await loadAndRenderAsset(qrId);
+        } else {
+            const msg = result?.message || result?.error || "Upload failed.";
+            if (typeof notify === "function") notify(msg, "error");
+            else alert("❌ " + msg);
+        }
+    } catch (err) {
+        if (spinner) spinner.style.display = "none";
+        const msg = err.message || "Upload failed.";
+        if (typeof notify === "function") notify(msg, "error");
+        else alert("❌ " + msg);
+    }
 }
 
 

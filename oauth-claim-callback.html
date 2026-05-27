@@ -80,14 +80,24 @@
         persistAuthSession(email, accessToken);
         statusEl.textContent = "⏳ Creating QRTagAll folder in your Google Drive…";
 
-        await completeQRClaim({
+        const list = await completeQRClaim({
           id,
           assetName: asset || "Unnamed Asset",
           email: email.toLowerCase(),
           storageType: "REMOTE",
           onStatus: (msg) => { statusEl.textContent = "⏳ " + msg; }
         });
-        /* REMOTE path submits a form and navigates to ClaimHandler — code below does not run */
+
+        const finalRedirectUrl =
+          `${window.location.origin}/?id=${encodeURIComponent(id)}&claimed=1&email=${encodeURIComponent(email)}`;
+
+        if (list.length > 0) {
+          statusEl.textContent = "✅ Claim complete. Redirecting…";
+          window.location.replace(finalRedirectUrl);
+        } else {
+          statusEl.textContent = "⚠️ Claim registered; opening QR…";
+          setTimeout(() => window.location.replace(finalRedirectUrl), 1500);
+        }
       } catch (err) {
         console.error("❌ Error:", err);
         statusEl.textContent = `❌ Error: ${err.message}`;
