@@ -7,19 +7,36 @@
   <h2>🔐 Finalizing login...</h2>
   <p id="status">Just a moment...</p>
   <script>
-    const hash = new URLSearchParams(window.location.hash.slice(1));
-    const accessToken = hash.get("access_token");
-    const stateUrl = hash.get("state");
+    (async function () {
+      const hash = new URLSearchParams(window.location.hash.slice(1));
+      const accessToken = hash.get("access_token");
+      const stateUrl = hash.get("state");
+      const status = document.getElementById("status");
 
-    const status = document.getElementById("status");
+      if (!stateUrl) {
+        status.textContent = "❌ No redirect URL found.";
+        return;
+      }
 
-    if (!stateUrl) {
-      status.textContent = "❌ No redirect URL found.";
-    } else {
-      console.log("🎯 Redirecting to:", stateUrl);
-      status.textContent = "✅ Redirecting to final page...";
-      window.location.href = stateUrl;
-    }
+      if (accessToken) {
+        try {
+          const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+            headers: { Authorization: "Bearer " + accessToken }
+          });
+          const userInfo = await userInfoRes.json();
+          if (userInfo.email) {
+            localStorage.setItem("qr_claimed_email", userInfo.email.toLowerCase());
+            localStorage.setItem("qr_access_token", accessToken);
+            console.log("📧 Session stored for:", userInfo.email);
+          }
+        } catch (err) {
+          console.warn("Could not persist session before redirect:", err);
+        }
+      }
+
+      status.textContent = "✅ Redirecting...";
+      window.location.replace(stateUrl);
+    })();
   </script>
 </body>
 </html>

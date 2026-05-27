@@ -2,14 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>QRTagAll – Claiming QR...</title>
+  <link rel="stylesheet" href="./css/style.css" />
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
       background: #f4f4f4;
       text-align: center;
-      padding-top: 80px;
+      padding: max(80px, 12vh) 16px max(24px, env(safe-area-inset-bottom));
       color: #333;
+      margin: 0;
+      box-sizing: border-box;
     }
     .spinner {
       margin-top: 20px;
@@ -27,27 +31,25 @@
       margin-top: 10px;
     }
   </style>
+  <script src="./js/qr-utils.js"></script>
+  <script src="./js/qr-fetch.js"></script>
+  <script src="./js/qr-auth.js"></script>
 </head>
 <body>
-  <h2>🔐 Finalizing QR Claim (v-17)</h2>
-  <p class="info" id="status">Just a moment while we make something spectacular for you...</p>
+  <h2>🔐 Finalizing QR Claim</h2>
+  <p class="info" id="status">Just a moment while we register your QR...</p>
   <div class="spinner">⏳</div>
 
   <script>
     async function finalizeQRClaim() {
-      //const hashParams = new URLSearchParams(window.location.hash.slice(1));
-      //const accessToken = hashParams.get("access_token");
-      //const id = hashParams.get("state");
-      //const asset = hashParams.get("asset");
-      //const statusEl = document.getElementById("status");
-
       const hashParams = new URLSearchParams(window.location.hash.slice(1));
       const accessToken = hashParams.get("access_token");
-      const rawState = hashParams.get("state");  // This is a JSON string
-      
+      const rawState = hashParams.get("state");
+      const statusEl = document.getElementById("status");
+
       let id = null;
       let asset = null;
-      
+
       try {
         const stateObj = JSON.parse(rawState);
         id = stateObj.id;
@@ -55,21 +57,18 @@
       } catch (err) {
         console.error("❌ Failed to parse state:", err);
       }
-      
-      const statusEl = document.getElementById("status");
 
-       if (!accessToken) {
+      if (!accessToken) {
         statusEl.textContent = "❌ Missing access token.";
         return;
       }
-      
-      if ( !id) {
-        statusEl.textContent = "❌ MissingQR ID.";
+
+      if (!id) {
+        statusEl.textContent = "❌ Missing QR ID.";
         return;
       }
 
       try {
-        // ✅ Get user's email
         const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
@@ -77,59 +76,18 @@
         const email = userInfo.email;
 
         if (!email) throw new Error("No email received from Google.");
-        console.log("📧 Email fetched:", email);
 
-        // ✅ Store email locally
-        localStorage.setItem("qr_claimed_email", email);
+        persistAuthSession(email, accessToken);
+        statusEl.textContent = "⏳ Creating QRTagAll folder in your Google Drive…";
 
-        /*
-        // ✅ Redirect to backend to claim
-        const backendUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec`;
-        const redirectBackUrl = `${window.location.origin}/?id=${encodeURIComponent(id)}&claimed=1`;
-
-        const claimUrl = `${backendUrl}?initClaim=${encodeURIComponent(id)}&email=${encodeURIComponent(email)}&oauthClaim=1&redirect=${encodeURIComponent(redirectBackUrl)}`;
-
-        console.log("🚀 Redirecting to backend:", claimUrl);
-        //window.location.href = claimUrl;
-        window.location.replace(claimUrl);
-        */
-
-
-        // ✅ Call backend to register the claim
-        //const backendUrl = `https://script.google.com/macros/s/AKfycbwLq3TCe-Zd0BI64Im9sGkIGH2kYvvGpWPTdM0-hVrGfP9UPx1j1GOC3YJVOGceycJn/exec`;
-        
-        const backendUrl = `https://script.google.com/macros/s/AKfycbzlXNlTnCL9MWYfu6ejMBXfSzhQp0SPTjL5YzmKiXTG7-3Lk4GhuBi-A8gzgf05WJdo/exec`;
-        
-        const finalRedirectUrl = `${window.location.origin}/?id=${encodeURIComponent(id)}&claimed=1&email=${encodeURIComponent(email)}`;
-        const claimUrl = `${backendUrl}?initClaim=${encodeURIComponent(id)}&asset=${encodeURIComponent(asset)}`;
-        // Log the backend request
-        console.log("📡 Sending claim info to backend:", claimUrl);
-        
-       
-         // await fetch(claimUrl);
-           window.location.href = claimUrl;
-
-      
-        setTimeout(() => {
-          {
-           // ✅ Trigger second OAuth to escape Apps Script sandbox
-              const secondOAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
-                `?response_type=token` +
-                `&client_id=121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com` +
-                `&redirect_uri=${encodeURIComponent('https://process.qrtagall.com/oauth-redirect-final.html')}` +
-                `&scope=${encodeURIComponent('https://www.googleapis.com/auth/userinfo.email')}` +
-                `&state=${encodeURIComponent(finalRedirectUrl)}`;
-              
-              console.log("🔁 Redirecting to second OAuth flow:", secondOAuthUrl);
-              window.location.href = secondOAuthUrl;
-            
-      
-          }
-        }, 10000);
-  
-        
-        
-
+        await completeQRClaim({
+          id,
+          assetName: asset || "Unnamed Asset",
+          email: email.toLowerCase(),
+          storageType: "REMOTE",
+          onStatus: (msg) => { statusEl.textContent = "⏳ " + msg; }
+        });
+        /* REMOTE path submits a form and navigates to ClaimHandler — code below does not run */
       } catch (err) {
         console.error("❌ Error:", err);
         statusEl.textContent = `❌ Error: ${err.message}`;

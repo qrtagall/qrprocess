@@ -1,11 +1,22 @@
 // qr-fetch.js
+//
+// GS deployment map (source of truth: Cursor_code/GS/)
+// | GS file                  | Constant                 | Role                                      |
+// |--------------------------|--------------------------|-------------------------------------------|
+// | QRTagAll_MultiSheet.txt  | AppScriptBaseUrl_New     | Fetch assets, logClaim, clone, save       |
+// | QRTagall.txt             | AppScriptBaseUrl         | resolve URLs, legacy logClaim             |
+// | QRTagAll_ClaimHandler.txt| AppScriptUserUrl         | Legacy; saves only — not used for claim     |
+// | SelfClaim.txt            | AppScriptUserUrlLOCAL    | Legacy; not used for claim                  |
+// | (claim)                  | AppScriptBaseUrl_New     | initClaim LOCAL + REMOTE via handleInitClaim|
+// | QRTagAll_viewDrive.txt   | AppScriptDriveViewUserUrl| Drive thumbnails                          |
+// | QRTagAll_GenVerQR.txt    | (proxy iframe)           | QR ID verify generate                     |
 
-// Constants for your Apps Script endpoints
 const AppScriptBaseUrl = "https://script.google.com/macros/s/AKfycby4lP7EpKCXew58BDqgZn39yxg_FmT1VilLPP0pthiDuTV2k6KCoOrSvbkM8mEBJvLUww/exec";
 const AppScriptUserUrl = "https://script.google.com/macros/s/AKfycbzlXNlTnCL9MWYfu6ejMBXfSzhQp0SPTjL5YzmKiXTG7-3Lk4GhuBi-A8gzgf05WJdo/exec";
 const AppScriptUserUrlLOCAL = "https://script.google.com/macros/s/AKfycbxoAVj1O4ZAaaDRCzp3-sNaS_v1XmwQbO7oCWWi8ZnauoidAaXj0E1zZGVnIcKEg8JfQQ/exec";
 const AppScriptDriveViewUserUrl = "https://script.google.com/macros/s/AKfycbxrLNo-pwzQWtkfl6QBUeZDyxsAxBub-QQsW6jqMLxPz6KPV-62wb8igpgbp21FQhND/exec";
 
+/** Master registry + fetch — deploy GS/QRTagAll_MultiSheet.txt here */
 const AppScriptBaseUrl_New = "https://script.google.com/macros/s/AKfycbytl1ePW3PbGoAUlnwBtCvKruI5SMQUcYxypyK399mjau981sjwtyEcSzMkYSTlOLmY/exec";
 
 // Global to hold asset metadata
@@ -13,6 +24,492 @@ let sheetID = "";  // populated after fetch
 //let StorageType = ""; // "GDRIVE" or "LOCAL" //Defined at auth??
 //let assetDataList = [];
 let globalRemoteAssetList = [];
+
+/** LOCAL (QRTagAll shared space) — MultiSheet, Execute as Me */
+const QRTAGALL_CLAIM_URL_LOCAL = AppScriptBaseUrl_New;
+/** REMOTE (user GDrive) — ClaimHandler, Execute as User accessing the web app */
+const QRTAGALL_CLAIM_URL_REMOTE = AppScriptUserUrl;
+
+function normalizeStorageType(storageType) {
+    const t = String(storageType || "").toUpperCase();
+    return t === "LOCAL" ? "LOCAL" : "REMOTE";
+}
+
+function getClaimScriptUrl(storageType) {
+    return normalizeStorageType(storageType) === "LOCAL"
+        ? QRTAGALL_CLAIM_URL_LOCAL
+        : QRTAGALL_CLAIM_URL_REMOTE;
+}
+
+/** Artifact saves: LOCAL → MultiSheet shared Drive; REMOTE → user's Drive via ClaimHandler */
+function getArtifactSaveScriptUrl(storageType) {
+    return getClaimScriptUrl(storageType);
+}
+
+/** @deprecated Use getClaimScriptUrl(storageType) */
+const QRTAGALL_CLAIM_URL = QRTAGALL_CLAIM_URL_LOCAL;
+const QRTAGALL_CLAIM_HANDLER_URL = AppScriptUserUrl;
+const QRTAGALL_CLAIM_HANDLER_LOCAL_URL = AppScriptUserUrlLOCAL;
+
+const QRTAGALL_MUTATING_MODES = new Set([
+    "updateCellsNew",
+    "updateCells",
+    "clone",
+    "hardClone",
+    "transfer",
+    "softDelete",
+    "hardDelete",
+    "addLinkedQR",
+]);
+
+const QRTAGALL_PROXY_ORIGIN = "https://proxy.qrtagall.com";
+
+function getStoredAccessToken() {
+    return (
+        window.GToken ||
+        localStorage.getItem("qr_access_token") ||
+        sessionStorage.getItem("qr_access_token") ||
+        ""
+    );
+}
+
+function clearStoredAccessTokens() {
+    localStorage.removeItem("qr_access_token");
+    sessionStorage.removeItem("qr_access_token");
+    window.GToken = null;
+}
+
+/** True if token can load userinfo (same check the server uses). */
+async function isAccessTokenValid(token) {
+    if (!token) return false;
+    try {
+        const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return false;
+        const data = await res.json();
+        return !!data.email;
+    } catch (e) {
+        console.warn("isAccessTokenValid:", e);
+        return false;
+    }
+}
+
+/** Attach OAuth token to mutating API calls (required by MultiSheet P0 auth). */
+async function ensureAccessTokenForMutation() {
+    let token = getStoredAccessToken();
+    if (token && (await isAccessTokenValid(token))) {
+        window.GToken = token;
+        return token;
+    }
+    if (token) clearStoredAccessTokens();
+
+    if (typeof getAccessToken === "function") {
+        token = await getAccessToken();
+        if (token) return token;
+    }
+    throw new Error("Please sign in with Google first.");
+}
+
+/** Parameter name for Apps Script (avoid access_token — may be stripped on script.google.com redirects). */
+const QRTAGALL_AUTH_PARAM = "authToken";
+
+function appendAuthToUrlParams(urlParams, token) {
+    if (token) {
+        urlParams.set(QRTAGALL_AUTH_PARAM, token);
+    }
+    return urlParams;
+}
+
+function withAccessTokenQuery(params) {
+    const token = getStoredAccessToken();
+    const p = new URLSearchParams(params);
+    appendAuthToUrlParams(p, token);
+    return p.toString();
+}
+
+/** Parse Apps Script JSONP body: callbackName({...}) */
+function parseJsonpPayload(text, callbackName) {
+    if (!text || !callbackName) return null;
+    const prefix = callbackName + "(";
+    const start = text.indexOf(prefix);
+    if (start === -1) return null;
+    const jsonStart = start + prefix.length;
+    let depth = 0;
+    for (let i = jsonStart; i < text.length; i++) {
+        const ch = text[i];
+        if (ch === "{") depth++;
+        else if (ch === "}") {
+            depth--;
+            if (depth === 0) {
+                try {
+                    return JSON.parse(text.slice(jsonStart, i + 1));
+                } catch (e) {
+                    console.warn("JSONP parse error:", e);
+                    return null;
+                }
+            }
+        }
+    }
+    return null;
+}
+
+/**
+ * Call Apps Script web app (GET + JSONP callback).
+ * Uses fetch first — works on mobile Firefox where <script> JSONP often fails.
+ */
+async function invokeAppsScriptGet(url, callbackName, options = {}) {
+    const { timeoutMs = 90000, softFail = false } = options;
+
+    try {
+        const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+        const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
+
+        const res = await fetch(url, {
+            method: "GET",
+            cache: "no-store",
+            redirect: "follow",
+            signal: controller?.signal,
+        });
+        if (timer) clearTimeout(timer);
+
+        const text = await res.text();
+        let data = parseJsonpPayload(text, callbackName);
+        if (!data) {
+            const trimmed = (text || "").trim();
+            if (trimmed.startsWith("{")) {
+                try {
+                    data = JSON.parse(trimmed);
+                } catch (e) { /* ignore */ }
+            }
+        }
+        if (data) return data;
+    } catch (e) {
+        console.warn("invokeAppsScriptGet fetch:", e);
+    }
+
+    return new Promise((resolve, reject) => {
+        let done = false;
+        const script = document.createElement("script");
+        let timeoutId = null;
+        let errorDelayId = null;
+
+        const finish = (data, err) => {
+            if (done) return;
+            done = true;
+            if (timeoutId) clearTimeout(timeoutId);
+            if (errorDelayId) clearTimeout(errorDelayId);
+            delete window[callbackName];
+            if (script.parentNode) script.parentNode.removeChild(script);
+            if (err) {
+                if (softFail) resolve(null);
+                else reject(err);
+            } else {
+                resolve(data);
+            }
+        };
+
+        window[callbackName] = (data) => finish(data, null);
+
+        script.onerror = () => {
+            errorDelayId = setTimeout(() => {
+                finish(null, new Error("Failed to load JSONP script."));
+            }, 2500);
+        };
+
+        timeoutId = setTimeout(() => {
+            finish(null, new Error("Apps Script request timed out."));
+        }, timeoutMs);
+
+        script.src = url;
+        document.body.appendChild(script);
+    });
+}
+
+/** GET save via fetch (avoids false script.onerror on Apps Script redirects). */
+async function invokeSaveRequest(targetUrl, callbackName) {
+    try {
+        return await invokeAppsScriptGet(targetUrl, callbackName, { timeoutMs: 60000, softFail: true });
+    } catch (e) {
+        console.warn("invokeSaveRequest:", e);
+        return null;
+    }
+}
+
+/**
+ * POST save via form payload (same as file upload — works with Apps Script doPost).
+ * Token stays in payload JSON, not in redirect URL.
+ */
+async function invokeAppsScriptPostJson(payload, scriptUrl) {
+    const url = scriptUrl || getArtifactSaveScriptUrl(payload.storageType);
+    const token = payload[QRTAGALL_AUTH_PARAM] || payload.access_token || getStoredAccessToken();
+    const payloadForJson = { ...payload };
+    delete payloadForJson[QRTAGALL_AUTH_PARAM];
+    delete payloadForJson.access_token;
+
+    const body = new URLSearchParams();
+    body.set("payload", JSON.stringify(payloadForJson));
+    if (token) {
+        body.set(QRTAGALL_AUTH_PARAM, token);
+    }
+
+    const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: body.toString(),
+        cache: "no-store",
+        redirect: "follow",
+    });
+    const text = (await res.text()) || "";
+    const trimmed = text.trim();
+    if (trimmed.startsWith("{")) {
+        try {
+            return JSON.parse(trimmed);
+        } catch (e) {
+            console.warn("invokeAppsScriptPostJson parse:", e);
+        }
+    }
+    return { success: false, message: "Invalid server response" };
+}
+
+function parseRemoteSheetsPayload(data) {
+    if (!data || !data.found || !data.data || !data.data.assets) {
+        return [];
+    }
+
+    const groupedAssets = data.data.assets;
+    const result = [];
+
+    for (const [linkKey, linkBlock] of Object.entries(groupedAssets)) {
+        if (!linkBlock || !Array.isArray(linkBlock.items)) continue;
+
+        const meta = linkBlock.metadata || {};
+        result.push({
+            email: meta.source || "unknown@user",
+            storageType: meta.storageType || "UNKNOWN",
+            linkId: meta.id || "",
+            description: meta.description || "",
+            sheetId: meta.sheetId || "",
+            assets: linkBlock.items,
+        });
+    }
+
+    return result;
+}
+
+/** @deprecated Public logClaim is disabled server-side; initClaim registers the master row. */
+function registerClaimOnMaster() {
+    console.warn("registerClaimOnMaster is disabled (use initClaim only).");
+    return Promise.resolve(false);
+}
+
+function fireClaimBeacon(claimUrl) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve();
+        img.onerror = () => resolve();
+        img.src = claimUrl;
+        document.body.appendChild(img);
+        setTimeout(() => {
+            if (img.parentNode) img.parentNode.removeChild(img);
+            resolve();
+        }, 5000);
+    });
+}
+
+function buildInitClaimUrl({ id, asset, email, storageType, claimScriptUrl, callbackName, accessToken }) {
+    const base = claimScriptUrl || QRTAGALL_CLAIM_URL_LOCAL;
+    const token = accessToken || getStoredAccessToken();
+    let url =
+        `${base}?initClaim=${encodeURIComponent(id)}` +
+        `&asset=${encodeURIComponent(asset || "Unnamed Asset")}` +
+        `&storageType=${encodeURIComponent(storageType || "REMOTE")}`;
+    if (email) {
+        url += `&email=${encodeURIComponent(email)}`;
+    }
+    if (token) {
+        url += `&${QRTAGALL_AUTH_PARAM}=${encodeURIComponent(token)}`;
+    }
+    if (callbackName) {
+        url += `&callback=${encodeURIComponent(callbackName)}`;
+    }
+    return url;
+}
+
+/** POST initClaim — authToken in form body (reliable; GET may strip token on redirect). */
+async function requestClaimViaPost({ id, asset, email, storageType, claimScriptUrl }) {
+    const accessToken = await ensureAccessTokenForMutation();
+    const base = claimScriptUrl || QRTAGALL_CLAIM_URL_LOCAL;
+    const payload = {
+        initClaim: id,
+        asset: asset || "Unnamed Asset",
+        storageType: storageType || "REMOTE",
+        email: (email || "").toLowerCase(),
+    };
+    const body = new URLSearchParams();
+    body.set("payload", JSON.stringify(payload));
+    body.set(QRTAGALL_AUTH_PARAM, accessToken);
+
+    const res = await fetch(base, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: body.toString(),
+        cache: "no-store",
+        redirect: "follow",
+    });
+    const text = (await res.text()) || "";
+    const trimmed = text.trim();
+    let data = null;
+    if (trimmed.startsWith("{")) {
+        try {
+            data = JSON.parse(trimmed);
+        } catch (e) {
+            console.warn("requestClaimViaPost parse:", e);
+        }
+    }
+    if (!data) {
+        throw new Error("Could not reach claim service. Check network or try again.");
+    }
+    if (!data.success) {
+        throw new Error(data?.message || data?.error || data?.hint || "Claim failed");
+    }
+    return data;
+}
+
+async function requestClaimViaJsonp({ id, asset, email, storageType, claimScriptUrl }) {
+    try {
+        return await requestClaimViaPost({ id, asset, email, storageType, claimScriptUrl });
+    } catch (postErr) {
+        console.warn("Claim POST failed, trying GET:", postErr);
+    }
+
+    const accessToken = await ensureAccessTokenForMutation();
+    const cb = `claimCallback_${Date.now()}`;
+    const url = buildInitClaimUrl({
+        id,
+        asset,
+        email,
+        storageType,
+        claimScriptUrl,
+        callbackName: cb,
+        accessToken,
+    });
+
+    const data = await invokeAppsScriptGet(url, cb, { timeoutMs: 120000, softFail: true });
+
+    if (!data) {
+        throw new Error("Could not reach claim service. Check network or try again.");
+    }
+    if (!data.success) {
+        throw new Error(data?.message || data?.error || data?.details || "Claim failed");
+    }
+    return data;
+}
+
+/**
+ * GDrive claim: form POST to ClaimHandler (Execute as user). Token stays in body, not URL.
+ */
+function submitRemoteClaimFormPost({ id, assetName, email, claimScriptUrl, authToken, redirect }) {
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = claimScriptUrl || QRTAGALL_CLAIM_URL_REMOTE;
+    form.target = "_self";
+    form.style.display = "none";
+
+    const payload = {
+        initClaim: id,
+        asset: assetName || "Unnamed Asset",
+        storageType: "REMOTE",
+        email: (email || "").toLowerCase(),
+        redirect: redirect || "",
+    };
+
+    const payloadInput = document.createElement("input");
+    payloadInput.type = "hidden";
+    payloadInput.name = "payload";
+    payloadInput.value = JSON.stringify(payload);
+    form.appendChild(payloadInput);
+
+    const tokenInput = document.createElement("input");
+    tokenInput.type = "hidden";
+    tokenInput.name = QRTAGALL_AUTH_PARAM;
+    tokenInput.value = authToken || "";
+    form.appendChild(tokenInput);
+
+    document.body.appendChild(form);
+    form.submit();
+}
+
+async function waitForClaimedAsset(id, maxAttempts = 10, delayMs = 2000) {
+    for (let i = 0; i < maxAttempts; i++) {
+        const list = await fetchAllRemoteSheets(id);
+        if (list?.length > 0) return list;
+        await new Promise((r) => setTimeout(r, delayMs));
+    }
+    return [];
+}
+
+/**
+ * Full claim flow: call ClaimHandler, register master row, poll until fetch sees data.
+ * @param {"LOCAL"|"REMOTE"} storageType
+ */
+async function completeQRClaim({ id, assetName, email, storageType, onStatus }) {
+    const storage = normalizeStorageType(storageType);
+    const claimScriptUrl = getClaimScriptUrl(storage);
+    const notify = (msg) => {
+        if (typeof onStatus === "function") onStatus(msg);
+        console.log("[claim]", msg);
+    };
+
+    // GDrive: POST to ClaimHandler (avoids huge authToken in GET URL) — runs as user, registers via MultiSheet
+    if (storage === "REMOTE") {
+        const token = await ensureAccessTokenForMutation();
+        const redirect = `${window.location.origin}/?id=${encodeURIComponent(id)}&claimed=1&email=${encodeURIComponent(email)}`;
+        notify("Creating QRTagAll folder in your Google Drive…");
+        submitRemoteClaimFormPost({
+            id,
+            assetName,
+            email,
+            claimScriptUrl,
+            authToken: token,
+            redirect,
+        });
+        return new Promise(() => {});
+    }
+
+    notify("Contacting registry (QRTagAll storage)…");
+
+    try {
+        await requestClaimViaJsonp({
+            id,
+            asset: assetName,
+            email,
+            storageType: "LOCAL",
+            claimScriptUrl,
+        });
+        notify("Claim accepted, loading asset…");
+    } catch (jsonpErr) {
+        const token = getStoredAccessToken();
+        if (!token) {
+            throw jsonpErr;
+        }
+        console.warn("Claim request failed, using beacon fallback:", jsonpErr);
+        notify("Retrying claim (fallback)…");
+        const beaconUrl = buildInitClaimUrl({
+            id,
+            asset: assetName,
+            email,
+            storageType: "LOCAL",
+            claimScriptUrl,
+            accessToken: token,
+        });
+        await fireClaimBeacon(beaconUrl);
+    }
+
+    notify("Waiting for asset data…");
+    return waitForClaimedAsset(id, 15, 2000);
+}
+
 
 
 
@@ -163,54 +660,23 @@ function renderThumbnailGrid(thumbnails) {
 
 
 async function fetchAllRemoteSheets(id) {
-    return new Promise((resolve, reject) => {
-        const callbackName = "handleQRTagAllResponse_" + Date.now();
+    const callbackName = "handleQRTagAllResponse_" + Date.now();
+    const url = `${AppScriptBaseUrl_New}?id=${encodeURIComponent(id)}&callback=${callbackName}`;
 
-
-
-        window[callbackName] = function (data) {
-            delete window[callbackName];
-            document.body.removeChild(script);
-
-            if (!data || !data.found || !data.data || !data.data.assets) {
-                console.warn("❌ Invalid or missing data in JSONP response");
-                resolve([]);
-                return;
-            }
-
-            const groupedAssets = data.data.assets;
-            const result = [];
-
-           // console.log(">>> Raw response data:", data);
-
-            for (const [linkKey, linkBlock] of Object.entries(groupedAssets)) {
-                if (!linkBlock || !Array.isArray(linkBlock.items)) continue;
-
-                const meta = linkBlock.metadata || {};
-                result.push({
-                    email: meta.source || "unknown@user",
-                    storageType: meta.storageType || "UNKNOWN",
-                    linkId: meta.id || "",
-                    description: meta.description || "",
-                    sheetId: meta.sheetId || "",
-                    assets: linkBlock.items
-                });
-            }
-
-           // console.log("✅ Parsed Remote Result:", result);
-            resolve(result);
-        };
-
-
-        const script = document.createElement("script");
-        script.src = `${AppScriptBaseUrl_New}?id=${encodeURIComponent(id)}&callback=${callbackName}`;
-        script.onerror = () => {
-            delete window[callbackName];
-            reject(new Error("❌ Failed to load JSONP script."));
-        };
-
-        document.body.appendChild(script);
-    });
+    try {
+        const data = await invokeAppsScriptGet(url, callbackName, {
+            timeoutMs: 60000,
+            softFail: true,
+        });
+        if (!data) {
+            console.warn("fetchAllRemoteSheets: no response");
+            return [];
+        }
+        return parseRemoteSheetsPayload(data);
+    } catch (e) {
+        console.warn("fetchAllRemoteSheets:", e);
+        return [];
+    }
 }
 
 
@@ -298,97 +764,187 @@ function triggerLink_get(params, modalId = null) {
 */
 
 
-let GToken = null;
+let GToken = localStorage.getItem("qr_access_token") || null;
+window.GToken = GToken;
 
 async function triggerLink_get(params, modalId = null) {
     const spinner = document.getElementById("fullScreenSpinner");
     if (spinner) spinner.style.display = "flex";
 
-    // ✅ Step 2: Create JSONP callback
-    const callbackName = `qrUpdateCallback_${Date.now()}`;
-    const script = document.createElement("script");
+    let urlParams = new URLSearchParams(params);
+    const mode = urlParams.get("mode");
 
-    window[callbackName] = function (response) {
-        delete window[callbackName];
-        document.body.removeChild(script);
+    if (mode === "updateCellsNew") {
+        const finishPostSave = async (result) => {
+            if (spinner) spinner.style.display = "none";
+            if (modalId) {
+                const modal = document.getElementById(modalId);
+                if (modal) modal.style.display = "none";
+            }
+            const qrId = getQueryParam("id");
+            if (result?.success) {
+                if (typeof notify === "function") notify("Artifact saved.", "success");
+                else alert("✅ Artifact info saved.");
+                await loadAndRenderAsset(qrId);
+                return;
+            }
+            let msg = result?.message || "Save rejected by server.";
+            if (result?.hint) {
+                console.warn("Save hint:", result.hint);
+                msg += " (" + result.hint + ")";
+            }
+            if (typeof notify === "function") notify(msg, "error");
+            else alert("❌ " + msg);
+        };
 
-        //if (spinner) spinner.style.display = "none";
+        try {
+            let token = await ensureAccessTokenForMutation();
+            const buildPayload = () => {
+                const payload = Object.fromEntries(urlParams.entries());
+                payload[QRTAGALL_AUTH_PARAM] = token;
+                payload.access_token = token;
+                return payload;
+            };
 
-        if (!response || !response.success) {
-            alert("❌ Failed to save artifact.");
+            let result = await invokeAppsScriptPostJson(buildPayload());
+            const authMsg = result?.message || "";
+            if (
+                !result?.success &&
+                /authentication required/i.test(authMsg) &&
+                !window.__qrSaveAuthRetried
+            ) {
+                window.__qrSaveAuthRetried = true;
+                clearStoredAccessTokens();
+                token = await getAccessToken();
+                result = await invokeAppsScriptPostJson(buildPayload());
+                window.__qrSaveAuthRetried = false;
+            }
+            await finishPostSave(result);
+        } catch (authErr) {
+            if (spinner) spinner.style.display = "none";
+            const msg = authErr.message || "Sign in required.";
+            if (typeof notify === "function") notify(msg, "error");
+            else alert("❌ " + msg);
+        }
+        return;
+    }
+
+    if (mode && QRTAGALL_MUTATING_MODES.has(mode)) {
+        try {
+            const token = await ensureAccessTokenForMutation();
+            appendAuthToUrlParams(urlParams, token);
+            params = urlParams.toString();
+            urlParams = new URLSearchParams(params);
+        } catch (authErr) {
+            if (spinner) spinner.style.display = "none";
+            const msg = authErr.message || "Sign in required.";
+            if (typeof notify === "function") notify(msg, "error");
+            else alert("❌ " + msg);
             return;
         }
+    }
 
-        alert("✅ Artifact info saved.");
-        //location.reload();
-        loadAndRenderAsset(getQueryParam("id")).then(() => {
-            console.log("✅ Asset re-rendered");
-        });
+    const callbackName = `qrUpdateCallback_${Date.now()}`;
+    let finished = false;
+    let timeoutId = null;
+    let errorDelayId = null;
+
+    const cleanupScript = (script) => {
+        delete window[callbackName];
+        if (script?.parentNode) script.parentNode.removeChild(script);
     };
 
-    // ✅ Step 3: Build URL
-    const urlParams = new URLSearchParams(params);
-    const storageType = urlParams.get("storageType") || "REMOTE";
-    const baseUrl = storageType === "LOCAL" ? AppScriptBaseUrl_New : AppScriptUserUrl;
+    const finishSave = (ok, message) => {
+        if (finished) return;
+        finished = true;
+        if (timeoutId) clearTimeout(timeoutId);
+        if (errorDelayId) clearTimeout(errorDelayId);
 
-    const separator = params.includes("?") ? "&" : "?";
-    const targetUrl = `${baseUrl}?${params}${separator}callback=${callbackName}`;
+        if (spinner) spinner.style.display = "none";
+        if (modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) modal.style.display = "none";
+        }
 
-    console.log("Final GET url>>>", targetUrl);
-    script.src = targetUrl;
-
-    // ❗ Error fallback
-    script.onerror = () => {
-       // if (spinner) spinner.style.display = "none";
-        console.warn("⚠️ Script load failed. Assuming optimistic success.");
-        delete window[callbackName];
-        document.body.removeChild(script);
-
-
-
-
-        //location.reload();
-        //cmedit
-        //await loadAndRenderAsset(getQueryParam("id");
-
-        loadAndRenderAsset(getQueryParam("id")).then(() => {
-            console.log("✅ Asset re-rendered");
-        });
-
-
-    };
-
-
-
-
-    // ⏳ Timeout fallback
-    setTimeout(() => {
-        delete window[callbackName];
-        //if (spinner) spinner.style.display = "none";
-        alert("✅ Saved (assumed). Reloading...");
-        //location.reload();
-
-        console.log("urlParams>>>",urlParams);
         const mode = urlParams.get("mode");
-
-        if (mode === "clone" || mode === "hardClone" || mode === "transfer")
-        {
-            //const paramMap = new URLSearchParams(params);
+        if (ok && (mode === "clone" || mode === "hardClone" || mode === "transfer")) {
             const newId = urlParams.get("newid");
             if (newId) {
                 window.location.href = `index.html?id=${encodeURIComponent(newId)}`;
-                return; // important: stop executing further fallback
+                return;
             }
         }
 
+        const qrId = getQueryParam("id");
+        if (ok) {
+            if (typeof notify === "function") {
+                notify(message || "Artifact saved.", "success");
+            } else {
+                alert("✅ " + (message || "Artifact info saved."));
+            }
+            loadAndRenderAsset(qrId).then(() => console.log("✅ Asset re-rendered"));
+        } else {
+            const errMsg = message || "Failed to save artifact.";
+            if (typeof notify === "function") {
+                notify(errMsg, "error");
+            } else {
+                alert("❌ " + errMsg);
+            }
+        }
+    };
 
-        loadAndRenderAsset(getQueryParam("id")).then(() => {
-            console.log("✅ Asset re-rendered");
-        });
-    }, 5000);
+    const storageType = urlParams.get("storageType") || "REMOTE";
+    const baseUrl = getArtifactSaveScriptUrl(storageType);
+    const buildSaveUrl = () => {
+        const sep = params.includes("?") ? "&" : "?";
+        return `${baseUrl}?${params}${sep}callback=${callbackName}`;
+    };
 
-    // 🚀 Fire request
-    document.body.appendChild(script);
+    const handleSaveResponse = async (response) => {
+        if (!response || !response.success) {
+            const msg = response?.message || response?.error || "Save rejected by server.";
+            const authFailed =
+                /authentication required/i.test(msg) || /sign in with google/i.test(msg);
+            if (authFailed && !window.__qrSaveAuthRetried) {
+                window.__qrSaveAuthRetried = true;
+                try {
+                    clearStoredAccessTokens();
+                    const freshToken = await getAccessToken();
+                    appendAuthToUrlParams(urlParams, freshToken);
+                    params = urlParams.toString();
+                    const retryResult = await invokeSaveRequest(buildSaveUrl(), callbackName);
+                    window.__qrSaveAuthRetried = false;
+                    if (retryResult?.success) {
+                        finishSave(true);
+                        return;
+                    }
+                } catch (retryErr) {
+                    console.warn("Save auth retry failed:", retryErr);
+                }
+                window.__qrSaveAuthRetried = false;
+            }
+            finishSave(false, msg);
+            return;
+        }
+        finishSave(true);
+    };
+
+    const targetUrl = buildSaveUrl();
+
+    console.log("Final GET save url>>>", targetUrl);
+
+    try {
+        const fetchResult = await invokeSaveRequest(targetUrl, callbackName);
+        if (fetchResult) {
+            handleSaveResponse(fetchResult);
+            return;
+        }
+        finishSave(false, "Could not reach save service.");
+    } catch (e) {
+        const qrId = getQueryParam("id");
+        console.warn("Save error, refreshing:", e);
+        loadAndRenderAsset(qrId).then(() => finishSave(true, "Saved — view refreshed."));
+    }
 }
 
 
@@ -398,14 +954,8 @@ async function triggerLink_get(params, modalId = null) {
 
 
 async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null) {
-
-
-    const urlParams = new URLSearchParams(params);
-    const storageType = urlParams.get("storageType") || "REMOTE";
-
-    const baseUrl = storageType === "LOCAL" ? AppScriptBaseUrl_New : AppScriptUserUrl;
-
-    //const baseUrl = StorageType === "LOCAL" ? AppScriptBaseUrl_New : AppScriptUserUrl;
+    const paramStorage = new URLSearchParams(params).get("storageType") || "REMOTE";
+    const baseUrl = getArtifactSaveScriptUrl(paramStorage);
 
     if (modalId) {
         const modal = document.getElementById(modalId);
@@ -444,6 +994,17 @@ async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null
         return;
     }
 
+    let token = getStoredAccessToken();
+    if (!token) {
+        try {
+            token = await ensureAccessTokenForMutation();
+        } catch (authErr) {
+            if (spinner) spinner.style.display = "none";
+            alert(authErr.message || "Please sign in with Google first.");
+            return;
+        }
+    }
+
     const payload = {
         ...Object.fromEntries(new URLSearchParams(params)),
         rawfiledata,
@@ -451,7 +1012,6 @@ async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null
     };
 
     console.log("🚀 Submitting to:", baseUrl);
-    console.log("📦 Payload:", payload);
 
     return new Promise((resolve) => {
         const iframeName = "hidden_iframe_" + Math.random().toString(36).substring(2);
@@ -464,7 +1024,6 @@ async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null
         form.method = "POST";
         form.action = baseUrl;
         form.target = iframeName;
-        //form.enctype = "text/plain"; // ensures Apps Script reads `e.parameter.payload`
 
         const input = document.createElement("input");
         input.type = "hidden";
@@ -472,37 +1031,38 @@ async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null
         input.value = JSON.stringify(payload);
         form.appendChild(input);
 
+        const authInput = document.createElement("input");
+        authInput.type = "hidden";
+        authInput.name = QRTAGALL_AUTH_PARAM;
+        authInput.value = token;
+        form.appendChild(authInput);
+
         document.body.appendChild(form);
         let responseflag=false;
 
-        // Fallback timeout in case iframe load doesn't trigger
-        const timeout = setTimeout(() => {
-            //if (spinner) spinner.style.display = "none";
-            alert("✅ Artifact info submitting....you may try after few time.");
-            //location.reload();
-            //await loadAndRenderAsset(getQueryParam("id");
-
-                responseflag=true;
-            loadAndRenderAsset(getQueryParam("id")).then(() => {
-                console.log("✅ Asset re-rendered");
-            });
+        const finishPost = (ok, msg) => {
+            if (responseflag) return;
+            responseflag = true;
+            clearTimeout(timeout);
+            if (spinner) spinner.style.display = "none";
+            const qrId = getQueryParam("id");
+            if (ok) {
+                if (typeof notify === "function") notify(msg || "File saved.", "success");
+                else alert("✅ " + (msg || "Artifact info submitted."));
+                loadAndRenderAsset(qrId).then(() => console.log("✅ Asset re-rendered"));
+            } else {
+                if (typeof notify === "function") notify(msg || "Upload failed.", "error");
+                else alert("❌ " + (msg || "Failed to submit file."));
+            }
             resolve();
+        };
 
-        }, 15000);
+        const timeout = setTimeout(() => {
+            finishPost(false, "Upload timed out.");
+        }, 45000);
 
         iframe.onload = function () {
-            clearTimeout(timeout);
-            if(!responseflag) {
-                //if (spinner) spinner.style.display = "none";
-                alert("✅ Artifact info submitted.");
-                //location.reload();
-                //await loadAndRenderAsset(getQueryParam("id");
-
-                loadAndRenderAsset(getQueryParam("id")).then(() => {
-                    console.log("✅ Asset re-rendered");
-                });
-                resolve();
-            }
+            finishPost(true);
         };
 
         form.submit();
@@ -514,16 +1074,54 @@ async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null
 
 
 
-// 🔐 Get new OAuth token
+// 🔐 Reuse stored token or request a new one (same OAuth client as claim/edit redirects)
 async function getAccessToken() {
+    const stored =
+        localStorage.getItem("qr_access_token") ||
+        sessionStorage.getItem("qr_access_token");
+    if (stored) {
+        try {
+            const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+                headers: { Authorization: `Bearer ${stored}` }
+            });
+            if (res.ok) {
+                GToken = stored;
+                window.GToken = stored;
+                return stored;
+            }
+        } catch (e) {
+            console.warn("Stored token invalid, requesting new token:", e);
+            localStorage.removeItem("qr_access_token");
+            sessionStorage.removeItem("qr_access_token");
+        }
+    }
+
+    const clientId =
+        typeof QRTAGALL_OAUTH_CLIENT_ID !== "undefined"
+            ? QRTAGALL_OAUTH_CLIENT_ID
+            : "121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com";
+
     return new Promise((resolve, reject) => {
         const client = google.accounts.oauth2.initTokenClient({
-            client_id: '121290253918-cae49r46mo3r9f9rhd7rq6ao9ae69jjv.apps.googleusercontent.com',
-            scope: 'https://www.googleapis.com/auth/userinfo.email',
-            prompt: 'consent',
+            client_id: clientId,
+            scope: "https://www.googleapis.com/auth/userinfo.email",
+            prompt: "",
             callback: (resp) => {
-                if (resp.access_token) resolve(resp.access_token);
-                else reject("❌ OAuth token failed");
+                if (resp.access_token) {
+                    localStorage.setItem("qr_access_token", resp.access_token);
+                    GToken = resp.access_token;
+                    window.GToken = resp.access_token;
+                    if (typeof fetchUserEmail === "function") {
+                        fetchUserEmail(resp.access_token).then((email) => {
+                            if (email && typeof persistAuthSession === "function") {
+                                persistAuthSession(email, resp.access_token);
+                            }
+                        });
+                    }
+                    resolve(resp.access_token);
+                } else {
+                    reject("❌ OAuth token failed");
+                }
             }
         });
         client.requestAccessToken();
@@ -556,7 +1154,7 @@ async function fetchThumbnails(folderId) {
 
 /************************ Clone, copy, transfer, delete **************************/
 
-function triggerOperation(mode, customParams = {}) {
+async function triggerOperation(mode, customParams = {}) {
     const id = getQueryParam("id");  // from URL
     const storageType = "LOCAL"; // default fallback; adjust if dynamic needed
 
@@ -567,7 +1165,7 @@ function triggerOperation(mode, customParams = {}) {
         storageType
     });
 
-    triggerLink_get(params.toString());
+    await triggerLink_get(params.toString());
 }
 
 
@@ -643,6 +1241,7 @@ function Verifyidx(idToVerify) {
         }
 
         const handler = (event) => {
+            if (event.origin !== QRTAGALL_PROXY_ORIGIN) return;
             if (!event.data || (event.data.type !== "qr_verified" && event.data.type !== "qr_error")) return;
 
             window.removeEventListener("message", handler);
@@ -657,10 +1256,13 @@ function Verifyidx(idToVerify) {
         window.addEventListener("message", handler);
 
         console.log("📤 Sending verify message via proxyFrame");
-        targetFrame.postMessage({
-            type: "verify",
-            id: idToVerify
-        }, "*");
+        targetFrame.postMessage(
+            {
+                type: "verify",
+                id: idToVerify
+            },
+            QRTAGALL_PROXY_ORIGIN
+        );
     });
 }
 

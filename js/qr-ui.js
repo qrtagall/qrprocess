@@ -348,11 +348,10 @@ async function renderInfoBlock(data) {
         }
 
         if (editMode) {
-            html += `<div style="margin-top:10px;">
-                        <button onclick="openAddModal(${index}, true)">📝 Edit</button>
-                        <button onclick="deleteArtifact(${index}, '${type}')">🗑️ Delete</button>
-                        <button onclick="openAddModal(${index})">➕ Add Below</button>
-                     </div>`;
+            html += getArtifactActionBarMarkup(index, {
+                typeUpper: type,
+                legacy: true,
+            });
         }
 
         html += `</div>`;
@@ -583,15 +582,8 @@ function renderMultipleRemoteBlocks(remoteList) {
 
                     if (editMode) {
                         const placeholder = document.createElement("div");
-                        placeholder.className = "artifact-block";
-                        placeholder.style.cssText =
-                            "margin-bottom:20px; border:1px dashed #aaa; padding:16px; " +
-                            "border-radius:8px; text-align:center; background:#fffff8;";
-                        placeholder.innerHTML = `
-              <button onclick="setModalLinkAndOpen(-1, false, '${linkId}')">
-                ➕ Add New Artifact
-              </button>
-            `;
+                        placeholder.className = "artifact-block qrt-artifact-add-slot";
+                        placeholder.innerHTML = getAddNewArtifactButtonMarkup(linkId, -1);
                         contentDiv.appendChild(placeholder);
                     }
                 } else {
@@ -778,12 +770,8 @@ function renderMultipleRemoteBlocks_old(remoteList) {
                     if ( editMode)
                     {
                         const placeholder = document.createElement("div");
-                        placeholder.className = "artifact-block";
-                        placeholder.style.cssText = "margin-bottom:20px; border:1px dashed #aaa; padding:16px; border-radius:8px; text-align:center; background:#fffff8;";
-                        placeholder.innerHTML = `
-        <!--p style="font-weight: bold; color: #666;">No artifacts yet</p-->
-        <button onclick="setModalLinkAndOpen(-1, false, '${linkId}')">➕ Add New Artifact</button>
-    `;
+                        placeholder.className = "artifact-block qrt-artifact-add-slot";
+                        placeholder.innerHTML = getAddNewArtifactButtonMarkup(linkId, -1);
                         contentDiv.appendChild(placeholder);
                     }
 
@@ -1277,6 +1265,11 @@ alert("Login required.");	notify("🔐 Please log in to continue.", "info");
  * @param {("success"|"error"|"info")} type - Visual styling.
  * @param {number} duration - How long to show (ms).
  */
+/** @deprecated Use notify() */
+function showToast(message, type = "info") {
+    notify(message, type);
+}
+
 function notify(message, type = "info", duration = 3000) {
     const toast = document.getElementById("notifyToast");
     if (!toast) return;
@@ -1474,30 +1467,214 @@ function saveDescription() {
 
 /****************************** ADD ARTIFACT **********************/
 
+/** UI copy + accept filters per artifact file type */
+const ARTIFACT_UPLOAD_UI = {
+    IMAGEFILE: {
+        sectionLabel: "Attach an image",
+        mainBtn: "📷 Select / Upload Image",
+        modalTitle: "📤 Upload Image",
+        hint: "Choose a photo or image file (JPG, PNG, GIF, WebP, etc.).<br>Maximum size: <strong>10 MB</strong>.",
+        accept: "image/*",
+        pickLabel: "📷 Choose Image",
+        changeLabel: "📷 Change Image",
+        emptyPreview: "No image selected",
+        pickError: "Please choose an image first.",
+    },
+    PDFFILE: {
+        sectionLabel: "Attach a PDF",
+        mainBtn: "📄 Select / Upload PDF",
+        modalTitle: "📤 Upload PDF",
+        hint: "Choose a PDF document.<br>Maximum size: <strong>10 MB</strong>.",
+        accept: "application/pdf,.pdf",
+        pickLabel: "📄 Choose PDF",
+        changeLabel: "📄 Change PDF",
+        emptyPreview: "No PDF selected",
+        pickError: "Please choose a PDF first.",
+    },
+    AUDIOFILE: {
+        sectionLabel: "Attach an audio file",
+        mainBtn: "🎵 Select / Upload Audio",
+        modalTitle: "📤 Upload Audio",
+        hint: "Choose an audio file (MP3, WAV, M4A, OGG, etc.).<br>Maximum size: <strong>10 MB</strong>.",
+        accept: "audio/*",
+        pickLabel: "🎵 Choose Audio",
+        changeLabel: "🎵 Change Audio",
+        emptyPreview: "No audio file selected",
+        pickError: "Please choose an audio file first.",
+    },
+    VIDEOFILE: {
+        sectionLabel: "Attach a video",
+        mainBtn: "🎬 Select / Upload Video",
+        modalTitle: "📤 Upload Video",
+        hint: "Choose a video file (MP4, MOV, WebM, etc.).<br>Maximum size: <strong>10 MB</strong>.",
+        accept: "video/*",
+        pickLabel: "🎬 Choose Video",
+        changeLabel: "🎬 Change Video",
+        emptyPreview: "No video selected",
+        pickError: "Please choose a video first.",
+    },
+    DOCFILE: {
+        sectionLabel: "Attach a document",
+        mainBtn: "📝 Select / Upload Document",
+        modalTitle: "📤 Upload Document",
+        hint: "Choose a Word or text document (.doc, .docx, .txt).<br>Maximum size: <strong>10 MB</strong>.",
+        accept: ".doc,.docx,.txt,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain",
+        pickLabel: "📝 Choose Document",
+        changeLabel: "📝 Change Document",
+        emptyPreview: "No document selected",
+        pickError: "Please choose a document first.",
+    },
+    OTHERFILE: {
+        sectionLabel: "Attach a file",
+        mainBtn: "📁 Select / Upload File",
+        modalTitle: "📤 Upload File",
+        hint: "Choose any supported file type.<br>Maximum size: <strong>10 MB</strong>.",
+        accept: "*/*",
+        pickLabel: "📁 Choose File",
+        changeLabel: "📁 Change File",
+        emptyPreview: "No file selected",
+        pickError: "Please choose a file first.",
+    },
+};
+
+function normalizeArtifactFileType(fileType) {
+    const t = String(fileType || "").toUpperCase();
+    if (t === "OTHERS") return "OTHERFILE";
+    return t;
+}
+
+function getCurrentArtifactFileType() {
+    return document.getElementById("artifactFileType")?.value || "OTHERFILE";
+}
+
+function getArtifactUploadUi(fileType) {
+    const key = normalizeArtifactFileType(fileType);
+    if (ARTIFACT_UPLOAD_UI[key]) return ARTIFACT_UPLOAD_UI[key];
+    if (isUploadBasedArtifactType(key)) return ARTIFACT_UPLOAD_UI.OTHERFILE;
+    return ARTIFACT_UPLOAD_UI.OTHERFILE;
+}
+
+function applyArtifactUploadUi(fileType) {
+    const cfg = getArtifactUploadUi(fileType);
+    const titleEl = document.getElementById("uploadModalTitle");
+    const hintEl = document.getElementById("uploadModalHint");
+    const pickLabelEl = document.getElementById("filePickerLabel");
+    const fileInput = document.getElementById("filePicker");
+    const mainBtn = document.getElementById("btnSelectUploadFile");
+    const sectionLabel = document.getElementById("fileUploadSectionLabel");
+    const preview = document.getElementById("filePreview");
+
+    if (titleEl) titleEl.textContent = cfg.modalTitle;
+    if (hintEl) hintEl.innerHTML = cfg.hint;
+    if (fileInput) fileInput.accept = cfg.accept;
+    if (mainBtn) mainBtn.textContent = cfg.mainBtn;
+    if (sectionLabel) sectionLabel.textContent = cfg.sectionLabel;
+
+    const hasFile = !!(fileInput?.files?.[0]);
+    if (pickLabelEl && !hasFile) pickLabelEl.textContent = cfg.pickLabel;
+    else if (pickLabelEl && hasFile) pickLabelEl.textContent = cfg.changeLabel;
+
+    if (preview?.classList.contains("is-empty")) {
+        preview.textContent = cfg.emptyPreview;
+    }
+}
+
+function initUploadModalUi() {
+    const fp = document.getElementById("filePicker");
+    if (!fp || fp.dataset.bound === "1") return;
+    fp.dataset.bound = "1";
+    fp.addEventListener("change", updateFilePickerPreview);
+}
+
+function updateFilePickerPreview() {
+    const fileInput = document.getElementById("filePicker");
+    const preview = document.getElementById("filePreview");
+    const label = document.getElementById("filePickerLabel");
+    if (!preview) return;
+
+    const cfg = getArtifactUploadUi(getCurrentArtifactFileType());
+    const file = fileInput?.files?.[0];
+    preview.classList.remove("is-selected", "is-empty");
+    preview.replaceChildren();
+
+    if (!file) {
+        preview.textContent = cfg.emptyPreview;
+        preview.classList.add("is-empty");
+        if (label) label.textContent = cfg.pickLabel;
+        return;
+    }
+
+    const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+    const strong = document.createElement("strong");
+    strong.textContent = file.name;
+    const meta = document.createElement("span");
+    meta.className = "qrt-file-meta";
+    meta.textContent = `${sizeMb} MB${file.type ? " · " + file.type : ""}`;
+    preview.appendChild(strong);
+    preview.appendChild(document.createElement("br"));
+    preview.appendChild(meta);
+    preview.classList.add("is-selected");
+    if (label) label.textContent = cfg.changeLabel;
+}
+
 function openUploadModal() {
+    initUploadModalUi();
+    applyArtifactUploadUi(getCurrentArtifactFileType());
     document.getElementById("uploadModal").style.display = "flex";
-    document.getElementById("filePicker").value = "";
-    document.getElementById("filePreview").textContent = "";
+    const fileInput = document.getElementById("filePicker");
+    if (fileInput) fileInput.value = "";
+    updateFilePickerPreview();
 }
 
 function closeUploadModal() {
     document.getElementById("uploadModal").style.display = "none";
 }
 
+if (typeof document !== "undefined") {
+    document.addEventListener("DOMContentLoaded", initUploadModalUi);
+}
+
+/** Update file status line styling in Add Artifact modal */
+function setUploadedFileStatus(message, state) {
+    const el = document.getElementById("uploadedFileLink");
+    if (!el) return;
+    el.textContent = message || "";
+    el.classList.remove("is-selected", "is-empty");
+    if (state === "selected") el.classList.add("is-selected");
+    else if (state === "empty") el.classList.add("is-empty");
+}
+
+function isTextBasedArtifactType(fileType) {
+    return ["TEXT", "GDRIVE", "DRIVE", "URL", "LINK"].includes(String(fileType || "").toUpperCase());
+}
+
+function isUploadBasedArtifactType(fileType) {
+    const t = String(fileType || "").toUpperCase();
+    return t.endsWith("FILE") || t === "OTHERS" || t === "OTHERFILE";
+}
+
+function hasArtifactFileSelected() {
+    const linkText = (document.getElementById("uploadedFileLink")?.textContent || "").trim();
+    const hasLink =
+        linkText &&
+        !/^no file selected/i.test(linkText) &&
+        (linkText.startsWith("http") || linkText.includes("Selected file"));
+    return !!(selectedUploadedFileData || selectedUploadedFileLink || hasLink);
+}
 
 function simulateUseFile() {
     const fileInput = document.getElementById("filePicker");
     const file = fileInput.files[0];
 
     if (!file) {
-        notify("❌ No file selected.", "error");
-        closeUploadModal();
+        const cfg = getArtifactUploadUi(getCurrentArtifactFileType());
+        notify(`❌ ${cfg.pickError}`, "error");
+        updateFilePickerPreview();
         return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-        notify("⚠️ File size exceeds 10MB. Please select a smaller file.", "error");
-        closeUploadModal();
+        notify("⚠️ File size exceeds 10 MB. Please select a smaller file.", "error");
         return;
     }
 
@@ -1505,7 +1682,7 @@ function simulateUseFile() {
     reader.onload = function (event) {
         selectedUploadedFileData = event.target.result.split(',')[1]; // base64
         selectedUploadedFileName = file.name;
-        document.getElementById("uploadedFileLink").textContent = `🆗 Selected file: ${file.name}`;
+        setUploadedFileStatus(`✅ Selected file: ${file.name}`, "selected");
         notify("✅ File attached successfully.", "success");
         closeUploadModal();
     };
@@ -1574,11 +1751,18 @@ function onFileTypeChange() {
 
     if (!textInputSection || !fileUploadSection || !textArea) return;
 
-    const fileUploadTypes = ["IMAGEFILE", "PDFFILE", "AUDIOFILE", "VIDEOFILE", "DOCFILE", "OTHERFILE"];
+    const fileUploadTypes = ["IMAGEFILE", "PDFFILE", "AUDIOFILE", "VIDEOFILE", "DOCFILE", "OTHERFILE", "OTHERS"];
 
     if (fileUploadTypes.includes(selectedType)) {
         textInputSection.style.display = "none";
         fileUploadSection.style.display = "block";
+        applyArtifactUploadUi(selectedType);
+        if (currentEditMode !== "edit") {
+            setUploadedFileStatus("No file selected yet.", "empty");
+            selectedUploadedFileData = "";
+            selectedUploadedFileName = "";
+            selectedUploadedFileLink = "";
+        }
     } else {
         textInputSection.style.display = "block";
         fileUploadSection.style.display = "none";
@@ -1602,6 +1786,8 @@ function onFileTypeChange() {
 
 function openAddModal(afterRowNum, isEditMode = false, linkId = null) {
     selectedUploadedFileLink = "";
+    selectedUploadedFileData = "";
+    selectedUploadedFileName = "";
 
     const modal = document.getElementById("addArtifactModal");
     const modalTitle = document.getElementById("addArtifactModalTitle");
@@ -1611,7 +1797,7 @@ function openAddModal(afterRowNum, isEditMode = false, linkId = null) {
     const fileTypeInput = document.getElementById("artifactFileType");
     const visibilityInput = document.getElementById("artifactOption");
     const uploadedFileLink = document.getElementById("uploadedFileLink");
-    const uploadBtn = document.querySelector("#fileUploadSection button");
+    const uploadBtn = document.getElementById("btnSelectUploadFile");
 
     // Helper functions
     const toggleSection = (id, show) => {
@@ -1682,7 +1868,7 @@ function openAddModal(afterRowNum, isEditMode = false, linkId = null) {
 
         if (["TEXT", "LINK", "URL", "GDRIVE", "DRIVE"].includes(fileType)) {
             textInfoInput.value = item.url || "";
-            uploadedFileLink.textContent = "";
+            setUploadedFileStatus("", "");
 
             setFieldDisabled(basicInfoInput, false);
             setFieldDisabled(fileTypeInput, false);
@@ -1694,24 +1880,29 @@ function openAddModal(afterRowNum, isEditMode = false, linkId = null) {
             toggleSection("fileUploadSection", false);
         }
 // ✅ Case 2: xxxFILE types — non-editable, only file shown
-        else if (fileType.endsWith("FILE")) {
+        else if (isUploadBasedArtifactType(fileType)) {
             textInfoInput.value = "";
-            uploadedFileLink.textContent = item.url || "";
+            if (item.url) {
+                setUploadedFileStatus(`📎 Current file: ${item.url.split("/").pop() || item.url}`, "selected");
+            } else {
+                setUploadedFileStatus("No file selected yet.", "empty");
+            }
 
             setFieldDisabled(basicInfoInput, false);
             setFieldDisabled(fileTypeInput, true);
             setFieldDisabled(textInfoInput, true);
             setFieldDisabled(visibilityInput, false);
-            setFieldDisabled(uploadBtn, true);
+            setFieldDisabled(uploadBtn, false);
 
             toggleSection("textInputSection", false);
             toggleSection("fileUploadSection", true);
+            applyArtifactUploadUi(fileType);
         }
 
         // ✅ Case 3: fallback
         else {
             textInfoInput.value = item.url || "";
-            uploadedFileLink.textContent = "";
+            setUploadedFileStatus("", "");
 
             setFieldDisabled(basicInfoInput, false);
             setFieldDisabled(fileTypeInput, false);
@@ -1767,11 +1958,11 @@ function openAddModal(afterRowNum, isEditMode = false, linkId = null) {
         textInfoInput.value = "Enter your text here...";
         fileTypeInput.value = "TEXT";
         visibilityInput.value = "VIEW";
-        uploadedFileLink.textContent = "";
+        setUploadedFileStatus("No file selected yet.", "empty");
 
         toggleSection("textInputSection", true);
         toggleSection("fileUploadSection", false);
-        onFileTypeChange(); // Optional if you want to dynamically adapt based on dropdown
+        onFileTypeChange();
     }
 
     /*
@@ -1789,6 +1980,7 @@ function openAddModal(afterRowNum, isEditMode = false, linkId = null) {
 function closeAddModal() {
     const modal = document.getElementById("addArtifactModal");
     if (modal) modal.style.display = "none";
+    setUploadedFileStatus("", "");
 
     insertAfterRow = null;
     selectedUploadedFileLink = "";
@@ -1975,28 +2167,58 @@ function saveArtifact() {
     const visibility = document.getElementById("artifactOption").value.toUpperCase();
 
     const textInfo = document.getElementById("artifactTextInfo").value.trim();
-    const fileLink = document.getElementById("uploadedFileLink").textContent.trim();
+    const isText = isTextBasedArtifactType(fileType);
+    const needsFile = isUploadBasedArtifactType(fileType);
 
-    // ✅ Treat GDRIVE / DRIVE / URL / TEXT as text-based inputs
-    const textBasedTypes = ["TEXT", "GDRIVE", "DRIVE", "URL", "LINK"];
-    const isText = textBasedTypes.includes(fileType);
-
-    if (!basicInfo || !fileType || !visibility) {
-        showToast("Please complete all fields.");
+    if (!basicInfo) {
+        notify("Please enter Basic Info.", "error");
+        document.getElementById("artifactBasicInfo")?.focus();
+        return;
+    }
+    if (!fileType) {
+        notify("Please select a File Type.", "error");
+        return;
+    }
+    if (!visibility) {
+        notify("Please select Visibility.", "error");
         return;
     }
 
     if (isText) {
         if (!textInfo) {
-            showToast("Please enter text or link info.");
+            notify(
+                fileType === "DRIVE" || fileType === "GDRIVE"
+                    ? "Please enter a Google Drive link."
+                    : "Please enter text or link info.",
+                "error"
+            );
+            document.getElementById("artifactTextInfo")?.focus();
             return;
         }
-    } else if (!fileLink && !selectedUploadedFileLink) {
-        showToast("Please upload or select a file.");
-        return;
+    } else if (needsFile) {
+        if (currentEditMode === "edit") {
+            const modal = document.getElementById("addArtifactModal");
+            const linkId = modal?.getAttribute("data-link-id");
+            const original = getArtifactByIndex(linkId, insertAfterRow);
+            if (!original?.url && !hasArtifactFileSelected()) {
+                notify("Please select a file to upload.", "error");
+                document.getElementById("btnSelectUploadFile")?.focus();
+                return;
+            }
+        } else if (!hasArtifactFileSelected()) {
+            notify("Please select a file before saving.", "error");
+            setUploadedFileStatus("No file selected — tap Select / Upload File.", "empty");
+            document.getElementById("btnSelectUploadFile")?.focus();
+            return;
+        }
+        if (currentEditMode !== "edit" && !selectedUploadedFileData) {
+            notify("Please select a file before saving.", "error");
+            setUploadedFileStatus("No file selected — tap Select / Upload File.", "empty");
+            return;
+        }
     }
 
-    // ✅ Pick correct input source
+    const fileLink = document.getElementById("uploadedFileLink").textContent.trim();
     const url = isText ? textInfo : selectedUploadedFileLink || fileLink;
 
     const modal = document.getElementById("addArtifactModal");
@@ -2072,8 +2294,6 @@ async function saveArtifactInfo({
 
 
     const sheetId = targetLinkId ;//|| sheetID;
-    const secretKey = "optional_static_key";
-
 
     console.log("id>>>>",id, targetLinkId, sheetId);
 
@@ -2108,7 +2328,6 @@ async function saveArtifactInfo({
         sheetId,
         range: startCell,
         values: finalValues,
-        secret_key: secretKey,
         storageType: storageType
     });
 
@@ -2116,7 +2335,7 @@ async function saveArtifactInfo({
 
     if (isInsert) query.append("insert", "1");
     if (isDelete) query.append("delete", "1");
-    query.append("email", encodeURIComponent(userEmail));
+    if (userEmail) query.set("email", userEmail);
 
     const queryString = query.toString();
 
@@ -2339,15 +2558,10 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
 
     if (isEditable && editMode) {
         const actionBar = document.createElement("div");
-        actionBar.style.marginTop = "10px";
-
-        actionBar.innerHTML = `
-        <button onclick="setModalLinkAndOpen(${index}, true, '${linkId}')">📝 Edit</button>
-        <button onclick="setModalLinkAndDelete(${index}, '${typeUpper}', '${linkId}')">🗑️ Delete</button>
-        <button onclick="setModalLinkAndOpen(${index}, false, '${linkId}')">➕ Add Below</button>
-    `;
-
-
+        actionBar.innerHTML = getArtifactActionBarMarkup(index, {
+            linkId,
+            typeUpper,
+        });
         wrapper.appendChild(actionBar);
     }
 

@@ -1,7 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>OAuth Callback</title>
+  <link rel="stylesheet" href="./css/style.css" />
+  <style>
+    body { margin: 0; padding: 24px 16px; text-align: center; font-family: 'Segoe UI', sans-serif; box-sizing: border-box; }
+  </style>
 </head>
 <body>
   <h3>⏳ Verifying your login...</h3>
@@ -21,12 +27,14 @@
         const email = profile.email;
         console.log("✅ Logged in as:", email);
 
-        // Store email
-        localStorage.setItem("qr_claimed_email", email);
-         localStorage.setItem("qr_access_token", token);
+        const normalized = (email || "").toLowerCase();
+        localStorage.setItem("qr_claimed_email", normalized);
+        localStorage.setItem("qr_access_token", token);
+        sessionStorage.setItem("qr_claimed_email", normalized);
+        sessionStorage.setItem("qr_access_token", token);
 
         // Redirect back to main page
-        const redirectUrl = `https://process.qrtagall.com/?id=${encodeURIComponent(state)}&verified=1`;
+        const redirectUrl = `https://process.qrtagall.com/?id=${encodeURIComponent(state)}&verified=1&email=${encodeURIComponent(email || "")}`;
         window.location.href = redirectUrl;
       })
       .catch(err => {
