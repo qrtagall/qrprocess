@@ -6,6 +6,16 @@
 const QRTAGALL_OAUTH_CLIENT_ID =
     "121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com";
 
+/**
+ * GDrive claim (redirect OAuth). Requires Test users on the OAuth consent screen while app is in Testing.
+ * See GS/OAUTH_SETUP.txt
+ */
+const QRTAGALL_GDRIVE_CLAIM_SCOPES = [
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/drive.file",
+    "https://www.googleapis.com/auth/spreadsheets",
+].join(" ");
+
 const QR_CLAIMED_EMAIL_KEY = "qr_claimed_email";
 const QR_ACCESS_TOKEN_KEY = "qr_access_token";
 
@@ -272,11 +282,7 @@ function googleLoginNew() {
 
     const clientId = QRTAGALL_OAUTH_CLIENT_ID;
     const redirectUri = "https://process.qrtagall.com/oauth-claim-callback.html";
-    const scope = [
-        "https://www.googleapis.com/auth/userinfo.email",
-        "https://www.googleapis.com/auth/drive.file",
-        "https://www.googleapis.com/auth/spreadsheets",
-    ].join(" ");
+    const scope = QRTAGALL_GDRIVE_CLAIM_SCOPES;
 
     const state = encodeURIComponent(JSON.stringify({ id, asset: assetName }));
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
@@ -284,7 +290,9 @@ function googleLoginNew() {
         `&client_id=${encodeURIComponent(clientId)}` +
         `&redirect_uri=${encodeURIComponent(redirectUri)}` +
         `&scope=${encodeURIComponent(scope)}` +
-        `&state=${state}`;
+        `&state=${state}` +
+        `&prompt=consent` +
+        `&include_granted_scopes=true`;
 
     window.location.href = authUrl;
 }

@@ -44,11 +44,25 @@
     async function finalizeQRClaim() {
       const hashParams = new URLSearchParams(window.location.hash.slice(1));
       const accessToken = hashParams.get("access_token");
+      const oauthError = hashParams.get("error");
+      const oauthErrorDesc = hashParams.get("error_description");
       const rawState = hashParams.get("state");
       const statusEl = document.getElementById("status");
 
       let id = null;
       let asset = null;
+
+      if (oauthError) {
+        statusEl.innerHTML =
+          "<strong>Google sign-in blocked (403)</strong><br><br>" +
+          "While the app is in <b>Testing</b> mode, only emails listed as <b>Test users</b> " +
+          "on the Google Cloud OAuth consent screen may sign in.<br><br>" +
+          "Add <code>automation.trinitysunrise.blr@gmail.com</code> (or your Gmail) under " +
+          "<b>Test users</b>, and ensure scopes include Drive + Sheets.<br><br>" +
+          "Details: " + (oauthErrorDesc || oauthError) +
+          "<br><br><a href=\"./index.html\">← Back to QR</a>";
+        return;
+      }
 
       try {
         const stateObj = JSON.parse(rawState);
@@ -59,7 +73,7 @@
       }
 
       if (!accessToken) {
-        statusEl.textContent = "❌ Missing access token.";
+        statusEl.textContent = "❌ Missing access token. Try claim again from the QR page.";
         return;
       }
 
