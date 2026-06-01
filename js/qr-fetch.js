@@ -226,9 +226,8 @@ async function invokeAppsScriptGet(url, callbackName, options = {}) {
     });
 }
 
-// NOTE: GDrive (REMOTE) saves run entirely on the same page via the Google
-// Sheets API (saveGdriveArtifactInBrowser). We intentionally do NOT open any
-// popup or external window for saving — per product requirement: never open a pop-up.
+// NOTE: GDrive (REMOTE) saves run on the same page via Drive API (drive.file):
+// export spreadsheet as CSV, edit rows, upload back. No popups.
 
 /** GET save via fetch (avoids false script.onerror on Apps Script redirects). */
 async function invokeSaveRequest(targetUrl, callbackName) {
@@ -301,48 +300,6 @@ function parseRemoteSheetsPayload(data) {
     return result;
 }
 
-async function sheetsApiRequest(token, url, options = {}) {
-    const headers = {
-        Authorization: `Bearer ${token}`,
-        ...(options.headers || {}),
-    };
-    if (!headers["Content-Type"] && !headers["content-type"]) {
-        headers["Content-Type"] = "application/json";
-    }
-    const res = await fetch(url, { ...options, headers });
-    const text = await res.text();
-    let data = null;
-    if (text) {
-        try {
-            data = JSON.parse(text);
-        } catch (e) {
-            data = { raw: text };
-        }
-    }
-    if (!res.ok) {
-        const msg =
-            data?.error?.message ||
-            data?.error_description ||
-            `Sheets API error (${res.status})`;
-        const err = new Error(msg);
-        err.status = res.status;
-        err.googleCode = data?.error?.status;
-        throw err;
-    }
-    return data;
-}
-
-function columnIndexToLetter(index) {
-    let s = "";
-    let n = index;
-    while (n > 0) {
-        const rem = (n - 1) % 26;
-        s = String.fromCharCode(65 + rem) + s;
-        n = Math.floor((n - 1) / 26);
-    }
-    return s;
-}
-
 function parseArtifactRange(range) {
     const rowMatch = String(range || "").match(/\d+/);
     if (!rowMatch) throw new Error("Invalid cell range");
@@ -352,23 +309,7 @@ function parseArtifactRange(range) {
     return { row, col };
 }
 
-async function getSpreadsheetTabMeta(token, spreadsheetId) {
-    const data = await sheetsApiRequest(
-        token,
-        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties(sheetId,title)`
-    );
-    const sheets = data.sheets || [];
-    const master = sheets.find((s) => s.properties?.title === "MasterSheet");
-    const pick = master || sheets[0];
-    if (!pick?.properties) throw new Error("Spreadsheet has no tabs");
-    return {
-        title: pick.properties.title,
-        sheetId: pick.properties.sheetId,
-        allSheets: sheets,
-    };
-}
-
-/** Same-page GDrive artifact save (Sheets API + user's OAuth token). */
+/** Same-page GDrive artifact save (Drive API drive.file — export/edit/upload CSV). */
 async function saveGdriveArtifactInBrowser({
     token,
     qrId,
@@ -381,105 +322,51 @@ async function saveGdriveArtifactInBrowser({
     if (!sheetId) {
         throw new Error("Missing spreadsheet ID for this QR. Refresh the page and try again.");
     }
-    const { title: tabTitle, sheetId: gridSheetId } = await getSpreadsheetTabMeta(token, sheetId);
 
-    const idCell = await sheetsApiRequest(
-        token,
-        `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(`${tabTitle}!B1`)}`
-    );
-    const idInSheet = (idCell.values && idCell.values[0] && idCell.values[0][0]) || "";
+    const csvText = await exportSpreadsheetAsCsv(token, sheetId);
+    const rows = parseCsvText(csvText);
+    if (!rows.length) {
+        throw new Error("Spreadsheet is empty");
+    }
+
+    const idInSheet = rows[0]?.[1] != null ? String(rows[0][1]) : "";
     if (String(idInSheet) !== String(qrId)) {
         throw new Error("QR ID mismatch in spreadsheet");
     }
 
     const values = valuesRaw ? String(valuesRaw).split("||") : [];
     const { row, col } = parseArtifactRange(startRange);
+    const rowIndex = row - 1;
 
-    if (insert) {
-        await sheetsApiRequest(
-            token,
-            `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}:batchUpdate`,
-            {
-                method: "POST",
-                body: JSON.stringify({
-                    requests: [
-                        {
-                            insertDimension: {
-                                range: {
-                                    sheetId: gridSheetId,
-                                    dimension: "ROWS",
-                                    startIndex: row - 1,
-                                    endIndex: row,
-                                },
-                                inheritFromBefore: row > 1,
-                            },
-                        },
-                    ],
-                }),
-            }
-        );
-        if (values.length > 0) {
-            const endCol = col + values.length - 1;
-            const rangeA1 = `${tabTitle}!${columnIndexToLetter(col)}${row}:${columnIndexToLetter(endCol)}${row}`;
-            await sheetsApiRequest(
-                token,
-                `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(rangeA1)}?valueInputOption=USER_ENTERED`,
-                {
-                    method: "PUT",
-                    body: JSON.stringify({ values: [values] }),
+    if (deleteRow) {
+        const sheetRow = ensureCsvRowWidth(rows[rowIndex] || [], 5);
+        const link = sheetRow[3] || "";
+        if (link && String(link).includes("drive.google.com")) {
+            const fileIdMatch = String(link).match(/[-\w]{25,}/);
+            if (fileIdMatch) {
+                try {
+                    await driveApiRequest(
+                        token,
+                        `https://www.googleapis.com/drive/v3/files/${fileIdMatch[0]}`,
+                        { method: "DELETE" }
+                    );
+                } catch (delErr) {
+                    console.warn("Drive file delete:", delErr);
                 }
-            );
+            }
         }
+        rows.splice(rowIndex, 1);
+        await updateSpreadsheetFromCsv(token, sheetId, rowsToCsvText(rows));
         return { success: true, id: qrId };
     }
 
-    if (deleteRow) {
-        const linkRange = `${tabTitle}!D${row}`;
-        try {
-            const linkCell = await sheetsApiRequest(
-                token,
-                `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(linkRange)}`
-            );
-            const link = linkCell.values?.[0]?.[0] || "";
-            if (link && String(link).includes("drive.google.com")) {
-                const fileIdMatch = String(link).match(/[-\w]{25,}/);
-                if (fileIdMatch) {
-                    try {
-                        await driveApiRequest(
-                            token,
-                            `https://www.googleapis.com/drive/v3/files/${fileIdMatch[0]}`,
-                            { method: "DELETE" }
-                        );
-                    } catch (delErr) {
-                        console.warn("Drive file delete:", delErr);
-                    }
-                }
-            }
-        } catch (linkErr) {
-            console.warn("Read link cell:", linkErr);
+    if (insert) {
+        const newRow = ensureCsvRowWidth([], col + values.length - 1);
+        for (let i = 0; i < values.length; i++) {
+            newRow[col - 1 + i] = values[i];
         }
-
-        await sheetsApiRequest(
-            token,
-            `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}:batchUpdate`,
-            {
-                method: "POST",
-                body: JSON.stringify({
-                    requests: [
-                        {
-                            deleteDimension: {
-                                range: {
-                                    sheetId: gridSheetId,
-                                    dimension: "ROWS",
-                                    startIndex: row - 1,
-                                    endIndex: row,
-                                },
-                            },
-                        },
-                    ],
-                }),
-            }
-        );
+        rows.splice(rowIndex, 0, newRow);
+        await updateSpreadsheetFromCsv(token, sheetId, rowsToCsvText(rows));
         return { success: true, id: qrId };
     }
 
@@ -487,16 +374,12 @@ async function saveGdriveArtifactInBrowser({
         throw new Error("No values to update");
     }
 
-    const endCol = col + values.length - 1;
-    const rangeA1 = `${tabTitle}!${columnIndexToLetter(col)}${row}:${columnIndexToLetter(endCol)}${row}`;
-    await sheetsApiRequest(
-        token,
-        `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(rangeA1)}?valueInputOption=USER_ENTERED`,
-        {
-            method: "PUT",
-            body: JSON.stringify({ values: [values] }),
-        }
-    );
+    const sheetRow = ensureCsvRowWidth(rows[rowIndex] || [], col + values.length - 1);
+    for (let i = 0; i < values.length; i++) {
+        sheetRow[col - 1 + i] = values[i];
+    }
+    rows[rowIndex] = sheetRow;
+    await updateSpreadsheetFromCsv(token, sheetId, rowsToCsvText(rows));
     return { success: true, id: qrId };
 }
 
@@ -605,6 +488,107 @@ function escapeCsvCell(value) {
         return `"${s.replace(/"/g, '""')}"`;
     }
     return s;
+}
+
+function parseCsvText(text) {
+    const rows = [];
+    let row = [];
+    let field = "";
+    let inQuotes = false;
+    const src = String(text || "");
+    for (let i = 0; i < src.length; i++) {
+        const c = src[i];
+        if (inQuotes) {
+            if (c === '"') {
+                if (src[i + 1] === '"') {
+                    field += '"';
+                    i++;
+                } else {
+                    inQuotes = false;
+                }
+            } else {
+                field += c;
+            }
+        } else if (c === '"') {
+            inQuotes = true;
+        } else if (c === ",") {
+            row.push(field);
+            field = "";
+        } else if (c === "\r") {
+            /* skip */
+        } else if (c === "\n") {
+            row.push(field);
+            field = "";
+            rows.push(row);
+            row = [];
+        } else {
+            field += c;
+        }
+    }
+    row.push(field);
+    if (row.length > 1 || row[0] !== "") {
+        rows.push(row);
+    }
+    return rows;
+}
+
+function rowsToCsvText(rows) {
+    return rows
+        .map((row) => (Array.isArray(row) ? row : []).map((cell) => escapeCsvCell(cell)).join(","))
+        .join("\n");
+}
+
+function ensureCsvRowWidth(row, width) {
+    const out = Array.isArray(row) ? row.slice() : [];
+    while (out.length < width) {
+        out.push("");
+    }
+    return out;
+}
+
+async function exportSpreadsheetAsCsv(token, fileId) {
+    const res = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}/export?mimeType=${encodeURIComponent("text/csv")}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+    );
+    const text = await res.text();
+    if (!res.ok) {
+        let msg = `Drive export failed (${res.status})`;
+        try {
+            const data = JSON.parse(text);
+            msg = data?.error?.message || msg;
+        } catch (e) {
+            /* use default */
+        }
+        throw new Error(msg);
+    }
+    return text;
+}
+
+async function updateSpreadsheetFromCsv(token, fileId, csv) {
+    const boundary = `qrtagall_up_${Date.now()}`;
+    const multipartBody = [
+        `--${boundary}`,
+        "Content-Type: application/json; charset=UTF-8",
+        "",
+        JSON.stringify({ mimeType: "application/vnd.google-apps.spreadsheet" }),
+        `--${boundary}`,
+        "Content-Type: text/csv; charset=UTF-8",
+        "",
+        csv,
+        `--${boundary}--`,
+        "",
+    ].join("\r\n");
+
+    await driveApiRequest(
+        token,
+        `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`,
+        {
+            method: "PATCH",
+            headers: { "Content-Type": `multipart/related; boundary=${boundary}` },
+            body: multipartBody,
+        }
+    );
 }
 
 /** Create claim spreadsheet via Drive API only (drive.file — no spreadsheets scope). */

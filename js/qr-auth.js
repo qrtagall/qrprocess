@@ -10,14 +10,10 @@ const QRTAGALL_OAUTH_CLIENT_ID =
  * GDrive claim (redirect OAuth). Requires Test users on the OAuth consent screen while app is in Testing.
  * See GS/OAUTH_SETUP.txt
  */
-/**
- * GDrive claim + in-browser edits on the user's QRTagAll spreadsheet.
- * spreadsheets: update rows in app-created sheets only (same page, no ClaimHandler popup).
- */
+/** GDrive claim + in-browser edits (email + drive.file only — OAuth verification). */
 const QRTAGALL_GDRIVE_CLAIM_SCOPES = [
     "https://www.googleapis.com/auth/userinfo.email",
     "https://www.googleapis.com/auth/drive.file",
-    "https://www.googleapis.com/auth/spreadsheets",
 ].join(" ");
 
 const QR_CLAIMED_EMAIL_KEY = "qr_claimed_email";
@@ -143,7 +139,7 @@ function requestGoogleEmailToken() {
     return requestGoogleToken("https://www.googleapis.com/auth/userinfo.email", "");
 }
 
-/** GDrive claim + edits (email, drive.file, spreadsheets). */
+/** GDrive claim + edits (email + drive.file). */
 function requestGdriveAccessToken(prompt) {
     return requestGoogleToken(QRTAGALL_GDRIVE_CLAIM_SCOPES, prompt);
 }
