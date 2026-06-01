@@ -224,15 +224,15 @@ function printQR() {
 
 function parseInlineOptions(text) {
     const out = {
-        cleanText: text || "",
+        cleanText: "",
         expand: false,
         color: null,
         noid: false,
         noowner: false
     };
-    if (!text) return out;
+    if (text == null || text === "") return out;
 
-    let clean = text;
+    let clean = typeof text === "string" ? text : String(text);
 
     // --- Expand / EX ---
     if (/<\s*(EXPAND|EX)\s*>/i.test(clean)) {

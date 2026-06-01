@@ -394,7 +394,7 @@ function parseRemoteSheetsPayload(data) {
             email: meta.source || "unknown@user",
             storageType: meta.storageType || "UNKNOWN",
             linkId: meta.id || "",
-            description: meta.description || "",
+            description: meta.description != null ? String(meta.description) : "",
             sheetId: meta.sheetId || "",
             assets: linkBlock.items,
         });
