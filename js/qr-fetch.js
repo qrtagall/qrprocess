@@ -1237,7 +1237,7 @@ async function triggerLink_get(params, modalId = null) {
                         /insufficient|scope|permission/i.test(sheetErr.message || "");
                     if (needsScope) {
                         throw new Error(
-                            "Please sign in again with Google (GDrive claim) so Sheets access is granted, then retry save."
+                            "Please sign out, revoke QRTagAll in Google Account → Security → Third-party access, then claim again with Data in GDrive (drive.file only)."
                         );
                     }
                     throw sheetErr;
