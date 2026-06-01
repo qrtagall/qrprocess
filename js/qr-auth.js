@@ -302,27 +302,41 @@ function handleLogout() {
     window.location.reload();
 }
 
-// 🔑 Login for Claim (OAuth flow, stores email)
-function googleLoginNew() {
+/** Full-page OAuth claim (works on mobile; no GIS popup). */
+function redirectToClaimOAuth(storageType) {
     const id = getQueryParam("id");
-    let assetName = document.getElementById("assetNameInput")?.value.trim() || "Unnamed Asset";
+    const assetName = document.getElementById("assetNameInput")?.value.trim() || "Unnamed Asset";
+    if (!id) {
+        alert("❌ No QR ID in URL.");
+        return;
+    }
 
-    const clientId = QRTAGALL_OAUTH_CLIENT_ID;
+    const storage = String(storageType || "REMOTE").toUpperCase() === "LOCAL" ? "LOCAL" : "REMOTE";
+    const scope =
+        storage === "LOCAL"
+            ? "https://www.googleapis.com/auth/userinfo.email"
+            : QRTAGALL_GDRIVE_CLAIM_SCOPES;
+
     const redirectUri = "https://process.qrtagall.com/oauth-claim-callback.html";
-    const scope = QRTAGALL_GDRIVE_CLAIM_SCOPES;
+    const state = encodeURIComponent(
+        JSON.stringify({ id, asset: assetName, storageType: storage })
+    );
 
-    const state = encodeURIComponent(JSON.stringify({ id, asset: assetName }));
-    // Do not use prompt=consent — it forces the full consent screen every visit.
-    // Google remembers approval after the first grant (until scopes change or token is revoked).
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
+    const authUrl =
+        `https://accounts.google.com/o/oauth2/v2/auth` +
         `?response_type=token` +
-        `&client_id=${encodeURIComponent(clientId)}` +
+        `&client_id=${encodeURIComponent(QRTAGALL_OAUTH_CLIENT_ID)}` +
         `&redirect_uri=${encodeURIComponent(redirectUri)}` +
         `&scope=${encodeURIComponent(scope)}` +
         `&state=${state}` +
         `&include_granted_scopes=true`;
 
     window.location.href = authUrl;
+}
+
+// 🔑 Data in GDrive — same-tab redirect (not a popup)
+function googleLoginNew() {
+    redirectToClaimOAuth("REMOTE");
 }
 
 
@@ -384,68 +398,11 @@ async function fetchUserEmail(token) {
     }
 }
 
-// 🚀 Claim via QRTagAll Shared Storage (same registry API as GDrive, storageType LOCAL)
-async function QRTagAllLoginNew() {
-    const id = getQueryParam("id");
-    if (!id) {
-        alert("❌ No QR ID in URL.");
-        return;
-    }
-
-    const assetName = document.getElementById("assetNameInput")?.value.trim() || "Unnamed Asset";
-    const spinner = document.getElementById("fullScreenSpinner");
-
+// 🚀 Data in QRTagAll — same-tab redirect as GDrive (no GIS popup; mobile-safe)
+function QRTagAllLoginNew() {
     setClaimButtonsEnabled(false);
-    setClaimStatus("Opening Google sign-in…");
-
-    let token;
-    try {
-        token = await requestGoogleEmailToken();
-    } catch (e) {
-        setClaimButtonsEnabled(true);
-        setClaimStatus(e.message || "Sign-in cancelled.", true);
-        return;
-    }
-
-    if (spinner) spinner.style.display = "flex";
-    setClaimStatus("Verifying your email…");
-
-    const userEmail = await fetchUserEmail(token);
-    if (!userEmail) {
-        if (spinner) spinner.style.display = "none";
-        setClaimButtonsEnabled(true);
-        setClaimStatus("Could not read your Gmail address.", true);
-        return;
-    }
-
-    persistAuthSession(userEmail, token);
-    setClaimStatus("Registering claim (QRTagAll storage)…");
-
-    try {
-        const list = await completeQRClaim({
-            id,
-            assetName,
-            email: userEmail,
-            storageType: "LOCAL",
-            onStatus: (msg) => setClaimStatus("⏳ " + msg),
-        });
-
-        if (spinner) spinner.style.display = "none";
-
-        if (list.length > 0) {
-            setClaimStatus("✅ Claim complete. Redirecting…");
-            redirectAfterClaim(id, userEmail);
-            return;
-        }
-
-        setClaimStatus("Claim sent; loading QR…");
-        redirectAfterClaim(id, userEmail);
-    } catch (e) {
-        if (spinner) spinner.style.display = "none";
-        setClaimButtonsEnabled(true);
-        console.error("❌ QRTagAll claim failed:", e);
-        setClaimStatus(`Claim failed: ${e.message || e}`, true);
-    }
+    setClaimStatus("Redirecting to Google sign-in…");
+    redirectToClaimOAuth("LOCAL");
 }
 
 

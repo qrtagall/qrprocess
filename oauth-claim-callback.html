@@ -31,9 +31,9 @@
       margin-top: 10px;
     }
   </style>
-  <script src="./js/qr-utils.js"></script>
-  <script src="./js/qr-fetch.js"></script>
-  <script src="./js/qr-auth.js"></script>
+  <script src="./js/qr-utils.js?v=20260601f"></script>
+  <script src="./js/qr-fetch.js?v=20260601f"></script>
+  <script src="./js/qr-auth.js?v=20260601f"></script>
 </head>
 <body>
   <h2>🔐 Finalizing QR Claim</h2>
@@ -51,13 +51,15 @@
 
       let id = null;
       let asset = null;
+      let storageType = "REMOTE";
 
       if (oauthError) {
         statusEl.innerHTML =
           "<strong>Google sign-in blocked (403)</strong><br><br>" +
           "While the app is in <b>Testing</b> mode, only emails listed as <b>Test users</b> " +
           "on the Google Cloud OAuth consent screen may sign in.<br><br>" +
-          "Add your Gmail under <b>Test users</b>, and ensure scopes include email + Drive (drive.file).<br><br>" +
+          "Add your Gmail under <b>Test users</b>. GDrive claims need email + drive.file; " +
+          "QRTagAll storage needs email only.<br><br>" +
           "Details: " + (oauthErrorDesc || oauthError) +
           "<br><br><a href=\"./index.html\">← Back to QR</a>";
         return;
@@ -67,6 +69,9 @@
         const stateObj = JSON.parse(rawState);
         id = stateObj.id;
         asset = stateObj.asset;
+        if (stateObj.storageType) {
+          storageType = String(stateObj.storageType).toUpperCase() === "LOCAL" ? "LOCAL" : "REMOTE";
+        }
       } catch (err) {
         console.error("❌ Failed to parse state:", err);
       }
@@ -91,13 +96,16 @@
         if (!email) throw new Error("No email received from Google.");
 
         persistAuthSession(email, accessToken);
-        statusEl.textContent = "⏳ Creating QRTagAll folder in your Google Drive…";
+        statusEl.textContent =
+          storageType === "LOCAL"
+            ? "⏳ Registering claim (QRTagAll storage)…"
+            : "⏳ Creating QRTagAll folder in your Google Drive…";
 
         const list = await completeQRClaim({
           id,
           assetName: asset || "Unnamed Asset",
           email: email.toLowerCase(),
-          storageType: "REMOTE",
+          storageType,
           onStatus: (msg) => { statusEl.textContent = "⏳ " + msg; }
         });
 
