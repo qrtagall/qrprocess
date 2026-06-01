@@ -229,16 +229,17 @@ async function invokeAppsScriptGet(url, callbackName, options = {}) {
 const QRTAGALL_POST_MESSAGE_ORIGINS = /^https:\/\/(script\.google\.com|[\w-]+\.googleusercontent\.com)$/;
 
 /**
- * POST to Apps Script in a hidden iframe; result via postMessage (no CORS).
- * ClaimHandler must return claimPostMessageHtml_ when clientPostMessage=1.
+ * POST to ClaimHandler in a popup (first-party Google cookies — fixes iframe 401).
+ * ClaimHandler returns claimPostMessageHtml_ with clientPopup=1.
  */
-async function invokeAppsScriptPostViaIframe(payload, scriptUrl, options = {}) {
+async function invokeAppsScriptPostViaPopup(payload, scriptUrl, options = {}) {
     const targetOrigin = options.targetOrigin || window.location.origin;
     const timeoutMs = options.timeoutMs || 120000;
     const url = scriptUrl || QRTAGALL_CLAIM_URL_REMOTE;
 
     const bodyPayload = { ...payload };
     bodyPayload.clientPostMessage = "1";
+    bodyPayload.clientPopup = "1";
     bodyPayload.postMessageOrigin = targetOrigin;
 
     const token = bodyPayload[QRTAGALL_AUTH_PARAM] || bodyPayload.authToken || getStoredAccessToken();
@@ -247,22 +248,13 @@ async function invokeAppsScriptPostViaIframe(payload, scriptUrl, options = {}) {
     }
 
     return new Promise((resolve, reject) => {
-        const frameName = `qrtagSave_${Date.now()}`;
         let done = false;
-        let form = null;
-        let iframe = null;
-
-        const cleanup = () => {
-            window.removeEventListener("message", onMessage);
-            clearTimeout(timer);
-            if (form?.parentNode) form.parentNode.removeChild(form);
-            if (iframe?.parentNode) iframe.parentNode.removeChild(iframe);
-        };
 
         const finish = (result, err) => {
             if (done) return;
             done = true;
-            cleanup();
+            window.removeEventListener("message", onMessage);
+            clearTimeout(timer);
             if (err) reject(err);
             else resolve(result);
         };
@@ -275,39 +267,68 @@ async function invokeAppsScriptPostViaIframe(payload, scriptUrl, options = {}) {
         };
 
         const timer = setTimeout(() => {
-            finish(null, new Error("Save timed out. Stay signed into Google and try again."));
+            finish(
+                null,
+                new Error(
+                    "Save timed out. Allow pop-ups, stay signed into Google, and approve QRTagAll Drive access if asked."
+                )
+            );
         }, timeoutMs);
 
         window.addEventListener("message", onMessage);
 
-        iframe = document.createElement("iframe");
-        iframe.name = frameName;
-        iframe.title = "QRTagAll save";
-        iframe.style.cssText = "position:fixed;left:-9999px;width:1px;height:1px;border:0;opacity:0";
-        document.body.appendChild(iframe);
-
-        form = document.createElement("form");
-        form.method = "POST";
-        form.action = url;
-        form.target = frameName;
-        form.style.display = "none";
-
-        const payloadInput = document.createElement("input");
-        payloadInput.type = "hidden";
-        payloadInput.name = "payload";
-        payloadInput.value = JSON.stringify(bodyPayload);
-        form.appendChild(payloadInput);
-
-        if (token) {
-            const tokenInput = document.createElement("input");
-            tokenInput.type = "hidden";
-            tokenInput.name = QRTAGALL_AUTH_PARAM;
-            tokenInput.value = token;
-            form.appendChild(tokenInput);
+        const popup = window.open(
+            "",
+            `qrtag_save_${Date.now()}`,
+            "popup=yes,width=520,height=420,menubar=no,toolbar=no,location=yes"
+        );
+        if (!popup) {
+            finish(
+                null,
+                new Error(
+                    "Pop-up blocked. Allow pop-ups for process.qrtagall.com to save edits to Google Drive."
+                )
+            );
+            return;
         }
 
-        document.body.appendChild(form);
-        form.submit();
+        try {
+            popup.document.open();
+            popup.document.write(
+                "<!DOCTYPE html><html><body style=\"font-family:sans-serif;padding:24px;text-align:center\">" +
+                "<p>Saving to your Google Drive…</p><p style=\"font-size:13px;color:#666\">Approve access if Google asks.</p></body></html>"
+            );
+            popup.document.close();
+
+            const form = popup.document.createElement("form");
+            form.method = "POST";
+            form.action = url;
+            form.acceptCharset = "UTF-8";
+
+            const payloadInput = popup.document.createElement("input");
+            payloadInput.type = "hidden";
+            payloadInput.name = "payload";
+            payloadInput.value = JSON.stringify(bodyPayload);
+            form.appendChild(payloadInput);
+
+            if (token) {
+                const tokenInput = popup.document.createElement("input");
+                tokenInput.type = "hidden";
+                tokenInput.name = QRTAGALL_AUTH_PARAM;
+                tokenInput.value = token;
+                form.appendChild(tokenInput);
+            }
+
+            popup.document.body.appendChild(form);
+            form.submit();
+        } catch (popupErr) {
+            try {
+                popup.close();
+            } catch (closeErr) {
+                /* ignore */
+            }
+            finish(null, popupErr);
+        }
     });
 }
 
@@ -1119,7 +1140,7 @@ async function triggerLink_get(params, modalId = null) {
                     window.__qrSaveAuthRetried = false;
                 }
             } else {
-                result = await invokeAppsScriptPostViaIframe(payload, QRTAGALL_CLAIM_URL_REMOTE);
+                result = await invokeAppsScriptPostViaPopup(payload, QRTAGALL_CLAIM_URL_REMOTE);
             }
             await finishPostSave(result);
         } catch (authErr) {
