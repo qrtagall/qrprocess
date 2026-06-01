@@ -402,6 +402,18 @@ function getSheetIdByLinkId(linkId) {
   return block?.sheetId || "";
 }
 
+/** Link id to use for title-level buttons (Add Artifact / Edit Description) that lack a link. */
+function getSoleOwnedLinkId() {
+  if (!globalRemoteAssetList?.length) return "";
+  const me = (typeof sessionEmail === "string" ? sessionEmail : "").toLowerCase();
+  const owned = globalRemoteAssetList.filter(
+    b => me && b.email && String(b.email).toLowerCase() === me
+  );
+  if (owned.length === 1) return owned[0].linkId || "";
+  if (globalRemoteAssetList.length === 1) return globalRemoteAssetList[0].linkId || "";
+  return "";
+}
+
 /************* pass linkid to openedit/delete modals modals modal */
 
 function setModalLinkAndOpen(index, isEdit, linkId) {

@@ -1343,6 +1343,12 @@ function editDescription(linkId = null, currentText = "") {
 
     let rawText = currentText || "";
 
+    // Title-level "Edit Description" passes no linkId — target the sole owned link
+    // so Save (which only handles link mode) works the same as the per-link pencil.
+    if (!linkId) {
+        linkId = getSoleOwnedLinkId();
+    }
+
     if (linkId) {
         // 🔍 Look up headerBlock directly, even if clean text passed in
         const headerBlock = document.querySelector(`[data-link-id="${linkId}"]`);
@@ -2300,6 +2306,11 @@ async function saveArtifactInfo({
     let sheetId = targetLinkId;
     if (!sheetId && modalLinkId) {
         sheetId = getSheetIdByLinkId(modalLinkId);
+    }
+    if (!sheetId) {
+        // Title-level "Add Artifact" carries no link — fall back to the sole owned link.
+        const soleLink = getSoleOwnedLinkId();
+        if (soleLink) sheetId = getSheetIdByLinkId(soleLink);
     }
     if (!sheetId) {
         showSpinner(false);
