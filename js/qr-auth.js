@@ -114,8 +114,8 @@ function setClaimButtonsEnabled(enabled) {
     });
 }
 
-/** Google Identity Services — email scope only (QRTagAll shared storage claim). */
-function requestGoogleEmailToken() {
+/** GIS token request — prompt "" reuses prior consent when scopes already granted. */
+function requestGoogleToken(scopes, prompt) {
     return new Promise((resolve, reject) => {
         if (!window.google?.accounts?.oauth2) {
             reject(new Error("Google sign-in library not loaded. Refresh the page."));
@@ -123,8 +123,8 @@ function requestGoogleEmailToken() {
         }
         const client = google.accounts.oauth2.initTokenClient({
             client_id: QRTAGALL_OAUTH_CLIENT_ID,
-            scope: "https://www.googleapis.com/auth/userinfo.email",
-            prompt: "",
+            scope: scopes,
+            prompt: prompt == null ? "" : prompt,
             callback: (response) => {
                 if (response.error) {
                     reject(new Error(response.error_description || response.error));
@@ -138,6 +138,26 @@ function requestGoogleEmailToken() {
     });
 }
 
+/** Email only — QRTagAll shared storage (LOCAL) claim. */
+function requestGoogleEmailToken() {
+    return requestGoogleToken("https://www.googleapis.com/auth/userinfo.email", "");
+}
+
+/** GDrive claim + edits (email, drive.file, spreadsheets). */
+function requestGdriveAccessToken(prompt) {
+    return requestGoogleToken(QRTAGALL_GDRIVE_CLAIM_SCOPES, prompt);
+}
+
+function pageUsesGdriveStorage() {
+    if (
+        typeof globalRemoteAssetList !== "undefined" &&
+        globalRemoteAssetList?.some((b) => String(b.storageType || "").toUpperCase() === "REMOTE")
+    ) {
+        return true;
+    }
+    return false;
+}
+
 function redirectAfterClaim(id, email) {
     const url =
         `${window.location.origin}${window.location.pathname}` +
@@ -149,15 +169,22 @@ function redirectAfterClaim(id, email) {
  * Logged-in UI uses sessionEmail, but saves need a valid OAuth token.
  * Silently refresh when email is known but token is missing/expired.
  */
-function maybeRefreshTokenForSession() {
+async function maybeRefreshTokenForSession() {
     if (!sessionEmail) return;
     const existing =
         localStorage.getItem(QR_ACCESS_TOKEN_KEY) ||
         sessionStorage.getItem(QR_ACCESS_TOKEN_KEY);
-    if (existing) return;
+    if (existing && (await validateStoredAccessToken(existing))) {
+        window.GToken = existing;
+        return;
+    }
     if (!window.google?.accounts?.oauth2) return;
 
-    requestGoogleEmailToken()
+    const tokenRequest = pageUsesGdriveStorage()
+        ? requestGdriveAccessToken("")
+        : requestGoogleEmailToken();
+
+    tokenRequest
         .then(async (token) => {
             const verified = await fetchUserEmail(token);
             return { token, verified };
@@ -289,13 +316,14 @@ function googleLoginNew() {
     const scope = QRTAGALL_GDRIVE_CLAIM_SCOPES;
 
     const state = encodeURIComponent(JSON.stringify({ id, asset: assetName }));
+    // Do not use prompt=consent — it forces the full consent screen every visit.
+    // Google remembers approval after the first grant (until scopes change or token is revoked).
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
         `?response_type=token` +
         `&client_id=${encodeURIComponent(clientId)}` +
         `&redirect_uri=${encodeURIComponent(redirectUri)}` +
         `&scope=${encodeURIComponent(scope)}` +
         `&state=${state}` +
-        `&prompt=consent` +
         `&include_granted_scopes=true`;
 
     window.location.href = authUrl;
@@ -325,13 +353,17 @@ function googleLoginForEdit(id) {
 
     */
 
+    const hasValidToken =
+        (localStorage.getItem(QR_ACCESS_TOKEN_KEY) || sessionStorage.getItem(QR_ACCESS_TOKEN_KEY));
+
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
         `?response_type=token` +
         `&client_id=${encodeURIComponent(clientId)}` +
         `&redirect_uri=${encodeURIComponent(redirectUri)}` +
         `&scope=${encodeURIComponent(scope)}` +
         `&state=${encodeURIComponent(id)}` +
-        `&prompt=select_account`;
+        `&include_granted_scopes=true` +
+        (hasValidToken ? "" : "&prompt=select_account");
 
     window.location.href = authUrl;
 }

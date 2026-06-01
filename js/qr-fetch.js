@@ -1617,15 +1617,38 @@ async function getAccessToken() {
         }
     }
 
+    const needsGdrive =
+        typeof pageUsesGdriveStorage === "function" && pageUsesGdriveStorage();
+    if (needsGdrive && typeof requestGdriveAccessToken === "function") {
+        try {
+            const token = await requestGdriveAccessToken("");
+            GToken = token;
+            window.GToken = token;
+            localStorage.setItem("qr_access_token", token);
+            if (typeof fetchUserEmail === "function") {
+                const email = await fetchUserEmail(token);
+                if (email && typeof persistAuthSession === "function") {
+                    persistAuthSession(email, token);
+                }
+            }
+            return token;
+        } catch (e) {
+            console.warn("GIS GDrive token:", e);
+        }
+    }
+
     const clientId =
         typeof QRTAGALL_OAUTH_CLIENT_ID !== "undefined"
             ? QRTAGALL_OAUTH_CLIENT_ID
             : "121290253918-e3qk9a1qao4r4r89s52lcq79evcbbes2.apps.googleusercontent.com";
+    const scope = needsGdrive && typeof QRTAGALL_GDRIVE_CLAIM_SCOPES !== "undefined"
+        ? QRTAGALL_GDRIVE_CLAIM_SCOPES
+        : "https://www.googleapis.com/auth/userinfo.email";
 
     return new Promise((resolve, reject) => {
         const client = google.accounts.oauth2.initTokenClient({
             client_id: clientId,
-            scope: "https://www.googleapis.com/auth/userinfo.email",
+            scope,
             prompt: "",
             callback: (resp) => {
                 if (resp.access_token) {
