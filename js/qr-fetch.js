@@ -480,11 +480,14 @@ async function saveGdriveArtifactInBrowser({
     insert,
     deleteRow,
 }) {
+    if (!sheetId) {
+        throw new Error("Missing spreadsheet ID for this QR. Refresh the page and try again.");
+    }
     const { title: tabTitle, sheetId: gridSheetId } = await getSpreadsheetTabMeta(token, sheetId);
 
     const idCell = await sheetsApiRequest(
         token,
-        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(`${tabTitle}!B1`)}`
+        `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(`${tabTitle}!B1`)}`
     );
     const idInSheet = (idCell.values && idCell.values[0] && idCell.values[0][0]) || "";
     if (String(idInSheet) !== String(qrId)) {

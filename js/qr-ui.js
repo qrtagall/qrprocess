@@ -2293,9 +2293,21 @@ async function saveArtifactInfo({
     showSpinner(true)
 
 
-    const sheetId = targetLinkId ;//|| sheetID;
+    const modalLinkId = modalId
+        ? document.getElementById(modalId)?.getAttribute("data-link-id")
+        : document.getElementById("addArtifactModal")?.getAttribute("data-link-id");
 
-    console.log("id>>>>",id, targetLinkId, sheetId);
+    let sheetId = targetLinkId;
+    if (!sheetId && modalLinkId) {
+        sheetId = getSheetIdByLinkId(modalLinkId);
+    }
+    if (!sheetId) {
+        showSpinner(false);
+        notify("Missing spreadsheet link for this QR. Refresh the page.", "error");
+        return;
+    }
+
+    console.log("id>>>>", id, targetLinkId, sheetId);
 
     // 🧠 Helper: safely trim or pass through
     const safe = (v) => typeof v === "string" ? v.trim() : v;
@@ -2310,7 +2322,7 @@ async function saveArtifactInfo({
 
     const userEmail = sessionEmail;
 
-    const storageType = getStorageTypeByLinkId(targetLinkId || sheetId);
+    const storageType = getStorageTypeByLinkId(modalLinkId || targetLinkId || sheetId);
 
     //console.log("TargetLink>>>>",id);
     //console.log("storageType>>>>",storageType);
