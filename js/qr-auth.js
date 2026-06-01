@@ -10,10 +10,14 @@ const QRTAGALL_OAUTH_CLIENT_ID =
  * GDrive claim (redirect OAuth). Requires Test users on the OAuth consent screen while app is in Testing.
  * See GS/OAUTH_SETUP.txt
  */
-/** GDrive claim: email + drive.file only (no spreadsheets — Sheets via ClaimHandler as user). */
+/**
+ * GDrive claim + in-browser edits on the user's QRTagAll spreadsheet.
+ * spreadsheets: update rows in app-created sheets only (same page, no ClaimHandler popup).
+ */
 const QRTAGALL_GDRIVE_CLAIM_SCOPES = [
     "https://www.googleapis.com/auth/userinfo.email",
     "https://www.googleapis.com/auth/drive.file",
+    "https://www.googleapis.com/auth/spreadsheets",
 ].join(" ");
 
 const QR_CLAIMED_EMAIL_KEY = "qr_claimed_email";
@@ -303,7 +307,13 @@ function googleLoginNew() {
 function googleLoginForEdit(id) {
     const clientId = QRTAGALL_OAUTH_CLIENT_ID;
     const redirectUri = "https://process.qrtagall.com/oauth-callback.html";
-    const scope = "https://www.googleapis.com/auth/userinfo.email";
+    let scope = "https://www.googleapis.com/auth/userinfo.email";
+    if (
+        typeof globalRemoteAssetList !== "undefined" &&
+        globalRemoteAssetList?.some((b) => String(b.storageType || "").toUpperCase() === "REMOTE")
+    ) {
+        scope = QRTAGALL_GDRIVE_CLAIM_SCOPES;
+    }
 
     /*
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth` +

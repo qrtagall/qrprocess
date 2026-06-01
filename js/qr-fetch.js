@@ -403,6 +403,202 @@ function parseRemoteSheetsPayload(data) {
     return result;
 }
 
+async function sheetsApiRequest(token, url, options = {}) {
+    const headers = {
+        Authorization: `Bearer ${token}`,
+        ...(options.headers || {}),
+    };
+    if (!headers["Content-Type"] && !headers["content-type"]) {
+        headers["Content-Type"] = "application/json";
+    }
+    const res = await fetch(url, { ...options, headers });
+    const text = await res.text();
+    let data = null;
+    if (text) {
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            data = { raw: text };
+        }
+    }
+    if (!res.ok) {
+        const msg =
+            data?.error?.message ||
+            data?.error_description ||
+            `Sheets API error (${res.status})`;
+        const err = new Error(msg);
+        err.status = res.status;
+        err.googleCode = data?.error?.status;
+        throw err;
+    }
+    return data;
+}
+
+function columnIndexToLetter(index) {
+    let s = "";
+    let n = index;
+    while (n > 0) {
+        const rem = (n - 1) % 26;
+        s = String.fromCharCode(65 + rem) + s;
+        n = Math.floor((n - 1) / 26);
+    }
+    return s;
+}
+
+function parseArtifactRange(range) {
+    const rowMatch = String(range || "").match(/\d+/);
+    if (!rowMatch) throw new Error("Invalid cell range");
+    const row = parseInt(rowMatch[0], 10);
+    const letters = String(range || "").match(/[A-Za-z]+/);
+    const col = letters ? letters[0].toUpperCase().split("").reduce((acc, ch) => acc * 26 + (ch.charCodeAt(0) - 64), 0) : 1;
+    return { row, col };
+}
+
+async function getSpreadsheetTabMeta(token, spreadsheetId) {
+    const data = await sheetsApiRequest(
+        token,
+        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties(sheetId,title)`
+    );
+    const sheets = data.sheets || [];
+    const master = sheets.find((s) => s.properties?.title === "MasterSheet");
+    const pick = master || sheets[0];
+    if (!pick?.properties) throw new Error("Spreadsheet has no tabs");
+    return {
+        title: pick.properties.title,
+        sheetId: pick.properties.sheetId,
+        allSheets: sheets,
+    };
+}
+
+/** Same-page GDrive artifact save (Sheets API + user's OAuth token). */
+async function saveGdriveArtifactInBrowser({
+    token,
+    qrId,
+    sheetId,
+    startRange,
+    valuesRaw,
+    insert,
+    deleteRow,
+}) {
+    const { title: tabTitle, sheetId: gridSheetId } = await getSpreadsheetTabMeta(token, sheetId);
+
+    const idCell = await sheetsApiRequest(
+        token,
+        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(`${tabTitle}!B1`)}`
+    );
+    const idInSheet = (idCell.values && idCell.values[0] && idCell.values[0][0]) || "";
+    if (String(idInSheet) !== String(qrId)) {
+        throw new Error("QR ID mismatch in spreadsheet");
+    }
+
+    const values = valuesRaw ? String(valuesRaw).split("||") : [];
+    const { row, col } = parseArtifactRange(startRange);
+
+    if (insert) {
+        await sheetsApiRequest(
+            token,
+            `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}:batchUpdate`,
+            {
+                method: "POST",
+                body: JSON.stringify({
+                    requests: [
+                        {
+                            insertDimension: {
+                                range: {
+                                    sheetId: gridSheetId,
+                                    dimension: "ROWS",
+                                    startIndex: row - 1,
+                                    endIndex: row,
+                                },
+                                inheritFromBefore: row > 1,
+                            },
+                        },
+                    ],
+                }),
+            }
+        );
+        if (values.length > 0) {
+            const endCol = col + values.length - 1;
+            const rangeA1 = `${tabTitle}!${columnIndexToLetter(col)}${row}:${columnIndexToLetter(endCol)}${row}`;
+            await sheetsApiRequest(
+                token,
+                `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(rangeA1)}?valueInputOption=USER_ENTERED`,
+                {
+                    method: "PUT",
+                    body: JSON.stringify({ values: [values] }),
+                }
+            );
+        }
+        return { success: true, id: qrId };
+    }
+
+    if (deleteRow) {
+        const linkRange = `${tabTitle}!D${row}`;
+        try {
+            const linkCell = await sheetsApiRequest(
+                token,
+                `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(linkRange)}`
+            );
+            const link = linkCell.values?.[0]?.[0] || "";
+            if (link && String(link).includes("drive.google.com")) {
+                const fileIdMatch = String(link).match(/[-\w]{25,}/);
+                if (fileIdMatch) {
+                    try {
+                        await driveApiRequest(
+                            token,
+                            `https://www.googleapis.com/drive/v3/files/${fileIdMatch[0]}`,
+                            { method: "DELETE" }
+                        );
+                    } catch (delErr) {
+                        console.warn("Drive file delete:", delErr);
+                    }
+                }
+            }
+        } catch (linkErr) {
+            console.warn("Read link cell:", linkErr);
+        }
+
+        await sheetsApiRequest(
+            token,
+            `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}:batchUpdate`,
+            {
+                method: "POST",
+                body: JSON.stringify({
+                    requests: [
+                        {
+                            deleteDimension: {
+                                range: {
+                                    sheetId: gridSheetId,
+                                    dimension: "ROWS",
+                                    startIndex: row - 1,
+                                    endIndex: row,
+                                },
+                            },
+                        },
+                    ],
+                }),
+            }
+        );
+        return { success: true, id: qrId };
+    }
+
+    if (values.length === 0) {
+        throw new Error("No values to update");
+    }
+
+    const endCol = col + values.length - 1;
+    const rangeA1 = `${tabTitle}!${columnIndexToLetter(col)}${row}:${columnIndexToLetter(endCol)}${row}`;
+    await sheetsApiRequest(
+        token,
+        `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(rangeA1)}?valueInputOption=USER_ENTERED`,
+        {
+            method: "PUT",
+            body: JSON.stringify({ values: [values] }),
+        }
+    );
+    return { success: true, id: qrId };
+}
+
 async function driveApiRequest(token, url, options = {}) {
     const headers = {
         Authorization: `Bearer ${token}`,
@@ -1140,7 +1336,27 @@ async function triggerLink_get(params, modalId = null) {
                     window.__qrSaveAuthRetried = false;
                 }
             } else {
-                result = await invokeAppsScriptPostViaPopup(payload, QRTAGALL_CLAIM_URL_REMOTE);
+                try {
+                    result = await saveGdriveArtifactInBrowser({
+                        token,
+                        qrId: payload.id,
+                        sheetId: payload.sheetId,
+                        startRange: payload.range,
+                        valuesRaw: payload.values,
+                        insert: payload.insert === "1",
+                        deleteRow: payload.delete === "1",
+                    });
+                } catch (sheetErr) {
+                    const needsScope =
+                        sheetErr.status === 403 ||
+                        /insufficient|scope|permission/i.test(sheetErr.message || "");
+                    if (needsScope) {
+                        throw new Error(
+                            "Please sign in again with Google (GDrive claim) so Sheets access is granted, then retry save."
+                        );
+                    }
+                    throw sheetErr;
+                }
             }
             await finishPostSave(result);
         } catch (authErr) {
