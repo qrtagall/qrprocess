@@ -298,13 +298,16 @@ function parseRemoteSheetsPayload(data) {
 }
 
 async function driveApiRequest(token, url, options = {}) {
+    const headers = {
+        Authorization: `Bearer ${token}`,
+        ...(options.headers || {}),
+    };
+    if (!headers["Content-Type"] && !headers["content-type"]) {
+        headers["Content-Type"] = "application/json";
+    }
     const res = await fetch(url, {
         ...options,
-        headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-            ...(options.headers || {}),
-        },
+        headers,
     });
     const text = await res.text();
     let data = null;
@@ -347,51 +350,53 @@ async function findOrCreateDriveFolder(token, name, parentId) {
     return created.id;
 }
 
-async function createClaimSpreadsheetInFolder(token, folderId, qrId, assetName) {
-    const created = await driveApiRequest(token, "https://www.googleapis.com/drive/v3/files", {
-        method: "POST",
-        body: JSON.stringify({
-            name: "QRTagAll",
-            mimeType: "application/vnd.google-apps.spreadsheet",
-            parents: [folderId],
-        }),
-    });
-    const spreadsheetId = created.id;
+function escapeCsvCell(value) {
+    const s = String(value == null ? "" : value);
+    if (/[",\r\n]/.test(s)) {
+        return `"${s.replace(/"/g, '""')}"`;
+    }
+    return s;
+}
 
-    await driveApiRequest(
+/** Create claim spreadsheet via Drive API only (drive.file — no spreadsheets scope). */
+async function createClaimSpreadsheetInFolder(token, folderId, qrId, assetName) {
+    const csv = [
+        `ID,${escapeCsvCell(qrId)}`,
+        `Description,${escapeCsvCell(assetName || "")}`,
+        ",,",
+        ",,",
+        "Basic Info,FileType,Options,Local Link,DateTime",
+    ].join("\n");
+
+    const boundary = `qrtagall_${Date.now()}`;
+    const metadata = {
+        name: "QRTagAll",
+        parents: [folderId],
+        mimeType: "application/vnd.google-apps.spreadsheet",
+    };
+    const multipartBody = [
+        `--${boundary}`,
+        "Content-Type: application/json; charset=UTF-8",
+        "",
+        JSON.stringify(metadata),
+        `--${boundary}`,
+        "Content-Type: text/csv; charset=UTF-8",
+        "",
+        csv,
+        `--${boundary}--`,
+        "",
+    ].join("\r\n");
+
+    const created = await driveApiRequest(
         token,
-        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`,
+        "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
         {
             method: "POST",
-            body: JSON.stringify({
-                requests: [
-                    {
-                        updateSheetProperties: {
-                            properties: { sheetId: 0, title: "MasterSheet" },
-                            fields: "title",
-                        },
-                    },
-                ],
-            }),
+            headers: { "Content-Type": `multipart/related; boundary=${boundary}` },
+            body: multipartBody,
         }
     );
-
-    await driveApiRequest(
-        token,
-        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/MasterSheet!A1:E5?valueInputOption=USER_ENTERED`,
-        {
-            method: "PUT",
-            body: JSON.stringify({
-                values: [
-                    ["ID", qrId],
-                    ["Description", assetName || ""],
-                    ["", ""],
-                    ["", ""],
-                    ["Basic Info", "FileType", "Options", "Local Link", "DateTime"],
-                ],
-            }),
-        }
-    );
+    const spreadsheetId = created.id;
 
     await driveApiRequest(
         token,
@@ -441,8 +446,8 @@ async function registerClaimOnMasterFetch({ id, sheetLink, token }) {
 }
 
 /**
- * GDrive claim via ClaimHandler (Execute as user) + browser registry fallback.
- * Uses drive.file + email OAuth only — no spreadsheets scope (Google verification).
+ * GDrive claim in the browser (Drive API + drive.file scope).
+ * Stays on process.qrtagall.com — no fetch to script.google.com (avoids CORS "Failed to fetch").
  */
 async function completeRemoteClaimViaDriveApi({ id, assetName, email, onStatus }) {
     const notify = (msg) => {
@@ -450,25 +455,26 @@ async function completeRemoteClaimViaDriveApi({ id, assetName, email, onStatus }
         console.log("[gdrive-claim]", msg);
     };
 
-    notify("Setting up QRTagAll folder and spreadsheet in your Google Drive…");
-    const data = await requestClaimViaPost({
+    const token = getStoredAccessToken() || (await ensureAccessTokenForMutation());
+    const normalizedEmail = (email || "").toLowerCase().trim();
+
+    notify("Creating QRTagAll folder in your Google Drive…");
+    const baseFolderId = await findOrCreateDriveFolder(token, "QRTagAll", null);
+    const qrFolderId = await findOrCreateDriveFolder(token, id, baseFolderId);
+
+    notify("Creating spreadsheet…");
+    const { url: publicLink } = await createClaimSpreadsheetInFolder(
+        token,
+        qrFolderId,
         id,
-        asset: assetName,
-        email,
-        storageType: "REMOTE",
-        claimScriptUrl: QRTAGALL_CLAIM_URL_REMOTE,
-    });
+        assetName
+    );
 
-    if (!data.registryOk && data.sheetLink) {
-        notify("Registering claim…");
-        const token = getStoredAccessToken() || (await ensureAccessTokenForMutation());
-        await registerClaimOnMasterFetch({ id, sheetLink: data.sheetLink, token });
-    }
+    const sheetLink = `${normalizedEmail}||${publicLink}||REMOTE`;
+    notify("Registering claim…");
+    await registerClaimOnMasterFetch({ id, sheetLink, token });
 
-    return {
-        publicLink: data.spreadsheetUrl || "",
-        sheetLink: data.sheetLink || "",
-    };
+    return { publicLink, sheetLink };
 }
 
 function fireClaimBeacon(claimUrl) {
@@ -629,7 +635,7 @@ async function completeQRClaim({ id, assetName, email, storageType, onStatus }) 
         console.log("[claim]", msg);
     };
 
-    // GDrive: ClaimHandler (user's Drive) + registry POST; OAuth scopes: email + drive.file
+    // GDrive: browser Drive API (drive.file) + registry POST; no script.google.com fetch on claim
     if (storage === "REMOTE") {
         await completeRemoteClaimViaDriveApi({ id, assetName, email, onStatus });
         notify("Waiting for asset data…");
