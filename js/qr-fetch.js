@@ -441,8 +441,8 @@ async function registerClaimOnMasterFetch({ id, sheetLink, token }) {
 }
 
 /**
- * GDrive claim entirely in the browser (Drive + Sheets API).
- * Avoids loading script.google.com/ClaimHandler in an iframe (refused to connect).
+ * GDrive claim via ClaimHandler (Execute as user) + browser registry fallback.
+ * Uses drive.file + email OAuth only — no spreadsheets scope (Google verification).
  */
 async function completeRemoteClaimViaDriveApi({ id, assetName, email, onStatus }) {
     const notify = (msg) => {
@@ -450,26 +450,25 @@ async function completeRemoteClaimViaDriveApi({ id, assetName, email, onStatus }
         console.log("[gdrive-claim]", msg);
     };
 
-    const token = getStoredAccessToken() || (await ensureAccessTokenForMutation());
-    const normalizedEmail = (email || "").toLowerCase().trim();
-
-    notify("Creating QRTagAll folder in your Google Drive…");
-    const baseFolderId = await findOrCreateDriveFolder(token, "QRTagAll", null);
-    const qrFolderId = await findOrCreateDriveFolder(token, id, baseFolderId);
-
-    notify("Creating MasterSheet spreadsheet…");
-    const { url: publicLink } = await createClaimSpreadsheetInFolder(
-        token,
-        qrFolderId,
+    notify("Setting up QRTagAll folder and spreadsheet in your Google Drive…");
+    const data = await requestClaimViaPost({
         id,
-        assetName
-    );
+        asset: assetName,
+        email,
+        storageType: "REMOTE",
+        claimScriptUrl: QRTAGALL_CLAIM_URL_REMOTE,
+    });
 
-    const sheetLink = `${normalizedEmail}||${publicLink}||REMOTE`;
-    notify("Registering claim…");
-    await registerClaimOnMasterFetch({ id, sheetLink, token });
+    if (!data.registryOk && data.sheetLink) {
+        notify("Registering claim…");
+        const token = getStoredAccessToken() || (await ensureAccessTokenForMutation());
+        await registerClaimOnMasterFetch({ id, sheetLink: data.sheetLink, token });
+    }
 
-    return { publicLink, sheetLink };
+    return {
+        publicLink: data.spreadsheetUrl || "",
+        sheetLink: data.sheetLink || "",
+    };
 }
 
 function fireClaimBeacon(claimUrl) {
@@ -630,7 +629,7 @@ async function completeQRClaim({ id, assetName, email, storageType, onStatus }) 
         console.log("[claim]", msg);
     };
 
-    // GDrive: create folder + sheet in user's Drive via Google APIs (stays on process.qrtagall.com)
+    // GDrive: ClaimHandler (user's Drive) + registry POST; OAuth scopes: email + drive.file
     if (storage === "REMOTE") {
         await completeRemoteClaimViaDriveApi({ id, assetName, email, onStatus });
         notify("Waiting for asset data…");

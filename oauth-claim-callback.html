@@ -57,8 +57,7 @@
           "<strong>Google sign-in blocked (403)</strong><br><br>" +
           "While the app is in <b>Testing</b> mode, only emails listed as <b>Test users</b> " +
           "on the Google Cloud OAuth consent screen may sign in.<br><br>" +
-          "Add <code>automation.trinitysunrise.blr@gmail.com</code> (or your Gmail) under " +
-          "<b>Test users</b>, and ensure scopes include Drive + Sheets.<br><br>" +
+          "Add your Gmail under <b>Test users</b>, and ensure scopes include email + Drive (drive.file).<br><br>" +
           "Details: " + (oauthErrorDesc || oauthError) +
           "<br><br><a href=\"./index.html\">← Back to QR</a>";
         return;

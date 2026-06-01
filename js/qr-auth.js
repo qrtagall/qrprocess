@@ -10,10 +10,10 @@ const QRTAGALL_OAUTH_CLIENT_ID =
  * GDrive claim (redirect OAuth). Requires Test users on the OAuth consent screen while app is in Testing.
  * See GS/OAUTH_SETUP.txt
  */
+/** GDrive claim: email + drive.file only (no spreadsheets — Sheets via ClaimHandler as user). */
 const QRTAGALL_GDRIVE_CLAIM_SCOPES = [
     "https://www.googleapis.com/auth/userinfo.email",
     "https://www.googleapis.com/auth/drive.file",
-    "https://www.googleapis.com/auth/spreadsheets",
 ].join(" ");
 
 const QR_CLAIMED_EMAIL_KEY = "qr_claimed_email";
