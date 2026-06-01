@@ -328,6 +328,52 @@ async function driveApiRequest(token, url, options = {}) {
     return data;
 }
 
+/** Upload artifact file to user's My Drive/QRTagAll/{qrId} (drive.file — no Apps Script POST). */
+async function uploadRemoteArtifactToDriveFolder(token, qrId, rawfiledata, rawfilename) {
+    const baseFolderId = await findOrCreateDriveFolder(token, "QRTagAll", null);
+    const qrFolderId = await findOrCreateDriveFolder(token, qrId, baseFolderId);
+
+    const binary = atob(rawfiledata);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+    const fileBlob = new Blob([bytes]);
+    const safeName = rawfilename || `Upload_${Date.now()}`;
+    const metadata = { name: safeName, parents: [qrFolderId] };
+
+    const form = new FormData();
+    form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }));
+    form.append("file", fileBlob, safeName);
+
+    const res = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+    });
+    const text = await res.text();
+    let data = null;
+    try {
+        data = JSON.parse(text);
+    } catch (e) {
+        data = { raw: text };
+    }
+    if (!res.ok) {
+        throw new Error(data?.error?.message || `Drive upload failed (${res.status})`);
+    }
+
+    const fileId = data.id;
+    await driveApiRequest(
+        token,
+        `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`,
+        {
+            method: "POST",
+            body: JSON.stringify({ role: "reader", type: "anyone" }),
+        }
+    );
+    return data.webViewLink || `https://drive.google.com/file/d/${fileId}/view`;
+}
+
 async function findOrCreateDriveFolder(token, name, parentId) {
     const parentClause = parentId ? `'${parentId}' in parents` : "'root' in parents";
     const q = encodeURIComponent(
@@ -940,6 +986,7 @@ async function triggerLink_get(params, modalId = null) {
     const mode = urlParams.get("mode");
 
     if (mode === "updateCellsNew") {
+        const storageType = (urlParams.get("storageType") || "REMOTE").toUpperCase();
         const finishPostSave = async (result) => {
             if (spinner) spinner.style.display = "none";
             if (modalId) {
@@ -962,36 +1009,39 @@ async function triggerLink_get(params, modalId = null) {
             else alert("❌ " + msg);
         };
 
-        try {
-            let token = await ensureAccessTokenForMutation();
-            const buildPayload = () => {
-                const payload = Object.fromEntries(urlParams.entries());
-                payload[QRTAGALL_AUTH_PARAM] = token;
-                payload.access_token = token;
-                return payload;
-            };
+        // LOCAL: POST to MultiSheet. REMOTE: JSONP GET below (POST to script.google.com → CORS).
+        if (storageType === "LOCAL") {
+            try {
+                let token = await ensureAccessTokenForMutation();
+                const buildPayload = () => {
+                    const payload = Object.fromEntries(urlParams.entries());
+                    payload[QRTAGALL_AUTH_PARAM] = token;
+                    payload.access_token = token;
+                    return payload;
+                };
 
-            let result = await invokeAppsScriptPostJson(buildPayload());
-            const authMsg = result?.message || "";
-            if (
-                !result?.success &&
-                /authentication required/i.test(authMsg) &&
-                !window.__qrSaveAuthRetried
-            ) {
-                window.__qrSaveAuthRetried = true;
-                clearStoredAccessTokens();
-                token = await getAccessToken();
-                result = await invokeAppsScriptPostJson(buildPayload());
-                window.__qrSaveAuthRetried = false;
+                let result = await invokeAppsScriptPostJson(buildPayload());
+                const authMsg = result?.message || "";
+                if (
+                    !result?.success &&
+                    /authentication required/i.test(authMsg) &&
+                    !window.__qrSaveAuthRetried
+                ) {
+                    window.__qrSaveAuthRetried = true;
+                    clearStoredAccessTokens();
+                    token = await getAccessToken();
+                    result = await invokeAppsScriptPostJson(buildPayload());
+                    window.__qrSaveAuthRetried = false;
+                }
+                await finishPostSave(result);
+            } catch (authErr) {
+                if (spinner) spinner.style.display = "none";
+                const msg = authErr.message || "Sign in required.";
+                if (typeof notify === "function") notify(msg, "error");
+                else alert("❌ " + msg);
             }
-            await finishPostSave(result);
-        } catch (authErr) {
-            if (spinner) spinner.style.display = "none";
-            const msg = authErr.message || "Sign in required.";
-            if (typeof notify === "function") notify(msg, "error");
-            else alert("❌ " + msg);
+            return;
         }
-        return;
     }
 
     if (mode && QRTAGALL_MUTATING_MODES.has(mode)) {
@@ -1119,29 +1169,16 @@ async function triggerLink_get(params, modalId = null) {
 
 
 async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null) {
-    const paramStorage = new URLSearchParams(params).get("storageType") || "REMOTE";
-    const baseUrl = getArtifactSaveScriptUrl(paramStorage);
-
-    if (modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) modal.style.display = "none";
-    }
-
-
-
-
+    const urlParams = new URLSearchParams(params);
+    const paramStorage = (urlParams.get("storageType") || "REMOTE").toUpperCase();
 
     const spinner = document.getElementById("fullScreenSpinner");
     if (spinner) spinner.style.display = "flex";
+    await new Promise((resolve) => setTimeout(resolve, 50));
 
-    await new Promise(resolve => setTimeout(resolve, 50)); // let spinner show
-
-
-    // ✅ Enforce Gmail auth via token (same as _get)
     if (!GToken) {
         try {
             GToken = await getAccessToken();
-            console.log("✅ Gmail token verified for POST");
         } catch (err) {
             alert(err);
             if (spinner) spinner.style.display = "none";
@@ -1149,14 +1186,41 @@ async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null
         }
     }
 
-    const isArtifactowner=isSessionUserOwnerOfAnyBlock();
-    //const _userEmail = sessionEmail;
-    //if (!_userEmail || _userEmail !== ownerEmail)
-    if(!isArtifactowner)
-    {
+    if (!isSessionUserOwnerOfAnyBlock()) {
         if (spinner) spinner.style.display = "none";
         alert("❌ You are not the owner of this QR Asset.\nPlease login with the correct account.");
         return;
+    }
+
+    // GDrive: upload via Drive API, then JSONP sheet update (avoids CORS POST to ClaimHandler).
+    if (paramStorage === "REMOTE" && rawfiledata) {
+        try {
+            const token = await ensureAccessTokenForMutation();
+            const qrId = urlParams.get("id");
+            const link = await uploadRemoteArtifactToDriveFolder(
+                token,
+                qrId,
+                rawfiledata,
+                rawfilename
+            );
+            const parts = (urlParams.get("values") || "").split("||");
+            while (parts.length < 4) parts.push("");
+            parts[3] = link;
+            urlParams.set("values", parts.join("||"));
+            await triggerLink_get(urlParams.toString(), modalId);
+        } catch (err) {
+            if (spinner) spinner.style.display = "none";
+            const msg = err.message || "Upload failed.";
+            if (typeof notify === "function") notify(msg, "error");
+            else alert("❌ " + msg);
+        }
+        return;
+    }
+
+    const baseUrl = getArtifactSaveScriptUrl(paramStorage);
+    if (modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) modal.style.display = "none";
     }
 
     let token = getStoredAccessToken();
@@ -1171,12 +1235,10 @@ async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null
     }
 
     const payload = {
-        ...Object.fromEntries(new URLSearchParams(params)),
+        ...Object.fromEntries(urlParams.entries()),
         rawfiledata,
-        rawfilename: rawfilename || ""
+        rawfilename: rawfilename || "",
     };
-
-    console.log("🚀 Submitting file upload to:", baseUrl);
 
     try {
         payload[QRTAGALL_AUTH_PARAM] = token;
