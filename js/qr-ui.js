@@ -2310,7 +2310,7 @@ async function saveArtifactInfo({
 
     const userEmail = sessionEmail;
 
-    const storageType = getStorageTypeByLinkId(id);//targetLinkId);
+    const storageType = getStorageTypeByLinkId(targetLinkId || sheetId);
 
     //console.log("TargetLink>>>>",id);
     //console.log("storageType>>>>",storageType);

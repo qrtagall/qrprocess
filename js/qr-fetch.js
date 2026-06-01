@@ -226,6 +226,91 @@ async function invokeAppsScriptGet(url, callbackName, options = {}) {
     });
 }
 
+const QRTAGALL_POST_MESSAGE_ORIGINS = /^https:\/\/(script\.google\.com|[\w-]+\.googleusercontent\.com)$/;
+
+/**
+ * POST to Apps Script in a hidden iframe; result via postMessage (no CORS).
+ * ClaimHandler must return claimPostMessageHtml_ when clientPostMessage=1.
+ */
+async function invokeAppsScriptPostViaIframe(payload, scriptUrl, options = {}) {
+    const targetOrigin = options.targetOrigin || window.location.origin;
+    const timeoutMs = options.timeoutMs || 120000;
+    const url = scriptUrl || QRTAGALL_CLAIM_URL_REMOTE;
+
+    const bodyPayload = { ...payload };
+    bodyPayload.clientPostMessage = "1";
+    bodyPayload.postMessageOrigin = targetOrigin;
+
+    const token = bodyPayload[QRTAGALL_AUTH_PARAM] || bodyPayload.authToken || getStoredAccessToken();
+    if (token) {
+        bodyPayload[QRTAGALL_AUTH_PARAM] = token;
+    }
+
+    return new Promise((resolve, reject) => {
+        const frameName = `qrtagSave_${Date.now()}`;
+        let done = false;
+        let form = null;
+        let iframe = null;
+
+        const cleanup = () => {
+            window.removeEventListener("message", onMessage);
+            clearTimeout(timer);
+            if (form?.parentNode) form.parentNode.removeChild(form);
+            if (iframe?.parentNode) iframe.parentNode.removeChild(iframe);
+        };
+
+        const finish = (result, err) => {
+            if (done) return;
+            done = true;
+            cleanup();
+            if (err) reject(err);
+            else resolve(result);
+        };
+
+        const onMessage = (event) => {
+            if (!QRTAGALL_POST_MESSAGE_ORIGINS.test(event.origin)) return;
+            const data = event.data;
+            if (!data || data.type !== "qrtagSave") return;
+            finish(data.result || data, null);
+        };
+
+        const timer = setTimeout(() => {
+            finish(null, new Error("Save timed out. Stay signed into Google and try again."));
+        }, timeoutMs);
+
+        window.addEventListener("message", onMessage);
+
+        iframe = document.createElement("iframe");
+        iframe.name = frameName;
+        iframe.title = "QRTagAll save";
+        iframe.style.cssText = "position:fixed;left:-9999px;width:1px;height:1px;border:0;opacity:0";
+        document.body.appendChild(iframe);
+
+        form = document.createElement("form");
+        form.method = "POST";
+        form.action = url;
+        form.target = frameName;
+        form.style.display = "none";
+
+        const payloadInput = document.createElement("input");
+        payloadInput.type = "hidden";
+        payloadInput.name = "payload";
+        payloadInput.value = JSON.stringify(bodyPayload);
+        form.appendChild(payloadInput);
+
+        if (token) {
+            const tokenInput = document.createElement("input");
+            tokenInput.type = "hidden";
+            tokenInput.name = QRTAGALL_AUTH_PARAM;
+            tokenInput.value = token;
+            form.appendChild(tokenInput);
+        }
+
+        document.body.appendChild(form);
+        form.submit();
+    });
+}
+
 /** GET save via fetch (avoids false script.onerror on Apps Script redirects). */
 async function invokeSaveRequest(targetUrl, callbackName) {
     try {
@@ -1009,18 +1094,16 @@ async function triggerLink_get(params, modalId = null) {
             else alert("❌ " + msg);
         };
 
-        // LOCAL: POST to MultiSheet. REMOTE: JSONP GET below (POST to script.google.com → CORS).
-        if (storageType === "LOCAL") {
-            try {
-                let token = await ensureAccessTokenForMutation();
-                const buildPayload = () => {
-                    const payload = Object.fromEntries(urlParams.entries());
-                    payload[QRTAGALL_AUTH_PARAM] = token;
-                    payload.access_token = token;
-                    return payload;
-                };
+        // LOCAL: fetch POST to MultiSheet. REMOTE: iframe POST + postMessage (no CORS).
+        try {
+            let token = await ensureAccessTokenForMutation();
+            const payload = Object.fromEntries(urlParams.entries());
+            payload[QRTAGALL_AUTH_PARAM] = token;
+            payload.access_token = token;
 
-                let result = await invokeAppsScriptPostJson(buildPayload());
+            let result;
+            if (storageType === "LOCAL") {
+                result = await invokeAppsScriptPostJson(payload, AppScriptBaseUrl_New);
                 const authMsg = result?.message || "";
                 if (
                     !result?.success &&
@@ -1030,18 +1113,22 @@ async function triggerLink_get(params, modalId = null) {
                     window.__qrSaveAuthRetried = true;
                     clearStoredAccessTokens();
                     token = await getAccessToken();
-                    result = await invokeAppsScriptPostJson(buildPayload());
+                    payload[QRTAGALL_AUTH_PARAM] = token;
+                    payload.access_token = token;
+                    result = await invokeAppsScriptPostJson(payload, AppScriptBaseUrl_New);
                     window.__qrSaveAuthRetried = false;
                 }
-                await finishPostSave(result);
-            } catch (authErr) {
-                if (spinner) spinner.style.display = "none";
-                const msg = authErr.message || "Sign in required.";
-                if (typeof notify === "function") notify(msg, "error");
-                else alert("❌ " + msg);
+            } else {
+                result = await invokeAppsScriptPostViaIframe(payload, QRTAGALL_CLAIM_URL_REMOTE);
             }
-            return;
+            await finishPostSave(result);
+        } catch (authErr) {
+            if (spinner) spinner.style.display = "none";
+            const msg = authErr.message || "Sign in required.";
+            if (typeof notify === "function") notify(msg, "error");
+            else alert("❌ " + msg);
         }
+        return;
     }
 
     if (mode && QRTAGALL_MUTATING_MODES.has(mode)) {
