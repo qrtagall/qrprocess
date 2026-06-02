@@ -490,6 +490,56 @@ async function findOrCreateDriveFolder(token, name, parentId) {
     return created.id;
 }
 
+/** Find an existing Drive folder by name under a parent (no creation). Returns id or null. */
+async function findDriveFolderByName(token, name, parentId) {
+    const parentClause = parentId ? `'${parentId}' in parents` : "'root' in parents";
+    const q = encodeURIComponent(
+        `name='${String(name).replace(/'/g, "\\'")}' and mimeType='application/vnd.google-apps.folder' and trashed=false and ${parentClause}`
+    );
+    const list = await driveApiRequest(
+        token,
+        `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&pageSize=1`
+    );
+    return list?.files?.[0]?.id || null;
+}
+
+/** Permanently delete a Drive file/folder (skips Trash). 404 is treated as already-gone. */
+async function driveApiDeletePermanently(token, fileId) {
+    if (!fileId) return false;
+    const res = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}`,
+        { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (res.ok || res.status === 404) return true;
+    const text = await res.text().catch(() => "");
+    throw new Error(`Drive delete failed (${res.status}): ${text}`);
+}
+
+/**
+ * Permanently remove a REMOTE QR from the user's own Drive:
+ * the per-QR spreadsheet + its My Drive/QRTagAll/{linkId} folder (cascades children).
+ * Uses the user's drive.file token — only touches files this app created.
+ */
+async function deleteRemoteQrInBrowser(token, linkId, sheetId) {
+    // 1) Delete the spreadsheet directly (we hold its id from the fetch metadata).
+    if (sheetId) {
+        try { await driveApiDeletePermanently(token, sheetId); }
+        catch (e) { console.warn("Remote spreadsheet delete:", e); }
+    }
+    // 2) Delete the dedicated My Drive/QRTagAll/{linkId} folder (removes any leftovers).
+    if (linkId) {
+        try {
+            const baseId = await findDriveFolderByName(token, "QRTagAll", null);
+            if (baseId) {
+                const qrFolderId = await findDriveFolderByName(token, linkId, baseId);
+                if (qrFolderId) await driveApiDeletePermanently(token, qrFolderId);
+            }
+        } catch (e) {
+            console.warn("Remote folder delete:", e);
+        }
+    }
+}
+
 function escapeCsvCell(value) {
     const s = String(value == null ? "" : value);
     if (/[",\r\n]/.test(s)) {

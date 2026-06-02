@@ -215,35 +215,155 @@ async function confirmAddLinkedQR() {
 
 
 /*********************************************** Delete ***********************************/
+
+/** QR links on the current master page that the signed-in user owns. */
+function getOwnedDeletableQRs() {
+    const me = (typeof sessionEmail === "string" ? sessionEmail : "").toLowerCase().trim();
+    if (!me || !Array.isArray(globalRemoteAssetList)) return [];
+    return globalRemoteAssetList
+        .filter((b) => String(b.email || "").toLowerCase().trim() === me && b.sheetId)
+        .map((b) => ({
+            linkId: b.linkId || "",
+            sheetId: b.sheetId || "",
+            storageType: String(b.storageType || "REMOTE").toUpperCase(),
+            description: b.description || b.asset || "",
+        }));
+}
+
 function openDeleteDialog() {
-
-    alert("Not available in Demo version.");
-    return;
-
-    const expandedBlock = document.querySelector(".collapsible.active");
-    if (!expandedBlock) {
-        alert("❌ No QR block is currently expanded.");
+    const me = (typeof sessionEmail === "string" ? sessionEmail : "").toLowerCase().trim();
+    if (!me) {
+        notify("Please sign in as the QR owner first.", "error");
         return;
     }
 
-    const linkId = expandedBlock.getAttribute("data-link-id") || null;
-
-    if (!linkId) {
-        alert("❌ Unable to detect linkId from expanded block.");
+    const owned = getOwnedDeletableQRs();
+    if (!owned.length) {
+        notify("You don't own any QR link on this page to delete.", "info");
         return;
     }
 
-    const mode = confirm("Do you want to perform a HARD DELETE?\n(OK = Hard Delete, Cancel = Soft Delete)")
-        ? "hardDelete"
-        : "softDelete";
+    const listEl = document.getElementById("deleteQRList");
+    const statusEl = document.getElementById("deleteQRStatus");
+    if (!listEl) {
+        alert("❌ Delete dialog markup missing. Redeploy index.html.");
+        return;
+    }
+    if (statusEl) { statusEl.textContent = ""; statusEl.style.display = "none"; }
 
-    if (confirm(`Are you sure you want to ${mode.toUpperCase()} QR ID:\n${linkId}?`)) {
-        triggerDelete(linkId, mode);
+    listEl.innerHTML = owned
+        .map((q, i) => {
+            const badgeClass = q.storageType === "LOCAL" ? "qrt-badge-local" : "qrt-badge-remote";
+            const desc = q.description ? `<div class="qrt-delete-item-desc">${escapeHtmlSafe(q.description)}</div>` : "";
+            return `
+            <label class="qrt-delete-item">
+                <input type="checkbox" class="qrt-delete-check" data-idx="${i}">
+                <span class="qrt-delete-item-main">
+                    <span class="qrt-delete-item-id">${escapeHtmlSafe(q.linkId || "(no id)")}</span>
+                    <span class="qrt-badge ${badgeClass}">${q.storageType}</span>
+                    ${desc}
+                </span>
+            </label>`;
+        })
+        .join("");
+
+    // Stash the owned list for the confirm handler.
+    window.__qrDeleteCandidates = owned;
+
+    const modal = document.getElementById("deleteQRModal");
+    if (modal) modal.style.display = "flex";
+}
+
+function closeDeleteQRModal() {
+    const modal = document.getElementById("deleteQRModal");
+    if (modal) modal.style.display = "none";
+    window.__qrDeleteCandidates = null;
+}
+
+async function confirmDeleteSelectedQRs() {
+    const candidates = window.__qrDeleteCandidates || [];
+    const checks = Array.from(document.querySelectorAll(".qrt-delete-check"));
+    const selected = checks
+        .filter((c) => c.checked)
+        .map((c) => candidates[parseInt(c.getAttribute("data-idx"), 10)])
+        .filter(Boolean);
+
+    if (!selected.length) {
+        const statusEl = document.getElementById("deleteQRStatus");
+        if (statusEl) { statusEl.textContent = "Select at least one QR to delete."; statusEl.style.display = "block"; statusEl.style.color = "#b91c1c"; }
+        return;
+    }
+
+    const idList = selected.map((s) => s.linkId || s.sheetId).join("\n");
+    const ok = confirm(
+        `⚠️ Permanently delete ${selected.length} QR(s)?\n\n${idList}\n\n` +
+        `This removes the data from Google Drive and the registry. This CANNOT be undone.`
+    );
+    if (!ok) return;
+
+    closeDeleteQRModal();
+    await deleteSelectedQRs(selected);
+}
+
+async function deleteSelectedQRs(selected) {
+    const masterId = getQueryParam("id");
+    const spinner = document.getElementById("fullScreenSpinner");
+    if (spinner) spinner.style.display = "flex";
+
+    try {
+        const token = await ensureAccessTokenForMutation();
+
+        // 1) REMOTE entries live in the user's own Drive — delete them in the browser.
+        for (const it of selected) {
+            if (it.storageType === "REMOTE") {
+                try {
+                    await deleteRemoteQrInBrowser(token, it.linkId, it.sheetId);
+                } catch (err) {
+                    console.warn("Remote delete failed for", it.linkId, err);
+                    // Continue — backend still clears the registry cell.
+                }
+            }
+        }
+
+        // 2) Backend: permanently delete LOCAL Drive storage, clear registry cells,
+        //    and drop the whole row if nothing remains.
+        const payload = {
+            mode: "deleteQR",
+            id: masterId,
+            storageType: "LOCAL",
+            targets: JSON.stringify(
+                selected.map((s) => ({ sheetId: s.sheetId, storageType: s.storageType, linkId: s.linkId }))
+            ),
+            [QRTAGALL_AUTH_PARAM]: token,
+            email: (typeof sessionEmail === "string" ? sessionEmail : "") || "",
+        };
+
+        const result = await invokeAppsScriptPostJson(payload, getArtifactSaveScriptUrl("LOCAL"));
+
+        if (spinner) spinner.style.display = "none";
+
+        if (result?.success) {
+            notify(result.message || "QR deleted.", "success");
+            setTimeout(() => {
+                window.location.href = `index.html?id=${encodeURIComponent(masterId)}`;
+            }, 700);
+        } else {
+            if (result?.hint) console.warn("Delete hint:", result.hint);
+            notify(result?.message || "Delete failed.", "error");
+        }
+    } catch (err) {
+        if (spinner) spinner.style.display = "none";
+        notify(err.message || "Delete failed.", "error");
     }
 }
-function triggerDelete(linkId, mode) {
-    if (!linkId || !mode) return;
-    triggerOperation(mode, { id: linkId });
+
+/** Minimal HTML escaping for values rendered into the delete list. */
+function escapeHtmlSafe(s) {
+    return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
 }
 
 

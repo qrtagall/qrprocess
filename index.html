@@ -19,7 +19,7 @@
 
 
     <!-- -->
-    <link rel="stylesheet" href="./css/style.css?v=20260602d">
+    <link rel="stylesheet" href="./css/style.css?v=20260603a">
      <!-- -->
 
 </head>
@@ -206,6 +206,28 @@
                 <button type="button" id="confirmAddQR" class="qrt-btn qrt-btn-primary qrt-btn-lg" onclick="confirmAddLinkedQR()">Add</button>
             </div>
 
+        </div>
+    </div>
+
+
+    <!-- Delete QR Modal -->
+    <div id="deleteQRModal" class="qrt-modal" style="display:none;">
+        <div class="qrt-modal-panel qrt-modal-panel-artifact">
+            <div class="qrt-modal-header-stripe qrt-stripe-delete">
+                <h3>❌ Delete QR</h3>
+            </div>
+
+            <p class="qrt-modal-body-text">Select the QR link(s) you own to delete.</p>
+            <p class="qrt-modal-hint">This <b>permanently</b> removes the data from Google Drive (skipping Trash) and from the registry. This action <b>cannot be undone</b>.</p>
+
+            <div id="deleteQRList" class="qrt-delete-list"></div>
+
+            <p id="deleteQRStatus" class="qrt-status-line"></p>
+
+            <div class="qrt-modal-actions">
+                <button type="button" class="qrt-btn qrt-btn-secondary qrt-btn-lg" onclick="closeDeleteQRModal()">Cancel</button>
+                <button type="button" id="deleteQRConfirmBtn" class="qrt-btn qrt-btn-danger qrt-btn-lg" onclick="confirmDeleteSelectedQRs()">Delete</button>
+            </div>
         </div>
     </div>
 
@@ -493,19 +515,19 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "3.73";
+    const QRTagAll_Ver_ = "4.0";
 </script>
 
 
 
 
 <!-- bump ?v= whenever JS changes to force browsers to load the new files -->
-<script src="./js/qr-utils.js?v=20260602d"></script>
-<script src="./js/qr-auth.js?v=20260602e"></script>
-<script src="./js/qr-fetch.js?v=20260602e"></script>
-<script src="./js/qr-edit.js?v=20260602d"></script>
-<script src="./js/qr-ui.js?v=20260602d"></script>
-<script src="./js/qr-main.js?v=20260602d"></script>
+<script src="./js/qr-utils.js?v=20260603a"></script>
+<script src="./js/qr-auth.js?v=20260603a"></script>
+<script src="./js/qr-fetch.js?v=20260603a"></script>
+<script src="./js/qr-edit.js?v=20260603a"></script>
+<script src="./js/qr-ui.js?v=20260603a"></script>
+<script src="./js/qr-main.js?v=20260603a"></script>
 <!--   -->
 
 <!-- LOCAL DEV ONLY — do not deploy with file:// script tags (breaks claim/save on process.qrtagall.com)

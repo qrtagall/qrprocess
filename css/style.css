@@ -796,6 +796,10 @@ body {
     background: linear-gradient(135deg, #d35400 0%, #e67e22 100%);
 }
 
+.qrt-stripe-delete {
+    background: linear-gradient(135deg, #7b241c 0%, #c0392b 55%, #e74c3c 100%);
+}
+
 .qrt-modal-body-text {
     font-size: 16px;
     line-height: 1.5;
@@ -1259,6 +1263,89 @@ body {
 .qrt-btn-secondary {
     background: #e8e8e8;
     color: #333;
+}
+
+.qrt-btn-danger {
+    background: #c0392b;
+    color: #fff;
+    font-weight: 600;
+}
+
+.qrt-btn-danger:hover {
+    background: #a93226;
+}
+
+/* Delete QR — owned-link selection list */
+.qrt-delete-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 320px;
+    overflow-y: auto;
+    margin: 6px 0 12px;
+}
+
+.qrt-delete-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid #e2e2e2;
+    border-radius: 10px;
+    background: #fafafa;
+    cursor: pointer;
+    text-align: left;
+}
+
+.qrt-delete-item:hover {
+    border-color: #c0392b;
+    background: #fff5f4;
+}
+
+.qrt-delete-check {
+    margin-top: 3px;
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+}
+
+.qrt-delete-item-main {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.qrt-delete-item-id {
+    font-weight: 600;
+    font-size: 14px;
+    color: #2c3e50;
+    word-break: break-all;
+}
+
+.qrt-delete-item-desc {
+    font-size: 13px;
+    color: #666;
+    word-break: break-word;
+}
+
+.qrt-badge {
+    display: inline-block;
+    align-self: flex-start;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    color: #fff;
+}
+
+.qrt-badge-local {
+    background: #2e86c1;
+}
+
+.qrt-badge-remote {
+    background: #1e8449;
 }
 
 .qrt-btn-lg {
