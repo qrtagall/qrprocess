@@ -1276,6 +1276,53 @@ async function triggerLink_get(params, modalId = null) {
         return;
     }
 
+    // Registry mutations (clone, transfer, addLinkedQR, delete) go via POST so the
+    // authToken is in the request body rather than the URL — avoids potential
+    // URL-stripping on Apps Script GET redirects and makes auth more reliable.
+    const REGISTRY_POST_MODES = new Set(["clone", "hardClone", "transfer", "softDelete", "hardDelete", "addLinkedQR"]);
+    if (mode && REGISTRY_POST_MODES.has(mode)) {
+        try {
+            const token = await ensureAccessTokenForMutation();
+            const postPayload = Object.fromEntries(urlParams.entries());
+            postPayload[QRTAGALL_AUTH_PARAM] = token;
+            const email =
+                (typeof sessionEmail === "string" && sessionEmail)
+                    ? sessionEmail
+                    : (localStorage.getItem("qr_claimed_email") || sessionStorage.getItem("qr_claimed_email") || "");
+            if (email) postPayload.email = email;
+
+            const scriptUrl = getArtifactSaveScriptUrl(postPayload.storageType || "LOCAL");
+            const result = await invokeAppsScriptPostJson(postPayload, scriptUrl);
+            if (spinner) spinner.style.display = "none";
+            if (modalId) {
+                const modal = document.getElementById(modalId);
+                if (modal) modal.style.display = "none";
+            }
+            if (result?.success) {
+                const successMsg = result.message || "Operation completed.";
+                if (typeof notify === "function") notify(successMsg, "success");
+                else alert("✅ " + successMsg);
+                const qrId = getQueryParam("id");
+                if (mode === "clone" || mode === "hardClone" || mode === "transfer") {
+                    const newId = urlParams.get("newid");
+                    if (newId) { window.location.href = `index.html?id=${encodeURIComponent(newId)}`; return; }
+                }
+                loadAndRenderAsset(qrId).then(() => console.log("✅ Asset re-rendered"));
+            } else {
+                const errMsg = (result?.message || "Operation failed.");
+                if (result?.hint) console.warn("Auth hint:", result.hint);
+                if (typeof notify === "function") notify(errMsg, "error");
+                else alert("❌ " + errMsg);
+            }
+        } catch (authErr) {
+            if (spinner) spinner.style.display = "none";
+            const msg = authErr.message || "Sign in required.";
+            if (typeof notify === "function") notify(msg, "error");
+            else alert("❌ " + msg);
+        }
+        return;
+    }
+
     if (mode && QRTAGALL_MUTATING_MODES.has(mode)) {
         try {
             const token = await ensureAccessTokenForMutation();
@@ -1350,6 +1397,7 @@ async function triggerLink_get(params, modalId = null) {
     const handleSaveResponse = async (response) => {
         if (!response || !response.success) {
             const msg = response?.message || response?.error || "Save rejected by server.";
+            if (response?.hint) console.warn("Server auth hint:", response.hint);
             const authFailed =
                 /authentication required/i.test(msg) || /sign in with google/i.test(msg);
             if (authFailed && !window.__qrSaveAuthRetried) {

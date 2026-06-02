@@ -342,7 +342,35 @@ function googleLoginNew() {
 
 
 // 🔐 Login for Edit access (separate redirect)
-function googleLoginForEdit(id) {
+async function googleLoginForEdit(id) {
+    // If the stored OAuth token is still alive, skip the Google redirect entirely.
+    // Re-verify the email from the token so we can restore the session and enter
+    // edit mode without asking the user to go through the consent screen again.
+    const storedToken =
+        localStorage.getItem(QR_ACCESS_TOKEN_KEY) ||
+        sessionStorage.getItem(QR_ACCESS_TOKEN_KEY);
+    if (storedToken) {
+        try {
+            const email = await fetchUserEmail(storedToken);
+            if (email) {
+                persistAuthSession(email, storedToken);
+                if (
+                    typeof isSessionUserOwnerOfAnyBlock === "function" &&
+                    isSessionUserOwnerOfAnyBlock() &&
+                    typeof enableEditMode === "function"
+                ) {
+                    enableEditMode();
+                    return; // skip Google redirect — already authenticated as owner
+                }
+                // Token valid but this account is not the owner of the current QR.
+                // Fall through to redirect so the user can switch to the right account.
+            }
+        } catch (_) {
+            // Network error — fall through to redirect
+        }
+    }
+
+    // Token missing, expired, or owner mismatch — do a full-page redirect to Google.
     const clientId = QRTAGALL_OAUTH_CLIENT_ID;
     const redirectUri = "https://process.qrtagall.com/oauth-callback.html";
     let scope = "https://www.googleapis.com/auth/userinfo.email";
@@ -353,27 +381,14 @@ function googleLoginForEdit(id) {
         scope = QRTAGALL_GDRIVE_CLAIM_SCOPES;
     }
 
-    /*
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
-        `?response_type=token` +
-        `&client_id=${encodeURIComponent(clientId)}` +
-        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-        `&scope=${encodeURIComponent(scope)}` +
-        `&state=${encodeURIComponent(id)}`;
-
-    */
-
-    const hasValidToken =
-        (localStorage.getItem(QR_ACCESS_TOKEN_KEY) || sessionStorage.getItem(QR_ACCESS_TOKEN_KEY));
-
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
+    const authUrl =
+        `https://accounts.google.com/o/oauth2/v2/auth` +
         `?response_type=token` +
         `&client_id=${encodeURIComponent(clientId)}` +
         `&redirect_uri=${encodeURIComponent(redirectUri)}` +
         `&scope=${encodeURIComponent(scope)}` +
         `&state=${encodeURIComponent(id)}` +
-        `&include_granted_scopes=true` +
-        (hasValidToken ? "" : "&prompt=select_account");
+        `&include_granted_scopes=true`;
 
     window.location.href = authUrl;
 }
