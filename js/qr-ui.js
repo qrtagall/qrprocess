@@ -42,11 +42,42 @@ function updatePanelBackground(colorCode) {
     if (panel) panel.style.backgroundColor = colorCode;
 }
 
+// Place view badge below #taglineWrapper (black ribbon), not over the tagline on mobile.
+function syncViewCountBadgePosition() {
+    const ribbon = document.getElementById("taglineWrapper");
+    if (!ribbon) return;
+    const bottom = Math.ceil(ribbon.getBoundingClientRect().bottom);
+    const gap = 8;
+    document.documentElement.style.setProperty("--qrtag-ribbon-bottom", `${bottom}px`);
+    const badge = document.getElementById("viewCountBadge");
+    if (badge) {
+        badge.style.top = `${bottom + gap}px`;
+    }
+}
+
+function bindViewCountBadgePositionSync() {
+    if (window.__qrViewBadgePositionBound) return;
+    window.__qrViewBadgePositionBound = true;
+    const run = () => syncViewCountBadgePosition();
+    window.addEventListener("resize", run);
+    window.addEventListener("orientationchange", run);
+    if (typeof ResizeObserver !== "undefined") {
+        const ribbon = document.getElementById("taglineWrapper");
+        if (ribbon) {
+            new ResizeObserver(run).observe(ribbon);
+        }
+    }
+    if (document.fonts?.ready) {
+        document.fonts.ready.then(run).catch(() => {});
+    }
+}
+
 // Floating view-count badge (top-right). Value comes from the master registry
 // via fetchAllRemoteSheets; the server increments once per load (owner excluded).
 // The badge is created on demand with inline styles so it shows even if the
 // index.html markup / style.css were not (re)deployed or are cached.
 function ensureViewCountBadge() {
+    bindViewCountBadgePositionSync();
     let badge = document.getElementById("viewCountBadge");
     if (!badge) {
         badge = document.createElement("div");
@@ -61,9 +92,8 @@ function ensureViewCountBadge() {
     // Inline styles guarantee visibility regardless of style.css.
     Object.assign(badge.style, {
         position: "fixed",
-        top: "14px",
         right: "14px",
-        zIndex: "2147483000",
+        zIndex: "999",
         display: "inline-flex",
         alignItems: "center",
         gap: "6px",
@@ -77,6 +107,7 @@ function ensureViewCountBadge() {
         borderRadius: "999px",
         boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
     });
+    syncViewCountBadgePosition();
     return badge;
 }
 
@@ -92,6 +123,17 @@ function updateViewCountBadge(count) {
     }
     valueEl.textContent = n.toLocaleString();
     badge.classList.add("is-visible");
+    syncViewCountBadgePosition();
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => {
+        bindViewCountBadgePositionSync();
+        syncViewCountBadgePosition();
+    });
+} else {
+    bindViewCountBadgePositionSync();
+    syncViewCountBadgePosition();
 }
 
 // Edit mode activation

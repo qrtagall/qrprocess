@@ -3,14 +3,16 @@
             --primary: #005aab;
             --valid: #00cc88;
             --error: #ff4444;
+            /* Set by JS from #taglineWrapper height; fallback for first paint */
+            --qrtag-ribbon-bottom: 48px;
         }
 
-        /* Floating view counter (top-right) */
+        /* Floating view counter — top-right, below black header ribbon */
         #viewCountBadge {
             position: fixed;
-            top: 14px;
+            top: calc(var(--qrtag-ribbon-bottom) + 8px);
             right: 14px;
-            z-index: 1000;
+            z-index: 999;
             display: none;
             align-items: center;
             gap: 6px;
@@ -37,7 +39,6 @@
 
         @media (max-width: 480px) {
             #viewCountBadge {
-                top: 10px;
                 right: 10px;
                 padding: 5px 10px;
                 font-size: 13px;
