@@ -42,6 +42,18 @@ function updatePanelBackground(colorCode) {
     if (panel) panel.style.backgroundColor = colorCode;
 }
 
+// Floating view-count badge (top-right). Value comes from the master registry
+// via fetchAllRemoteSheets; the server increments once per load (owner excluded).
+function updateViewCountBadge(count) {
+    const badge = document.getElementById("viewCountBadge");
+    const valueEl = document.getElementById("viewCountValue");
+    if (!badge || !valueEl) return;
+    const n = Number(count);
+    if (!Number.isFinite(n) || n < 0) return;
+    valueEl.textContent = n.toLocaleString();
+    badge.classList.add("is-visible");
+}
+
 // Edit mode activation
 function enableEditMode() {
     editMode = true;

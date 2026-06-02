@@ -185,7 +185,10 @@ async function renderAssetPanel(id) {
      spinner.style.display = "block";
 
 
-    let remoteList = await fetchAllRemoteSheets(id);
+    // Count one view per page load (server skips owner). Re-renders after save don't recount.
+    const countThisView = !window.__qrViewCounted;
+    window.__qrViewCounted = true;
+    let remoteList = await fetchAllRemoteSheets(id, { countView: countThisView });
 
     if ((remoteList?.length || 0) === 0 && getQueryParam("claimed") === "1") {
         console.log("⏳ claimed=1 but no data yet — polling master registry…");

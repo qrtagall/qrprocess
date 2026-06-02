@@ -41,7 +41,7 @@ function getClaimScriptUrl(storageType) {
         : QRTAGALL_CLAIM_URL_REMOTE;
 }
 
-/** Artifact saves: LOCAL → MultiSheet shared Drive; REMOTE → user's Drive via ClaimHandler */
+/** Artifact saves: LOCAL → MultiSheet; REMOTE → browser Drive API (see saveGdriveArtifactInBrowser) */
 function getArtifactSaveScriptUrl(storageType) {
     return getClaimScriptUrl(storageType);
 }
@@ -1057,9 +1057,18 @@ function renderThumbnailGrid(thumbnails) {
 
 
 
-async function fetchAllRemoteSheets(id) {
+async function fetchAllRemoteSheets(id, options = {}) {
     const callbackName = "handleQRTagAllResponse_" + Date.now();
-    const url = `${AppScriptBaseUrl_New}?id=${encodeURIComponent(id)}&callback=${callbackName}`;
+    let url = `${AppScriptBaseUrl_New}?id=${encodeURIComponent(id)}&callback=${callbackName}`;
+
+    // Count a view only when explicitly requested (initial page load). The
+    // server excludes the owner; pass the logged-in email so owner visits skip.
+    if (options.countView) {
+        url += `&countView=1`;
+        const viewer =
+            typeof sessionEmail === "string" && sessionEmail ? sessionEmail : "";
+        if (viewer) url += `&viewerEmail=${encodeURIComponent(viewer)}`;
+    }
 
     try {
         const data = await invokeAppsScriptGet(url, callbackName, {
@@ -1069,6 +1078,12 @@ async function fetchAllRemoteSheets(id) {
         if (!data) {
             console.warn("fetchAllRemoteSheets: no response");
             return [];
+        }
+        if (typeof data.views !== "undefined") {
+            window.qrViewCount = Number(data.views) || 0;
+            if (typeof updateViewCountBadge === "function") {
+                updateViewCountBadge(window.qrViewCount);
+            }
         }
         return parseRemoteSheetsPayload(data);
     } catch (e) {
