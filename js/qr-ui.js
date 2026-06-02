@@ -44,12 +44,52 @@ function updatePanelBackground(colorCode) {
 
 // Floating view-count badge (top-right). Value comes from the master registry
 // via fetchAllRemoteSheets; the server increments once per load (owner excluded).
+// The badge is created on demand with inline styles so it shows even if the
+// index.html markup / style.css were not (re)deployed or are cached.
+function ensureViewCountBadge() {
+    let badge = document.getElementById("viewCountBadge");
+    if (!badge) {
+        badge = document.createElement("div");
+        badge.id = "viewCountBadge";
+        badge.title = "Number of views";
+        badge.setAttribute("aria-label", "Number of views");
+        badge.innerHTML =
+            '<span class="vcb-icon">\u{1F441}\uFE0F</span> ' +
+            '<span id="viewCountValue">0</span>';
+        document.body.appendChild(badge);
+    }
+    // Inline styles guarantee visibility regardless of style.css.
+    Object.assign(badge.style, {
+        position: "fixed",
+        top: "14px",
+        right: "14px",
+        zIndex: "2147483000",
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "6px",
+        padding: "6px 12px",
+        background: "rgba(0, 90, 171, 0.92)",
+        color: "#fff",
+        fontFamily: "'Segoe UI', sans-serif",
+        fontSize: "14px",
+        fontWeight: "600",
+        lineHeight: "1",
+        borderRadius: "999px",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
+    });
+    return badge;
+}
+
 function updateViewCountBadge(count) {
-    const badge = document.getElementById("viewCountBadge");
-    const valueEl = document.getElementById("viewCountValue");
-    if (!badge || !valueEl) return;
     const n = Number(count);
     if (!Number.isFinite(n) || n < 0) return;
+    const badge = ensureViewCountBadge();
+    let valueEl = document.getElementById("viewCountValue");
+    if (!valueEl) {
+        valueEl = document.createElement("span");
+        valueEl.id = "viewCountValue";
+        badge.appendChild(valueEl);
+    }
     valueEl.textContent = n.toLocaleString();
     badge.classList.add("is-visible");
 }
