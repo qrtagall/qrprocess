@@ -118,6 +118,14 @@ function appendAuthToUrlParams(urlParams, token) {
     if (token) {
         urlParams.set(QRTAGALL_AUTH_PARAM, token);
     }
+    // Always send email alongside the token so the server owner-fallback can
+    // use it when Apps Script cannot read email from the token directly.
+    const email =
+        typeof sessionEmail === "string" && sessionEmail
+            ? sessionEmail
+            : (localStorage.getItem("qr_claimed_email") ||
+               sessionStorage.getItem("qr_claimed_email") || "");
+    if (email) urlParams.set("email", email);
     return urlParams;
 }
 
