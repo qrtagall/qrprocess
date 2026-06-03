@@ -301,6 +301,7 @@ function parseRemoteSheetsPayload(data) {
             linkId: meta.id || "",
             description: meta.description != null ? String(meta.description) : "",
             sheetId: meta.sheetId || "",
+            linkSlot: Number(meta.linkSlot) || 0, // Remote_Link slot: 1 = parent, 2+ = linked child
             assets: linkBlock.items,
         });
     }

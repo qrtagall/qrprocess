@@ -227,6 +227,7 @@ function getOwnedDeletableQRs() {
             sheetId: b.sheetId || "",
             storageType: String(b.storageType || "REMOTE").toUpperCase(),
             description: b.description || b.asset || "",
+            linkSlot: Number(b.linkSlot) || 0, // 1 = parent (real delete), 2+ = linked child (unlink only)
         }));
 }
 
@@ -254,13 +255,21 @@ function openDeleteDialog() {
     listEl.innerHTML = owned
         .map((q, i) => {
             const badgeClass = q.storageType === "LOCAL" ? "qrt-badge-local" : "qrt-badge-remote";
+            const isParent = Number(q.linkSlot) === 1;
+            const slotLabel = q.linkSlot ? `Remote Link ${q.linkSlot}` : "Remote Link ?";
+            const roleClass = isParent ? "qrt-badge-main" : "qrt-badge-branch";
+            const roleText = isParent ? "Main" : "Branch";
             const desc = q.description ? `<div class="qrt-delete-item-desc">${escapeHtmlSafe(q.description)}</div>` : "";
             return `
             <label class="qrt-delete-item">
                 <input type="checkbox" class="qrt-delete-check" data-idx="${i}">
                 <span class="qrt-delete-item-main">
                     <span class="qrt-delete-item-id">${escapeHtmlSafe(q.linkId || "(no id)")}</span>
-                    <span class="qrt-badge ${badgeClass}">${q.storageType}</span>
+                    <span class="qrt-delete-item-tags">
+                        <span class="qrt-badge qrt-badge-slot">${slotLabel}</span>
+                        <span class="qrt-badge ${roleClass}">${roleText}</span>
+                        <span class="qrt-badge ${badgeClass}">${q.storageType}</span>
+                    </span>
                     ${desc}
                 </span>
             </label>`;
@@ -270,8 +279,84 @@ function openDeleteDialog() {
     // Stash the owned list for the confirm handler.
     window.__qrDeleteCandidates = owned;
 
+    listEl.querySelectorAll(".qrt-delete-check").forEach((cb) => {
+        cb.addEventListener("change", updateDeleteQRHint);
+    });
+    updateDeleteQRHint();
+
     const modal = document.getElementById("deleteQRModal");
     if (modal) modal.style.display = "flex";
+}
+
+/** Main = Remote Link 1 (this page’s primary resource). Branch = Remote Link 2+ (unlink only). */
+function isDeleteMainLink(item) {
+    return Number(item && item.linkSlot) === 1;
+}
+
+function getSelectedDeleteCandidates() {
+    const candidates = window.__qrDeleteCandidates || [];
+    const checks = Array.from(document.querySelectorAll(".qrt-delete-check"));
+    return checks
+        .filter((c) => c.checked)
+        .map((c) => candidates[parseInt(c.getAttribute("data-idx"), 10)])
+        .filter(Boolean);
+}
+
+/** Refresh the modal hint from the current checkbox selection. */
+function updateDeleteQRHint() {
+    const hintEl = document.getElementById("deleteQRHint");
+    if (!hintEl) return;
+
+    const selected = getSelectedDeleteCandidates();
+    if (!selected.length) {
+        hintEl.innerHTML =
+            "<b>Main</b> (Remote Link 1): permanently removes that QR’s data from Google Drive (skipping Trash) and updates the registry. " +
+            "<b>Branch</b> (Remote Link 2+): only removes the link from <i>this</i> page — the linked QR’s data and its master row are not deleted.";
+        return;
+    }
+
+    const mains = selected.filter(isDeleteMainLink);
+    const branches = selected.filter((s) => !isDeleteMainLink(s));
+    const parts = [];
+
+    if (mains.length) {
+        parts.push(
+            `<b>Main (${mains.length})</b>: permanently deletes Drive data (skipping Trash) and clears this page’s primary link. Cannot be undone.`
+        );
+    }
+    if (branches.length) {
+        parts.push(
+            `<b>Branch (${branches.length})</b>: unlinks from this page only — does not delete that QR’s spreadsheet, folder, or its own registry row.`
+        );
+    }
+    hintEl.innerHTML = parts.join(" ");
+}
+
+function buildDeleteConfirmMessage(selected) {
+    const mains = selected.filter(isDeleteMainLink);
+    const branches = selected.filter((s) => !isDeleteMainLink(s));
+    const idList = selected.map((s) => {
+        const role = isDeleteMainLink(s) ? "Main" : "Branch";
+        return `${role}: ${s.linkId || s.sheetId}`;
+    }).join("\n");
+
+    if (mains.length && !branches.length) {
+        return (
+            `⚠️ Permanently delete ${mains.length} Main QR link(s)?\n\n${idList}\n\n` +
+            `This removes data from Google Drive (skipping Trash) and updates the registry. This CANNOT be undone.`
+        );
+    }
+    if (branches.length && !mains.length) {
+        return (
+            `⚠️ Unlink ${branches.length} Branch link(s) from this page?\n\n${idList}\n\n` +
+            `Only the reference on this page is removed. Each linked QR’s data and its own master entry are not deleted.`
+        );
+    }
+    return (
+        `⚠️ Process ${selected.length} link(s)?\n\n${idList}\n\n` +
+        `Main (${mains.length}): permanent Drive delete + registry update.\n` +
+        `Branch (${branches.length}): unlink from this page only (no Drive delete for those IDs).`
+    );
 }
 
 function closeDeleteQRModal() {
@@ -281,12 +366,7 @@ function closeDeleteQRModal() {
 }
 
 async function confirmDeleteSelectedQRs() {
-    const candidates = window.__qrDeleteCandidates || [];
-    const checks = Array.from(document.querySelectorAll(".qrt-delete-check"));
-    const selected = checks
-        .filter((c) => c.checked)
-        .map((c) => candidates[parseInt(c.getAttribute("data-idx"), 10)])
-        .filter(Boolean);
+    const selected = getSelectedDeleteCandidates();
 
     if (!selected.length) {
         const statusEl = document.getElementById("deleteQRStatus");
@@ -294,11 +374,7 @@ async function confirmDeleteSelectedQRs() {
         return;
     }
 
-    const idList = selected.map((s) => s.linkId || s.sheetId).join("\n");
-    const ok = confirm(
-        `⚠️ Permanently delete ${selected.length} QR(s)?\n\n${idList}\n\n` +
-        `This removes the data from Google Drive and the registry. This CANNOT be undone.`
-    );
+    const ok = confirm(buildDeleteConfirmMessage(selected));
     if (!ok) return;
 
     closeDeleteQRModal();
@@ -313,9 +389,11 @@ async function deleteSelectedQRs(selected) {
     try {
         const token = await ensureAccessTokenForMutation();
 
-        // 1) REMOTE entries live in the user's own Drive — delete them in the browser.
+        // 1) Only a PARENT (Remote_Link 1) deletes its actual data. A REMOTE parent
+        //    lives in the user's own Drive, so delete it in the browser. Children
+        //    (Remote_Link 2+) are just unlinked server-side — never delete contents.
         for (const it of selected) {
-            if (it.storageType === "REMOTE") {
+            if (it.storageType === "REMOTE" && Number(it.linkSlot) === 1) {
                 try {
                     await deleteRemoteQrInBrowser(token, it.linkId, it.sheetId);
                 } catch (err) {
@@ -332,7 +410,12 @@ async function deleteSelectedQRs(selected) {
             id: masterId,
             storageType: "LOCAL",
             targets: JSON.stringify(
-                selected.map((s) => ({ sheetId: s.sheetId, storageType: s.storageType, linkId: s.linkId }))
+                selected.map((s) => ({
+                    sheetId: s.sheetId,
+                    storageType: s.storageType,
+                    linkId: s.linkId,
+                    linkSlot: s.linkSlot,
+                }))
             ),
             [QRTAGALL_AUTH_PARAM]: token,
             email: (typeof sessionEmail === "string" ? sessionEmail : "") || "",

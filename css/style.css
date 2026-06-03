@@ -1348,6 +1348,27 @@ body {
     background: #1e8449;
 }
 
+.qrt-delete-item-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 2px 0;
+}
+
+.qrt-badge-slot {
+    background: #34495e;
+}
+
+.qrt-badge-main,
+.qrt-badge-parent {
+    background: #c0392b;
+}
+
+.qrt-badge-branch,
+.qrt-badge-child {
+    background: #8e44ad;
+}
+
 .qrt-btn-lg {
     min-height: 48px;
     padding: 12px 18px;
