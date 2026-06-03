@@ -795,6 +795,14 @@ async function completeRemoteClaimViaDriveApi({ id, assetName, email, onStatus }
     return { publicLink, sheetLink };
 }
 
+/** POST/GET returned a real server message — do not JSONP-retry or image-beacon. */
+function isDefinitiveClaimError(err) {
+    const msg = String(err?.message || err || "").trim();
+    if (!msg) return false;
+    if (msg === "Could not reach claim service. Check network or try again.") return false;
+    return true;
+}
+
 function fireClaimBeacon(claimUrl) {
     return new Promise((resolve) => {
         const img = new Image();
@@ -872,6 +880,7 @@ async function requestClaimViaJsonp({ id, asset, email, storageType, claimScript
     try {
         return await requestClaimViaPost({ id, asset, email, storageType, claimScriptUrl });
     } catch (postErr) {
+        if (isDefinitiveClaimError(postErr)) throw postErr;
         console.warn("Claim POST failed, trying GET:", postErr);
     }
 
@@ -962,35 +971,32 @@ async function completeQRClaim({ id, assetName, email, storageType, onStatus }) 
 
     notify("Contacting registry (QRTagAll storage)…");
 
-    try {
-        await requestClaimViaJsonp({
-            id,
-            asset: assetName,
-            email,
-            storageType: "LOCAL",
-            claimScriptUrl,
-        });
-        notify("Claim accepted, loading asset…");
-    } catch (jsonpErr) {
-        const token = getStoredAccessToken();
-        if (!token) {
-            throw jsonpErr;
-        }
-        console.warn("Claim request failed, using beacon fallback:", jsonpErr);
-        notify("Retrying claim (fallback)…");
-        const beaconUrl = buildInitClaimUrl({
-            id,
-            asset: assetName,
-            email,
-            storageType: "LOCAL",
-            claimScriptUrl,
-            accessToken: token,
-        });
-        await fireClaimBeacon(beaconUrl);
+    const claimResult = await requestClaimViaJsonp({
+        id,
+        asset: assetName,
+        email,
+        storageType: "LOCAL",
+        claimScriptUrl,
+    });
+    notify("Claim accepted, loading asset…");
+
+    // Registry row should be visible immediately after initClaim; short poll only.
+    const list = await waitForClaimedAsset(id, 5, 1500);
+    if (list?.length > 0) return list;
+
+    if (claimResult?.spreadsheetUrl) {
+        return [
+            {
+                id,
+                url: claimResult.spreadsheetUrl,
+                storageType: "LOCAL",
+                email: (email || "").toLowerCase(),
+            },
+        ];
     }
 
     notify("Waiting for asset data…");
-    return waitForClaimedAsset(id, 15, 2000);
+    return waitForClaimedAsset(id, 10, 2000);
 }
 
 
