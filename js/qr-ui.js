@@ -2429,13 +2429,17 @@ async function saveArtifactInfo({
 
     const storageType = getStorageTypeByLinkId(modalLinkId || targetLinkId || sheetId);
 
-    //console.log("TargetLink>>>>",id);
-    //console.log("storageType>>>>",storageType);
+    if (isInsert && typeof checkArtifactLimitBeforeInsert === "function") {
+        try {
+            await checkArtifactLimitBeforeInsert({ sheetId, email: userEmail });
+        } catch (limErr) {
+            showSpinner(false);
+            if (typeof notify === "function") notify(limErr.message, "error");
+            else alert("❌ " + (limErr.message || "Artifact limit reached."));
+            return;
+        }
+    }
 
-    //cmedit
-    //return;
-
-    //const mode = storageType === "REMOTE" ? "updateCells" : "updateCellsNew";
     const mode="updateCellsNew";
     //const baseUrl = storageType === "LOCAL" ? AppScriptBaseUrl_New : AppScriptUserUrl;
     // 🧩 Build query string

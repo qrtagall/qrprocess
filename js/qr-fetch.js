@@ -318,6 +318,28 @@ function parseArtifactRange(range) {
     return { row, col };
 }
 
+/** Server check before adding a new artifact row (Owners MaxArtifact limit). */
+async function checkArtifactLimitBeforeInsert({ sheetId, email }) {
+    if (!sheetId) return;
+    const token = await ensureAccessTokenForMutation();
+    const params = new URLSearchParams({
+        mode: "checkArtifactLimit",
+        sheetId,
+        email: String(email || sessionEmail || "").toLowerCase(),
+    });
+    appendAuthToUrlParams(params, token);
+    const cb = "qrArtifactLimit_" + Date.now();
+    const url = `${AppScriptBaseUrl_New}?${params.toString()}&callback=${cb}`;
+    const data = await invokeAppsScriptGet(url, cb, { timeoutMs: 30000, softFail: false });
+    if (!data || data.success === false) {
+        throw new Error(
+            data?.message ||
+                data?.error ||
+                "Maximum Artifact addition limit reached. Upgrade subscription"
+        );
+    }
+}
+
 /** Same-page GDrive artifact save (Drive API drive.file — export/edit/upload CSV). */
 async function saveGdriveArtifactInBrowser({
     token,
@@ -330,6 +352,10 @@ async function saveGdriveArtifactInBrowser({
 }) {
     if (!sheetId) {
         throw new Error("Missing spreadsheet ID for this QR. Refresh the page and try again.");
+    }
+
+    if (insert) {
+        await checkArtifactLimitBeforeInsert({ sheetId });
     }
 
     const csvText = await exportSpreadsheetAsCsv(token, sheetId);
