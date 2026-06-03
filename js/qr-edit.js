@@ -255,22 +255,19 @@ function openDeleteDialog() {
     listEl.innerHTML = owned
         .map((q, i) => {
             const badgeClass = q.storageType === "LOCAL" ? "qrt-badge-local" : "qrt-badge-remote";
-            const isParent = Number(q.linkSlot) === 1;
-            const slotLabel = q.linkSlot ? `Remote Link ${q.linkSlot}` : "Remote Link ?";
-            const roleClass = isParent ? "qrt-badge-main" : "qrt-badge-branch";
-            const roleText = isParent ? "Main" : "Branch";
-            const desc = q.description ? `<div class="qrt-delete-item-desc">${escapeHtmlSafe(q.description)}</div>` : "";
+            const isRoot = isDeleteRootLink(q);
+            const roleClass = isRoot ? "qrt-badge-root" : "qrt-badge-branch";
+            const roleText = isRoot ? "Root" : "Branch";
+            const label = formatDeleteItemLabel(q);
             return `
             <label class="qrt-delete-item">
                 <input type="checkbox" class="qrt-delete-check" data-idx="${i}">
                 <span class="qrt-delete-item-main">
-                    <span class="qrt-delete-item-id">${escapeHtmlSafe(q.linkId || "(no id)")}</span>
+                    <span class="qrt-delete-item-id">${escapeHtmlSafe(label)}</span>
                     <span class="qrt-delete-item-tags">
-                        <span class="qrt-badge qrt-badge-slot">${slotLabel}</span>
                         <span class="qrt-badge ${roleClass}">${roleText}</span>
                         <span class="qrt-badge ${badgeClass}">${q.storageType}</span>
                     </span>
-                    ${desc}
                 </span>
             </label>`;
         })
@@ -288,10 +285,21 @@ function openDeleteDialog() {
     if (modal) modal.style.display = "flex";
 }
 
-/** Main = Remote Link 1 (this page’s primary resource). Branch = Remote Link 2+ (unlink only). */
-function isDeleteMainLink(item) {
+/** Root = primary link on this page (slot 1). Branch = linked child (slot 2+), unlink only. */
+function isDeleteRootLink(item) {
     return Number(item && item.linkSlot) === 1;
 }
+
+/** Display label: {Title}-{ID}, or ID alone if no title/description. */
+function formatDeleteItemLabel(item) {
+    const title = String(item?.description || "").trim();
+    const id = item?.linkId || item?.sheetId || "(no id)";
+    return title ? `${title}-${id}` : id;
+}
+
+const DELETE_QR_HINT_DEFAULT =
+    "<b>Root Link:</b> permanently removes that QR’s data from storage. " +
+    "<b>Branch Link:</b> only removes the link from this page — the original linked QR’s data will not be deleted.";
 
 function getSelectedDeleteCandidates() {
     const candidates = window.__qrDeleteCandidates || [];
@@ -309,53 +317,50 @@ function updateDeleteQRHint() {
 
     const selected = getSelectedDeleteCandidates();
     if (!selected.length) {
-        hintEl.innerHTML =
-            "<b>Main</b> (Remote Link 1): permanently removes that QR’s data from Google Drive (skipping Trash) and updates the registry. " +
-            "<b>Branch</b> (Remote Link 2+): only removes the link from <i>this</i> page — the linked QR’s data and its master row are not deleted.";
+        hintEl.innerHTML = DELETE_QR_HINT_DEFAULT;
         return;
     }
 
-    const mains = selected.filter(isDeleteMainLink);
-    const branches = selected.filter((s) => !isDeleteMainLink(s));
+    const roots = selected.filter(isDeleteRootLink);
+    const branches = selected.filter((s) => !isDeleteRootLink(s));
     const parts = [];
 
-    if (mains.length) {
+    if (roots.length) {
         parts.push(
-            `<b>Main (${mains.length})</b>: permanently deletes Drive data (skipping Trash) and clears this page’s primary link. Cannot be undone.`
+            `<b>Root (${roots.length})</b>: permanently removes data from storage.`
         );
     }
     if (branches.length) {
         parts.push(
-            `<b>Branch (${branches.length})</b>: unlinks from this page only — does not delete that QR’s spreadsheet, folder, or its own registry row.`
+            `<b>Branch (${branches.length})</b>: only removes the link from this page — the original linked QR’s data will not be deleted.`
         );
     }
     hintEl.innerHTML = parts.join(" ");
 }
 
 function buildDeleteConfirmMessage(selected) {
-    const mains = selected.filter(isDeleteMainLink);
-    const branches = selected.filter((s) => !isDeleteMainLink(s));
+    const roots = selected.filter(isDeleteRootLink);
+    const branches = selected.filter((s) => !isDeleteRootLink(s));
     const idList = selected.map((s) => {
-        const role = isDeleteMainLink(s) ? "Main" : "Branch";
-        return `${role}: ${s.linkId || s.sheetId}`;
+        const role = isDeleteRootLink(s) ? "Root" : "Branch";
+        return `${role}: ${formatDeleteItemLabel(s)}`;
     }).join("\n");
 
-    if (mains.length && !branches.length) {
+    if (roots.length && !branches.length) {
         return (
-            `⚠️ Permanently delete ${mains.length} Main QR link(s)?\n\n${idList}\n\n` +
-            `This removes data from Google Drive (skipping Trash) and updates the registry. This CANNOT be undone.`
+            `⚠️ Permanently delete ${roots.length} Root link(s)?\n\n${idList}\n\n` +
+            `Data will be removed from storage. This cannot be undone.`
         );
     }
-    if (branches.length && !mains.length) {
+    if (branches.length && !roots.length) {
         return (
-            `⚠️ Unlink ${branches.length} Branch link(s) from this page?\n\n${idList}\n\n` +
-            `Only the reference on this page is removed. Each linked QR’s data and its own master entry are not deleted.`
+            `⚠️ Remove ${branches.length} Branch link(s) from this page?\n\n${idList}\n\n` +
+            `The original linked QR’s data will not be deleted.`
         );
     }
     return (
-        `⚠️ Process ${selected.length} link(s)?\n\n${idList}\n\n` +
-        `Main (${mains.length}): permanent Drive delete + registry update.\n` +
-        `Branch (${branches.length}): unlink from this page only (no Drive delete for those IDs).`
+        `⚠️ Continue with ${selected.length} link(s)?\n\n${idList}\n\n` +
+        `Root: removes data from storage. Branch: unlink only on this page.`
     );
 }
 
