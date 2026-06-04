@@ -289,35 +289,76 @@ function openDeleteDialog() {
     if (statusEl) { statusEl.textContent = ""; statusEl.style.display = "none"; }
 
     const showAllLinks = isCurrentUserRootOwnerOnPage();
+    const sorted =
+        typeof sortLinksForTreeDisplay === "function"
+            ? sortLinksForTreeDisplay(owned)
+            : owned;
+    const indexBySheet = {};
+    sorted.forEach((q, i) => {
+        indexBySheet[q.sheetId || q.linkId] = i;
+    });
+    window.__qrDeleteCandidates = sorted;
 
-    listEl.innerHTML = owned
-        .map((q, i) => {
-            const badgeClass = q.storageType === "LOCAL" ? "qrt-badge-local" : "qrt-badge-remote";
-            const isRoot = isDeleteRootLink(q);
-            const roleClass = isRoot ? "qrt-badge-root" : "qrt-badge-branch";
-            const roleText = isRoot ? "Root" : "Branch";
-            const label = formatDeleteItemLabel(q);
-            const ownerHint =
-                showAllLinks && q.email && q.email !== me
-                    ? ` <span class="qrt-delete-item-owner">(${escapeHtmlSafe(q.email)})</span>`
-                    : "";
-            return `
-            <label class="qrt-delete-item">
-                <input type="checkbox" class="qrt-delete-check" data-idx="${i}">
+    function renderDeleteRow(q, globalIdx) {
+        const badgeClass = q.storageType === "LOCAL" ? "qrt-badge-local" : "qrt-badge-remote";
+        const isRoot = isDeleteRootLink(q);
+        const roleClass = isRoot ? "qrt-badge-root" : "qrt-badge-branch";
+        const roleText =
+            typeof getLinkTreeRoleLabel === "function"
+                ? getLinkTreeRoleLabel(q.linkSlot)
+                : isRoot
+                  ? "Root"
+                  : "Branch";
+        const label = formatDeleteItemLabel(q);
+        const ownerHint =
+            showAllLinks && q.email && q.email !== me
+                ? ` <span class="qrt-delete-item-owner">(${escapeHtmlSafe(q.email)})</span>`
+                : "";
+        const checkClass = isRoot
+            ? "qrt-delete-check qrt-delete-check-root"
+            : "qrt-delete-check qrt-delete-check-branch";
+        const itemClass = isRoot
+            ? "qrt-delete-item qrt-delete-item-root"
+            : "qrt-delete-item qrt-delete-item-branch";
+        return `
+            <label class="${itemClass}">
+                <input type="checkbox" class="${checkClass}" data-idx="${globalIdx}">
                 <span class="qrt-delete-item-main">
-                    <span class="qrt-delete-item-id">${escapeHtmlSafe(label)}${ownerHint}</span>
+                    <span class="qrt-delete-item-id">${isRoot ? "" : "<span class=\"qrt-tree-glyph\" aria-hidden=\"true\">└─</span> "}${escapeHtmlSafe(label)}${ownerHint}</span>
                     <span class="qrt-delete-item-tags">
                         <span class="qrt-badge ${roleClass}">${roleText}</span>
                         <span class="qrt-badge ${badgeClass}">${q.storageType}</span>
                     </span>
                 </span>
             </label>`;
-        })
-        .join("");
+    }
 
-    // Stash the owned list for the confirm handler.
-    window.__qrDeleteCandidates = owned;
+    const roots = sorted.filter(isDeleteRootLink);
+    const branches = sorted.filter((q) => !isDeleteRootLink(q));
+    let html = '<div class="qrt-delete-tree">';
+    roots.forEach((q) => {
+        html += renderDeleteRow(q, indexBySheet[q.sheetId || q.linkId]);
+    });
+    if (branches.length) {
+        html += '<div class="qrt-delete-tree-children">';
+        branches.forEach((q) => {
+            html += renderDeleteRow(q, indexBySheet[q.sheetId || q.linkId]);
+        });
+        html += "</div>";
+    }
+    html += "</div>";
+    listEl.innerHTML = html;
 
+    const rootCb = listEl.querySelector(".qrt-delete-check-root");
+    const branchCbs = listEl.querySelectorAll(".qrt-delete-check-branch");
+    if (rootCb) {
+        rootCb.addEventListener("change", () => {
+            branchCbs.forEach((cb) => {
+                cb.checked = rootCb.checked;
+            });
+            updateDeleteQRHint();
+        });
+    }
     listEl.querySelectorAll(".qrt-delete-check").forEach((cb) => {
         cb.addEventListener("change", updateDeleteQRHint);
     });
@@ -340,8 +381,9 @@ function formatDeleteItemLabel(item) {
 }
 
 const DELETE_QR_HINT_DEFAULT =
-    "<b>Your Root Link:</b> permanently removes <em>your</em> QR data from storage. " +
-    "<b>Branch Link (yours or others):</b> only removes the link on <em>this page</em> — no other owner’s files are deleted.";
+    "<b>Tree on this page:</b> Root is the trunk; Branches hang under it. " +
+    "<b>Deleting Root</b> removes the whole tree from this page (all Branches too). " +
+    "Only <em>your</em> Root data is permanently erased; other owners’ QR files stay intact.";
 
 function getSelectedDeleteCandidates() {
     const candidates = window.__qrDeleteCandidates || [];
@@ -368,13 +410,13 @@ function updateDeleteQRHint() {
     const parts = [];
 
     if (roots.length) {
+        const treeSize = (window.__qrDeleteCandidates || []).length;
         parts.push(
-            `<b>Root (${roots.length})</b>: permanently removes data from storage.`
+            `<b>Root (${roots.length})</b>: removes this page’s entire tree (${treeSize} link(s) on this page). Your Root data is permanently deleted.`
         );
-    }
-    if (branches.length) {
+    } else if (branches.length) {
         parts.push(
-            `<b>Branch (${branches.length})</b>: only removes the link from this page — the original linked QR’s data will not be deleted.`
+            `<b>Branch (${branches.length})</b>: only removes your link(s) from this page — other owners’ QR data is not deleted.`
         );
     }
     hintEl.innerHTML = parts.join(" ");
@@ -389,9 +431,17 @@ function buildDeleteConfirmMessage(selected) {
     }).join("\n");
 
     if (roots.length && !branches.length) {
+        const treeSize = (window.__qrDeleteCandidates || []).length;
         return (
-            `⚠️ Permanently delete ${roots.length} Root link(s)?\n\n${idList}\n\n` +
-            `Data will be removed from storage. This cannot be undone.`
+            `⚠️ Remove this QR tree from the page?\n\n${idList}\n\n` +
+            `All ${treeSize} link(s) on this page will be removed. Your Root data is permanently deleted; Branch links are unlinked only.`
+        );
+    }
+    if (roots.length && branches.length) {
+        const treeSize = (window.__qrDeleteCandidates || []).length;
+        return (
+            `⚠️ Remove this QR tree (${treeSize} link(s))?\n\n${idList}\n\n` +
+            `Root: your data is permanently deleted. Branches: unlinked from this page only.`
         );
     }
     if (branches.length && !roots.length) {

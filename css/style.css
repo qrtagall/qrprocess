@@ -1275,7 +1275,49 @@ body {
     background: #a93226;
 }
 
-/* Delete QR — owned-link selection list */
+/* Master page link tree (Root → Branches) */
+.qrt-link-tree {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.qrt-tree-branch {
+    margin-left: 20px;
+    border-left: 3px solid #e8c4a0;
+    padding-left: 8px;
+}
+
+.qrt-tree-root {
+    border-left: 3px solid #2e86c1;
+    padding-left: 4px;
+}
+
+/* Delete QR — tree selection list */
+.qrt-delete-tree {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.qrt-delete-tree-children {
+    margin-left: 16px;
+    padding-left: 12px;
+    border-left: 2px dashed #ccc;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.qrt-delete-item-branch {
+    margin-left: 4px;
+}
+
+.qrt-tree-glyph {
+    color: #888;
+    font-family: monospace;
+}
+
 .qrt-delete-list {
     display: flex;
     flex-direction: column;

@@ -277,7 +277,24 @@ function getSoftColor(n) {
 
 
 
-function buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, linkId, artifactOwner,hideID, hideOwner }) {
+/** Sort master-page links: Root (slot 1) first, then branches by slot number. */
+function sortLinksForTreeDisplay(list) {
+  if (!Array.isArray(list)) return [];
+  return list.slice().sort((a, b) => {
+    const sa = Number(a.linkSlot) || 999;
+    const sb = Number(b.linkSlot) || 999;
+    return sa - sb;
+  });
+}
+
+function getLinkTreeRoleLabel(linkSlot) {
+  const slot = Number(linkSlot) || 0;
+  if (slot === 1) return "Root";
+  if (slot > 1) return "Branch " + slot;
+  return "Link";
+}
+
+function buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, linkId, artifactOwner, hideID, hideOwner, treeRole }) {
     const wrapper = document.createElement("div");
     wrapper.className = "asset-banner";
 
@@ -295,7 +312,8 @@ function buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, l
   const titleText = document.createElement("div");
   titleText.style.flexGrow = "1";
   titleText.style.textAlign = "center";
-  titleText.innerText = `${serial}. ${storageIcon} ${description || "-"}`;
+  const rolePrefix = treeRole ? `${treeRole} · ` : `${serial}. `;
+  titleText.innerText = `${rolePrefix}${storageIcon} ${description || "-"}`;
   titleRow.appendChild(titleText);
 
   // Edit button (if owner)
