@@ -214,6 +214,11 @@ function closeTransferModal() {
     transferTargetEmail = "";
 }
 
+function isGmailAddressForTransfer(email) {
+    const s = String(email || "").toLowerCase().trim();
+    return /^[a-z0-9._%+-]+@gmail\.com$/.test(s);
+}
+
 async function verifyTransferTarget() {
     const input = document.getElementById("transferTargetEmailInput");
     const status = document.getElementById("transferVerifyStatus");
@@ -221,12 +226,23 @@ async function verifyTransferTarget() {
 
     const email = String(input.value || "").toLowerCase().trim();
     const me = (typeof sessionEmail === "string" ? sessionEmail : "").toLowerCase().trim();
+    const masterId = getQueryParam("id");
 
     transferTargetVerified = false;
     transferTargetEmail = "";
 
+    if (!masterId) {
+        status.textContent = "⚠️ Missing QR ID in page URL.";
+        status.style.color = "#b45309";
+        return;
+    }
     if (!email) {
-        status.textContent = "⚠️ Enter the new owner's email.";
+        status.textContent = "⚠️ Enter the new owner's Gmail (example@gmail.com).";
+        status.style.color = "#b45309";
+        return;
+    }
+    if (!isGmailAddressForTransfer(email)) {
+        status.textContent = "⚠️ Use a Gmail address (example@gmail.com).";
         status.style.color = "#b45309";
         return;
     }
@@ -240,7 +256,7 @@ async function verifyTransferTarget() {
     status.style.color = "#666";
 
     try {
-        const data = await verifyTransferTargetEmail(email);
+        const data = await verifyTransferTargetEmail(masterId, email);
         if (data && data.success) {
             transferTargetVerified = true;
             transferTargetEmail = email;

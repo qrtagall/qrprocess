@@ -1798,16 +1798,21 @@ function triggerTransfer(id, newId) {
 }
 
 /** Check target email exists on Owners sheet (has claimed at least one QR). */
-async function verifyTransferTargetEmail(targetEmail) {
+async function verifyTransferTargetEmail(masterId, targetEmail) {
     const token = await ensureAccessTokenForMutation();
-    const params = new URLSearchParams({
+    const session =
+        (typeof sessionEmail === "string" && sessionEmail) ||
+        localStorage.getItem("qr_claimed_email") ||
+        sessionStorage.getItem("qr_claimed_email") ||
+        "";
+    const payload = {
         mode: "verifyTransferTarget",
+        id: masterId,
         targetEmail: String(targetEmail || "").toLowerCase().trim(),
-    });
-    appendAuthToUrlParams(params, token);
-    const cb = "qrXferVerify_" + Date.now();
-    const url = `${AppScriptBaseUrl_New}?${params.toString()}&callback=${encodeURIComponent(cb)}`;
-    return invokeAppsScriptGet(url, cb, { timeoutMs: 30000, softFail: false });
+        email: session,
+        [QRTAGALL_AUTH_PARAM]: token,
+    };
+    return invokeAppsScriptPostJson(payload, AppScriptBaseUrl_New);
 }
 
 /** Transfer LOCAL Root ownership to another verified user (same master ID). */

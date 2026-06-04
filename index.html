@@ -219,10 +219,11 @@
 
             <p class="qrt-modal-body-text">Transfer <b>ownership</b> of this QR (same ID) to another verified user.</p>
             <p class="qrt-modal-hint">Only <b>Data in QRTagAll (LOCAL)</b> Root QRs can be transferred. Files stay in QRTagAll storage; only the owner email on the master registry changes.</p>
+            <p class="qrt-modal-hint">New owner must be a <b>Gmail</b> account (<code>example@gmail.com</code>) that has already claimed at least one QRTag.</p>
 
-            <label class="qrt-label">New owner email</label>
+            <label class="qrt-label">New owner Gmail</label>
             <div class="qrt-input-row">
-                <input type="email" id="transferTargetEmailInput" class="qrt-input" placeholder="user@example.com" autocomplete="email">
+                <input type="email" id="transferTargetEmailInput" class="qrt-input" placeholder="example@gmail.com" autocomplete="email">
                 <button type="button" class="qrt-btn qrt-btn-secondary qrt-btn-lg" onclick="verifyTransferTarget()">✅ Verify</button>
             </div>
 
@@ -540,7 +541,7 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "4.2";
+    const QRTagAll_Ver_ = "4.3";
 </script>
 
 
@@ -549,8 +550,8 @@
 <!-- bump ?v= whenever JS changes to force browsers to load the new files -->
 <script src="./js/qr-utils.js?v=20260605a"></script>
 <script src="./js/qr-auth.js?v=20260603b"></script>
-<script src="./js/qr-fetch.js?v=20260605c"></script>
-<script src="./js/qr-edit.js?v=20260605c"></script>
+<script src="./js/qr-fetch.js?v=20260605d"></script>
+<script src="./js/qr-edit.js?v=20260605d"></script>
 <script src="./js/qr-ui.js?v=20260605b"></script>
 <script src="./js/qr-main.js?v=20260603b"></script>
 <!--   -->
