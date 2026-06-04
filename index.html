@@ -210,6 +210,31 @@
     </div>
 
 
+    <!-- Transfer QR Modal -->
+    <div id="transferQRModal" class="qrt-modal" style="display:none;">
+        <div class="qrt-modal-panel qrt-modal-panel-artifact">
+            <div class="qrt-modal-header-stripe qrt-stripe-transfer">
+                <h3>🔀 Transfer QR</h3>
+            </div>
+
+            <p class="qrt-modal-body-text">Transfer <b>ownership</b> of this QR (same ID) to another verified user.</p>
+            <p class="qrt-modal-hint">Only <b>Data in QRTagAll (LOCAL)</b> Root QRs can be transferred. Files stay in QRTagAll storage; only the owner email on the master registry changes.</p>
+
+            <label class="qrt-label">New owner email</label>
+            <div class="qrt-input-row">
+                <input type="email" id="transferTargetEmailInput" class="qrt-input" placeholder="user@example.com" autocomplete="email">
+                <button type="button" class="qrt-btn qrt-btn-secondary qrt-btn-lg" onclick="verifyTransferTarget()">✅ Verify</button>
+            </div>
+
+            <p id="transferVerifyStatus" class="qrt-status-line"></p>
+
+            <div class="qrt-modal-actions">
+                <button type="button" class="qrt-btn qrt-btn-secondary qrt-btn-lg" onclick="closeTransferModal()">Cancel</button>
+                <button type="button" id="transferQRConfirmBtn" class="qrt-btn qrt-btn-primary qrt-btn-lg" onclick="confirmTransferQR()">Transfer</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Delete QR Modal -->
     <div id="deleteQRModal" class="qrt-modal" style="display:none;">
         <div class="qrt-modal-panel qrt-modal-panel-artifact">
@@ -515,7 +540,7 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "4.11";
+    const QRTagAll_Ver_ = "4.2";
 </script>
 
 
@@ -524,8 +549,8 @@
 <!-- bump ?v= whenever JS changes to force browsers to load the new files -->
 <script src="./js/qr-utils.js?v=20260605a"></script>
 <script src="./js/qr-auth.js?v=20260603b"></script>
-<script src="./js/qr-fetch.js?v=20260604b"></script>
-<script src="./js/qr-edit.js?v=20260605a"></script>
+<script src="./js/qr-fetch.js?v=20260605c"></script>
+<script src="./js/qr-edit.js?v=20260605c"></script>
 <script src="./js/qr-ui.js?v=20260605b"></script>
 <script src="./js/qr-main.js?v=20260603b"></script>
 <!--   -->

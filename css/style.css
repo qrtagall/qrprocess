@@ -788,6 +788,10 @@ body {
     background: linear-gradient(135deg, #c0392b 0%, #e74c3c 55%, #f39c12 100%);
 }
 
+.qrt-stripe-transfer {
+    background: linear-gradient(135deg, #1a5276 0%, #2980b9 55%, #5dade2 100%);
+}
+
 .qrt-stripe-addqr {
     background: linear-gradient(135deg, #1e8449 0%, #27ae60 55%, #58d68d 100%);
 }

@@ -1382,7 +1382,15 @@ async function triggerLink_get(params, modalId = null) {
     // Registry mutations (clone, transfer, addLinkedQR, delete) go via POST so the
     // authToken is in the request body rather than the URL — avoids potential
     // URL-stripping on Apps Script GET redirects and makes auth more reliable.
-    const REGISTRY_POST_MODES = new Set(["clone", "hardClone", "transfer", "softDelete", "hardDelete", "addLinkedQR"]);
+    const REGISTRY_POST_MODES = new Set([
+        "clone",
+        "hardClone",
+        "transfer",
+        "transferOwnership",
+        "softDelete",
+        "hardDelete",
+        "addLinkedQR",
+    ]);
     if (mode && REGISTRY_POST_MODES.has(mode)) {
         try {
             const token = await ensureAccessTokenForMutation();
@@ -1409,6 +1417,10 @@ async function triggerLink_get(params, modalId = null) {
                 if (mode === "clone" || mode === "hardClone" || mode === "transfer") {
                     const newId = urlParams.get("newid");
                     if (newId) { window.location.href = `index.html?id=${encodeURIComponent(newId)}`; return; }
+                }
+                if (mode === "transferOwnership") {
+                    window.location.href = `index.html?id=${encodeURIComponent(qrId)}`;
+                    return;
                 }
                 loadAndRenderAsset(qrId).then(() => console.log("✅ Asset re-rendered"));
             } else {
@@ -1783,6 +1795,32 @@ function triggerHardClone(id, newId, dirMap = {}) {
 
 function triggerTransfer(id, newId) {
     triggerOperation("transfer", { id, newid: newId });
+}
+
+/** Check target email exists on Owners sheet (has claimed at least one QR). */
+async function verifyTransferTargetEmail(targetEmail) {
+    const token = await ensureAccessTokenForMutation();
+    const params = new URLSearchParams({
+        mode: "verifyTransferTarget",
+        targetEmail: String(targetEmail || "").toLowerCase().trim(),
+    });
+    appendAuthToUrlParams(params, token);
+    const cb = "qrXferVerify_" + Date.now();
+    const url = `${AppScriptBaseUrl_New}?${params.toString()}&callback=${encodeURIComponent(cb)}`;
+    return invokeAppsScriptGet(url, cb, { timeoutMs: 30000, softFail: false });
+}
+
+/** Transfer LOCAL Root ownership to another verified user (same master ID). */
+async function invokeTransferOwnership({ masterId, targetEmail }) {
+    const token = await ensureAccessTokenForMutation();
+    const payload = {
+        mode: "transferOwnership",
+        id: masterId,
+        targetEmail: String(targetEmail || "").toLowerCase().trim(),
+        email: (typeof sessionEmail === "string" ? sessionEmail : "") || "",
+        [QRTAGALL_AUTH_PARAM]: token,
+    };
+    return invokeAppsScriptPostJson(payload, AppScriptBaseUrl_New);
 }
 
 

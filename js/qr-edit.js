@@ -153,13 +153,150 @@ function confirmClone() {
 
 
 /*********************************************** Transfer ***********************************/
-function openTransferDialog() {
-    const linkId=null;
-   // const newId = prompt("Enter new ID to transfer this QR to:");
-   // if (newId) triggerTransfer(linkId, newId);
 
-    alert("Not available in Demo version.");
-    return;
+let transferTargetVerified = false;
+let transferTargetEmail = "";
+
+/** Root link on this page owned by the signed-in user (slot 1). */
+function getPageRootLinkForCurrentUser() {
+    const me = (typeof sessionEmail === "string" ? sessionEmail : "").toLowerCase().trim();
+    if (!me || !Array.isArray(globalRemoteAssetList)) return null;
+    return (
+        globalRemoteAssetList.find(
+            (b) => Number(b.linkSlot) === 1 && String(b.email || "").toLowerCase().trim() === me
+        ) || null
+    );
+}
+
+function openTransferDialog() {
+    if (!isCurrentUserRootOwnerOnPage()) {
+        notify("Permission Denied. Only Root owner can perform this", "error");
+        return;
+    }
+
+    const root = getPageRootLinkForCurrentUser();
+    if (!root) {
+        notify("Permission Denied. Only Root owner can perform this", "error");
+        return;
+    }
+
+    if (String(root.storageType || "").toUpperCase() !== "LOCAL") {
+        notify(
+            "Transfer is only available for Data in QRTagAll (LOCAL). This QR uses Google Drive storage.",
+            "error"
+        );
+        return;
+    }
+
+    transferTargetVerified = false;
+    transferTargetEmail = "";
+
+    const modal = document.getElementById("transferQRModal");
+    const input = document.getElementById("transferTargetEmailInput");
+    const status = document.getElementById("transferVerifyStatus");
+    if (!modal || !input) {
+        alert("❌ Transfer dialog markup missing. Redeploy index.html.");
+        return;
+    }
+
+    input.value = "";
+    if (status) {
+        status.textContent = "";
+        status.style.color = "";
+    }
+    modal.style.display = "flex";
+}
+
+function closeTransferModal() {
+    const modal = document.getElementById("transferQRModal");
+    if (modal) modal.style.display = "none";
+    transferTargetVerified = false;
+    transferTargetEmail = "";
+}
+
+async function verifyTransferTarget() {
+    const input = document.getElementById("transferTargetEmailInput");
+    const status = document.getElementById("transferVerifyStatus");
+    if (!input || !status) return;
+
+    const email = String(input.value || "").toLowerCase().trim();
+    const me = (typeof sessionEmail === "string" ? sessionEmail : "").toLowerCase().trim();
+
+    transferTargetVerified = false;
+    transferTargetEmail = "";
+
+    if (!email) {
+        status.textContent = "⚠️ Enter the new owner's email.";
+        status.style.color = "#b45309";
+        return;
+    }
+    if (email === me) {
+        status.textContent = "⚠️ Target must be a different user.";
+        status.style.color = "#b45309";
+        return;
+    }
+
+    status.textContent = "⏳ Verifying…";
+    status.style.color = "#666";
+
+    try {
+        const data = await verifyTransferTargetEmail(email);
+        if (data && data.success) {
+            transferTargetVerified = true;
+            transferTargetEmail = email;
+            status.textContent = "✅ Target user verified";
+            status.style.color = "#15803d";
+        } else {
+            status.textContent =
+                data?.message || "Target user is not verified. Needs to get atleast one QRTag";
+            status.style.color = "#b91c1c";
+        }
+    } catch (err) {
+        status.textContent = err.message || "Verification failed.";
+        status.style.color = "#b91c1c";
+    }
+}
+
+async function confirmTransferQR() {
+    if (!transferTargetVerified || !transferTargetEmail) {
+        const status = document.getElementById("transferVerifyStatus");
+        if (status) {
+            status.textContent = "⚠️ Verify the target email first.";
+            status.style.color = "#b45309";
+        }
+        return;
+    }
+
+    const masterId = getQueryParam("id");
+    const ok = confirm(
+        `Transfer ownership of this QR to ${transferTargetEmail}?\n\n` +
+            `The QR ID stays the same. Data remains in QRTagAll storage. You will lose edit access as Root owner.`
+    );
+    if (!ok) return;
+
+    closeTransferModal();
+    const spinner = document.getElementById("fullScreenSpinner");
+    if (spinner) spinner.style.display = "flex";
+
+    try {
+        const result = await invokeTransferOwnership({
+            masterId,
+            targetEmail: transferTargetEmail,
+        });
+        if (spinner) spinner.style.display = "none";
+
+        if (result?.success) {
+            notify(result.message || "QR transferred.", "success");
+            setTimeout(() => {
+                window.location.href = `index.html?id=${encodeURIComponent(masterId)}`;
+            }, 800);
+        } else {
+            notify(result?.message || "Transfer failed.", "error");
+        }
+    } catch (err) {
+        if (spinner) spinner.style.display = "none";
+        notify(err.message || "Transfer failed.", "error");
+    }
 }
 
 
