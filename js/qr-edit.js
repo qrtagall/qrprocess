@@ -290,14 +290,16 @@ async function confirmTransferQR() {
     );
     if (!ok) return;
 
+    const targetEmail = transferTargetEmail;
     closeTransferModal();
+
     const spinner = document.getElementById("fullScreenSpinner");
     if (spinner) spinner.style.display = "flex";
 
     try {
         const result = await invokeTransferOwnership({
             masterId,
-            targetEmail: transferTargetEmail,
+            targetEmail: targetEmail,
         });
         if (spinner) spinner.style.display = "none";
 

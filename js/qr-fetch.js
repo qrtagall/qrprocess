@@ -1818,11 +1818,20 @@ async function verifyTransferTargetEmail(masterId, targetEmail) {
 /** Transfer LOCAL Root ownership to another verified user (same master ID). */
 async function invokeTransferOwnership({ masterId, targetEmail }) {
     const token = await ensureAccessTokenForMutation();
+    const normalizedTarget = String(targetEmail || "").toLowerCase().trim();
+    if (!normalizedTarget) {
+        return { success: false, message: "Missing target user email" };
+    }
+    const session =
+        (typeof sessionEmail === "string" && sessionEmail) ||
+        localStorage.getItem("qr_claimed_email") ||
+        sessionStorage.getItem("qr_claimed_email") ||
+        "";
     const payload = {
         mode: "transferOwnership",
         id: masterId,
-        targetEmail: String(targetEmail || "").toLowerCase().trim(),
-        email: (typeof sessionEmail === "string" ? sessionEmail : "") || "",
+        targetEmail: normalizedTarget,
+        email: session,
         [QRTAGALL_AUTH_PARAM]: token,
     };
     return invokeAppsScriptPostJson(payload, AppScriptBaseUrl_New);
