@@ -627,21 +627,7 @@ function renderMultipleRemoteBlocks(remoteList) {
         const assetLinks = document.getElementById("assetLinks");
         assetLinks.innerHTML = "";
 
-        const treeList =
-            typeof sortLinksForTreeDisplay === "function"
-                ? sortLinksForTreeDisplay(remoteList)
-                : remoteList;
-
-        const treeWrap = document.createElement("div");
-        treeWrap.className = "qrt-link-tree";
-        assetLinks.appendChild(treeWrap);
-
-        treeList.forEach(({ email, storageType, assets, description, linkId, linkSlot }, idx) => {
-            const isTreeRoot = Number(linkSlot) === 1;
-            const treeRole =
-                typeof getLinkTreeRoleLabel === "function"
-                    ? getLinkTreeRoleLabel(linkSlot)
-                    : String(idx + 1);
+        remoteList.forEach(({ email, storageType, assets, description, linkId }, idx) => {
             const artifactOwner = (email === sessionEmail);
 
             // Keep raw for edit mode; parse for display
@@ -666,10 +652,8 @@ function renderMultipleRemoteBlocks(remoteList) {
                 artifactOwner,
                 hideID,
                 hideOwner,
-                treeRole,
             });
             headerBlock.classList.add("asset-banner");
-            headerBlock.classList.add(isTreeRoot ? "qrt-tree-root" : "qrt-tree-branch");
             headerBlock.dataset.rawDescription = rawDescription; // preserve raw for edit UI
             headerBlock.dataset.linkId = linkId;  // used later in editDescription() lookup
 
@@ -768,9 +752,8 @@ function renderMultipleRemoteBlocks(remoteList) {
             // Tighten gap (your earlier tweak)
             headerBlock.style.marginBottom = "-1px";
 
-            // Append under tree container (Root first, branches nested visually)
-            treeWrap.appendChild(headerBlock);
-            treeWrap.appendChild(contentDiv);
+            assetLinks.appendChild(headerBlock);
+            assetLinks.appendChild(contentDiv);
         });
 
         showSpinner(false);
