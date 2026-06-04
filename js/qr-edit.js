@@ -219,6 +219,89 @@ function isGmailAddressForTransfer(email) {
     return /^[a-z0-9._%+-]+@gmail\.com$/.test(s);
 }
 
+/** Root owner email from a claimed QR (Remote_Link 1), or null if unclaimed / unknown. */
+async function resolveRootOwnerEmailFromQrId(scannedId) {
+    const trimmed = String(scannedId || "").trim();
+    if (!trimmed) {
+        return { ok: false, message: "⚠️ Invalid scan — no QR ID detected." };
+    }
+
+    const links = await fetchAllRemoteSheets(trimmed);
+    if (!links || links.length === 0) {
+        return {
+            ok: false,
+            message: "❌ QR not claimed or not found (new QR / no owner).",
+        };
+    }
+
+    const root =
+        links.find((b) => Number(b.linkSlot) === 1 && b.email && b.email !== "unknown@user") ||
+        links.find((b) => b.email && b.email !== "unknown@user") ||
+        null;
+
+    const ownerEmail = String(root?.email || "")
+        .toLowerCase()
+        .trim();
+    if (!ownerEmail || ownerEmail === "unknown@user") {
+        return {
+            ok: false,
+            message: "❌ No owner email on this QR (new QR / not claimed).",
+        };
+    }
+
+    return { ok: true, email: ownerEmail, scannedId: trimmed };
+}
+
+function openTransferOwnerQRScan() {
+    if (typeof openQRScanModal !== "function") {
+        notify("Scanner not available.", "error");
+        return;
+    }
+    openQRScanModal("transferTargetEmailInput", false, handleTransferOwnerQRScanned);
+}
+
+async function handleTransferOwnerQRScanned(scannedId) {
+    const input = document.getElementById("transferTargetEmailInput");
+    const status = document.getElementById("transferVerifyStatus");
+    if (!input || !status) return;
+
+    transferTargetVerified = false;
+    transferTargetEmail = "";
+    input.value = "";
+
+    status.textContent = "⏳ Looking up owner from scanned QR…";
+    status.style.color = "#666";
+
+    try {
+        const lookup = await resolveRootOwnerEmailFromQrId(scannedId);
+        if (!lookup.ok) {
+            status.textContent = lookup.message;
+            status.style.color = "#b91c1c";
+            return;
+        }
+
+        const me = (typeof sessionEmail === "string" ? sessionEmail : "").toLowerCase().trim();
+        if (lookup.email === me) {
+            status.textContent = "⚠️ Scanned QR is yours — pick another owner's QR.";
+            status.style.color = "#b45309";
+            return;
+        }
+        if (!isGmailAddressForTransfer(lookup.email)) {
+            status.textContent = "⚠️ Owner is not a Gmail address (@gmail.com required).";
+            status.style.color = "#b45309";
+            return;
+        }
+
+        input.value = lookup.email;
+        status.textContent = `✅ Found owner ${lookup.email} — verifying…`;
+        status.style.color = "#666";
+        await verifyTransferTarget();
+    } catch (err) {
+        status.textContent = err.message || "Scan lookup failed.";
+        status.style.color = "#b91c1c";
+    }
+}
+
 async function verifyTransferTarget() {
     const input = document.getElementById("transferTargetEmailInput");
     const status = document.getElementById("transferVerifyStatus");

@@ -673,9 +673,12 @@ function createEmptyArtifactPrompt(index, linkId) {
 let currentQRScanTargetInput = null;
 let qrScannerInstance = null;
 let videoTrack = null;
+/** Optional async (scannedId, targetInputId) => void — used by Transfer owner scan. */
+let qrScanOnDecodedCallback = null;
 
 
-function openQRScanModal(targetInputId, isExpectingExist) {
+function openQRScanModal(targetInputId, isExpectingExist, onDecoded) {
+    qrScanOnDecodedCallback = typeof onDecoded === "function" ? onDecoded : null;
     const modal = document.getElementById("qrScanModal");
     currentQRScanTargetInput = document.getElementById(targetInputId);
     modal.style.display = "flex";
@@ -690,9 +693,19 @@ function openQRScanModal(targetInputId, isExpectingExist) {
                 qrScannerInstance.clear();
                 modal.style.display = "none";
 
+                const scannedId = extractIdFromQRString(decodedText);
+                if (qrScanOnDecodedCallback) {
+                    const cb = qrScanOnDecodedCallback;
+                    qrScanOnDecodedCallback = null;
+                    Promise.resolve(cb(scannedId, targetInputId)).catch((err) =>
+                        console.error("QR scan callback:", err)
+                    );
+                    return;
+                }
+
                 if (currentQRScanTargetInput) {
-                    currentQRScanTargetInput.value = extractIdFromQRString(decodedText);//decodedText;
-                    verifyQRIdFromInput(targetInputId, 'qrVerifyStatus',isExpectingExist); // auto verify
+                    currentQRScanTargetInput.value = scannedId;
+                    verifyQRIdFromInput(targetInputId, "qrVerifyStatus", isExpectingExist);
                 }
             }).catch(err => console.error("Stop error", err));
         },
@@ -766,6 +779,7 @@ async function openQRScanModal(targetInputId) {
 
 function closeQRScanModal() {
     const modal = document.getElementById("qrScanModal");
+    qrScanOnDecodedCallback = null;
 
     if (qrScannerInstance) {
         qrScannerInstance.stop().then(() => {
