@@ -1797,22 +1797,41 @@ function triggerTransfer(id, newId) {
     triggerOperation("transfer", { id, newid: newId });
 }
 
+/** Stored OAuth token for registry verify (no GIS refresh — safe after camera scan callback). */
+function getStoredMutationToken() {
+    return (
+        getStoredAccessToken() ||
+        (typeof window !== "undefined" && window.GToken) ||
+        null
+    );
+}
+
 /** Check target email exists on Owners sheet (has claimed at least one QR). */
 async function verifyTransferTargetEmail(masterId, targetEmail) {
-    const token = await ensureAccessTokenForMutation();
+    const token = getStoredMutationToken();
+    if (!token) {
+        return {
+            success: false,
+            message: "Please tap Verify to sign in, then try Scan again.",
+        };
+    }
+
     const session =
         (typeof sessionEmail === "string" && sessionEmail) ||
         localStorage.getItem("qr_claimed_email") ||
         sessionStorage.getItem("qr_claimed_email") ||
         "";
-    const payload = {
+    const params = new URLSearchParams({
         mode: "verifyTransferTarget",
         id: masterId,
         targetEmail: String(targetEmail || "").toLowerCase().trim(),
-        email: session,
-        [QRTAGALL_AUTH_PARAM]: token,
-    };
-    return invokeAppsScriptPostJson(payload, AppScriptBaseUrl_New);
+    });
+    if (session) params.set("email", session);
+    params.set(QRTAGALL_AUTH_PARAM, token);
+
+    const cb = "qrXferVerify_" + Date.now();
+    const url = `${AppScriptBaseUrl_New}?${params.toString()}&callback=${encodeURIComponent(cb)}`;
+    return invokeAppsScriptGet(url, cb, { timeoutMs: 45000, softFail: false });
 }
 
 /** Transfer LOCAL Root ownership to another verified user (same master ID). */

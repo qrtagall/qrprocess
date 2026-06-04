@@ -293,11 +293,45 @@ async function handleTransferOwnerQRScanned(scannedId) {
         }
 
         input.value = lookup.email;
-        status.textContent = `✅ Found owner ${lookup.email} — verifying…`;
-        status.style.color = "#666";
-        await verifyTransferTarget();
+        const masterId = getQueryParam("id");
+        if (!masterId) {
+            status.textContent = "⚠️ Missing QR ID in page URL.";
+            status.style.color = "#b45309";
+            return;
+        }
+        await runTransferTargetVerify(masterId, lookup.email, status);
     } catch (err) {
         status.textContent = err.message || "Scan lookup failed.";
+        status.style.color = "#b91c1c";
+    }
+}
+
+function applyTransferVerifyResult(data, email, status) {
+    if (data && data.success) {
+        transferTargetVerified = true;
+        transferTargetEmail = email;
+        status.textContent = "✅ Target user verified";
+        status.style.color = "#15803d";
+        return;
+    }
+    status.textContent =
+        data?.message || "Target user is not verified. Needs to get atleast one QRTag";
+    status.style.color = "#b91c1c";
+}
+
+/** Server Owners-sheet check (GET + stored token — works after camera scan). */
+async function runTransferTargetVerify(masterId, email, status) {
+    transferTargetVerified = false;
+    transferTargetEmail = "";
+
+    status.textContent = "⏳ Verifying…";
+    status.style.color = "#666";
+
+    try {
+        const data = await verifyTransferTargetEmail(masterId, email);
+        applyTransferVerifyResult(data, email, status);
+    } catch (err) {
+        status.textContent = err.message || "Verification failed.";
         status.style.color = "#b91c1c";
     }
 }
@@ -310,9 +344,6 @@ async function verifyTransferTarget() {
     const email = String(input.value || "").toLowerCase().trim();
     const me = (typeof sessionEmail === "string" ? sessionEmail : "").toLowerCase().trim();
     const masterId = getQueryParam("id");
-
-    transferTargetVerified = false;
-    transferTargetEmail = "";
 
     if (!masterId) {
         status.textContent = "⚠️ Missing QR ID in page URL.";
@@ -335,25 +366,17 @@ async function verifyTransferTarget() {
         return;
     }
 
-    status.textContent = "⏳ Verifying…";
-    status.style.color = "#666";
-
-    try {
-        const data = await verifyTransferTargetEmail(masterId, email);
-        if (data && data.success) {
-            transferTargetVerified = true;
-            transferTargetEmail = email;
-            status.textContent = "✅ Target user verified";
-            status.style.color = "#15803d";
-        } else {
-            status.textContent =
-                data?.message || "Target user is not verified. Needs to get atleast one QRTag";
+    if (!getStoredMutationToken()) {
+        try {
+            await ensureAccessTokenForMutation();
+        } catch (err) {
+            status.textContent = err.message || "Please sign in with Google first.";
             status.style.color = "#b91c1c";
+            return;
         }
-    } catch (err) {
-        status.textContent = err.message || "Verification failed.";
-        status.style.color = "#b91c1c";
     }
+
+    await runTransferTargetVerify(masterId, email, status);
 }
 
 async function confirmTransferQR() {
