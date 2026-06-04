@@ -288,7 +288,6 @@ function openDeleteDialog() {
     }
     if (statusEl) { statusEl.textContent = ""; statusEl.style.display = "none"; }
 
-    const me = (typeof sessionEmail === "string" ? sessionEmail : "").toLowerCase().trim();
     const showAllLinks = isCurrentUserRootOwnerOnPage();
 
     listEl.innerHTML = owned
