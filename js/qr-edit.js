@@ -216,19 +216,50 @@ async function confirmAddLinkedQR() {
 
 /*********************************************** Delete ***********************************/
 
-/** QR links on the current master page that the signed-in user owns. */
-function getOwnedDeletableQRs() {
+/** True when session user owns Remote_Link 1 (Root) on this master page. */
+function isCurrentUserRootOwnerOnPage() {
+    const me = (typeof sessionEmail === "string" ? sessionEmail : "").toLowerCase().trim();
+    if (!me || !Array.isArray(globalRemoteAssetList)) return false;
+    return globalRemoteAssetList.some(
+        (b) =>
+            Number(b.linkSlot) === 1 &&
+            String(b.email || "").toLowerCase().trim() === me
+    );
+}
+
+function mapBlockToDeleteCandidate(b) {
+    return {
+        linkId: b.linkId || "",
+        sheetId: b.sheetId || "",
+        storageType: String(b.storageType || "REMOTE").toUpperCase(),
+        description: b.description || b.asset || "",
+        linkSlot: Number(b.linkSlot) || 0,
+        email: String(b.email || "").toLowerCase().trim(),
+    };
+}
+
+/**
+ * Delete modal list:
+ * - Root owner (slot 1): every link on this page (Root + all Branches).
+ * - Non-root: only Branch links (slot 2+) they own.
+ */
+function getDeletableQRsForDeleteModal() {
     const me = (typeof sessionEmail === "string" ? sessionEmail : "").toLowerCase().trim();
     if (!me || !Array.isArray(globalRemoteAssetList)) return [];
-    return globalRemoteAssetList
-        .filter((b) => String(b.email || "").toLowerCase().trim() === me && b.sheetId)
-        .map((b) => ({
-            linkId: b.linkId || "",
-            sheetId: b.sheetId || "",
-            storageType: String(b.storageType || "REMOTE").toUpperCase(),
-            description: b.description || b.asset || "",
-            linkSlot: Number(b.linkSlot) || 0, // 1 = parent (real delete), 2+ = linked child (unlink only)
-        }));
+
+    const withSheet = globalRemoteAssetList.filter((b) => b.sheetId);
+
+    if (isCurrentUserRootOwnerOnPage()) {
+        return withSheet.map(mapBlockToDeleteCandidate);
+    }
+
+    return withSheet
+        .filter(
+            (b) =>
+                Number(b.linkSlot) !== 1 &&
+                String(b.email || "").toLowerCase().trim() === me
+        )
+        .map(mapBlockToDeleteCandidate);
 }
 
 function openDeleteDialog() {
@@ -238,9 +269,14 @@ function openDeleteDialog() {
         return;
     }
 
-    const owned = getOwnedDeletableQRs();
+    const owned = getDeletableQRsForDeleteModal();
     if (!owned.length) {
-        notify("You don't own any QR link on this page to delete.", "info");
+        notify(
+            isCurrentUserRootOwnerOnPage()
+                ? "No QR links on this page to delete."
+                : "You don't own any Branch link on this page to delete.",
+            "info"
+        );
         return;
     }
 
@@ -252,6 +288,9 @@ function openDeleteDialog() {
     }
     if (statusEl) { statusEl.textContent = ""; statusEl.style.display = "none"; }
 
+    const me = (typeof sessionEmail === "string" ? sessionEmail : "").toLowerCase().trim();
+    const showAllLinks = isCurrentUserRootOwnerOnPage();
+
     listEl.innerHTML = owned
         .map((q, i) => {
             const badgeClass = q.storageType === "LOCAL" ? "qrt-badge-local" : "qrt-badge-remote";
@@ -259,11 +298,15 @@ function openDeleteDialog() {
             const roleClass = isRoot ? "qrt-badge-root" : "qrt-badge-branch";
             const roleText = isRoot ? "Root" : "Branch";
             const label = formatDeleteItemLabel(q);
+            const ownerHint =
+                showAllLinks && q.email && q.email !== me
+                    ? ` <span class="qrt-delete-item-owner">(${escapeHtmlSafe(q.email)})</span>`
+                    : "";
             return `
             <label class="qrt-delete-item">
                 <input type="checkbox" class="qrt-delete-check" data-idx="${i}">
                 <span class="qrt-delete-item-main">
-                    <span class="qrt-delete-item-id">${escapeHtmlSafe(label)}</span>
+                    <span class="qrt-delete-item-id">${escapeHtmlSafe(label)}${ownerHint}</span>
                     <span class="qrt-delete-item-tags">
                         <span class="qrt-badge ${roleClass}">${roleText}</span>
                         <span class="qrt-badge ${badgeClass}">${q.storageType}</span>
@@ -298,8 +341,8 @@ function formatDeleteItemLabel(item) {
 }
 
 const DELETE_QR_HINT_DEFAULT =
-    "<b>Root Link:</b> permanently removes that QR’s data from storage. " +
-    "<b>Branch Link:</b> only removes the link from this page — the original linked QR’s data will not be deleted.";
+    "<b>Your Root Link:</b> permanently removes <em>your</em> QR data from storage. " +
+    "<b>Branch Link (yours or others):</b> only removes the link on <em>this page</em> — no other owner’s files are deleted.";
 
 function getSelectedDeleteCandidates() {
     const candidates = window.__qrDeleteCandidates || [];
@@ -397,8 +440,14 @@ async function deleteSelectedQRs(selected) {
         // 1) Only a PARENT (Remote_Link 1) deletes its actual data. A REMOTE parent
         //    lives in the user's own Drive, so delete it in the browser. Children
         //    (Remote_Link 2+) are just unlinked server-side — never delete contents.
+        const me = (typeof sessionEmail === "string" ? sessionEmail : "").toLowerCase().trim();
         for (const it of selected) {
-            if (it.storageType === "REMOTE" && Number(it.linkSlot) === 1) {
+            // Only the owner's Root REMOTE sheet is removed from their Drive (drive.file).
+            if (
+                it.storageType === "REMOTE" &&
+                Number(it.linkSlot) === 1 &&
+                String(it.email || me).toLowerCase().trim() === me
+            ) {
                 try {
                     await deleteRemoteQrInBrowser(token, it.linkId, it.sheetId);
                 } catch (err) {

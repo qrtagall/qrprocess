@@ -1323,6 +1323,12 @@ body {
     word-break: break-all;
 }
 
+.qrt-delete-item-owner {
+    font-weight: 400;
+    font-size: 12px;
+    color: #6b7280;
+}
+
 .qrt-delete-item-desc {
     font-size: 13px;
     color: #666;
