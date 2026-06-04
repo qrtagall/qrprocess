@@ -2386,12 +2386,8 @@ async function saveArtifactInfo({
     //const id = getQueryParam("id");
 
    console.log("info>>>>>targetLinkId",targetLinkId);
-    const id = targetLinkId ? getLinkIdBySheetId(targetLinkId) : getQueryParam("id");
-    console.log("info>>>>>Id",id);
 
-
-    showSpinner(true)
-
+    showSpinner(true);
 
     const modalLinkId = modalId
         ? document.getElementById(modalId)?.getAttribute("data-link-id")
@@ -2412,7 +2408,9 @@ async function saveArtifactInfo({
         return;
     }
 
-    console.log("id>>>>", id, targetLinkId, sheetId);
+    const pageQrId = getQueryParam("id");
+    const id = pageQrId || getLinkIdBySheetId(sheetId) || modalLinkId || "";
+    console.log("info>>>>>Id", id, "sheetId", sheetId, "storage lookup keys", modalLinkId, pageQrId);
 
     // 🧠 Helper: safely trim or pass through
     const safe = (v) => typeof v === "string" ? v.trim() : v;
@@ -2427,7 +2425,10 @@ async function saveArtifactInfo({
 
     const userEmail = sessionEmail;
 
-    const storageType = getStorageTypeByLinkId(modalLinkId || targetLinkId || sheetId);
+    const storageType =
+        typeof resolveStorageTypeForArtifactSave === "function"
+            ? resolveStorageTypeForArtifactSave({ modalLinkId, sheetId })
+            : getStorageTypeByLinkId(modalLinkId || sheetId);
 
     if (isInsert && typeof checkArtifactLimitBeforeInsert === "function") {
         try {

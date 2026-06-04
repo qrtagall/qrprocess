@@ -1338,15 +1338,35 @@ async function triggerLink_get(params, modalId = null) {
                         deleteRow: payload.delete === "1",
                     });
                 } catch (sheetErr) {
-                    const needsScope =
+                    const errMsg = sheetErr.message || "";
+                    const driveFileDenied = /not granted.*read access/i.test(errMsg);
+                    const block =
+                        typeof findAssetBlockByLinkOrSheet === "function"
+                            ? findAssetBlockByLinkOrSheet(payload.sheetId)
+                            : null;
+                    const shouldUseLocal =
+                        driveFileDenied &&
+                        (block?.storageType === "LOCAL" ||
+                            (typeof resolveStorageTypeForArtifactSave === "function" &&
+                                resolveStorageTypeForArtifactSave({
+                                    modalLinkId: null,
+                                    sheetId: payload.sheetId,
+                                }) === "LOCAL"));
+                    if (shouldUseLocal) {
+                        payload.storageType = "LOCAL";
+                        result = await invokeAppsScriptPostJson(payload, AppScriptBaseUrl_New);
+                    } else if (
                         sheetErr.status === 403 ||
-                        /insufficient|scope|permission/i.test(sheetErr.message || "");
-                    if (needsScope) {
+                        /insufficient|scope|permission|not granted/i.test(errMsg)
+                    ) {
                         throw new Error(
-                            "Please sign out, revoke QRTagAll in Google Account → Security → Third-party access, then claim again with Data in GDrive (drive.file only)."
+                            driveFileDenied
+                                ? "This QR is stored in QRTagAll, not your Drive. Refresh the page and try again. If it persists, open the QR from process.qrtagall.com and use Edit while signed in."
+                                : "Please sign out, revoke QRTagAll in Google Account → Security → Third-party access, then claim again with Data in GDrive (drive.file only)."
                         );
+                    } else {
+                        throw sheetErr;
                     }
-                    throw sheetErr;
                 }
             }
             await finishPostSave(result);

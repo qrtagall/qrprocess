@@ -390,10 +390,35 @@ function isCopied(id) {
   return !globalRemoteAssetList.some(block => block.linkId === id);
 }
 
-function getStorageTypeByLinkId(linkId) {
-  if (!linkId || !globalRemoteAssetList?.length) return "REMOTE";  // default fallback
-  const block = globalRemoteAssetList.find(b => b.linkId === linkId);
-  return block?.storageType?.toUpperCase() || "REMOTE";
+function findAssetBlockByLinkOrSheet(key) {
+  if (!key || !globalRemoteAssetList?.length) return null;
+  const k = String(key).trim();
+  return (
+    globalRemoteAssetList.find(
+      (b) => b.linkId === k || (b.sheetId && String(b.sheetId).trim() === k)
+    ) || null
+  );
+}
+
+function getStorageTypeByLinkId(linkOrSheetId) {
+  const block = findAssetBlockByLinkOrSheet(linkOrSheetId);
+  if (block?.storageType) return String(block.storageType).toUpperCase();
+  return "REMOTE";
+}
+
+/** Prefer modal link id, then spreadsheet id, then page QR id. */
+function resolveStorageTypeForArtifactSave({ modalLinkId, sheetId } = {}) {
+  const keys = [
+    modalLinkId,
+    sheetId,
+    typeof getLinkIdBySheetId === "function" ? getLinkIdBySheetId(sheetId) : "",
+    typeof getQueryParam === "function" ? getQueryParam("id") : "",
+  ].filter(Boolean);
+  for (let i = 0; i < keys.length; i++) {
+    const block = findAssetBlockByLinkOrSheet(keys[i]);
+    if (block?.storageType) return String(block.storageType).toUpperCase();
+  }
+  return "REMOTE";
 }
 
 function getSheetIdByLinkId(linkId) {
