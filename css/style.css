@@ -702,6 +702,143 @@ body {
     color: #1b5e20;
 }
 
+.qrt-edit-qr-btn-explore {
+    border-color: #b8a8e8;
+    background: linear-gradient(180deg, #faf8ff 0%, #f3effc 100%);
+    color: #4a148c;
+    flex: 1 1 100%;
+    max-width: 100%;
+}
+
+.qrt-stripe-dashboard {
+    background: linear-gradient(90deg, #7e57c2, #9575cd);
+}
+
+.qrt-dashboard-body {
+    text-align: left;
+    margin: 12px 0 16px;
+    max-height: min(60vh, 420px);
+    overflow-y: auto;
+}
+
+.qrt-dashboard-email {
+    margin: 0 0 10px;
+    font-size: 15px;
+}
+
+.qrt-dashboard-label {
+    color: #555;
+}
+
+.qrt-dashboard-stats {
+    margin: 0 0 14px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #333;
+}
+
+.qrt-dashboard-id-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.qrt-dashboard-id-list li {
+    margin: 0 0 8px;
+}
+
+.qrt-dashboard-id-link {
+    display: block;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #d4c8f0;
+    background: #faf8ff;
+    color: #5e35b1;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    word-break: break-all;
+}
+
+.qrt-dashboard-id-link:hover {
+    background: #f0ebfa;
+    text-decoration: underline;
+}
+
+.qrt-dashboard-empty,
+.qrt-dashboard-loading,
+.qrt-dashboard-error {
+    margin: 0;
+    font-size: 14px;
+    color: #555;
+}
+
+.qrt-dashboard-error {
+    color: #b91c1c;
+}
+
+.qrt-userlogin-page {
+    min-height: 100vh;
+    margin: 0;
+    background: linear-gradient(160deg, #f5f0ff 0%, #fff 45%, #eef6fc 100%);
+}
+
+.qrt-userlogin-wrap {
+    max-width: 440px;
+    margin: 0 auto;
+    padding: 32px 16px 48px;
+    box-sizing: border-box;
+}
+
+.qrt-userlogin-header h1 {
+    margin: 0 0 10px;
+    font-size: 22px;
+    color: var(--primary, #5e35b1);
+    text-align: center;
+    line-height: 1.35;
+}
+
+.qrt-userlogin-sub {
+    margin: 0 0 24px;
+    text-align: center;
+    color: #555;
+    font-size: 15px;
+    line-height: 1.45;
+}
+
+.qrt-userlogin-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 20px 18px;
+    box-shadow: 0 4px 20px rgba(94, 53, 177, 0.1);
+    border: 1px solid #e8dff5;
+}
+
+.qrt-userlogin-input {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 14px;
+}
+
+.qrt-userlogin-btn {
+    width: 100%;
+}
+
+.qrt-userlogin-hint {
+    margin: 14px 0 0;
+    font-size: 13px;
+}
+
+.qrt-userlogin-footer {
+    margin-top: 24px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.qrt-userlogin-footer a {
+    color: #5e35b1;
+}
+
 .main-action-buttons {
     display: flex;
     flex-wrap: wrap;

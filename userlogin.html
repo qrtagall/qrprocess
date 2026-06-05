@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>QRTagAll | User Dashboard Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <link rel="stylesheet" href="./css/style.css?v=20260607a">
+</head>
+<body class="qrt-userlogin-page">
+
+    <div class="qrt-userlogin-wrap">
+        <header class="qrt-userlogin-header">
+            <h1>Login to see all the Linked assets</h1>
+            <p class="qrt-userlogin-sub">Sign in with Google to view every QR ID registered to your account.</p>
+        </header>
+
+        <div class="qrt-userlogin-card">
+            <label class="qrt-label" for="dashboardLoginEmailInput">Your Gmail</label>
+            <input
+                type="email"
+                id="dashboardLoginEmailInput"
+                class="qrt-input qrt-userlogin-input"
+                placeholder="example@gmail.com"
+                autocomplete="email"
+            />
+            <button type="button" id="dashboardLoginBtn" class="qrt-btn qrt-btn-primary qrt-btn-lg qrt-userlogin-btn">
+                🔐 Sign in with Google
+            </button>
+            <p class="qrt-modal-hint qrt-userlogin-hint">
+                Uses the same Google account as QRTagAll edit access (<code>userinfo.email</code> only).
+            </p>
+        </div>
+
+        <p class="qrt-userlogin-footer">
+            <a href="https://process.qrtagall.com/index.html">← Back to QRTagAll</a>
+        </p>
+    </div>
+
+    <!-- User Dashboard Modal (shared with index.html) -->
+    <div id="userDashboardModal" class="qrt-modal" style="display:none;">
+        <div class="qrt-modal-panel qrt-modal-panel-artifact qrt-modal-panel-dashboard">
+            <div class="qrt-modal-header-stripe qrt-stripe-dashboard">
+                <h3>📊 Your QR Assets</h3>
+            </div>
+            <p class="qrt-modal-hint">All QR IDs registered to your account on QRTagAll (Owners sheet).</p>
+            <div id="userDashboardBody" class="qrt-dashboard-body"></div>
+            <div class="qrt-modal-actions">
+                <button type="button" class="qrt-btn qrt-btn-primary qrt-btn-lg" onclick="closeUserDashboardModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="./js/qr-utils.js?v=20260606a"></script>
+    <script src="./js/qr-auth.js?v=20260607a"></script>
+    <script src="./js/qr-fetch.js?v=20260607a"></script>
+    <script src="./js/qr-dashboard.js?v=20260607a"></script>
+</body>
+</html>

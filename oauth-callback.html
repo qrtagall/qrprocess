@@ -12,13 +12,20 @@
 <body>
   <h3>⏳ Verifying your login...</h3>
   <script>
-    // Parse access_token from URL fragment
+    function parseOAuthState(rawState) {
+      if (!rawState) return { id: "" };
+      try {
+        const decoded = decodeURIComponent(rawState);
+        if (decoded.charAt(0) === "{") return JSON.parse(decoded);
+      } catch (e) { /* legacy plain id */ }
+      return { id: rawState };
+    }
+
     const hash = new URLSearchParams(window.location.hash.slice(1));
     const token = hash.get("access_token");
-    const state = hash.get("state"); // this is your ID
+    const stateRaw = hash.get("state");
 
     if (token) {
-      // Fetch user's email using token
       fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
         headers: { Authorization: "Bearer " + token }
       })
@@ -33,8 +40,28 @@
         sessionStorage.setItem("qr_claimed_email", normalized);
         sessionStorage.setItem("qr_access_token", token);
 
-        // Redirect back to main page
-        const redirectUrl = `https://process.qrtagall.com/?id=${encodeURIComponent(state)}&verified=1&email=${encodeURIComponent(email || "")}`;
+        const stateObj = parseOAuthState(stateRaw);
+
+        if (stateObj.intent === "dashboard") {
+          const expected = String(stateObj.expectedEmail || "").toLowerCase().trim();
+          if (expected && expected !== normalized) {
+            document.body.innerHTML =
+              "<p>⚠️ Google account (" + email + ") does not match the email you entered (" +
+              stateObj.expectedEmail + "). Please try again.</p>";
+            return;
+          }
+          window.location.href =
+            "https://process.qrtagall.com/userlogin.html?dashboard=1&email=" +
+            encodeURIComponent(email || "");
+          return;
+        }
+
+        const qrId = stateObj.id || stateRaw || "";
+        const redirectUrl =
+          "https://process.qrtagall.com/index.html?id=" +
+          encodeURIComponent(qrId) +
+          "&verified=1&email=" +
+          encodeURIComponent(email || "");
         window.location.href = redirectUrl;
       })
       .catch(err => {
