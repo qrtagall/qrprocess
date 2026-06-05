@@ -762,6 +762,134 @@ body {
     cursor: default;
 }
 
+.qrt-dashboard-header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    flex: 0 0 auto;
+    justify-content: flex-end;
+}
+
+.qrt-dashboard-scan-note {
+    margin: 0 0 10px;
+    font-size: 12px;
+    color: #555;
+    line-height: 1.5;
+}
+
+.qrt-dashboard-loading-sub {
+    font-size: 12px;
+    color: #888;
+}
+
+.qrt-dashboard-tree,
+.qrt-dash-tree-children {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.qrt-dash-tree-children {
+    margin-left: 14px;
+    padding-left: 10px;
+    border-left: 2px solid #e8dff5;
+}
+
+.qrt-dash-tree-item {
+    margin: 0 0 10px;
+}
+
+.qrt-dash-id-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 8px;
+}
+
+.qrt-dash-tree-glyph {
+    color: #9575cd;
+    font-weight: 700;
+    margin-right: 2px;
+}
+
+.qrt-dash-tags {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+}
+
+.qrt-tag {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
+.qrt-tag-storage.qrt-tag-local {
+    background: #e8f5e9;
+    color: #1b5e20;
+    border: 1px solid #a5d6a7;
+}
+
+.qrt-tag-storage.qrt-tag-remote {
+    background: #e3f2fd;
+    color: #0d47a1;
+    border: 1px solid #90caf9;
+}
+
+.qrt-tag-status.qrt-tag-valid {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #81c784;
+}
+
+.qrt-tag-status.qrt-tag-invalid {
+    background: #ffebee;
+    color: #b71c1c;
+    border: 1px solid #ef9a9a;
+}
+
+.qrt-tag-status.qrt-tag-incomplete {
+    background: #fff8e1;
+    color: #e65100;
+    border: 1px solid #ffcc80;
+}
+
+.qrt-tag-status.qrt-tag-not-registered {
+    background: #f5f5f5;
+    color: #616161;
+    border: 1px solid #e0e0e0;
+}
+
+.qrt-tag-role {
+    background: #f3e5f5;
+    color: #6a1b9a;
+    border: 1px solid #ce93d8;
+}
+
+.qrt-tag-slot {
+    background: #eceff1;
+    color: #455a64;
+    border: 1px solid #cfd8dc;
+}
+
+.qrt-dash-meta {
+    display: block;
+    margin: 4px 0 0 0;
+    font-size: 12px;
+    color: #666;
+    padding-left: 2px;
+}
+
+.qrt-dash-tree-branch .qrt-dashboard-id-link {
+    font-size: 13px;
+}
+
 .qrt-dashboard-body {
     text-align: left;
     margin: 12px 0 16px;

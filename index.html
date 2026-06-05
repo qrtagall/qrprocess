@@ -19,7 +19,7 @@
 
 
     <!-- -->
-    <link rel="stylesheet" href="./css/style.css?v=20260609a">
+    <link rel="stylesheet" href="./css/style.css?v=20260610a">
      <!-- -->
 
 </head>
@@ -271,7 +271,10 @@
         <div class="qrt-modal-panel qrt-modal-panel-artifact qrt-modal-panel-dashboard">
             <div class="qrt-modal-header-stripe qrt-stripe-dashboard qrt-dashboard-header">
                 <h3>📊 Your QR Assets</h3>
-                <button type="button" id="userDashboardRefreshBtn" class="qrt-btn qrt-btn-dashboard-refresh" onclick="refreshUserDashboard()" title="Reload asset list from Owners sheet">🔄 Refresh</button>
+                <div class="qrt-dashboard-header-actions">
+                    <button type="button" id="userDashboardDeepScanBtn" class="qrt-btn qrt-btn-dashboard-refresh" onclick="deepScanUserDashboard()" title="Scan registry links and spreadsheet health for every ID">🔬 Deep Scan</button>
+                    <button type="button" id="userDashboardRefreshBtn" class="qrt-btn qrt-btn-dashboard-refresh" onclick="refreshUserDashboard()" title="Reload asset list from Owners sheet">🔄 Refresh</button>
+                </div>
             </div>
             <p class="qrt-modal-hint">All QR IDs registered to your account on QRTagAll (Owners sheet).</p>
             <div id="userDashboardBody" class="qrt-dashboard-body"></div>
@@ -570,9 +573,9 @@
 <!-- bump ?v= whenever JS changes to force browsers to load the new files -->
 <script src="./js/qr-utils.js?v=20260608a"></script>
 <script src="./js/qr-auth.js?v=20260607a"></script>
-<script src="./js/qr-fetch.js?v=20260609b"></script>
+<script src="./js/qr-fetch.js?v=20260610a"></script>
 <script src="./js/qr-edit.js?v=20260608a"></script>
-<script src="./js/qr-dashboard.js?v=20260609a"></script>
+<script src="./js/qr-dashboard.js?v=20260610a"></script>
 <script src="./js/qr-ui.js?v=20260608a"></script>
 <script src="./js/qr-main.js?v=20260608a"></script>
 <!--   -->

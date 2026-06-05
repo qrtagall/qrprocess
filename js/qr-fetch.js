@@ -1836,6 +1836,32 @@ async function fetchUserDashboard() {
     return invokeAppsScriptGet(url, cb, { timeoutMs: 45000, softFail: false });
 }
 
+/** Deep scan — probe each Owners ID on master registry (may take a while). */
+async function fetchUserDashboardDeepScan() {
+    let token = getStoredMutationToken();
+    if (!token) {
+        token = await ensureAccessTokenForMutation();
+    }
+    const session =
+        (typeof sessionEmail === "string" && sessionEmail) ||
+        localStorage.getItem("qr_claimed_email") ||
+        sessionStorage.getItem("qr_claimed_email") ||
+        "";
+    if (!session) {
+        return { success: false, message: "Please sign in with Google first." };
+    }
+
+    const params = new URLSearchParams({
+        mode: "userDashboardDeepScan",
+        email: session,
+    });
+    params.set(QRTAGALL_AUTH_PARAM, token);
+
+    const cb = "qrUserDashDeep_" + Date.now();
+    const url = `${AppScriptBaseUrl_New}?${params.toString()}&callback=${encodeURIComponent(cb)}`;
+    return invokeAppsScriptGet(url, cb, { timeoutMs: 180000, softFail: false });
+}
+
 /** Stored OAuth token for registry verify (no GIS refresh — safe after camera scan callback). */
 function getStoredMutationToken() {
     return (
