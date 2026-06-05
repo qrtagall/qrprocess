@@ -1173,13 +1173,24 @@ async function fetchAllRemoteSheets(id, options = {}) {
             console.warn("fetchAllRemoteSheets: no response");
             return [];
         }
+        if (data.success === false || data.error) {
+            console.warn("fetchAllRemoteSheets: server error", data.message || data.error);
+            return [];
+        }
         if (typeof data.views !== "undefined") {
             window.qrViewCount = Number(data.views) || 0;
             if (typeof updateViewCountBadge === "function") {
                 updateViewCountBadge(window.qrViewCount);
             }
         }
-        return parseRemoteSheetsPayload(data);
+        const parsed = parseRemoteSheetsPayload(data);
+        if (parsed.length === 0 && data.found && data.data && data.data.assets) {
+            const keys = Object.keys(data.data.assets);
+            if (keys.length > 0) {
+                console.warn("fetchAllRemoteSheets: assets keys present but parse empty", keys);
+            }
+        }
+        return parsed;
     } catch (e) {
         console.warn("fetchAllRemoteSheets:", e);
         return [];
