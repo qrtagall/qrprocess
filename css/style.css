@@ -725,6 +725,43 @@ body {
     background: linear-gradient(90deg, #7e57c2, #9575cd);
 }
 
+.qrt-dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.qrt-dashboard-header h3 {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.qrt-btn-dashboard-refresh {
+    flex: 0 0 auto;
+    min-height: 36px;
+    min-width: auto;
+    padding: 6px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    background: rgba(255, 255, 255, 0.22);
+    color: #fff;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+.qrt-btn-dashboard-refresh:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.38);
+}
+
+.qrt-btn-dashboard-refresh:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
 .qrt-dashboard-body {
     text-align: left;
     margin: 12px 0 16px;

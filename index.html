@@ -19,7 +19,7 @@
 
 
     <!-- -->
-    <link rel="stylesheet" href="./css/style.css?v=20260608a">
+    <link rel="stylesheet" href="./css/style.css?v=20260609a">
      <!-- -->
 
 </head>
@@ -269,13 +269,13 @@
     <!-- User Dashboard Modal -->
     <div id="userDashboardModal" class="qrt-modal" style="display:none;">
         <div class="qrt-modal-panel qrt-modal-panel-artifact qrt-modal-panel-dashboard">
-            <div class="qrt-modal-header-stripe qrt-stripe-dashboard">
+            <div class="qrt-modal-header-stripe qrt-stripe-dashboard qrt-dashboard-header">
                 <h3>📊 Your QR Assets</h3>
+                <button type="button" id="userDashboardRefreshBtn" class="qrt-btn qrt-btn-dashboard-refresh" onclick="refreshUserDashboard()" title="Reload asset list from Owners sheet">🔄 Refresh</button>
             </div>
             <p class="qrt-modal-hint">All QR IDs registered to your account on QRTagAll (Owners sheet).</p>
             <div id="userDashboardBody" class="qrt-dashboard-body"></div>
             <div class="qrt-modal-actions">
-                <button type="button" id="userDashboardRefreshBtn" class="qrt-btn qrt-btn-secondary qrt-btn-lg" onclick="refreshUserDashboard()">🔄 Refresh</button>
                 <button type="button" class="qrt-btn qrt-btn-primary qrt-btn-lg" onclick="closeUserDashboardModal()">Close</button>
             </div>
         </div>
@@ -561,7 +561,7 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "4.10";
+    const QRTagAll_Ver_ = "4.11";
 </script>
 
 
@@ -572,7 +572,7 @@
 <script src="./js/qr-auth.js?v=20260607a"></script>
 <script src="./js/qr-fetch.js?v=20260608b"></script>
 <script src="./js/qr-edit.js?v=20260608a"></script>
-<script src="./js/qr-dashboard.js?v=20260608c"></script>
+<script src="./js/qr-dashboard.js?v=20260609a"></script>
 <script src="./js/qr-ui.js?v=20260608a"></script>
 <script src="./js/qr-main.js?v=20260608a"></script>
 <!--   -->
