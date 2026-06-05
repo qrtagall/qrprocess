@@ -294,7 +294,6 @@ function parseRemoteSheetsPayload(data) {
     for (const [linkKey, linkBlock] of Object.entries(groupedAssets)) {
         if (!linkBlock || !linkBlock.metadata) continue;
         const items = Array.isArray(linkBlock.items) ? linkBlock.items : [];
-        if (items.length === 0 && !linkBlock.metadata.dataUnavailable) continue;
 
         const meta = linkBlock.metadata || {};
         result.push({
