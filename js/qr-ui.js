@@ -143,6 +143,9 @@ function enableEditMode() {
 
 
     renderMultipleRemoteBlocks(globalRemoteAssetList);//remoteList);
+    if (typeof applyEditActionsAvailability === "function") {
+        applyEditActionsAvailability();
+    }
 
     /*
 	fetchAssetData(getQueryParam("id")).then(({ data }) => {
@@ -627,7 +630,7 @@ function renderMultipleRemoteBlocks(remoteList) {
         const assetLinks = document.getElementById("assetLinks");
         assetLinks.innerHTML = "";
 
-        remoteList.forEach(({ email, storageType, assets, description, linkId }, idx) => {
+        remoteList.forEach(({ email, storageType, assets, description, linkId, dataUnavailable }, idx) => {
             const artifactOwner = (email === sessionEmail);
 
             // Keep raw for edit mode; parse for display
@@ -674,7 +677,7 @@ function renderMultipleRemoteBlocks(remoteList) {
                     contentDiv.style.backgroundColor  = pastel || shadeApproved;
                     EditLinkID = linkId;
 
-                    if (editMode) {
+                    if (editMode && !dataUnavailable) {
                         const placeholder = document.createElement("div");
                         placeholder.className = "artifact-block qrt-artifact-add-slot";
                         placeholder.innerHTML = getAddNewArtifactButtonMarkup(linkId, -1);
@@ -691,18 +694,30 @@ function renderMultipleRemoteBlocks(remoteList) {
 
             // Asset loading
             let isLoaded = false;
-            const isBlockEditable = sessionEmail &&
+            const isBlockEditable =
+                !dataUnavailable &&
+                sessionEmail &&
                 email &&
-                (sessionEmail.toLowerCase() === email.toLowerCase());
+                sessionEmail.toLowerCase() === email.toLowerCase();
 
             const loadAssets = () => {
+                if (isLoaded) return;
+                if (dataUnavailable) {
+                    contentDiv.innerHTML =
+                        '<p class="qrt-data-unavailable">⚠️ <b>Data is not available.</b> ' +
+                        "The linked spreadsheet or files may have been removed from Google Drive " +
+                        "while this QR is still registered. As owner, you can <b>Delete QR</b> to clear the registry entry.</p>";
+                    isLoaded = true;
+                    return;
+                }
+
                 const spinner = document.createElement("div");
                 spinner.className = "spinner";
                 contentDiv.appendChild(spinner);
 
                 setTimeout(() => {
                     spinner.remove();
-                    assets.forEach((asset, i) => {
+                    (assets || []).forEach((asset, i) => {
                         const block = createAssetBlockFromHTML(
                             asset, i, isBlockEditable, artifactOwner, linkId, artifactOwner
                         );
@@ -745,6 +760,12 @@ function renderMultipleRemoteBlocks(remoteList) {
 
             // Auto-expand the last one when not in editMode
             if (!editMode && idx === remoteList.length - 1) {
+                headerBlock.classList.add("active");
+                requestAnimationFrame(() => loadAssets());
+            }
+
+            // Always surface missing-data message for registry-only links
+            if (dataUnavailable) {
                 headerBlock.classList.add("active");
                 requestAnimationFrame(() => loadAssets());
             }

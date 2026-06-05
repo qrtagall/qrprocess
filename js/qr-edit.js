@@ -120,7 +120,38 @@ async function verifyQRIdValue(newId) {
 
 /*********************************************** Clone ***********************************/
 
+/** Disable Clone / Transfer / Add when linked storage was removed; Delete + Dashboard stay available. */
+function applyEditActionsAvailability() {
+    const bar = document.getElementById("editActions");
+    if (!bar) return;
+    const unavailable =
+        typeof isPageDataUnavailable === "function" && isPageDataUnavailable();
+    bar.querySelectorAll(
+        ".qrt-edit-qr-btn-clone, .qrt-edit-qr-btn-transfer, .qrt-edit-qr-btn-addqr"
+    ).forEach((btn) => {
+        btn.disabled = unavailable;
+        btn.classList.toggle("qrt-btn-disabled", unavailable);
+        btn.style.opacity = unavailable ? "0.45" : "";
+        btn.style.pointerEvents = unavailable ? "none" : "";
+        btn.title = unavailable
+            ? "Unavailable — linked data was removed from storage"
+            : "";
+    });
+}
+
+function guardEditActionWhenDataUnavailable(actionLabel) {
+    if (typeof isPageDataUnavailable === "function" && isPageDataUnavailable()) {
+        notify(
+            `${actionLabel} is disabled because the linked data is no longer available in storage.`,
+            "error"
+        );
+        return true;
+    }
+    return false;
+}
+
 function openCloneDialog() {
+    if (guardEditActionWhenDataUnavailable("Clone")) return;
     //document.getElementById("cloneQRModal").style.display = "flex";
     isnewQRIDVerifiedAndFree=false;
     currentLinkId = EditLinkID;  // ✅ Set global variable
@@ -169,6 +200,7 @@ function getPageRootLinkForCurrentUser() {
 }
 
 function openTransferDialog() {
+    if (guardEditActionWhenDataUnavailable("Transfer")) return;
     if (!isCurrentUserRootOwnerOnPage()) {
         notify("Permission Denied. Only Root owner can perform this", "error");
         return;
@@ -427,6 +459,7 @@ async function confirmTransferQR() {
 /************************* ADD QR ****************************************/
 
 function openAddQRDialog() {
+    if (guardEditActionWhenDataUnavailable("Add Linked QR")) return;
     document.getElementById("addQRModal").style.display = "flex";
     document.getElementById("newLinkedQRInput").value = "";
     document.getElementById("addQRVerifyStatus").textContent = "";

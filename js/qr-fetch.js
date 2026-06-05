@@ -292,7 +292,9 @@ function parseRemoteSheetsPayload(data) {
     const result = [];
 
     for (const [linkKey, linkBlock] of Object.entries(groupedAssets)) {
-        if (!linkBlock || !Array.isArray(linkBlock.items)) continue;
+        if (!linkBlock || !linkBlock.metadata) continue;
+        const items = Array.isArray(linkBlock.items) ? linkBlock.items : [];
+        if (items.length === 0 && !linkBlock.metadata.dataUnavailable) continue;
 
         const meta = linkBlock.metadata || {};
         result.push({
@@ -302,7 +304,8 @@ function parseRemoteSheetsPayload(data) {
             description: meta.description != null ? String(meta.description) : "",
             sheetId: meta.sheetId || "",
             linkSlot: Number(meta.linkSlot) || 0, // Remote_Link slot: 1 = parent, 2+ = linked child
-            assets: linkBlock.items,
+            dataUnavailable: !!meta.dataUnavailable,
+            assets: items,
         });
     }
 

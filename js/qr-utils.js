@@ -287,6 +287,14 @@ function sortLinksForTreeDisplay(list) {
   });
 }
 
+/** True when master registry has a link but the per-QR spreadsheet/files could not be loaded. */
+function isPageDataUnavailable() {
+    return (
+        Array.isArray(globalRemoteAssetList) &&
+        globalRemoteAssetList.some((b) => b && b.dataUnavailable)
+    );
+}
+
 function getLinkTreeRoleLabel(linkSlot) {
   const slot = Number(linkSlot) || 0;
   if (slot === 1) return "Root";
