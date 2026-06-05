@@ -275,6 +275,7 @@
             <p class="qrt-modal-hint">All QR IDs registered to your account on QRTagAll (Owners sheet).</p>
             <div id="userDashboardBody" class="qrt-dashboard-body"></div>
             <div class="qrt-modal-actions">
+                <button type="button" id="userDashboardRefreshBtn" class="qrt-btn qrt-btn-secondary qrt-btn-lg" onclick="refreshUserDashboard()">🔄 Refresh</button>
                 <button type="button" class="qrt-btn qrt-btn-primary qrt-btn-lg" onclick="closeUserDashboardModal()">Close</button>
             </div>
         </div>
@@ -560,7 +561,7 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "4.9";
+    const QRTagAll_Ver_ = "4.10";
 </script>
 
 
@@ -571,7 +572,7 @@
 <script src="./js/qr-auth.js?v=20260607a"></script>
 <script src="./js/qr-fetch.js?v=20260608b"></script>
 <script src="./js/qr-edit.js?v=20260608a"></script>
-<script src="./js/qr-dashboard.js?v=20260607a"></script>
+<script src="./js/qr-dashboard.js?v=20260608c"></script>
 <script src="./js/qr-ui.js?v=20260608a"></script>
 <script src="./js/qr-main.js?v=20260608a"></script>
 <!--   -->

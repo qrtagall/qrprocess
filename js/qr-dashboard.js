@@ -61,11 +61,20 @@ function renderUserDashboardContent(data) {
     `;
 }
 
+function setUserDashboardRefreshBusy(busy) {
+    const btn = document.getElementById("userDashboardRefreshBtn");
+    if (!btn) return;
+    btn.disabled = !!busy;
+    btn.style.opacity = busy ? "0.55" : "";
+    btn.style.pointerEvents = busy ? "none" : "";
+}
+
 async function loadAndRenderUserDashboard() {
     const body = document.getElementById("userDashboardBody");
     if (body) {
         body.innerHTML = `<p class="qrt-dashboard-loading">⏳ Loading your assets…</p>`;
     }
+    setUserDashboardRefreshBusy(true);
 
     try {
         const data = await fetchUserDashboard();
@@ -75,7 +84,13 @@ async function loadAndRenderUserDashboard() {
             success: false,
             message: err.message || "Failed to load dashboard.",
         });
+    } finally {
+        setUserDashboardRefreshBusy(false);
     }
+}
+
+function refreshUserDashboard() {
+    loadAndRenderUserDashboard();
 }
 
 function openUserDashboardModal() {
