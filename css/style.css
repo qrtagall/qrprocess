@@ -878,12 +878,55 @@ body {
     border: 1px solid #cfd8dc;
 }
 
-.qrt-dash-meta {
-    display: block;
-    margin: 4px 0 0 0;
+.qrt-dash-inline-meta {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
     font-size: 12px;
+    color: #555;
+    max-width: 100%;
+}
+
+.qrt-dash-desc-inline {
+    font-style: italic;
+    color: #444;
+}
+
+.qrt-dash-artifact-inline {
     color: #666;
-    padding-left: 2px;
+    font-size: 11px;
+}
+
+.qrt-dash-meta-sep {
+    color: #bbb;
+}
+
+.qrt-tag-pending {
+    background: #e8eaf6;
+    color: #3949ab;
+    border: 1px solid #9fa8da;
+    animation: qrt-dash-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes qrt-dash-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.55; }
+}
+
+.qrt-dashboard-scan-active {
+    color: #3949ab;
+    font-weight: 600;
+}
+
+.qrt-dash-scan-stop {
+    border-color: rgba(255, 200, 200, 0.7) !important;
+    background: rgba(255, 80, 80, 0.25) !important;
+}
+
+.qrt-dash-id-row .qrt-dashboard-id-link {
+    flex: 0 1 auto;
+    max-width: 100%;
 }
 
 .qrt-dash-tree-branch .qrt-dashboard-id-link {

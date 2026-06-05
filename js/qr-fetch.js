@@ -1836,8 +1836,8 @@ async function fetchUserDashboard() {
     return invokeAppsScriptGet(url, cb, { timeoutMs: 45000, softFail: false });
 }
 
-/** Deep scan — probe each Owners ID on master registry (may take a while). */
-async function fetchUserDashboardDeepScan() {
+/** Deep scan one Owners ID (progressive dashboard). */
+async function fetchUserDashboardDeepScanOne(scanId) {
     let token = getStoredMutationToken();
     if (!token) {
         token = await ensureAccessTokenForMutation();
@@ -1852,14 +1852,15 @@ async function fetchUserDashboardDeepScan() {
     }
 
     const params = new URLSearchParams({
-        mode: "userDashboardDeepScan",
+        mode: "userDashboardDeepScanOne",
         email: session,
+        scanId: String(scanId || "").trim(),
     });
     params.set(QRTAGALL_AUTH_PARAM, token);
 
-    const cb = "qrUserDashDeep_" + Date.now();
+    const cb = "qrUserDashOne_" + Date.now();
     const url = `${AppScriptBaseUrl_New}?${params.toString()}&callback=${encodeURIComponent(cb)}`;
-    return invokeAppsScriptGet(url, cb, { timeoutMs: 180000, softFail: false });
+    return invokeAppsScriptGet(url, cb, { timeoutMs: 90000, softFail: false });
 }
 
 /** Stored OAuth token for registry verify (no GIS refresh — safe after camera scan callback). */

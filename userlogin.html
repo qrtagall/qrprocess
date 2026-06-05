@@ -5,7 +5,7 @@
     <title>QRTagAll | User Dashboard Login</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <link rel="stylesheet" href="./css/style.css?v=20260610a">
+    <link rel="stylesheet" href="./css/style.css?v=20260610b">
 </head>
 <body class="qrt-userlogin-page">
 
@@ -44,6 +44,8 @@
                 <h3>📊 Your QR Assets</h3>
                 <div class="qrt-dashboard-header-actions">
                     <button type="button" id="userDashboardDeepScanBtn" class="qrt-btn qrt-btn-dashboard-refresh" onclick="deepScanUserDashboard()" title="Scan registry links and spreadsheet health for every ID">🔬 Deep Scan</button>
+                    <button type="button" id="userDashboardDeepScanPauseBtn" class="qrt-btn qrt-btn-dashboard-refresh qrt-dash-scan-ctl" style="display:none;" onclick="toggleDeepScanPause()" title="Pause or resume deep scan">⏸ Pause</button>
+                    <button type="button" id="userDashboardDeepScanCancelBtn" class="qrt-btn qrt-btn-dashboard-refresh qrt-dash-scan-ctl qrt-dash-scan-stop" style="display:none;" onclick="cancelDeepScanUserDashboard()" title="Stop deep scan (keep results so far)">⏹ Stop</button>
                     <button type="button" id="userDashboardRefreshBtn" class="qrt-btn qrt-btn-dashboard-refresh" onclick="refreshUserDashboard()" title="Reload asset list from Owners sheet">🔄 Refresh</button>
                 </div>
             </div>
@@ -57,7 +59,7 @@
 
     <script src="./js/qr-utils.js?v=20260606a"></script>
     <script src="./js/qr-auth.js?v=20260607a"></script>
-<script src="./js/qr-fetch.js?v=20260610a"></script>
-<script src="./js/qr-dashboard.js?v=20260610a"></script>
+<script src="./js/qr-fetch.js?v=20260610b"></script>
+<script src="./js/qr-dashboard.js?v=20260610b"></script>
 </body>
 </html>
