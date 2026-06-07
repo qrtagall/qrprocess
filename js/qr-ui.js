@@ -2431,7 +2431,8 @@ async function saveArtifactInfo({
     }
 
     const pageQrId = getQueryParam("id");
-    const id = pageQrId || getLinkIdBySheetId(sheetId) || modalLinkId || "";
+    // Use the QR id for the sheet being edited (multi-link pages: URL id may be another asset).
+    const id = getLinkIdBySheetId(sheetId) || modalLinkId || pageQrId || "";
     console.log("info>>>>>Id", id, "sheetId", sheetId, "storage lookup keys", modalLinkId, pageQrId);
 
     // 🧠 Helper: safely trim or pass through
