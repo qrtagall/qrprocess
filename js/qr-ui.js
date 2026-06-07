@@ -1659,6 +1659,93 @@ const ARTIFACT_UPLOAD_UI = {
     },
 };
 
+/** Inline help below Text Info / upload fields in Add Artifact modal */
+const ARTIFACT_TEXT_HINTS = {
+    TEXT: `💡 Text formatting:<br>
+<code>Label: value</code> – text before <code>:</code> is shown <strong>bold</strong> (e.g. <code>Phone: 9876543210</code>)<br>
+<code>9876543210</code> – 10-digit phone → 📞 Call &amp; 💬 WhatsApp (+91 / leading 0 OK)<br>
+<code>https://…</code> – auto link card with Open / Copy<br>
+Smart links: YouTube, Facebook, Instagram, LinkedIn, X/Twitter, Google Maps, Drive, Docs, Forms, WhatsApp<br>
+Drive thumbnail: caption then file URL on the same line<br>
+One item per line (blank lines are ignored)`,
+    DRIVE: `💡 Google Drive link:<br>
+<code>https://drive.google.com/file/d/…</code> – inline file preview<br>
+<code>https://drive.google.com/drive/folders/…</code> – folder thumbnail gallery<br>
+Use a link you own or can open in your Google account<br>
+Share the file/folder so visitors can view it`,
+    GDRIVE: `💡 Google Drive link:<br>
+<code>https://drive.google.com/file/d/…</code> – inline file preview<br>
+<code>https://drive.google.com/drive/folders/…</code> – folder thumbnail gallery<br>
+Use a link you own or can open in your Google account<br>
+Share the file/folder so visitors can view it`,
+};
+
+const ARTIFACT_UPLOAD_HINTS = {
+    IMAGEFILE: `💡 Image upload:<br>
+JPG, PNG, GIF, WebP, and other image formats<br>
+Maximum size: <strong>10 MB</strong><br>
+Uploaded to Google Drive; visitors see an inline image preview<br>
+When editing, the current file is kept unless you upload a new one`,
+    PDFFILE: `💡 PDF upload:<br>
+PDF documents only<br>
+Maximum size: <strong>10 MB</strong><br>
+Displays as an inline scrollable Drive preview<br>
+When editing, the current file is kept unless you upload a new one`,
+    AUDIOFILE: `💡 Audio upload:<br>
+MP3, WAV, M4A, OGG, and other audio formats<br>
+Maximum size: <strong>10 MB</strong><br>
+Plays via Google Drive inline preview player<br>
+When editing, the current file is kept unless you upload a new one`,
+    VIDEOFILE: `💡 Video upload:<br>
+MP4, MOV, WebM, and other video formats<br>
+Maximum size: <strong>10 MB</strong><br>
+Displays as an inline video player (Drive preview)<br>
+When editing, the current file is kept unless you upload a new one`,
+    DOCFILE: `💡 Document upload:<br>
+Word or text files (.doc, .docx, .txt)<br>
+Maximum size: <strong>10 MB</strong><br>
+Opens via Google Drive preview when possible`,
+    OTHERFILE: `💡 File upload:<br>
+Any supported file type<br>
+Maximum size: <strong>10 MB</strong><br>
+Uploaded to Google Drive; opens via Drive preview when possible<br>
+When editing, the current file is kept unless you upload a new one`,
+    OTHERS: `💡 File upload:<br>
+Any supported file type<br>
+Maximum size: <strong>10 MB</strong><br>
+Uploaded to Google Drive; opens via Drive preview when possible<br>
+When editing, the current file is kept unless you upload a new one`,
+};
+
+const ARTIFACT_VISIBILITY_HINT = `💡 Visibility:<br>
+<code>VIEW</code> – all visitors can see this artifact<br>
+<code>NOVIEW</code> – hidden from others; only the owner sees it (🔒)`;
+
+function updateArtifactFieldHints(fileType) {
+    const selectedType = String(fileType || "").toUpperCase();
+    const textHintEl = document.getElementById("artifactTextHint");
+    const uploadHintEl = document.getElementById("artifactUploadHint");
+    const visHintEl = document.getElementById("artifactVisibilityHint");
+
+    if (visHintEl) visHintEl.innerHTML = ARTIFACT_VISIBILITY_HINT;
+
+    if (textHintEl) {
+        const textKey = selectedType === "GDRIVE" ? "DRIVE" : selectedType;
+        const textHtml = ARTIFACT_TEXT_HINTS[textKey] || ARTIFACT_TEXT_HINTS[selectedType] || "";
+        textHintEl.innerHTML = textHtml;
+        textHintEl.style.display = textHtml && isTextBasedArtifactType(selectedType) ? "block" : "none";
+    }
+
+    if (uploadHintEl) {
+        const uploadKey = normalizeArtifactFileType(selectedType);
+        const uploadHtml =
+            ARTIFACT_UPLOAD_HINTS[uploadKey] ||
+            (isUploadBasedArtifactType(selectedType) ? ARTIFACT_UPLOAD_HINTS.OTHERFILE : "");
+        uploadHintEl.innerHTML = uploadHtml;
+        uploadHintEl.style.display = uploadHtml && isUploadBasedArtifactType(selectedType) ? "block" : "none";
+    }
+}
+
 function normalizeArtifactFileType(fileType) {
     const t = String(fileType || "").toUpperCase();
     if (t === "OTHERS") return "OTHERFILE";
@@ -1870,7 +1957,6 @@ function onFileTypeChange() {
     const fileUploadSection = document.getElementById("fileUploadSection");
     const textLabel = textInputSection.querySelector("label");
     const textArea = document.getElementById("artifactTextInfo");
-    const textFormatHint = document.getElementById("textFormatHint");
 
     if (!textInputSection || !fileUploadSection || !textArea) return;
 
@@ -1879,7 +1965,6 @@ function onFileTypeChange() {
     if (fileUploadTypes.includes(selectedType)) {
         textInputSection.style.display = "none";
         fileUploadSection.style.display = "block";
-        if (textFormatHint) textFormatHint.style.display = "none";
         applyArtifactUploadUi(selectedType);
         if (currentEditMode !== "edit") {
             setUploadedFileStatus("No file selected yet.", "empty");
@@ -1902,10 +1987,9 @@ function onFileTypeChange() {
             textLabel.textContent = "Text Info:";
             textArea.placeholder = "Enter your text here...";
         }
-        if (textFormatHint) {
-            textFormatHint.style.display = selectedType === "TEXT" ? "block" : "none";
-        }
     }
+
+    updateArtifactFieldHints(selectedType);
 }
 
 
@@ -2040,6 +2124,8 @@ function openAddModal(afterRowNum, isEditMode = false, linkId = null) {
             toggleSection("textInputSection", true);
             toggleSection("fileUploadSection", false);
         }
+
+        updateArtifactFieldHints(fileType);
 
         /*
         else if (fileType === "TEXT") {
