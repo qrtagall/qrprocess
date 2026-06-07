@@ -19,7 +19,7 @@
 
 
     <!-- -->
-    <link rel="stylesheet" href="./css/style.css?v=20260611a">
+    <link rel="stylesheet" href="./css/style.css?v=20260613a">
      <!-- -->
 
 </head>
@@ -427,6 +427,15 @@
         <div id="textInputSection" class="qrt-form-section qrt-section-text">
             <label class="qrt-label">Text Info</label>
             <textarea id="artifactTextInfo" class="qrt-field qrt-textarea" placeholder="Enter your text here..."></textarea>
+            <div id="textFormatHint" class="qrt-hint-box qrt-text-format-hint">
+                💡 Text formatting (File Type = TEXT):<br>
+                <code>Label: value</code> – text before <code>:</code> is shown <strong>bold</strong> (e.g. <code>Phone: 9876543210</code>)<br>
+                <code>9876543210</code> – 10-digit phone → 📞 Call &amp; 💬 WhatsApp links (+91 / leading 0 OK)<br>
+                <code>https://…</code> – auto link card with Open / Copy<br>
+                Smart links: YouTube, Facebook, Instagram, LinkedIn, X/Twitter, Google Maps, Drive, Docs, Forms, WhatsApp<br>
+                Drive thumbnail: put caption then file URL on the same line<br>
+                One item per line (blank lines are ignored)
+            </div>
         </div>
 
         <div id="fileUploadSection" class="qrt-form-section qrt-section-upload" style="display:none;">
@@ -567,7 +576,7 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "4.16";
+    const QRTagAll_Ver_ = "4.17";
 </script>
 
 
@@ -579,7 +588,7 @@
 <script src="./js/qr-fetch.js?v=20260610b"></script>
 <script src="./js/qr-edit.js?v=20260608a"></script>
 <script src="./js/qr-dashboard.js?v=20260610b"></script>
-<script src="./js/qr-ui.js?v=20260612a"></script>
+<script src="./js/qr-ui.js?v=20260613a"></script>
 <script src="./js/qr-main.js?v=20260608a"></script>
 <!--   -->
 

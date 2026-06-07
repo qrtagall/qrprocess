@@ -1870,6 +1870,7 @@ function onFileTypeChange() {
     const fileUploadSection = document.getElementById("fileUploadSection");
     const textLabel = textInputSection.querySelector("label");
     const textArea = document.getElementById("artifactTextInfo");
+    const textFormatHint = document.getElementById("textFormatHint");
 
     if (!textInputSection || !fileUploadSection || !textArea) return;
 
@@ -1878,6 +1879,7 @@ function onFileTypeChange() {
     if (fileUploadTypes.includes(selectedType)) {
         textInputSection.style.display = "none";
         fileUploadSection.style.display = "block";
+        if (textFormatHint) textFormatHint.style.display = "none";
         applyArtifactUploadUi(selectedType);
         if (currentEditMode !== "edit") {
             setUploadedFileStatus("No file selected yet.", "empty");
@@ -1899,6 +1901,9 @@ function onFileTypeChange() {
         } else {
             textLabel.textContent = "Text Info:";
             textArea.placeholder = "Enter your text here...";
+        }
+        if (textFormatHint) {
+            textFormatHint.style.display = selectedType === "TEXT" ? "block" : "none";
         }
     }
 }

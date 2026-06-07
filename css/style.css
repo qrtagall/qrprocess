@@ -1467,6 +1467,21 @@ body {
     text-align: left;
 }
 
+.qrt-text-format-hint {
+    margin-top: 10px;
+    margin-bottom: 0;
+    font-size: 12.5px;
+    background: #f0faf4;
+    border-left-color: #27ae60;
+}
+
+.qrt-text-format-hint code {
+    font-size: 11.5px;
+    background: #e8f5e9;
+    padding: 1px 4px;
+    border-radius: 4px;
+}
+
 .qrt-modal-actions-artifact {
     border-top: none;
     background: linear-gradient(180deg, transparent, #eef6fc);
