@@ -641,6 +641,7 @@ function renderMultipleRemoteBlocks(remoteList) {
             const customColorVal = parsed.color; // 1..100 or null
             const hideID         = parsed.noid;
             const hideOwner      = parsed.noowner;
+            const balloonText    = parsed.balloon || null;
 
             const maskEmail = maskEmailUser(email);
             const storageIcon = (storageType === "LOCAL") ? "📂" : "🌐";
@@ -655,6 +656,7 @@ function renderMultipleRemoteBlocks(remoteList) {
                 artifactOwner,
                 hideID,
                 hideOwner,
+                balloonText,
             });
             headerBlock.classList.add("asset-banner");
             headerBlock.dataset.rawDescription = rawDescription; // preserve raw for edit UI

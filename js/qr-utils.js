@@ -228,7 +228,8 @@ function parseInlineOptions(text) {
         expand: false,
         color: null,
         noid: false,
-        noowner: false
+        noowner: false,
+        balloon: null,
     };
     if (text == null || text === "") return out;
 
@@ -258,6 +259,19 @@ function parseInlineOptions(text) {
     if (/<\s*NOOWNER\s*>/i.test(clean)) {
         out.noowner = true;
         clean = clean.replace(/<\s*NOOWNER\s*>/ig, "");
+    }
+
+    // --- Promo balloon (max 15 chars), e.g. <BALOON:Offer!> ---
+    const balloonColon = clean.match(/<\s*BALOON:\s*([^<>]{1,40})\s*>/i);
+    if (balloonColon) {
+        out.balloon = String(balloonColon[1] || "").trim().slice(0, 15);
+        clean = clean.replace(/<\s*BALOON:\s*[^<>]{1,40}\s*>/ig, "");
+    } else {
+        const balloonPair = clean.match(/<\s*BALOON\s*>([^<]{1,40})<\s*\/\s*BALOON\s*>/i);
+        if (balloonPair) {
+            out.balloon = String(balloonPair[1] || "").trim().slice(0, 15);
+            clean = clean.replace(/<\s*BALOON\s*>[^<]{1,40}<\s*\/\s*BALOON\s*>/ig, "");
+        }
     }
 
     out.cleanText = clean.trim();
@@ -302,9 +316,29 @@ function getLinkTreeRoleLabel(linkSlot) {
   return "Link";
 }
 
-function buildCollapsibleHeader({ serial, storageIcon, description, maskEmail, linkId, artifactOwner, hideID, hideOwner, treeRole }) {
+function buildCollapsibleHeader({
+    serial,
+    storageIcon,
+    description,
+    maskEmail,
+    linkId,
+    artifactOwner,
+    hideID,
+    hideOwner,
+    treeRole,
+    balloonText,
+}) {
     const wrapper = document.createElement("div");
     wrapper.className = "asset-banner";
+
+    if (balloonText) {
+        wrapper.classList.add("asset-banner--has-balloon");
+        const balloon = document.createElement("span");
+        balloon.className = "qrt-promo-balloon";
+        balloon.textContent = balloonText;
+        balloon.setAttribute("aria-label", "Promotion: " + balloonText);
+        wrapper.appendChild(balloon);
+    }
 
     // Title Row
     const titleRow = document.createElement("div");

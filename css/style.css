@@ -376,6 +376,43 @@
             position: relative;
             cursor: pointer;
             display: block;
+            overflow: visible;
+        }
+
+        .asset-banner--has-balloon {
+            margin-top: 22px;
+        }
+
+        .qrt-promo-balloon {
+            position: absolute;
+            left: 10px;
+            top: -16px;
+            z-index: 3;
+            max-width: 140px;
+            padding: 5px 12px;
+            border-radius: 14px;
+            background: #ff9800;
+            color: #000;
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+            pointer-events: none;
+        }
+
+        .qrt-promo-balloon::after {
+            content: "";
+            position: absolute;
+            left: 18px;
+            bottom: -7px;
+            width: 0;
+            height: 0;
+            border-left: 7px solid transparent;
+            border-right: 7px solid transparent;
+            border-top: 8px solid #ff9800;
         }
 
         /* Info text inside banner */
