@@ -2170,8 +2170,11 @@ function openAddModal(afterRowNum, isEditMode = false, linkId = null) {
             const canEditBasic = item.editBasicInfo !== false;
             setFieldDisabled(basicInfoInput, !canEditBasic);
             setFieldDisabled(visibilityInput, false);
-            if (fileType !== "MESSAGEEMAIL") {
+            if (fileType !== "MESSAGEEMAIL" && !isUploadBasedArtifactType(fileType)) {
                 setFieldDisabled(textInfoInput, false);
+            }
+            if (isUploadBasedArtifactType(fileType)) {
+                setFieldDisabled(uploadBtn, false);
             }
         }
 
@@ -2510,15 +2513,25 @@ function saveArtifact() {
             original && original.editBasicInfo === false
                 ? (original.title || basicInfo)
                 : basicInfo;
+        const hasNewFileUpload =
+            needsFile && !!(selectedUploadedFileData || selectedUploadedFileLink);
 
         saveArtifactInfo({
             startCell: cellOffset,
             basicInfo: effectiveBasicInfo,
             fileType: isMsgEmail ? fileType : isText ? fileType : original.type || "TEXT",
             visibility,
-            linkOrText: isMsgEmail ? "-" : isText ? url : original.url || "",
+            linkOrText: isMsgEmail
+                ? "-"
+                : isText
+                  ? url
+                  : hasNewFileUpload
+                    ? selectedUploadedFileLink || url
+                    : original.url || "",
             modalId,
-            targetLinkId: sheetId
+            targetLinkId: sheetId,
+            rawfilename: hasNewFileUpload ? selectedUploadedFileName : undefined,
+            rawfiledata: hasNewFileUpload ? selectedUploadedFileData : undefined,
         });
     }
 

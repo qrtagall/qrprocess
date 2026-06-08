@@ -436,10 +436,11 @@ async function saveGdriveArtifactInBrowser({
     }
 
     if (insert) {
-        const newRow = ensureCsvRowWidth([], col + values.length - 1);
+        const newRow = ensureCsvRowWidth([], Math.max(col + values.length - 1, 5));
         for (let i = 0; i < values.length; i++) {
             newRow[col - 1 + i] = values[i];
         }
+        newRow[4] = artifactDateTimeStamp();
         rows.splice(rowIndex, 0, newRow);
         await updateSpreadsheetFromCsv(token, sheetId, rowsToCsvText(rows));
         return { success: true, id: qrId };
@@ -449,10 +450,11 @@ async function saveGdriveArtifactInBrowser({
         throw new Error("No values to update");
     }
 
-    const sheetRow = ensureCsvRowWidth(rows[rowIndex] || [], col + values.length - 1);
+    const sheetRow = ensureCsvRowWidth(rows[rowIndex] || [], Math.max(col + values.length - 1, 5));
     for (let i = 0; i < values.length; i++) {
         sheetRow[col - 1 + i] = values[i];
     }
+    sheetRow[4] = artifactDateTimeStamp();
     rows[rowIndex] = sheetRow;
     await updateSpreadsheetFromCsv(token, sheetId, rowsToCsvText(rows));
     return { success: true, id: qrId };
@@ -725,12 +727,27 @@ function applyArtifactPolicyFromFetch(data) {
     }
 }
 
-/** Pre-fill claim-page asset name from template Description (B2). */
+/** Pre-fill claim-page asset name from template Description (B2); lock when templated. */
 function prefillAssetNameFromTemplate(description) {
     const text = String(description || "").trim();
-    if (!text) return;
     const input = document.getElementById("assetNameInput");
-    if (input) input.value = text;
+    if (!input) return;
+    if (text) {
+        input.value = text;
+        input.disabled = true;
+        input.readOnly = true;
+        input.style.opacity = "0.75";
+        input.style.cursor = "not-allowed";
+    } else {
+        input.disabled = false;
+        input.readOnly = false;
+        input.style.opacity = "";
+        input.style.cursor = "";
+    }
+}
+
+function artifactDateTimeStamp() {
+    return new Date().toLocaleString();
 }
 
 /** Claim template rows for REMOTE CSV create (falls back to empty sheet). */
@@ -1711,8 +1728,9 @@ async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null
                 rawfilename
             );
             const parts = (urlParams.get("values") || "").split("||");
-            while (parts.length < 4) parts.push("");
+            while (parts.length < 5) parts.push("");
             parts[3] = link;
+            parts[4] = artifactDateTimeStamp();
             urlParams.set("values", parts.join("||"));
             await triggerLink_get(urlParams.toString(), modalId);
         } catch (err) {
