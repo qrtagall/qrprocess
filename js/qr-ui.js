@@ -2804,6 +2804,7 @@ async function submitGuestMessage() {
             updateGuestMessageCharCount();
         } else {
             const err = result?.message || "FAILED — could not send message.";
+            if (result?.hint) console.warn("Send message hint:", result.hint);
             if (statusEl) {
                 statusEl.textContent = err.startsWith("FAILED") ? err : `FAILED — ${err}`;
                 statusEl.className = "qrt-guest-msg-status is-error";
