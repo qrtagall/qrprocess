@@ -69,6 +69,19 @@
           return;
         }
 
+        if (stateObj.intent === "ownerReply") {
+          const pageQrId = stateObj.pageQrId || stateObj.id || "";
+          const serial = stateObj.serial || "";
+          window.location.href =
+            "https://process.qrtagall.com/index.html?id=" +
+            encodeURIComponent(pageQrId) +
+            "&reply=1&serial=" +
+            encodeURIComponent(serial) +
+            "&verified=1&email=" +
+            encodeURIComponent(email || "");
+          return;
+        }
+
         const qrId = stateObj.id || stateRaw || "";
         const redirectUrl =
           "https://process.qrtagall.com/index.html?id=" +

@@ -19,7 +19,7 @@
 
 
     <!-- -->
-    <link rel="stylesheet" href="./css/style.css?v=20260615a">
+    <link rel="stylesheet" href="./css/style.css?v=20260617a">
      <!-- -->
 
 </head>
@@ -450,6 +450,26 @@
 
 
 
+<!-- ↩️ Owner anonymous reply (from email link) -->
+<div id="ownerReplyModal" class="qrt-modal" style="display:none;">
+    <div class="qrt-modal-panel qrt-modal-panel-desc">
+        <div class="qrt-modal-header-stripe qrt-stripe-reply">
+            <h4>↩️ Reply anonymously</h4>
+        </div>
+        <div class="qrt-form-section qrt-section-text">
+            <label class="qrt-label" for="ownerReplyInput">Your response</label>
+            <textarea id="ownerReplyInput" class="qrt-field qrt-textarea" maxlength="150"
+                placeholder="Enter your reply (max 150 characters)…"></textarea>
+            <p id="ownerReplyCharCount" class="qrt-guest-msg-count">0 / 150</p>
+            <p id="ownerReplyStatus" class="qrt-guest-msg-status" aria-live="polite"></p>
+        </div>
+        <div class="qrt-modal-actions">
+            <button type="button" class="qrt-btn qrt-btn-secondary qrt-btn-lg" onclick="closeOwnerReplyModal()">Cancel</button>
+            <button type="button" id="ownerReplySendBtn" class="qrt-btn qrt-btn-primary qrt-btn-lg" onclick="submitOwnerReply()">Send</button>
+        </div>
+    </div>
+</div>
+
 <!-- ✉️ Guest message (MESSAGEEMAIL artifact) -->
 <div id="guestMessageModal" class="qrt-modal" style="display:none;">
     <div class="qrt-modal-panel qrt-modal-panel-desc">
@@ -591,7 +611,7 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "5.1";
+    const QRTagAll_Ver_ = "5.2";
 </script>
 
 
@@ -599,12 +619,12 @@
 
 <!-- bump ?v= whenever JS changes to force browsers to load the new files -->
 <script src="./js/qr-utils.js?v=20260615a"></script>
-<script src="./js/qr-auth.js?v=20260615a"></script>
-<script src="./js/qr-fetch.js?v=20260615a"></script>
+<script src="./js/qr-auth.js?v=20260617a"></script>
+<script src="./js/qr-fetch.js?v=20260617a"></script>
 <script src="./js/qr-edit.js?v=20260608a"></script>
 <script src="./js/qr-dashboard.js?v=20260610b"></script>
-<script src="./js/qr-ui.js?v=20260616a"></script>
-<script src="./js/qr-main.js?v=20260615a"></script>
+<script src="./js/qr-ui.js?v=20260617a"></script>
+<script src="./js/qr-main.js?v=20260617a"></script>
 <!--   -->
 
 <!-- LOCAL DEV ONLY — do not deploy with file:// script tags (breaks claim/save on process.qrtagall.com)

@@ -1511,6 +1511,11 @@ body {
     color: #fff;
 }
 
+.qrt-stripe-reply {
+    background: linear-gradient(90deg, #6a1b9a, #8e24aa);
+    color: #fff;
+}
+
 .qrt-message-email-btn {
     min-width: 200px;
 }

@@ -418,6 +418,31 @@ function googleLoginForSendMessage(pageQrId, recipientQrId) {
     window.location.href = authUrl;
 }
 
+/** Full-page OAuth before owner sends anonymous reply (email scope only). */
+function googleLoginForOwnerReply(pageQrId, serial) {
+    const clientId = QRTAGALL_OAUTH_CLIENT_ID;
+    const redirectUri = "https://process.qrtagall.com/oauth-callback.html";
+    const scope = "https://www.googleapis.com/auth/userinfo.email";
+    const state = encodeURIComponent(
+        JSON.stringify({
+            intent: "ownerReply",
+            pageQrId: pageQrId || getQueryParam("id") || "",
+            serial: serial || "",
+        })
+    );
+
+    const authUrl =
+        `https://accounts.google.com/o/oauth2/v2/auth` +
+        `?response_type=token` +
+        `&client_id=${encodeURIComponent(clientId)}` +
+        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+        `&scope=${encodeURIComponent(scope)}` +
+        `&state=${state}` +
+        `&include_granted_scopes=true`;
+
+    window.location.href = authUrl;
+}
+
 /** Full-page OAuth for User Dashboard (userlogin.html — email scope only). */
 function googleLoginForDashboard() {
     const input = document.getElementById("dashboardLoginEmailInput");

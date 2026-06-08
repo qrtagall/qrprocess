@@ -320,6 +320,23 @@ function parseArtifactRange(range) {
     return { row, col };
 }
 
+/** Owner anonymous reply — guest email resolved server-side from SERIAL only. */
+async function sendOwnerReplyEmail({ serial, content }) {
+    const token = await ensureAccessTokenForMutation();
+    const sender =
+        (typeof sessionEmail === "string" && sessionEmail) ||
+        localStorage.getItem("qr_claimed_email") ||
+        "";
+    const payload = {
+        mode: "sendOwnerReply",
+        serial: String(serial || "").trim(),
+        content: String(content || "").trim(),
+        email: String(sender).toLowerCase(),
+        [QRTAGALL_AUTH_PARAM]: token,
+    };
+    return invokeAppsScriptPostJson(payload, AppScriptBaseUrl_New);
+}
+
 /** Guest MESSAGEEMAIL — send via MultiSheet (owner email never exposed to client). */
 async function sendOwnerMessageEmail({ recipientQrId, content }) {
     const token = await ensureAccessTokenForMutation();

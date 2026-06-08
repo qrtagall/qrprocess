@@ -1728,6 +1728,7 @@ Owner email is never shown to visitors.`;
 
 const GUEST_MESSAGE_MAX_LEN = 150;
 let guestMessageRecipientQrId = "";
+let ownerReplySerial = "";
 
 function updateArtifactFieldHints(fileType) {
     const selectedType = String(fileType || "").toUpperCase();
@@ -2823,6 +2824,139 @@ async function submitGuestMessage() {
     }
 }
 
+function updateOwnerReplyCharCount() {
+    const input = document.getElementById("ownerReplyInput");
+    const counter = document.getElementById("ownerReplyCharCount");
+    if (!input || !counter) return;
+    counter.textContent = `${(input.value || "").length} / ${GUEST_MESSAGE_MAX_LEN}`;
+}
+
+function openOwnerReplyModal(serial) {
+    const modal = document.getElementById("ownerReplyModal");
+    const input = document.getElementById("ownerReplyInput");
+    const statusEl = document.getElementById("ownerReplyStatus");
+    const sendBtn = document.getElementById("ownerReplySendBtn");
+
+    if (!modal || !input) {
+        notify("Reply dialog is unavailable. Refresh the page.", "error");
+        return;
+    }
+
+    ownerReplySerial = String(serial || "").trim();
+    if (!ownerReplySerial) {
+        notify("Invalid reply link.", "error");
+        return;
+    }
+
+    input.value = sessionStorage.getItem("qrtagall_owner_reply_draft") || "";
+    if (statusEl) {
+        statusEl.textContent = "";
+        statusEl.className = "qrt-guest-msg-status";
+    }
+    if (sendBtn) sendBtn.disabled = false;
+    updateOwnerReplyCharCount();
+    modal.style.display = "flex";
+    input.focus();
+}
+
+function closeOwnerReplyModal() {
+    const modal = document.getElementById("ownerReplyModal");
+    if (modal) modal.style.display = "none";
+    ownerReplySerial = "";
+}
+
+async function submitOwnerReply() {
+    const input = document.getElementById("ownerReplyInput");
+    const statusEl = document.getElementById("ownerReplyStatus");
+    const sendBtn = document.getElementById("ownerReplySendBtn");
+    const content = (input?.value || "").trim();
+
+    if (!ownerReplySerial) {
+        notify("Invalid reply link.", "error");
+        return;
+    }
+    if (!content) {
+        notify("Please enter your response.", "info");
+        input?.focus();
+        return;
+    }
+    if (content.length > GUEST_MESSAGE_MAX_LEN) {
+        notify(`Reply must be ${GUEST_MESSAGE_MAX_LEN} characters or fewer.`, "error");
+        return;
+    }
+
+    if (!sessionEmail) {
+        sessionStorage.setItem("qrtagall_owner_reply_draft", content);
+        sessionStorage.setItem("qrtagall_owner_reply_serial", ownerReplySerial);
+        if (typeof googleLoginForOwnerReply === "function") {
+            googleLoginForOwnerReply(getQueryParam("id"), ownerReplySerial);
+        } else {
+            notify("Please sign in with Google as the QR owner to reply.", "error");
+        }
+        return;
+    }
+
+    if (sendBtn) sendBtn.disabled = true;
+    if (statusEl) {
+        statusEl.textContent = "Sending…";
+        statusEl.className = "qrt-guest-msg-status is-pending";
+    }
+    showSpinner(true);
+
+    try {
+        const result = await sendOwnerReplyEmail({ serial: ownerReplySerial, content });
+        showSpinner(false);
+        if (sendBtn) sendBtn.disabled = false;
+
+        if (result?.success) {
+            sessionStorage.removeItem("qrtagall_owner_reply_draft");
+            sessionStorage.removeItem("qrtagall_owner_reply_serial");
+            if (statusEl) {
+                statusEl.textContent = "REPLY SENT";
+                statusEl.className = "qrt-guest-msg-status is-success";
+            }
+            if (typeof notify === "function") notify("REPLY SENT", "success");
+            if (input) input.value = "";
+            updateOwnerReplyCharCount();
+        } else {
+            const err = result?.message || "FAILED — could not send reply.";
+            if (result?.hint) console.warn("Owner reply hint:", result.hint);
+            if (statusEl) {
+                statusEl.textContent = err.startsWith("FAILED") ? err : `FAILED — ${err}`;
+                statusEl.className = "qrt-guest-msg-status is-error";
+            }
+            if (typeof notify === "function") notify(err, "error");
+        }
+    } catch (e) {
+        showSpinner(false);
+        if (sendBtn) sendBtn.disabled = false;
+        const err = e?.message || "FAILED — network error.";
+        if (statusEl) {
+            statusEl.textContent = err.startsWith("FAILED") ? err : `FAILED — ${err}`;
+            statusEl.className = "qrt-guest-msg-status is-error";
+        }
+        if (typeof notify === "function") notify(err, "error");
+    }
+}
+
+function maybeResumeOwnerReplyFlow() {
+    if (getQueryParam("reply") !== "1") return;
+    const serial =
+        getQueryParam("serial") ||
+        sessionStorage.getItem("qrtagall_owner_reply_serial") ||
+        "";
+    if (!serial) return;
+
+    const cleanUrl = new URL(window.location.href);
+    cleanUrl.searchParams.delete("reply");
+    cleanUrl.searchParams.delete("serial");
+    window.history.replaceState({}, "", cleanUrl.pathname + cleanUrl.search);
+
+    setTimeout(() => {
+        openOwnerReplyModal(serial);
+    }, 300);
+}
+
 function maybeResumeGuestMessageFlow() {
     if (getQueryParam("sendMsg") !== "1") return;
     const recipientQrId =
@@ -2843,9 +2977,15 @@ function maybeResumeGuestMessageFlow() {
 
 function initGuestMessageModalUi() {
     const input = document.getElementById("guestMessageInput");
-    if (!input || input.dataset.bound === "1") return;
-    input.dataset.bound = "1";
-    input.addEventListener("input", updateGuestMessageCharCount);
+    if (input && input.dataset.bound !== "1") {
+        input.dataset.bound = "1";
+        input.addEventListener("input", updateGuestMessageCharCount);
+    }
+    const replyInput = document.getElementById("ownerReplyInput");
+    if (replyInput && replyInput.dataset.bound !== "1") {
+        replyInput.dataset.bound = "1";
+        replyInput.addEventListener("input", updateOwnerReplyCharCount);
+    }
 }
 
 document.addEventListener("DOMContentLoaded", initGuestMessageModalUi);
