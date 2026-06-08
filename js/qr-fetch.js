@@ -304,7 +304,10 @@ function parseRemoteSheetsPayload(data) {
             sheetId: meta.sheetId || "",
             linkSlot: Number(meta.linkSlot) || 0, // Remote_Link slot: 1 = parent, 2+ = linked child
             dataUnavailable: !!meta.dataUnavailable,
-            assets: items,
+            assets: items.map((item) => ({
+                ...item,
+                editBasicInfo: item.editBasicInfo !== false,
+            })),
         });
     }
 
@@ -720,6 +723,14 @@ function applyArtifactPolicyFromFetch(data) {
     } else {
         window.qrArtifactPolicy = data.artifactPolicy;
     }
+}
+
+/** Pre-fill claim-page asset name from template Description (B2). */
+function prefillAssetNameFromTemplate(description) {
+    const text = String(description || "").trim();
+    if (!text) return;
+    const input = document.getElementById("assetNameInput");
+    if (input) input.value = text;
 }
 
 /** Claim template rows for REMOTE CSV create (falls back to empty sheet). */
@@ -1254,6 +1265,9 @@ async function fetchAllRemoteSheets(id, options = {}) {
             window.qrClaimStorageOptions = data.claimStorage;
         }
         applyArtifactPolicyFromFetch(data);
+        if (data.templateDescription) {
+            prefillAssetNameFromTemplate(data.templateDescription);
+        }
         if (data.found === false) {
             return [];
         }

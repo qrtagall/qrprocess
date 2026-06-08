@@ -2167,7 +2167,12 @@ function openAddModal(afterRowNum, isEditMode = false, linkId = null) {
 
         if (typeof isArtifactTemplateLocked === "function" && isArtifactTemplateLocked()) {
             setFieldDisabled(fileTypeInput, true);
-            setFieldDisabled(visibilityInput, true);
+            const canEditBasic = item.editBasicInfo !== false;
+            setFieldDisabled(basicInfoInput, !canEditBasic);
+            setFieldDisabled(visibilityInput, false);
+            if (fileType !== "MESSAGEEMAIL") {
+                setFieldDisabled(textInfoInput, false);
+            }
         }
 
         /*
@@ -2501,10 +2506,14 @@ function saveArtifact() {
     // ✅ EDIT MODE
     if (currentEditMode === "edit") {
         const original = getArtifactByIndex(linkId, insertAfterRow);
+        const effectiveBasicInfo =
+            original && original.editBasicInfo === false
+                ? (original.title || basicInfo)
+                : basicInfo;
 
         saveArtifactInfo({
             startCell: cellOffset,
-            basicInfo,
+            basicInfo: effectiveBasicInfo,
             fileType: isMsgEmail ? fileType : isText ? fileType : original.type || "TEXT",
             visibility,
             linkOrText: isMsgEmail ? "-" : isText ? url : original.url || "",
