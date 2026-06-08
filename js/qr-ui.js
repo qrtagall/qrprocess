@@ -1721,6 +1721,14 @@ const ARTIFACT_VISIBILITY_HINT = `💡 Visibility:<br>
 <code>VIEW</code> – all visitors can see this artifact<br>
 <code>NOVIEW</code> – hidden from others; only the owner sees it (🔒)`;
 
+const ARTIFACT_MESSAGEEMAIL_HINT = `💡 Contact by Email artifact:<br>
+Guests sign in with Google, then send a short message (max <strong>150</strong> characters).<br>
+Only <strong>one</strong> MESSAGEEMAIL artifact per QR link block.<br>
+Owner email is never shown to visitors.`;
+
+const GUEST_MESSAGE_MAX_LEN = 150;
+let guestMessageRecipientQrId = "";
+
 function updateArtifactFieldHints(fileType) {
     const selectedType = String(fileType || "").toUpperCase();
     const textHintEl = document.getElementById("artifactTextHint");
@@ -1730,10 +1738,15 @@ function updateArtifactFieldHints(fileType) {
     if (visHintEl) visHintEl.innerHTML = ARTIFACT_VISIBILITY_HINT;
 
     if (textHintEl) {
-        const textKey = selectedType === "GDRIVE" ? "DRIVE" : selectedType;
-        const textHtml = ARTIFACT_TEXT_HINTS[textKey] || ARTIFACT_TEXT_HINTS[selectedType] || "";
-        textHintEl.innerHTML = textHtml;
-        textHintEl.style.display = textHtml && isTextBasedArtifactType(selectedType) ? "block" : "none";
+        if (selectedType === "MESSAGEEMAIL") {
+            textHintEl.innerHTML = ARTIFACT_MESSAGEEMAIL_HINT;
+            textHintEl.style.display = "block";
+        } else {
+            const textKey = selectedType === "GDRIVE" ? "DRIVE" : selectedType;
+            const textHtml = ARTIFACT_TEXT_HINTS[textKey] || ARTIFACT_TEXT_HINTS[selectedType] || "";
+            textHintEl.innerHTML = textHtml;
+            textHintEl.style.display = textHtml && isTextBasedArtifactType(selectedType) ? "block" : "none";
+        }
     }
 
     if (uploadHintEl) {
@@ -1857,6 +1870,10 @@ function isTextBasedArtifactType(fileType) {
     return ["TEXT", "GDRIVE", "DRIVE", "URL", "LINK"].includes(String(fileType || "").toUpperCase());
 }
 
+function isMessageEmailArtifactType(fileType) {
+    return String(fileType || "").toUpperCase() === "MESSAGEEMAIL";
+}
+
 function isUploadBasedArtifactType(fileType) {
     const t = String(fileType || "").toUpperCase();
     return t.endsWith("FILE") || t === "OTHERS" || t === "OTHERFILE";
@@ -1976,16 +1993,29 @@ function onFileTypeChange() {
         textInputSection.style.display = "block";
         fileUploadSection.style.display = "none";
 
-        // ✅ Update label and placeholder dynamically
-        if (selectedType === "GDRIVE" || selectedType === "DRIVE") {
-            textLabel.textContent = "Google Drive Link:";
-            textArea.placeholder = "Enter Google Drive link here...";
-        } else if (selectedType === "URL" || selectedType === "LINK") {
-            textLabel.textContent = "Website / URL Link:";
-            textArea.placeholder = "Enter URL here...";
+        if (selectedType === "MESSAGEEMAIL") {
+            textLabel.textContent = "Contact button";
+            textArea.style.display = "none";
+            textArea.value = "";
+            textArea.placeholder = "";
+            if (currentEditMode !== "edit") {
+                const basicEl = document.getElementById("artifactBasicInfo");
+                if (basicEl && !basicEl.value.trim()) {
+                    basicEl.value = "Contact owner by Email";
+                }
+            }
         } else {
-            textLabel.textContent = "Text Info:";
-            textArea.placeholder = "Enter your text here...";
+            textArea.style.display = "";
+            if (selectedType === "GDRIVE" || selectedType === "DRIVE") {
+                textLabel.textContent = "Google Drive Link:";
+                textArea.placeholder = "Enter Google Drive link here...";
+            } else if (selectedType === "URL" || selectedType === "LINK") {
+                textLabel.textContent = "Website / URL Link:";
+                textArea.placeholder = "Enter URL here...";
+            } else {
+                textLabel.textContent = "Text Info:";
+                textArea.placeholder = "Enter your text here...";
+            }
         }
     }
 
@@ -2077,18 +2107,21 @@ function openAddModal(afterRowNum, isEditMode = false, linkId = null) {
         basicInfoInput.value = item.title || "";
         visibilityInput.value = (item.visibility || "VIEW").toUpperCase();
 
-        if (["TEXT", "LINK", "URL", "GDRIVE", "DRIVE"].includes(fileType)) {
-            textInfoInput.value = item.url || "";
+        if (fileType === "MESSAGEEMAIL" || ["TEXT", "LINK", "URL", "GDRIVE", "DRIVE"].includes(fileType)) {
+            textInfoInput.value = fileType === "MESSAGEEMAIL" ? "" : (item.url || "");
             setUploadedFileStatus("", "");
 
             setFieldDisabled(basicInfoInput, false);
             setFieldDisabled(fileTypeInput, false);
-            setFieldDisabled(textInfoInput, false);
+            setFieldDisabled(textInfoInput, fileType === "MESSAGEEMAIL");
             setFieldDisabled(visibilityInput, false);
             setFieldDisabled(uploadBtn, true);
 
             toggleSection("textInputSection", true);
             toggleSection("fileUploadSection", false);
+            if (fileType === "MESSAGEEMAIL") {
+                textInfoInput.style.display = "none";
+            }
         }
 // ✅ Case 2: xxxFILE types — non-editable, only file shown
         else if (isUploadBasedArtifactType(fileType)) {
@@ -2125,7 +2158,7 @@ function openAddModal(afterRowNum, isEditMode = false, linkId = null) {
             toggleSection("fileUploadSection", false);
         }
 
-        updateArtifactFieldHints(fileType);
+        onFileTypeChange();
 
         /*
         else if (fileType === "TEXT") {
@@ -2168,7 +2201,8 @@ function openAddModal(afterRowNum, isEditMode = false, linkId = null) {
         const defaultTitle = insertAfterRow === -1 ? "New Artifact 1" : `New Artifact ${insertAfterRow + 2}`;
 
         basicInfoInput.value = defaultTitle;
-        textInfoInput.value = "Enter your text here...";
+        textInfoInput.value = "";
+        textInfoInput.style.display = "";
         fileTypeInput.value = "TEXT";
         visibilityInput.value = "VIEW";
         setUploadedFileStatus("No file selected yet.", "empty");
@@ -2381,7 +2415,18 @@ function saveArtifact() {
 
     const textInfo = document.getElementById("artifactTextInfo").value.trim();
     const isText = isTextBasedArtifactType(fileType);
+    const isMsgEmail = isMessageEmailArtifactType(fileType);
     const needsFile = isUploadBasedArtifactType(fileType);
+
+    const modal = document.getElementById("addArtifactModal");
+    const linkId = modal?.getAttribute("data-link-id") || "";
+
+    if (isMsgEmail && currentEditMode !== "edit") {
+        if (typeof countMessageEmailArtifacts === "function" && countMessageEmailArtifacts(linkId) >= 1) {
+            notify("Only one MESSAGEEMAIL artifact is allowed per QR link block.", "error");
+            return;
+        }
+    }
 
     if (!basicInfo) {
         notify("Please enter Basic Info.", "error");
@@ -2397,7 +2442,9 @@ function saveArtifact() {
         return;
     }
 
-    if (isText) {
+    if (isMsgEmail) {
+        // No link/text body required — button-only artifact.
+    } else if (isText) {
         if (!textInfo) {
             notify(
                 fileType === "DRIVE" || fileType === "GDRIVE"
@@ -2432,10 +2479,8 @@ function saveArtifact() {
     }
 
     const fileLink = document.getElementById("uploadedFileLink").textContent.trim();
-    const url = isText ? textInfo : selectedUploadedFileLink || fileLink;
+    const url = isMsgEmail ? "-" : isText ? textInfo : selectedUploadedFileLink || fileLink;
 
-    const modal = document.getElementById("addArtifactModal");
-    const linkId = modal.getAttribute("data-link-id");
     const sheetId = getSheetIdByLinkId(linkId);
 
     const cellOffset = insertAfterRow + 6;
@@ -2450,9 +2495,9 @@ function saveArtifact() {
         saveArtifactInfo({
             startCell: cellOffset,
             basicInfo,
-            fileType: isText ? fileType : original.type || "TEXT",
+            fileType: isMsgEmail ? fileType : isText ? fileType : original.type || "TEXT",
             visibility,
-            linkOrText: isText ? url : original.url || "",
+            linkOrText: isMsgEmail ? "-" : isText ? url : original.url || "",
             modalId,
             targetLinkId: sheetId
         });
@@ -2654,6 +2699,156 @@ async function saveArtifactInfo({
 
 
 
+/**************** Guest MESSAGEEMAIL ****************/
+
+function updateGuestMessageCharCount() {
+    const input = document.getElementById("guestMessageInput");
+    const counter = document.getElementById("guestMessageCharCount");
+    if (!input || !counter) return;
+    const len = (input.value || "").length;
+    counter.textContent = `${len} / ${GUEST_MESSAGE_MAX_LEN}`;
+}
+
+function openGuestMessageModal(recipientQrId, buttonLabel) {
+    const modal = document.getElementById("guestMessageModal");
+    const titleEl = document.getElementById("guestMessageModalTitle");
+    const input = document.getElementById("guestMessageInput");
+    const statusEl = document.getElementById("guestMessageStatus");
+    const sendBtn = document.getElementById("guestMessageSendBtn");
+
+    if (!modal || !input) {
+        notify("Message dialog is unavailable. Refresh the page.", "error");
+        return;
+    }
+
+    guestMessageRecipientQrId = String(recipientQrId || "").trim();
+    if (!guestMessageRecipientQrId) {
+        notify("Missing QR context for this message.", "error");
+        return;
+    }
+
+    const label = String(buttonLabel || "Contact owner by Email").trim();
+    if (titleEl) titleEl.textContent = `✉️ ${label}`;
+    input.value = sessionStorage.getItem("qrtagall_guest_msg_draft") || "";
+    if (statusEl) {
+        statusEl.textContent = "";
+        statusEl.className = "qrt-guest-msg-status";
+    }
+    if (sendBtn) sendBtn.disabled = false;
+    updateGuestMessageCharCount();
+    modal.style.display = "flex";
+    input.focus();
+}
+
+function closeGuestMessageModal() {
+    const modal = document.getElementById("guestMessageModal");
+    if (modal) modal.style.display = "none";
+    guestMessageRecipientQrId = "";
+}
+
+async function submitGuestMessage() {
+    const input = document.getElementById("guestMessageInput");
+    const statusEl = document.getElementById("guestMessageStatus");
+    const sendBtn = document.getElementById("guestMessageSendBtn");
+    const content = (input?.value || "").trim();
+
+    if (!guestMessageRecipientQrId) {
+        notify("Missing QR context for this message.", "error");
+        return;
+    }
+    if (!content) {
+        notify("Please enter a message.", "info");
+        input?.focus();
+        return;
+    }
+    if (content.length > GUEST_MESSAGE_MAX_LEN) {
+        notify(`Message must be ${GUEST_MESSAGE_MAX_LEN} characters or fewer.`, "error");
+        return;
+    }
+
+    if (!sessionEmail) {
+        sessionStorage.setItem("qrtagall_guest_msg_draft", content);
+        sessionStorage.setItem("qrtagall_guest_msg_recipient", guestMessageRecipientQrId);
+        if (typeof googleLoginForSendMessage === "function") {
+            googleLoginForSendMessage(getQueryParam("id"), guestMessageRecipientQrId);
+        } else {
+            notify("Please sign in with Google to send a message.", "error");
+        }
+        return;
+    }
+
+    if (sendBtn) sendBtn.disabled = true;
+    if (statusEl) {
+        statusEl.textContent = "Sending…";
+        statusEl.className = "qrt-guest-msg-status is-pending";
+    }
+    showSpinner(true);
+
+    try {
+        const result = await sendOwnerMessageEmail({
+            recipientQrId: guestMessageRecipientQrId,
+            content,
+        });
+        showSpinner(false);
+        if (sendBtn) sendBtn.disabled = false;
+
+        if (result?.success) {
+            sessionStorage.removeItem("qrtagall_guest_msg_draft");
+            sessionStorage.removeItem("qrtagall_guest_msg_recipient");
+            if (statusEl) {
+                statusEl.textContent = "MESSAGE SENT";
+                statusEl.className = "qrt-guest-msg-status is-success";
+            }
+            if (typeof notify === "function") notify("MESSAGE SENT", "success");
+            if (input) input.value = "";
+            updateGuestMessageCharCount();
+        } else {
+            const err = result?.message || "FAILED — could not send message.";
+            if (statusEl) {
+                statusEl.textContent = err.startsWith("FAILED") ? err : `FAILED — ${err}`;
+                statusEl.className = "qrt-guest-msg-status is-error";
+            }
+            if (typeof notify === "function") notify(err, "error");
+        }
+    } catch (e) {
+        showSpinner(false);
+        if (sendBtn) sendBtn.disabled = false;
+        const err = e?.message || "FAILED — network error.";
+        if (statusEl) {
+            statusEl.textContent = err.startsWith("FAILED") ? err : `FAILED — ${err}`;
+            statusEl.className = "qrt-guest-msg-status is-error";
+        }
+        if (typeof notify === "function") notify(err, "error");
+    }
+}
+
+function maybeResumeGuestMessageFlow() {
+    if (getQueryParam("sendMsg") !== "1") return;
+    const recipientQrId =
+        getQueryParam("recipientQrId") ||
+        sessionStorage.getItem("qrtagall_guest_msg_recipient") ||
+        "";
+    if (!recipientQrId) return;
+
+    const cleanUrl = new URL(window.location.href);
+    cleanUrl.searchParams.delete("sendMsg");
+    cleanUrl.searchParams.delete("recipientQrId");
+    window.history.replaceState({}, "", cleanUrl.pathname + cleanUrl.search);
+
+    setTimeout(() => {
+        openGuestMessageModal(recipientQrId, "Contact owner by Email");
+    }, 300);
+}
+
+function initGuestMessageModalUi() {
+    const input = document.getElementById("guestMessageInput");
+    if (!input || input.dataset.bound === "1") return;
+    input.dataset.bound = "1";
+    input.addEventListener("input", updateGuestMessageCharCount);
+}
+
+document.addEventListener("DOMContentLoaded", initGuestMessageModalUi);
+
 /*************** Great Helper ********************/
 function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOener=false, linkId = null) {
     const {
@@ -2722,6 +2917,29 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
     if (visibilityUpper === "NOVIEW" && !isArticatOener) {
         mainBlock.innerHTML = `<p><b>${index + 1}.</b> ${icon} <b>${title}</b> <span style="color:gray;">(🔒 No view permission)</span></p>`;
         wrapper.appendChild(mainBlock);
+        return wrapper;
+    }
+
+    if (typeUpper === "MESSAGEEMAIL") {
+        const btnLabel = escapeHtml(title || "Contact owner by Email");
+        const rid = escapeHtml(linkId || "");
+        mainBlock.innerHTML = `
+            <p><b>${index + 1}.</b> ${icon} <b>${btnLabel}</b> ${visibilityIcon}</p>
+            <div style="margin: 8px 0 10px 10px;">
+                <button type="button" class="qrt-btn qrt-btn-primary qrt-message-email-btn" data-recipient-qr-id="${rid}">
+                    ✉️ ${btnLabel}
+                </button>
+            </div>`;
+        wrapper.appendChild(mainBlock);
+        const btn = mainBlock.querySelector(".qrt-message-email-btn");
+        if (btn) {
+            btn.addEventListener("click", () => openGuestMessageModal(linkId, title || "Contact owner by Email"));
+        }
+        if (isEditable && editMode) {
+            const actionBar = document.createElement("div");
+            actionBar.innerHTML = getArtifactActionBarMarkup(index, { linkId, typeUpper });
+            wrapper.appendChild(actionBar);
+        }
         return wrapper;
     }
 

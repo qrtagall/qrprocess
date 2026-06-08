@@ -393,6 +393,31 @@ async function googleLoginForEdit(id) {
     window.location.href = authUrl;
 }
 
+/** Full-page OAuth before guest sends MESSAGEEMAIL (email scope only). */
+function googleLoginForSendMessage(pageQrId, recipientQrId) {
+    const clientId = QRTAGALL_OAUTH_CLIENT_ID;
+    const redirectUri = "https://process.qrtagall.com/oauth-callback.html";
+    const scope = "https://www.googleapis.com/auth/userinfo.email";
+    const state = encodeURIComponent(
+        JSON.stringify({
+            intent: "sendMessage",
+            pageQrId: pageQrId || getQueryParam("id") || "",
+            recipientQrId: recipientQrId || "",
+        })
+    );
+
+    const authUrl =
+        `https://accounts.google.com/o/oauth2/v2/auth` +
+        `?response_type=token` +
+        `&client_id=${encodeURIComponent(clientId)}` +
+        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+        `&scope=${encodeURIComponent(scope)}` +
+        `&state=${state}` +
+        `&include_granted_scopes=true`;
+
+    window.location.href = authUrl;
+}
+
 /** Full-page OAuth for User Dashboard (userlogin.html — email scope only). */
 function googleLoginForDashboard() {
     const input = document.getElementById("dashboardLoginEmailInput");

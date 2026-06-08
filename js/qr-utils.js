@@ -418,6 +418,14 @@ function getArtifactByIndex(linkId, indexInBlock) {
   return block.assets[indexInBlock];
 }
 
+function countMessageEmailArtifacts(linkId) {
+  const block = globalRemoteAssetList.find((b) => b.linkId === linkId);
+  if (!block?.assets?.length) return 0;
+  return block.assets.filter(
+    (a) => String(a.type || "").toUpperCase() === "MESSAGEEMAIL"
+  ).length;
+}
+
 function isSessionUserOwnerOfAnyBlock() {
   if (!sessionEmail || !globalRemoteAssetList?.length) return false;
   const lowercaseSession = sessionEmail.toLowerCase();

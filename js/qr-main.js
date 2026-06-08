@@ -260,6 +260,10 @@ async function renderAssetPanel(id) {
 
     renderMultipleRemoteBlocks(remoteList);
 
+    if (typeof maybeResumeGuestMessageFlow === "function") {
+        maybeResumeGuestMessageFlow();
+    }
+
     if (typeof applyEditActionsAvailability === "function") {
         applyEditActionsAvailability();
     }

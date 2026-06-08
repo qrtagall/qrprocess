@@ -320,6 +320,24 @@ function parseArtifactRange(range) {
     return { row, col };
 }
 
+/** Guest MESSAGEEMAIL — send via MultiSheet (owner email never exposed to client). */
+async function sendOwnerMessageEmail({ recipientQrId, content }) {
+    const token = await ensureAccessTokenForMutation();
+    const sender =
+        (typeof sessionEmail === "string" && sessionEmail) ||
+        localStorage.getItem("qr_claimed_email") ||
+        "";
+    const payload = {
+        mode: "sendOwnerMessage",
+        recipientQrId: String(recipientQrId || "").trim(),
+        content: String(content || "").trim(),
+        messageType: "email",
+        email: String(sender).toLowerCase(),
+        [QRTAGALL_AUTH_PARAM]: token,
+    };
+    return invokeAppsScriptPostJson(payload, AppScriptBaseUrl_New);
+}
+
 /** Server check before adding a new artifact row (Owners MaxArtifact limit). */
 async function checkArtifactLimitBeforeInsert({ sheetId, email }) {
     if (!sheetId) return;

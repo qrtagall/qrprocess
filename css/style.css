@@ -1506,6 +1506,41 @@ body {
     background: #ebe0f5;
 }
 
+.qrt-stripe-message {
+    background: linear-gradient(90deg, #1565c0, #1e88e5);
+    color: #fff;
+}
+
+.qrt-message-email-btn {
+    min-width: 200px;
+}
+
+.qrt-guest-msg-count {
+    font-size: 12px;
+    color: #666;
+    margin: 6px 0 0;
+    text-align: right;
+}
+
+.qrt-guest-msg-status {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 10px 0 0;
+    min-height: 1.2em;
+}
+
+.qrt-guest-msg-status.is-success {
+    color: #1b7a3d;
+}
+
+.qrt-guest-msg-status.is-error {
+    color: #c0392b;
+}
+
+.qrt-guest-msg-status.is-pending {
+    color: #555;
+}
+
 .qrt-modal-actions-artifact {
     border-top: none;
     background: linear-gradient(180deg, transparent, #eef6fc);

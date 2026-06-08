@@ -19,7 +19,7 @@
 
 
     <!-- -->
-    <link rel="stylesheet" href="./css/style.css?v=20260614a">
+    <link rel="stylesheet" href="./css/style.css?v=20260615a">
      <!-- -->
 
 </head>
@@ -412,6 +412,7 @@
                 <option value="AUDIOFILE">AUDIOFILE</option>
                 <option value="VIDEOFILE">VIDEOFILE</option>
                 <option value="DRIVE">GDRIVE</option>
+                <option value="MESSAGEEMAIL">MESSAGEEMAIL</option>
                 <option value="OTHERS">OTHERFILE</option>
             </select>
         </div>
@@ -448,6 +449,26 @@
 </div>
 
 
+
+<!-- ✉️ Guest message (MESSAGEEMAIL artifact) -->
+<div id="guestMessageModal" class="qrt-modal" style="display:none;">
+    <div class="qrt-modal-panel qrt-modal-panel-desc">
+        <div class="qrt-modal-header-stripe qrt-stripe-message">
+            <h4 id="guestMessageModalTitle">✉️ Contact owner by Email</h4>
+        </div>
+        <div class="qrt-form-section qrt-section-text">
+            <label class="qrt-label" for="guestMessageInput">Your message</label>
+            <textarea id="guestMessageInput" class="qrt-field qrt-textarea" maxlength="150"
+                placeholder="Write your message (max 150 characters)…"></textarea>
+            <p id="guestMessageCharCount" class="qrt-guest-msg-count">0 / 150</p>
+            <p id="guestMessageStatus" class="qrt-guest-msg-status" aria-live="polite"></p>
+        </div>
+        <div class="qrt-modal-actions">
+            <button type="button" class="qrt-btn qrt-btn-secondary qrt-btn-lg" onclick="closeGuestMessageModal()">Cancel</button>
+            <button type="button" id="guestMessageSendBtn" class="qrt-btn qrt-btn-primary qrt-btn-lg" onclick="submitGuestMessage()">Send</button>
+        </div>
+    </div>
+</div>
 
 <!-- ✏️ Modal to Edit Description -->
 <div id="editDescriptionModal" class="qrt-modal" style="display:none;">
@@ -570,20 +591,20 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "4.18";
+    const QRTagAll_Ver_ = "5.0";
 </script>
 
 
 
 
 <!-- bump ?v= whenever JS changes to force browsers to load the new files -->
-<script src="./js/qr-utils.js?v=20260611a"></script>
-<script src="./js/qr-auth.js?v=20260607a"></script>
-<script src="./js/qr-fetch.js?v=20260610b"></script>
+<script src="./js/qr-utils.js?v=20260615a"></script>
+<script src="./js/qr-auth.js?v=20260615a"></script>
+<script src="./js/qr-fetch.js?v=20260615a"></script>
 <script src="./js/qr-edit.js?v=20260608a"></script>
 <script src="./js/qr-dashboard.js?v=20260610b"></script>
-<script src="./js/qr-ui.js?v=20260614a"></script>
-<script src="./js/qr-main.js?v=20260608a"></script>
+<script src="./js/qr-ui.js?v=20260615a"></script>
+<script src="./js/qr-main.js?v=20260615a"></script>
 <!--   -->
 
 <!-- LOCAL DEV ONLY — do not deploy with file:// script tags (breaks claim/save on process.qrtagall.com)
