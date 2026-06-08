@@ -2702,6 +2702,44 @@ async function saveArtifactInfo({
 
 /**************** Guest MESSAGEEMAIL ****************/
 
+function getContactModalEls(kind) {
+    const isGuest = kind === "guest";
+    return {
+        compose: document.getElementById(isGuest ? "guestMessageCompose" : "ownerReplyCompose"),
+        result: document.getElementById(isGuest ? "guestMessageResult" : "ownerReplyResult"),
+        resultText: document.getElementById(isGuest ? "guestMessageResultText" : "ownerReplyResultText"),
+        sendBtn: document.getElementById(isGuest ? "guestMessageSendBtn" : "ownerReplySendBtn"),
+        closeBtn: document.getElementById(isGuest ? "guestMessageCloseBtn" : "ownerReplyCloseBtn"),
+    };
+}
+
+function resetContactModalUi(kind) {
+    const els = getContactModalEls(kind);
+    if (els.compose) els.compose.style.display = "block";
+    if (els.result) {
+        els.result.style.display = "none";
+        els.result.className = "qrt-msg-result";
+    }
+    if (els.resultText) els.resultText.textContent = "";
+    if (els.sendBtn) {
+        els.sendBtn.style.display = "";
+        els.sendBtn.disabled = false;
+    }
+    if (els.closeBtn) els.closeBtn.textContent = "Cancel";
+}
+
+function showContactModalResult(kind, state, message) {
+    const els = getContactModalEls(kind);
+    if (els.compose) els.compose.style.display = "none";
+    if (els.result) {
+        els.result.style.display = "block";
+        els.result.className = "qrt-msg-result is-" + state;
+    }
+    if (els.resultText) els.resultText.textContent = message;
+    if (els.sendBtn) els.sendBtn.style.display = "none";
+    if (els.closeBtn) els.closeBtn.textContent = "Close";
+}
+
 function updateGuestMessageCharCount() {
     const input = document.getElementById("guestMessageInput");
     const counter = document.getElementById("guestMessageCharCount");
@@ -2714,8 +2752,6 @@ function openGuestMessageModal(recipientQrId, buttonLabel) {
     const modal = document.getElementById("guestMessageModal");
     const titleEl = document.getElementById("guestMessageModalTitle");
     const input = document.getElementById("guestMessageInput");
-    const statusEl = document.getElementById("guestMessageStatus");
-    const sendBtn = document.getElementById("guestMessageSendBtn");
 
     if (!modal || !input) {
         notify("Message dialog is unavailable. Refresh the page.", "error");
@@ -2728,14 +2764,10 @@ function openGuestMessageModal(recipientQrId, buttonLabel) {
         return;
     }
 
+    resetContactModalUi("guest");
     const label = String(buttonLabel || "Contact owner by Email").trim();
     if (titleEl) titleEl.textContent = `✉️ ${label}`;
     input.value = sessionStorage.getItem("qrtagall_guest_msg_draft") || "";
-    if (statusEl) {
-        statusEl.textContent = "";
-        statusEl.className = "qrt-guest-msg-status";
-    }
-    if (sendBtn) sendBtn.disabled = false;
     updateGuestMessageCharCount();
     modal.style.display = "flex";
     input.focus();
@@ -2745,11 +2777,11 @@ function closeGuestMessageModal() {
     const modal = document.getElementById("guestMessageModal");
     if (modal) modal.style.display = "none";
     guestMessageRecipientQrId = "";
+    resetContactModalUi("guest");
 }
 
 async function submitGuestMessage() {
     const input = document.getElementById("guestMessageInput");
-    const statusEl = document.getElementById("guestMessageStatus");
     const sendBtn = document.getElementById("guestMessageSendBtn");
     const content = (input?.value || "").trim();
 
@@ -2779,10 +2811,7 @@ async function submitGuestMessage() {
     }
 
     if (sendBtn) sendBtn.disabled = true;
-    if (statusEl) {
-        statusEl.textContent = "Sending…";
-        statusEl.className = "qrt-guest-msg-status is-pending";
-    }
+    showContactModalResult("guest", "pending", "Sending…");
     showSpinner(true);
 
     try {
@@ -2791,36 +2820,28 @@ async function submitGuestMessage() {
             content,
         });
         showSpinner(false);
-        if (sendBtn) sendBtn.disabled = false;
 
         if (result?.success) {
             sessionStorage.removeItem("qrtagall_guest_msg_draft");
             sessionStorage.removeItem("qrtagall_guest_msg_recipient");
-            if (statusEl) {
-                statusEl.textContent = "MESSAGE SENT";
-                statusEl.className = "qrt-guest-msg-status is-success";
-            }
-            if (typeof notify === "function") notify("MESSAGE SENT", "success");
             if (input) input.value = "";
-            updateGuestMessageCharCount();
+            showContactModalResult("guest", "success", "MESSAGE SENT");
         } else {
-            const err = result?.message || "FAILED — could not send message.";
+            const err = result?.message || "Could not send message.";
             if (result?.hint) console.warn("Send message hint:", result.hint);
-            if (statusEl) {
-                statusEl.textContent = err.startsWith("FAILED") ? err : `FAILED — ${err}`;
-                statusEl.className = "qrt-guest-msg-status is-error";
-            }
-            if (typeof notify === "function") notify(err, "error");
+            const display = err.toUpperCase().startsWith("FAILED")
+                ? err
+                : "FAILED — " + err;
+            showContactModalResult("guest", "error", display);
         }
     } catch (e) {
         showSpinner(false);
-        if (sendBtn) sendBtn.disabled = false;
-        const err = e?.message || "FAILED — network error.";
-        if (statusEl) {
-            statusEl.textContent = err.startsWith("FAILED") ? err : `FAILED — ${err}`;
-            statusEl.className = "qrt-guest-msg-status is-error";
-        }
-        if (typeof notify === "function") notify(err, "error");
+        const err = e?.message || "Network error.";
+        showContactModalResult(
+            "guest",
+            "error",
+            err.toUpperCase().startsWith("FAILED") ? err : "FAILED — " + err
+        );
     }
 }
 
@@ -2834,8 +2855,6 @@ function updateOwnerReplyCharCount() {
 function openOwnerReplyModal(serial) {
     const modal = document.getElementById("ownerReplyModal");
     const input = document.getElementById("ownerReplyInput");
-    const statusEl = document.getElementById("ownerReplyStatus");
-    const sendBtn = document.getElementById("ownerReplySendBtn");
 
     if (!modal || !input) {
         notify("Reply dialog is unavailable. Refresh the page.", "error");
@@ -2848,12 +2867,8 @@ function openOwnerReplyModal(serial) {
         return;
     }
 
+    resetContactModalUi("owner");
     input.value = sessionStorage.getItem("qrtagall_owner_reply_draft") || "";
-    if (statusEl) {
-        statusEl.textContent = "";
-        statusEl.className = "qrt-guest-msg-status";
-    }
-    if (sendBtn) sendBtn.disabled = false;
     updateOwnerReplyCharCount();
     modal.style.display = "flex";
     input.focus();
@@ -2863,11 +2878,11 @@ function closeOwnerReplyModal() {
     const modal = document.getElementById("ownerReplyModal");
     if (modal) modal.style.display = "none";
     ownerReplySerial = "";
+    resetContactModalUi("owner");
 }
 
 async function submitOwnerReply() {
     const input = document.getElementById("ownerReplyInput");
-    const statusEl = document.getElementById("ownerReplyStatus");
     const sendBtn = document.getElementById("ownerReplySendBtn");
     const content = (input?.value || "").trim();
 
@@ -2897,45 +2912,34 @@ async function submitOwnerReply() {
     }
 
     if (sendBtn) sendBtn.disabled = true;
-    if (statusEl) {
-        statusEl.textContent = "Sending…";
-        statusEl.className = "qrt-guest-msg-status is-pending";
-    }
+    showContactModalResult("owner", "pending", "Sending…");
     showSpinner(true);
 
     try {
         const result = await sendOwnerReplyEmail({ serial: ownerReplySerial, content });
         showSpinner(false);
-        if (sendBtn) sendBtn.disabled = false;
 
         if (result?.success) {
             sessionStorage.removeItem("qrtagall_owner_reply_draft");
             sessionStorage.removeItem("qrtagall_owner_reply_serial");
-            if (statusEl) {
-                statusEl.textContent = "REPLY SENT";
-                statusEl.className = "qrt-guest-msg-status is-success";
-            }
-            if (typeof notify === "function") notify("REPLY SENT", "success");
             if (input) input.value = "";
-            updateOwnerReplyCharCount();
+            showContactModalResult("owner", "success", "REPLY SENT");
         } else {
-            const err = result?.message || "FAILED — could not send reply.";
+            const err = result?.message || "Could not send reply.";
             if (result?.hint) console.warn("Owner reply hint:", result.hint);
-            if (statusEl) {
-                statusEl.textContent = err.startsWith("FAILED") ? err : `FAILED — ${err}`;
-                statusEl.className = "qrt-guest-msg-status is-error";
-            }
-            if (typeof notify === "function") notify(err, "error");
+            const display = err.toUpperCase().startsWith("FAILED")
+                ? err
+                : "FAILED — " + err;
+            showContactModalResult("owner", "error", display);
         }
     } catch (e) {
         showSpinner(false);
-        if (sendBtn) sendBtn.disabled = false;
-        const err = e?.message || "FAILED — network error.";
-        if (statusEl) {
-            statusEl.textContent = err.startsWith("FAILED") ? err : `FAILED — ${err}`;
-            statusEl.className = "qrt-guest-msg-status is-error";
-        }
-        if (typeof notify === "function") notify(err, "error");
+        const err = e?.message || "Network error.";
+        showContactModalResult(
+            "owner",
+            "error",
+            err.toUpperCase().startsWith("FAILED") ? err : "FAILED — " + err
+        );
     }
 }
 

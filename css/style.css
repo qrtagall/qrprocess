@@ -1546,6 +1546,36 @@ body {
     color: #555;
 }
 
+.qrt-msg-compose {
+    display: block;
+}
+
+.qrt-msg-result {
+    text-align: center;
+    padding: 28px 16px 20px;
+    min-height: 120px;
+}
+
+.qrt-msg-result-text {
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1.45;
+    margin: 0;
+}
+
+.qrt-msg-result.is-success .qrt-msg-result-text {
+    color: #1b7a3d;
+}
+
+.qrt-msg-result.is-error .qrt-msg-result-text {
+    color: #c0392b;
+}
+
+.qrt-msg-result.is-pending .qrt-msg-result-text {
+    color: #555;
+    font-size: 1.1rem;
+}
+
 .qrt-modal-actions-artifact {
     border-top: none;
     background: linear-gradient(180deg, transparent, #eef6fc);

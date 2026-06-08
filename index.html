@@ -19,7 +19,7 @@
 
 
     <!-- -->
-    <link rel="stylesheet" href="./css/style.css?v=20260617a">
+    <link rel="stylesheet" href="./css/style.css?v=20260618a">
      <!-- -->
 
 </head>
@@ -457,14 +457,18 @@
             <h4>↩️ Reply anonymously</h4>
         </div>
         <div class="qrt-form-section qrt-section-text">
-            <label class="qrt-label" for="ownerReplyInput">Your response</label>
-            <textarea id="ownerReplyInput" class="qrt-field qrt-textarea" maxlength="150"
-                placeholder="Enter your reply (max 150 characters)…"></textarea>
-            <p id="ownerReplyCharCount" class="qrt-guest-msg-count">0 / 150</p>
-            <p id="ownerReplyStatus" class="qrt-guest-msg-status" aria-live="polite"></p>
+            <div id="ownerReplyCompose" class="qrt-msg-compose">
+                <label class="qrt-label" for="ownerReplyInput">Your response</label>
+                <textarea id="ownerReplyInput" class="qrt-field qrt-textarea" maxlength="150"
+                    placeholder="Enter your reply (max 150 characters)…"></textarea>
+                <p id="ownerReplyCharCount" class="qrt-guest-msg-count">0 / 150</p>
+            </div>
+            <div id="ownerReplyResult" class="qrt-msg-result" style="display:none;" aria-live="polite">
+                <p id="ownerReplyResultText" class="qrt-msg-result-text"></p>
+            </div>
         </div>
         <div class="qrt-modal-actions">
-            <button type="button" class="qrt-btn qrt-btn-secondary qrt-btn-lg" onclick="closeOwnerReplyModal()">Cancel</button>
+            <button type="button" id="ownerReplyCloseBtn" class="qrt-btn qrt-btn-secondary qrt-btn-lg" onclick="closeOwnerReplyModal()">Cancel</button>
             <button type="button" id="ownerReplySendBtn" class="qrt-btn qrt-btn-primary qrt-btn-lg" onclick="submitOwnerReply()">Send</button>
         </div>
     </div>
@@ -477,14 +481,18 @@
             <h4 id="guestMessageModalTitle">✉️ Contact owner by Email</h4>
         </div>
         <div class="qrt-form-section qrt-section-text">
-            <label class="qrt-label" for="guestMessageInput">Your message</label>
-            <textarea id="guestMessageInput" class="qrt-field qrt-textarea" maxlength="150"
-                placeholder="Write your message (max 150 characters)…"></textarea>
-            <p id="guestMessageCharCount" class="qrt-guest-msg-count">0 / 150</p>
-            <p id="guestMessageStatus" class="qrt-guest-msg-status" aria-live="polite"></p>
+            <div id="guestMessageCompose" class="qrt-msg-compose">
+                <label class="qrt-label" for="guestMessageInput">Your message</label>
+                <textarea id="guestMessageInput" class="qrt-field qrt-textarea" maxlength="150"
+                    placeholder="Write your message (max 150 characters)…"></textarea>
+                <p id="guestMessageCharCount" class="qrt-guest-msg-count">0 / 150</p>
+            </div>
+            <div id="guestMessageResult" class="qrt-msg-result" style="display:none;" aria-live="polite">
+                <p id="guestMessageResultText" class="qrt-msg-result-text"></p>
+            </div>
         </div>
         <div class="qrt-modal-actions">
-            <button type="button" class="qrt-btn qrt-btn-secondary qrt-btn-lg" onclick="closeGuestMessageModal()">Cancel</button>
+            <button type="button" id="guestMessageCloseBtn" class="qrt-btn qrt-btn-secondary qrt-btn-lg" onclick="closeGuestMessageModal()">Cancel</button>
             <button type="button" id="guestMessageSendBtn" class="qrt-btn qrt-btn-primary qrt-btn-lg" onclick="submitGuestMessage()">Send</button>
         </div>
     </div>
@@ -611,7 +619,7 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "5.2";
+    const QRTagAll_Ver_ = "5.3";
 </script>
 
 
@@ -623,7 +631,7 @@
 <script src="./js/qr-fetch.js?v=20260617a"></script>
 <script src="./js/qr-edit.js?v=20260608a"></script>
 <script src="./js/qr-dashboard.js?v=20260610b"></script>
-<script src="./js/qr-ui.js?v=20260617a"></script>
+<script src="./js/qr-ui.js?v=20260618a"></script>
 <script src="./js/qr-main.js?v=20260617a"></script>
 <!--   -->
 
