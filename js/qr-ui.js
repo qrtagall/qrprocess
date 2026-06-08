@@ -2027,6 +2027,10 @@ function onFileTypeChange() {
 
 
 function openAddModal(afterRowNum, isEditMode = false, linkId = null) {
+    if (!isEditMode && typeof isArtifactTemplateLocked === "function" && isArtifactTemplateLocked()) {
+        return;
+    }
+
     selectedUploadedFileLink = "";
     selectedUploadedFileData = "";
     selectedUploadedFileName = "";
@@ -2160,6 +2164,11 @@ function openAddModal(afterRowNum, isEditMode = false, linkId = null) {
         }
 
         onFileTypeChange();
+
+        if (typeof isArtifactTemplateLocked === "function" && isArtifactTemplateLocked()) {
+            setFieldDisabled(fileTypeInput, true);
+            setFieldDisabled(visibilityInput, true);
+        }
 
         /*
         else if (fileType === "TEXT") {

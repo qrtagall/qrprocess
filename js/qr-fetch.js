@@ -713,15 +713,49 @@ async function updateSpreadsheetFromCsv(token, fileId, csv) {
     );
 }
 
+function applyArtifactPolicyFromFetch(data) {
+    if (!data || !data.artifactPolicy) return;
+    if (typeof applyArtifactTemplatePolicy === "function") {
+        applyArtifactTemplatePolicy(data.artifactPolicy);
+    } else {
+        window.qrArtifactPolicy = data.artifactPolicy;
+    }
+}
+
+/** Claim template rows for REMOTE CSV create (falls back to empty sheet). */
+async function fetchClaimTemplateRows(qrId) {
+    const callbackName = "claimTpl_" + Date.now();
+    const url = `${AppScriptBaseUrl_New}?mode=claimTemplate&id=${encodeURIComponent(qrId)}&callback=${callbackName}`;
+    const data = await invokeAppsScriptGet(url, callbackName, { timeoutMs: 30000, softFail: true });
+    if (!data || data.success === false) return null;
+    applyArtifactPolicyFromFetch(data);
+    if (!data.hasTemplate || !Array.isArray(data.rows) || !data.rows.length) return null;
+    return data.rows;
+}
+
+function qrTemplateRowsToCsv(rows) {
+    return rows
+        .map((row) =>
+            row.map((cell) => escapeCsvCell(String(cell == null ? "" : cell))).join(",")
+        )
+        .join("\n");
+}
+
 /** Create claim spreadsheet via Drive API only (drive.file — no spreadsheets scope). */
 async function createClaimSpreadsheetInFolder(token, folderId, qrId, assetName) {
-    const csv = [
-        `ID,${escapeCsvCell(qrId)}`,
-        `Description,${escapeCsvCell(assetName || "")}`,
-        ",,",
-        ",,",
-        "Basic Info,FileType,Options,Local Link,DateTime",
-    ].join("\n");
+    let csv;
+    const templateRows = await fetchClaimTemplateRows(qrId);
+    if (templateRows) {
+        csv = qrTemplateRowsToCsv(templateRows);
+    } else {
+        csv = [
+            `ID,${escapeCsvCell(qrId)}`,
+            `Description,${escapeCsvCell(assetName || "")}`,
+            ",,",
+            ",,",
+            "Basic Info,FileType,Options,Local Link,DateTime",
+        ].join("\n");
+    }
 
     const boundary = `qrtagall_${Date.now()}`;
     const metadata = {
@@ -1219,6 +1253,7 @@ async function fetchAllRemoteSheets(id, options = {}) {
         } else if (data.claimStorage) {
             window.qrClaimStorageOptions = data.claimStorage;
         }
+        applyArtifactPolicyFromFetch(data);
         if (data.found === false) {
             return [];
         }
