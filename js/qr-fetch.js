@@ -905,6 +905,11 @@ async function requestClaimViaPost({ id, asset, email, storageType, claimScriptU
         }
     }
     if (!data) {
+        if (res.ok) {
+            throw new Error(
+                "Claim may have completed but the server response was unreadable. Refresh the QR page instead of claiming again."
+            );
+        }
         throw new Error("Could not reach claim service. Check network or try again.");
     }
     if (!data.success) {
@@ -918,6 +923,8 @@ async function requestClaimViaJsonp({ id, asset, email, storageType, claimScript
         return await requestClaimViaPost({ id, asset, email, storageType, claimScriptUrl });
     } catch (postErr) {
         if (isDefinitiveClaimError(postErr)) throw postErr;
+        const msg = String(postErr?.message || postErr || "");
+        if (msg.indexOf("unreadable") !== -1) throw postErr;
         console.warn("Claim POST failed, trying GET:", postErr);
     }
 
