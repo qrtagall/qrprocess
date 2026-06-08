@@ -205,6 +205,9 @@ async function renderAssetPanel(id) {
         resultDiv.textContent = "This is a new and unclaimed ID!";
         resultDiv.style.color = "forestgreen";
         loginSection.style.display = "block";
+        if (typeof applyClaimStorageOptions === "function") {
+            applyClaimStorageOptions(window.qrClaimStorageOptions);
+        }
         return;
 
     } else {

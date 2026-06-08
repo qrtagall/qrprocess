@@ -1214,6 +1214,14 @@ async function fetchAllRemoteSheets(id, options = {}) {
             console.warn("fetchAllRemoteSheets: no response");
             return [];
         }
+        if (data.claimStorage && typeof applyClaimStorageOptions === "function") {
+            applyClaimStorageOptions(data.claimStorage);
+        } else if (data.claimStorage) {
+            window.qrClaimStorageOptions = data.claimStorage;
+        }
+        if (data.found === false) {
+            return [];
+        }
         if (data.success === false || data.error) {
             console.warn("fetchAllRemoteSheets: server error", data.message || data.error);
             return [];

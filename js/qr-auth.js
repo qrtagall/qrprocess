@@ -98,16 +98,51 @@ function setClaimStatus(message, isError) {
     el.style.color = isError ? "#b91c1c" : "#555";
 }
 
+function setClaimButtonEnabled(btn, enabled) {
+    if (!btn) return;
+    btn.disabled = !enabled;
+    btn.classList.toggle("disabled-button", !enabled);
+    btn.classList.toggle("enabled", enabled);
+    btn.style.opacity = enabled ? "1" : "0.55";
+    btn.style.pointerEvents = enabled ? "auto" : "none";
+    btn.setAttribute("aria-disabled", enabled ? "false" : "true");
+}
+
 function setClaimButtonsEnabled(enabled) {
-    ["btnClaimQRTagAll", "btnClaimGDrive"].forEach((id) => {
-        const btn = document.getElementById(id);
-        if (!btn) return;
-        btn.disabled = !enabled;
-        btn.classList.toggle("disabled-button", !enabled);
-        btn.classList.toggle("enabled", enabled);
-        btn.style.opacity = enabled ? "1" : "0.55";
-        btn.style.pointerEvents = enabled ? "auto" : "none";
-    });
+    setClaimButtonEnabled(document.getElementById("btnClaimQRTagAll"), enabled);
+    setClaimButtonEnabled(document.getElementById("btnClaimGDrive"), enabled);
+}
+
+/** Enable/disable claim storage buttons from MasterConfig IDConfig (REMOTE|LOCAL column). */
+function applyClaimStorageOptions(opts) {
+    const options = opts || window.qrClaimStorageOptions || { local: true, remote: true };
+    window.qrClaimStorageOptions = {
+        local: options.local !== false,
+        remote: options.remote !== false,
+        allowed: Array.isArray(options.allowed) ? options.allowed : [],
+        raw: options.raw || "",
+    };
+
+    const localBtn = document.getElementById("btnClaimQRTagAll");
+    const remoteBtn = document.getElementById("btnClaimGDrive");
+    setClaimButtonEnabled(localBtn, window.qrClaimStorageOptions.local);
+    setClaimButtonEnabled(remoteBtn, window.qrClaimStorageOptions.remote);
+
+    if (!window.qrClaimStorageOptions.local && !window.qrClaimStorageOptions.remote) {
+        setClaimStatus("Claim is not enabled for this QR type.", true);
+    } else if (!window.qrClaimStorageOptions.local) {
+        setClaimStatus("Only Google Drive storage is available for this QR type.");
+    } else if (!window.qrClaimStorageOptions.remote) {
+        setClaimStatus("Only QRTagAll shared storage is available for this QR type.");
+    } else {
+        setClaimStatus("");
+    }
+}
+
+function isClaimStorageAllowed(storageType) {
+    const opts = window.qrClaimStorageOptions || { local: true, remote: true };
+    const st = String(storageType || "").toUpperCase() === "LOCAL" ? "LOCAL" : "REMOTE";
+    return st === "LOCAL" ? opts.local !== false : opts.remote !== false;
 }
 
 /** GIS token request — prompt "" reuses prior consent when scopes already granted. */
@@ -312,6 +347,17 @@ function redirectToClaimOAuth(storageType) {
     }
 
     const storage = String(storageType || "REMOTE").toUpperCase() === "LOCAL" ? "LOCAL" : "REMOTE";
+    if (!isClaimStorageAllowed(storage)) {
+        alert(
+            storage === "LOCAL"
+                ? "Data in QRTagAll is not available for this QR type."
+                : "Data in GDrive is not available for this QR type."
+        );
+        setClaimButtonsEnabled(true);
+        setClaimStatus("");
+        applyClaimStorageOptions(window.qrClaimStorageOptions);
+        return;
+    }
     const scope =
         storage === "LOCAL"
             ? "https://www.googleapis.com/auth/userinfo.email"
