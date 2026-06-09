@@ -290,11 +290,16 @@ function setFieldDisabled(el, disabled) {
 
             const colonIndex = line.indexOf(':');
             if (colonIndex === -1) {
-                return `<span style="color:#333;">${line}</span>`;
+                return line.includes('<') ? line : `<span style="color:#333;">${line}</span>`;
             }
 
             const prefix = line.slice(0, colonIndex + 1).trim();
             const suffix = line.slice(colonIndex + 1);
+
+            // Skip label styling when inline markup already applied to the label
+            if (prefix.includes('<') || prefix.includes('>')) {
+                return line;
+            }
 
             // 🚫 If prefix is part of a URL (ending in :// or contains http), skip
             if (/https?:\/\/[^ ]*$/i.test(prefix) || /^https?:\/\//i.test(prefix)) {
@@ -354,36 +359,7 @@ async function renderInfoBlock(data) {
         } else if (!url || url.trim() === "" || url.toLowerCase() === "not available") {
             html += `<p><b>${index + 1}.</b> ${icon} <b>${title}</b> <span style="color:gray;">(🔗 Link not available)</span></p>`;
         } else if (type === "TEXT") {
-            let safeText = url.replace(/\n/g, "<br>");
-            
-
-			
-			 safeText = safeText.replace(/<\s*(https?:\/\/[^\s<>]+)\s*>/g, (match, link) => {
-                        return `<a href="${link}" target="_blank" style="color: var(--primary); text-decoration: underline;">🌐 WebLink</a>`;
-                    });
-
-                    safeText = safeText.replace(/(https?:\/\/[^\s<]+)/g, (link) => {
-                        return `<a href="${link}" target="_blank" style="color: var(--primary); text-decoration: underline;">🌐 WebLink</a>`;
-                    });
-					
-			
-            safeText = boldLeadingLabels(safeText);
-
-            const phoneRegex = /(?:(?:\+91|0)?[\s\-]*)?(?:\d[\s\-]*){10}/g;
-            safeText = safeText.replace(phoneRegex, (rawNum) => {
-                const digits = rawNum.replace(/\D/g, '');
-                let formatted = digits;
-                if (digits.length === 10) formatted = '+91' + digits;
-                else if (digits.length === 11 && digits.startsWith('0')) formatted = '+91' + digits.slice(1);
-                else if (digits.length === 12 && digits.startsWith('91')) formatted = '+' + digits;
-                else return rawNum;
-
-                return `<span style="white-space:nowrap;">${rawNum}
-                    <a href="tel:${formatted}">📞</a>
-                    <a href="https://wa.me/${formatted.replace('+', '')}" target="_blank">💬</a>
-                </span>`;
-            });
-
+            const safeText = formatTextContent(url);
 
 			html += `<p><b>${index + 1}.</b> ${icon} <b>${title}</b> ${visibilityIcon}</p>
          <div style="margin-left: 10px; margin-bottom: 10px; font-size: 14px; line-height: 1.6; background: #f9f9ff; padding: 10px 12px; border-left: 4px solid #005aab; border-radius: 6px;">
@@ -1050,6 +1026,40 @@ function escapeHtml(unsafe) {
         .replace(/'/g, "&#039;");
 }
 
+/**
+ * Inline TEXT styles (applied before Label: / URL / phone rules).
+ * Pairs only — apostrophes inside words (Owner's) are left alone.
+ */
+function applyInlineTextMarkup(line) {
+    const markers = [];
+    const stash = (html) => {
+        const id = markers.length;
+        markers.push(html);
+        return `\uE000${id}\uE001`;
+    };
+
+    let s = String(line ?? "");
+
+    s = s.replace(/"([^"\n]+)"/g, (_, inner) =>
+        stash(`<strong>${escapeHtml(inner)}</strong>`)
+    );
+    s = s.replace(/'([^'\n]+)'/g, (_, inner) =>
+        stash(`<em>${escapeHtml(inner)}</em>`)
+    );
+    s = s.replace(/`([^`\n]+)`/g, (_, inner) =>
+        stash(`<code class="qrt-inline-code">${escapeHtml(inner)}</code>`)
+    );
+    s = s.replace(/~~([^~\n]+)~~/g, (_, inner) =>
+        stash(`<del>${escapeHtml(inner)}</del>`)
+    );
+    s = s.replace(/==([^=\n]+)==/g, (_, inner) =>
+        stash(`<mark class="qrt-inline-mark">${escapeHtml(inner)}</mark>`)
+    );
+
+    s = escapeHtml(s);
+    return s.replace(/\uE000(\d+)\uE001/g, (_, id) => markers[Number(id)]);
+}
+
 
 
 
@@ -1107,7 +1117,7 @@ function formatTextContent(text) {
     const allFiles = [];
 
     const formattedLines = lines.map(line => {
-        let safeLine = escapeHtml(line);
+        let safeLine = applyInlineTextMarkup(line);
 
         // Step 1: Handle URLs and basic formatting
         safeLine = safeLine.replace(
@@ -1662,7 +1672,10 @@ const ARTIFACT_UPLOAD_UI = {
 /** Inline help below Text Info / upload fields in Add Artifact modal */
 const ARTIFACT_TEXT_HINTS = {
     TEXT: `💡 Text formatting:<br>
-<code>Label: value</code> – text before <code>:</code> is shown <strong>bold</strong> (e.g. <code>Phone: 9876543210</code>)<br>
+<code>Label: value</code> – text before <code>:</code> is shown <strong>bold blue</strong> (e.g. <code>Phone: 9876543210</code>)<br>
+<code>"text"</code> – <strong>bold</strong> &nbsp; <code>'text'</code> – <em>italic</em> &nbsp; <code>\`text\`</code> – monospace<br>
+<code>~~text~~</code> – strikethrough &nbsp; <code>==text==</code> – highlight<br>
+Use matching pairs only; plain apostrophes in words (Owner's) are not styled<br>
 <code>9876543210</code> – 10-digit phone → 📞 Call &amp; 💬 WhatsApp (+91 / leading 0 OK)<br>
 <code>https://…</code> – auto link card with Open / Copy<br>
 Smart links: YouTube, Facebook, Instagram, LinkedIn, X/Twitter, Google Maps, Drive, Docs, Forms, WhatsApp<br>
