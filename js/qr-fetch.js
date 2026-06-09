@@ -1473,24 +1473,36 @@ async function triggerLink_get(params, modalId = null) {
                         typeof findAssetBlockByLinkOrSheet === "function"
                             ? findAssetBlockByLinkOrSheet(payload.sheetId)
                             : null;
+                    const resolvedStorage =
+                        typeof resolveStorageTypeForArtifactSave === "function"
+                            ? resolveStorageTypeForArtifactSave({
+                                  modalLinkId: null,
+                                  sheetId: payload.sheetId,
+                              })
+                            : block?.storageType || "";
                     const shouldUseLocal =
                         driveFileDenied &&
-                        (block?.storageType === "LOCAL" ||
-                            (typeof resolveStorageTypeForArtifactSave === "function" &&
-                                resolveStorageTypeForArtifactSave({
-                                    modalLinkId: null,
-                                    sheetId: payload.sheetId,
-                                }) === "LOCAL"));
-                    if (shouldUseLocal) {
+                        (String(block?.storageType || "").toUpperCase() === "LOCAL" ||
+                            String(resolvedStorage).toUpperCase() === "LOCAL");
+                    if (shouldUseLocal || driveFileDenied) {
                         payload.storageType = "LOCAL";
                         result = await invokeAppsScriptPostJson(payload, AppScriptBaseUrl_New);
-                    } else if (
+                        if (result?.success) {
+                            await finishPostSave(result);
+                            return;
+                        }
+                        if (shouldUseLocal) {
+                            await finishPostSave(result);
+                            return;
+                        }
+                    }
+                    if (
                         sheetErr.status === 403 ||
                         /insufficient|scope|permission|not granted/i.test(errMsg)
                     ) {
                         throw new Error(
                             driveFileDenied
-                                ? "This QR is stored in QRTagAll, not your Drive. Refresh the page and try again. If it persists, open the QR from process.qrtagall.com and use Edit while signed in."
+                                ? "This workbook is stored in QRTagAll (not your Drive). Refresh the page so storage type reloads, then save again while signed in on process.qrtagall.com. If you use |||| variants, ensure each link’s LOCAL|REMOTE tag matches where the file actually lives."
                                 : "Please sign out, revoke QRTagAll in Google Account → Security → Third-party access, then claim again with Data in GDrive (drive.file only)."
                         );
                     } else {
