@@ -1060,9 +1060,131 @@ function applyInlineTextMarkup(line) {
     return s.replace(/\uE000(\d+)\uE001/g, (_, id) => markers[Number(id)]);
 }
 
+/** Strip unsafe tags/attrs from owner HTML blocks (scripts, event handlers). */
+function sanitizeOwnerHtml(html) {
+    let s = String(html ?? "").trim();
+    if (!s) return "";
+    s = s.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
+    s = s.replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, "");
+    s = s.replace(/<object\b[^<]*(?:(?!<\/object>)<[^<]*)*<\/object>/gi, "");
+    s = s.replace(/<embed\b[^>]*>/gi, "");
+    s = s.replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "");
+    s = s.replace(/javascript:/gi, "");
+    return s;
+}
 
+/**
+ * Split TEXT into plain vs HTML segments.
+ * Delimiters: [HTML]…[/HTML] (inline or whole field), or whole field only <html>…</html>.
+ */
+function splitTextByHtmlBlocks(text) {
+    const s = String(text ?? "");
+    const trimmed = s.trim();
 
+    const wholeBracket = trimmed.match(/^\[HTML\]([\s\S]*)\[\/HTML\]$/i);
+    if (wholeBracket) {
+        return [{ type: "html", content: wholeBracket[1] }];
+    }
 
+    const wholeTag = trimmed.match(/^<html>([\s\S]*)<\/html>$/i);
+    if (wholeTag) {
+        return [{ type: "html", content: wholeTag[1] }];
+    }
+
+    const parts = [];
+    let cursor = 0;
+    const openRe = /\[HTML\]/gi;
+
+    while (cursor < s.length) {
+        openRe.lastIndex = cursor;
+        const openMatch = openRe.exec(s);
+        if (!openMatch) {
+            if (cursor < s.length) {
+                parts.push({ type: "plain", content: s.slice(cursor) });
+            }
+            break;
+        }
+
+        if (openMatch.index > cursor) {
+            parts.push({ type: "plain", content: s.slice(cursor, openMatch.index) });
+        }
+
+        const afterOpen = openMatch.index + openMatch[0].length;
+        const rest = s.slice(afterOpen);
+        const closeMatch = rest.match(/\[\/HTML\]/i);
+        if (!closeMatch) {
+            parts.push({ type: "plain", content: s.slice(openMatch.index) });
+            break;
+        }
+
+        parts.push({ type: "html", content: rest.slice(0, closeMatch.index) });
+        cursor = afterOpen + closeMatch.index + closeMatch[0].length;
+    }
+
+    if (!parts.length && s) {
+        parts.push({ type: "plain", content: s });
+    }
+    return parts;
+}
+
+function formatPlainTextSegment(text) {
+    if (!text) return "";
+
+    const lines = text.split(/\r?\n/).filter((line) => line.trim() !== "");
+    const allFiles = [];
+
+    const formattedLines = lines.map((line) => {
+        let safeLine = applyInlineTextMarkup(line);
+
+        safeLine = safeLine.replace(
+            /(https?:\/\/[^\s<>"')]+)(?=[\s<>"')]|$)/g,
+            (fullMatch, cleanUrl) => urlToContext(cleanUrl)
+        );
+        safeLine = boldLeadingLabels(safeLine);
+        safeLine = safeLine.replace(
+            /(?<!<[^>]*)(?:(?:\+91|0)?[\s\-]*)?(?:\d[\s\-]*){10}(?![^<]*>)/g,
+            formatPhoneNumber
+        );
+
+        const driveRegex =
+            /(.*?)(https?:\/\/drive\.google\.com\/(?:file\/d\/|open\?id=|drive\/folders\/)[a-zA-Z0-9_\-?=\/.&]+)/g;
+        const matches = Array.from(line.matchAll(driveRegex));
+
+        matches.forEach((match) => {
+            const preText = (match[1] || "").trim().replace(/[:>\-]+$/, "");
+            const url = match[2];
+            const fileIdMatch = url.match(/\/d\/([^/?]+)/) || url.match(/id=([^&]+)/);
+            const fileId = fileIdMatch ? fileIdMatch[1] : null;
+            if (!fileId) return;
+
+            allFiles.push({
+                id: fileId,
+                url,
+                caption: preText || " ",
+            });
+        });
+
+        return matches.length === 0 ? safeLine : "";
+    });
+
+    if (allFiles.length > 0) {
+        const galleryHtml = allFiles
+            .map((f) => makeDriveThumbnailBlock(f.id, f.caption, f.url))
+            .join("");
+
+        formattedLines.push(`
+              <div style="background:#f9f9f9; border:1px solid #ddd; border-radius:10px;
+                          padding:10px; margin:10px 0;">
+                <div style="display:flex; flex-wrap:wrap; justify-content:center;
+                            gap:6px 8px; padding:6px 0;">
+                  ${galleryHtml}
+                </div>
+              </div>
+            `);
+    }
+
+    return formattedLines.filter(Boolean).join("<br>");
+}
 
 function makeDriveThumbnailBlock(fileId, caption, url) {
     const link = `https://drive.google.com/file/d/${fileId}/view`;
@@ -1113,65 +1235,17 @@ function makeDriveThumbnailBlock(fileId, caption, url) {
 function formatTextContent(text) {
     if (!text) return "";
 
-    const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
-    const allFiles = [];
-
-    const formattedLines = lines.map(line => {
-        let safeLine = applyInlineTextMarkup(line);
-
-        // Step 1: Handle URLs and basic formatting
-        safeLine = safeLine.replace(
-            /(https?:\/\/[^\s<>"')]+)(?=[\s<>"')]|$)/g,
-            (fullMatch, cleanUrl) => urlToContext(cleanUrl)
-        );
-        safeLine = boldLeadingLabels(safeLine);
-        safeLine = safeLine.replace(
-            /(?<!<[^>]*)(?:(?:\+91|0)?[\s\-]*)?(?:\d[\s\-]*){10}(?![^<]*>)/g,
-            formatPhoneNumber
-        );
-
-        // Step 2: Capture all drive links with captions
-        const driveRegex = /(.*?)(https?:\/\/drive\.google\.com\/(?:file\/d\/|open\?id=|drive\/folders\/)[a-zA-Z0-9_\-?=\/.&]+)/g;
-        const matches = Array.from(line.matchAll(driveRegex));
-
-        matches.forEach(match => {
-            const preText = (match[1] || "").trim().replace(/[:>\-]+$/, "");
-            const url = match[2];
-            const fileIdMatch = url.match(/\/d\/([^/?]+)/) || url.match(/id=([^&]+)/);
-            const fileId = fileIdMatch ? fileIdMatch[1] : null;
-            if (!fileId) return;
-
-            allFiles.push({
-                id: fileId,
-                url,
-                caption: preText || " "
-            });
-        });
-
-        // return normal line content if no Drive links found
-        return matches.length === 0 ? safeLine : "";
+    const segments = splitTextByHtmlBlocks(text);
+    const rendered = segments.map((seg) => {
+        if (seg.type === "html") {
+            const safe = sanitizeOwnerHtml(seg.content);
+            if (!safe) return "";
+            return `<div class="qrt-html-block">${safe}</div>`;
+        }
+        return formatPlainTextSegment(seg.content);
     });
 
-    // Step 3: Render single combined panel (if any Drive links)
-    if (allFiles.length > 0) {
-
-        const galleryHtml = allFiles.map(f => makeDriveThumbnailBlock(f.id, f.caption, f.url)).join("");
-
-        formattedLines.push(`
-              <div style="background:#f9f9f9; border:1px solid #ddd; border-radius:10px;
-                          padding:10px; margin:10px 0;">
-                <div style="display:flex; flex-wrap:wrap; justify-content:center;
-                            gap:6px 8px; padding:6px 0;">
-                  ${galleryHtml}
-                </div>
-              </div>
-            `);
-
-
-    }
-
-    // Step 4: Return full formatted text with single gallery panel
-    return formattedLines.filter(Boolean).join("<br>");
+    return rendered.filter(Boolean).join("<br>");
 }
 
 
@@ -1669,18 +1743,14 @@ const ARTIFACT_UPLOAD_UI = {
     },
 };
 
+/** Full TEXT formatting reference (standalone page). */
+const TEXT_FORMATTING_GUIDE_URL = "./text-formatting-guide.html";
+
 /** Inline help below Text Info / upload fields in Add Artifact modal */
 const ARTIFACT_TEXT_HINTS = {
-    TEXT: `💡 Text formatting:<br>
-<code>Label: value</code> – text before <code>:</code> is shown <strong>bold blue</strong> (e.g. <code>Phone: 9876543210</code>)<br>
-<code>"text"</code> – <strong>bold</strong> &nbsp; <code>'text'</code> – <em>italic</em> &nbsp; <code>\`text\`</code> – monospace<br>
-<code>~~text~~</code> – strikethrough &nbsp; <code>==text==</code> – highlight<br>
-Use matching pairs only; plain apostrophes in words (Owner's) are not styled<br>
-<code>9876543210</code> – 10-digit phone → 📞 Call &amp; 💬 WhatsApp (+91 / leading 0 OK)<br>
-<code>https://…</code> – auto link card with Open / Copy<br>
-Smart links: YouTube, Facebook, Instagram, LinkedIn, X/Twitter, Google Maps, Drive, Docs, Forms, WhatsApp<br>
-Drive thumbnail: caption then file URL on the same line<br>
-One item per line (blank lines are ignored)`,
+    TEXT: `💡 Text formatting — quick tips:<br>
+<code>Label: value</code> · <code>"bold"</code> · <code>'italic'</code> · <code>\`code\`</code> · phones &amp; <code>https://</code> links auto-format<br>
+<a href="${TEXT_FORMATTING_GUIDE_URL}" target="_blank" rel="noopener" class="qrt-formatting-guide-link">📖 Full formatting guide (labels, HTML blocks, examples)</a>`,
     DRIVE: `💡 Google Drive link:<br>
 <code>https://drive.google.com/file/d/…</code> – inline file preview<br>
 <code>https://drive.google.com/drive/folders/…</code> – folder thumbnail gallery<br>

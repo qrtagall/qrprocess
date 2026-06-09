@@ -1488,6 +1488,18 @@ body {
     background: #e8f5e9;
 }
 
+.qrt-artifact-hint--text .qrt-formatting-guide-link {
+    display: inline-block;
+    margin-top: 6px;
+    font-weight: 600;
+    color: var(--primary);
+    text-decoration: underline;
+}
+
+.qrt-artifact-hint--text .qrt-formatting-guide-link:hover {
+    color: #003d7a;
+}
+
 .qrt-artifact-hint--upload {
     background: #fffaf3;
     border-left-color: #e67e22;
@@ -2097,4 +2109,29 @@ body {
     background: #fff3cd;
     padding: 0 3px;
     border-radius: 2px;
+}
+
+.qrt-html-block {
+    font-size: 14px;
+    line-height: 1.55;
+    word-break: break-word;
+}
+
+.qrt-html-block table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 6px 0;
+}
+
+.qrt-html-block th,
+.qrt-html-block td {
+    border: 1px solid #ddd;
+    padding: 4px 8px;
+    text-align: left;
+}
+
+.qrt-html-block ul,
+.qrt-html-block ol {
+    margin: 6px 0 6px 1.2em;
+    padding: 0;
 }

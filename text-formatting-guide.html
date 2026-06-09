@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>QRTagAll — TEXT Formatting Guide</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Formatting rules for TEXT artifacts in QRTagAll — labels, inline styles, HTML blocks, phones, and links.">
+    <link rel="stylesheet" href="./css/style.css?v=20260620c">
+    <style>
+        body.qrt-guide-body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f4f6f9;
+            color: #222;
+            margin: 0;
+            padding: 52px 16px 56px;
+            line-height: 1.55;
+        }
+
+        .qrt-guide-wrap {
+            max-width: 820px;
+            margin: 0 auto;
+        }
+
+        .qrt-guide-back {
+            display: inline-block;
+            margin-bottom: 16px;
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .qrt-guide-back:hover {
+            text-decoration: underline;
+        }
+
+        .qrt-guide-card {
+            background: #fff;
+            border: 1px solid #dde3ea;
+            border-radius: 12px;
+            padding: 24px 22px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .qrt-guide-card h1 {
+            margin: 0 0 8px;
+            font-size: 1.55rem;
+            color: var(--primary);
+        }
+
+        .qrt-guide-lead {
+            margin: 0 0 20px;
+            color: #555;
+            font-size: 15px;
+        }
+
+        .qrt-guide-card h2 {
+            margin: 28px 0 10px;
+            font-size: 1.15rem;
+            color: #333;
+            border-bottom: 2px solid #e8eef5;
+            padding-bottom: 6px;
+        }
+
+        .qrt-guide-card h2:first-of-type {
+            margin-top: 0;
+        }
+
+        .qrt-guide-card h3 {
+            margin: 18px 0 8px;
+            font-size: 1rem;
+            color: #444;
+        }
+
+        .qrt-guide-card p,
+        .qrt-guide-card li {
+            font-size: 14px;
+        }
+
+        .qrt-guide-card ul {
+            margin: 8px 0 12px;
+            padding-left: 1.3em;
+        }
+
+        .qrt-guide-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin: 10px 0 16px;
+        }
+
+        .qrt-guide-table th,
+        .qrt-guide-table td {
+            border: 1px solid #dde3ea;
+            padding: 8px 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .qrt-guide-table th {
+            background: #f0f5fb;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .qrt-guide-table code {
+            font-size: 12px;
+        }
+
+        .qrt-guide-example {
+            display: grid;
+            gap: 10px;
+            margin: 12px 0 18px;
+        }
+
+        @media (min-width: 640px) {
+            .qrt-guide-example {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .qrt-guide-example-box {
+            border: 1px solid #dde3ea;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .qrt-guide-example-label {
+            background: #eef2f7;
+            padding: 6px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #666;
+        }
+
+        .qrt-guide-example-body {
+            padding: 10px 12px;
+            font-size: 13px;
+            font-family: ui-monospace, Consolas, monospace;
+            white-space: pre-wrap;
+            word-break: break-word;
+            background: #fafbfc;
+        }
+
+        .qrt-guide-preview {
+            padding: 10px 12px;
+            font-size: 14px;
+            background: #f9f9ff;
+            border-left: 4px solid var(--primary);
+            line-height: 1.6;
+        }
+
+        .qrt-guide-note {
+            background: #fff8e6;
+            border: 1px solid #f0d78c;
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 13px;
+            margin: 12px 0;
+        }
+
+        .qrt-guide-ribbon {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            text-align: center;
+            font-size: 18px;
+            background: #000;
+            color: #fff;
+            padding: 10px 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .qrt-guide-ribbon a {
+            color: #ffa500;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .qrt-guide-footer {
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body class="qrt-guide-body">
+
+<div class="qrt-guide-ribbon">
+    <a href="https://qrtagall.com" target="_blank" rel="noopener">QRTagAll</a>
+    <span style="font-size:14px;color:#fff;"> — TEXT formatting guide</span>
+</div>
+
+<div class="qrt-guide-wrap">
+    <a class="qrt-guide-back" href="javascript:history.back()">← Back to QR page</a>
+
+    <div class="qrt-guide-card">
+        <h1>TEXT artifact formatting</h1>
+        <p class="qrt-guide-lead">
+            Use these rules in the <strong>Text Info</strong> field when <strong>FileType</strong> is <code>TEXT</code>.
+            Rules apply on the public QR page when the artifact is set to <code>VIEW</code>.
+        </p>
+
+        <h2>1. Label lines</h2>
+        <p>Text before the first <code>:</code> on a line is shown as a <strong style="color:#005aab;">bold blue</strong> label.</p>
+        <table class="qrt-guide-table">
+            <thead>
+                <tr><th>You type</th><th>Displayed as</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>Phone: 9876543210</code></td><td><strong style="color:#005aab;">Phone:</strong> 9876543210</td></tr>
+                <tr><td><code>Vehicle No: MH12AB1234</code></td><td><strong style="color:#005aab;">Vehicle No:</strong> MH12AB1234</td></tr>
+            </tbody>
+        </table>
+        <p>Up to 10 words before <code>:</code> qualify. URLs like <code>https://</code> are not treated as labels.</p>
+
+        <h2>2. Inline styles</h2>
+        <p>Use <strong>matching pairs</strong> only. Plain apostrophes in words (e.g. <code>Owner's</code>) are not styled.</p>
+        <table class="qrt-guide-table">
+            <thead>
+                <tr><th>Syntax</th><th>Result</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>"text"</code></td><td><strong>bold</strong></td></tr>
+                <tr><td><code>'text'</code></td><td><em>italic</em></td></tr>
+                <tr><td><code>`text`</code></td><td><code class="qrt-inline-code">monospace</code></td></tr>
+                <tr><td><code>~~text~~</code></td><td><del>strikethrough</del></td></tr>
+                <tr><td><code>==text==</code></td><td><mark class="qrt-inline-mark">highlight</mark></td></tr>
+            </tbody>
+        </table>
+        <div class="qrt-guide-example">
+            <div class="qrt-guide-example-box">
+                <div class="qrt-guide-example-label">You type</div>
+                <div class="qrt-guide-example-body">Name: "Chandan Kumar"
+Plate: `MH12AB1234`
+Status: ==Active==</div>
+            </div>
+            <div class="qrt-guide-example-box">
+                <div class="qrt-guide-example-label">Preview (simplified)</div>
+                <div class="qrt-guide-preview">
+                    <strong style="color:#005aab;">Name:</strong> <strong>Chandan Kumar</strong><br>
+                    <strong style="color:#005aab;">Plate:</strong> <code class="qrt-inline-code">MH12AB1234</code><br>
+                    <strong style="color:#005aab;">Status:</strong> <mark class="qrt-inline-mark">Active</mark>
+                </div>
+            </div>
+        </div>
+
+        <h2>3. Phone numbers</h2>
+        <p>10-digit Indian-style numbers get <strong>Call</strong> and <strong>WhatsApp</strong> actions. Leading <code>0</code> or <code>+91</code> is handled.</p>
+        <p>Example: <code>Mobile: 9876543210</code></p>
+
+        <h2>4. Web links</h2>
+        <p>Lines with <code>https://…</code> become smart link cards (Open / Copy) where supported.</p>
+        <p>Recognised platforms include YouTube, Facebook, Instagram, LinkedIn, X/Twitter, Google Maps, Drive, Docs, Forms, and WhatsApp.</p>
+
+        <h2>5. Google Drive on a line</h2>
+        <p>Put optional caption text, then a Drive file or folder URL on the <strong>same line</strong>:</p>
+        <p><code>Manual https://drive.google.com/file/d/…</code></p>
+        <p>File links show a thumbnail; folder links show a gallery when available.</p>
+
+        <h2>6. HTML blocks (optional)</h2>
+        <p>Wrap HTML in explicit delimiters. <strong>Outside</strong> the block, normal rules above still apply. <strong>Inside</strong> the block, raw HTML is rendered (with safety filtering).</p>
+
+        <h3>Delimiters</h3>
+        <table class="qrt-guide-table">
+            <thead>
+                <tr><th>Form</th><th>Usage</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>[HTML] … [/HTML]</code></td><td>Inline block or entire field (case insensitive)</td></tr>
+                <tr><td><code>&lt;html&gt; … &lt;/html&gt;</code></td><td>Entire field only (case insensitive)</td></tr>
+            </tbody>
+        </table>
+
+        <h3>Mixed plain + HTML</h3>
+        <div class="qrt-guide-example">
+            <div class="qrt-guide-example-box">
+                <div class="qrt-guide-example-label">You type</div>
+                <div class="qrt-guide-example-body">Phone: 9876543210
+[HTML]
+&lt;ul&gt;
+  &lt;li&gt;&lt;b&gt;Insurance&lt;/b&gt; — valid&lt;/li&gt;
+  &lt;li&gt;&lt;b&gt;PUC&lt;/b&gt; — valid&lt;/li&gt;
+&lt;/ul&gt;
+[/HTML]
+POLICE: Phone: 112</div>
+            </div>
+        </div>
+
+        <h3>Allowed &amp; blocked in HTML blocks</h3>
+        <ul>
+            <li><strong>Allowed:</strong> headings, paragraphs, lists, tables, links, images, inline styles</li>
+            <li><strong>Removed for safety:</strong> <code>&lt;script&gt;</code>, <code>&lt;iframe&gt;</code>, <code>&lt;object&gt;</code>, <code>&lt;embed&gt;</code>, <code>onclick=</code> and other event attributes, <code>javascript:</code> URLs</li>
+        </ul>
+
+        <div class="qrt-guide-note">
+            <strong>Tip:</strong> Use HTML for tables or multi-column layouts. Use plain <code>Label: value</code> lines for simple sticker fields — they are easier to edit on a phone.
+        </div>
+
+        <h2>7. Line breaks</h2>
+        <ul>
+            <li>One logical item per line outside HTML blocks</li>
+            <li>Blank lines are ignored outside HTML blocks</li>
+            <li>Inside <code>[HTML]</code> blocks, line breaks in your markup are preserved</li>
+        </ul>
+
+        <h2>8. Vehicle sticker example</h2>
+        <div class="qrt-guide-example-box">
+            <div class="qrt-guide-example-label">Sample Local Link content</div>
+            <div class="qrt-guide-example-body">VEHICLE NO: "MH12AB1234"
+Name: 'Owner Name'
+Mobile No: 9876543210
+[HTML]
+&lt;table&gt;
+  &lt;tr&gt;&lt;th&gt;Document&lt;/th&gt;&lt;th&gt;Status&lt;/th&gt;&lt;/tr&gt;
+  &lt;tr&gt;&lt;td&gt;Insurance&lt;/td&gt;&lt;td style="color:green"&gt;Active&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;
+[/HTML]
+POLICE: Phone: 112</div>
+        </div>
+
+        <h2>9. What does not apply to TEXT</h2>
+        <ul>
+            <li><code>NOVIEW</code> artifacts are hidden from visitors (owner still sees them in edit mode)</li>
+            <li>File uploads use <code>PDFFILE</code>, <code>IMAGEFILE</code>, etc. — not TEXT</li>
+            <li><code>MESSAGEEMAIL</code> is a separate type (Message Owner button)</li>
+        </ul>
+    </div>
+
+    <p class="qrt-guide-footer">
+        <a href="https://process.qrtagall.com" style="color:var(--primary);">process.qrtagall.com</a>
+        · <a href="https://qrtagall.com" style="color:var(--primary);">qrtagall.com</a>
+    </p>
+</div>
+
+</body>
+</html>
