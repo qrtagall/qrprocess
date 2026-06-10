@@ -293,11 +293,20 @@
          }
 
         /* TEXT artifacts — layout variants (title-only / headless / default) */
+        .qrt-text-artifact--title-only {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
         .qrt-text-header {
             margin: 0 0 8px;
         }
 
         .qrt-text-header--center {
+            margin: 0;
+            width: 100%;
             text-align: center;
         }
 

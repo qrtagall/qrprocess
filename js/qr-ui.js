@@ -1053,7 +1053,7 @@ function buildTextArtifactInnerHtml({ title, url, index, icon, visibilityIcon })
     if (isUrlEmpty) {
         return (
             `<div class="qrt-text-artifact qrt-text-artifact--title-only">` +
-            `<p class="qrt-text-header qrt-text-header--center">${icon} <b>${safeTitle}</b> ${visibilityIcon}</p>` +
+            `<p class="qrt-text-header qrt-text-header--center"><b>${safeTitle}</b> ${visibilityIcon}</p>` +
             `</div>`
         );
     }
