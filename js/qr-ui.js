@@ -356,16 +356,16 @@ async function renderInfoBlock(data) {
 
         if (visibility === "NOVIEW" && !isOwner) {
             html += `<p><b>${index + 1}.</b> ${icon} <b>${title}</b> <span style="color:gray;">(🔒 No view permission)</span></p>`;
+        } else if (type === "TEXT") {
+            html += buildTextArtifactInnerHtml({
+                title,
+                url,
+                index,
+                icon,
+                visibilityIcon,
+            });
         } else if (!url || url.trim() === "" || url.toLowerCase() === "not available") {
             html += `<p><b>${index + 1}.</b> ${icon} <b>${title}</b> <span style="color:gray;">(🔗 Link not available)</span></p>`;
-        } else if (type === "TEXT") {
-            const safeText = formatTextContent(url);
-
-			html += `<p><b>${index + 1}.</b> ${icon} <b>${title}</b> ${visibilityIcon}</p>
-         <div style="margin-left: 10px; margin-bottom: 10px; font-size: 14px; line-height: 1.6; background: #f9f9ff; padding: 10px 12px; border-left: 4px solid #005aab; border-radius: 6px;">
-            ${safeText}
-         </div>`;
-		 
         } else if (type.includes("FILE") && /drive\.google\.com/.test(url)) {
             const match = url.match(/\/d\/([^/]+)/);
             const fileId = match ? match[1] : null;
@@ -1024,6 +1024,46 @@ function escapeHtml(unsafe) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+}
+
+/**
+ * TEXT artifact layout (Basic Info = title, Local Link = url).
+ * a) Empty Local Link → no serial; Basic Info centered.
+ * b) Basic Info ≤1 char → no serial, no title; Local Link right-aligned (if present).
+ */
+function buildTextArtifactInnerHtml({ title, url, index, icon, visibilityIcon }) {
+    const titleTrim = String(title || "").trim();
+    const urlTrim = String(url || "").trim();
+    const isUrlEmpty = !urlTrim || urlTrim.toLowerCase() === "not available";
+    const isTitleShort = titleTrim.length <= 1;
+    const safeTitle = escapeHtml(titleTrim);
+    const formattedText = isUrlEmpty ? "" : formatTextContent(urlTrim);
+
+    if (isTitleShort) {
+        if (isUrlEmpty) {
+            return `<div class="qrt-text-artifact qrt-text-artifact--headless"></div>`;
+        }
+        return (
+            `<div class="qrt-text-artifact qrt-text-artifact--headless">` +
+            `<div class="qrt-text-body qrt-text-body--right">${formattedText}</div>` +
+            `</div>`
+        );
+    }
+
+    if (isUrlEmpty) {
+        return (
+            `<div class="qrt-text-artifact qrt-text-artifact--title-only">` +
+            `<p class="qrt-text-header qrt-text-header--center">${icon} <b>${safeTitle}</b> ${visibilityIcon}</p>` +
+            `</div>`
+        );
+    }
+
+    return (
+        `<div class="qrt-text-artifact">` +
+        `<p class="qrt-text-header"><b>${index + 1}.</b> ${icon} <b>${safeTitle}</b> ${visibilityIcon}</p>` +
+        `<div class="qrt-text-body">${formattedText}</div>` +
+        `</div>`
+    );
 }
 
 /**
@@ -3202,15 +3242,19 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
         return wrapper;
     }
 
-    if (!url || url.trim() === "" || url.toLowerCase() === "not available") {
+    if (typeUpper === "TEXT") {
+        mainBlock.innerHTML = buildTextArtifactInnerHtml({
+            title,
+            url,
+            index,
+            icon,
+            visibilityIcon,
+        });
+        wrapper.appendChild(mainBlock);
+    } else if (!url || url.trim() === "" || url.toLowerCase() === "not available") {
         mainBlock.innerHTML = `<p><b>${index + 1}.</b> ${icon} <b>${title}</b> <span style="color:gray;">(🔗 Link not available)</span></p>`;
         wrapper.appendChild(mainBlock);
-        return wrapper;
-    }
-
-
-    //Image and Video??
-    if (typeUpper.includes("FILE") && /drive\.google\.com/.test(url)) {
+    } else if (typeUpper.includes("FILE") && /drive\.google\.com/.test(url)) {
         const match = url.match(/\/d\/([^/]+)/);
         const fileId = match ? match[1] : null;
         if (fileId) {
@@ -3221,9 +3265,7 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
                                        sandbox="allow-scripts allow-same-origin allow-presentation"></iframe>`;
             wrapper.appendChild(mainBlock);
         }
-    }
-    //Google Drive ->>
-    else if (typeUpper.includes("DRIVE") && url.includes("drive.google.com/drive/")) {
+    } else if (typeUpper.includes("DRIVE") && url.includes("drive.google.com/drive/")) {
         const match = url.match(/\/folders\/([a-zA-Z0-9_-]{10,})/);
         const folderId = match ? match[1] : null;
         const galleryId = `thumbnailGallery_${index}`;
@@ -3244,17 +3286,7 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
                 container.innerHTML = `<p style="color:red;">❌ Failed to load thumbnails</p>`;
             });
         }
-    }
-    else  if (typeUpper === "TEXT") {
-        const formattedText = formatTextContent(url);
-        mainBlock.innerHTML = `
-            <p><b>${index + 1}.</b> ${icon} <b>${title}</b> ${visibilityIcon}</p>
-            <div style="margin-left: 10px; margin-bottom: 10px; font-size: 14px; line-height: 1.6; background: #f9f9ff; padding: 10px 12px; border-left: 4px solid #005aab; border-radius: 6px;">
-                ${formattedText}
-            </div>`;
-        wrapper.appendChild(mainBlock);
-    }
-    else if (url.startsWith("http")) {
+    } else if (url.startsWith("http")) {
 
         resolveAndRender(url, index + 1, title).then((html) => {
             const temp = document.createElement("div");

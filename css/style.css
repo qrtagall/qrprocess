@@ -292,6 +292,41 @@
 
          }
 
+        /* TEXT artifacts — layout variants (title-only / headless / default) */
+        .qrt-text-header {
+            margin: 0 0 8px;
+        }
+
+        .qrt-text-header--center {
+            text-align: center;
+        }
+
+        .qrt-text-body {
+            margin: 0 0 10px 10px;
+            font-size: 14px;
+            line-height: 1.6;
+            background: #f9f9ff;
+            padding: 10px 12px;
+            border-left: 4px solid var(--primary);
+            border-radius: 6px;
+            text-align: left;
+        }
+
+        .qrt-text-body--right {
+            margin-left: 0;
+            text-align: right;
+            border-left: none;
+            border-right: 4px solid var(--primary);
+        }
+
+        .qrt-text-artifact--headless .qrt-text-body--right {
+            margin-bottom: 0;
+        }
+
+        .qrt-text-artifact--title-only .qrt-text-header--center {
+            margin-bottom: 0;
+        }
+
 
         .spinner {
             border: 4px solid #f3f3f3;
