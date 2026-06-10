@@ -5,7 +5,7 @@
     <title>QRTagAll — TEXT Formatting Guide</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="description" content="Formatting rules for TEXT artifacts in QRTagAll — labels, inline styles, HTML blocks, phones, and links.">
-    <link rel="stylesheet" href="./css/style.css?v=20260620c">
+    <link rel="stylesheet" href="./css/style.css?v=20260622b">
     <style>
         body.qrt-guide-body {
             font-family: 'Segoe UI', sans-serif;
@@ -187,6 +187,55 @@
             color: #888;
             margin-top: 8px;
         }
+
+        /* Layout mode previews (match public QR page TEXT blocks) */
+        .qrt-guide-layout-card {
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px 0 16px;
+            background: #fafafa;
+        }
+
+        .qrt-guide-layout-card .qrt-text-artifact--title-only {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
+        .qrt-guide-layout-card .qrt-text-header--center {
+            margin: 0;
+            width: 100%;
+            text-align: center;
+        }
+
+        .qrt-guide-layout-card .qrt-text-body {
+            margin: 0 0 10px 10px;
+            font-size: 14px;
+            line-height: 1.6;
+            background: #f9f9ff;
+            padding: 10px 12px;
+            border-left: 4px solid var(--primary);
+            border-radius: 6px;
+            text-align: left;
+        }
+
+        .qrt-guide-layout-card .qrt-text-body--right {
+            margin: 0;
+            text-align: right;
+            border-left: none;
+            border-right: 4px solid var(--primary);
+        }
+
+        .qrt-guide-layout-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #666;
+            margin-bottom: 8px;
+        }
     </style>
 </head>
 <body class="qrt-guide-body">
@@ -202,11 +251,84 @@
     <div class="qrt-guide-card">
         <h1>TEXT artifact formatting</h1>
         <p class="qrt-guide-lead">
-            Use these rules in the <strong>Text Info</strong> field when <strong>FileType</strong> is <code>TEXT</code>.
-            Rules apply on the public QR page when the artifact is set to <code>VIEW</code>.
+            For <strong>FileType</strong> <code>TEXT</code>, the spreadsheet columns are
+            <code>Basic Info</code> · <code>FileType</code> · <code>Options</code> · <code>Local Link</code>.
+            In the edit form, <strong>Basic Info</strong> is the artifact title and <strong>Text Info</strong> is saved to
+            <strong>Local Link</strong>. Formatting rules below apply to <strong>Local Link</strong> / Text Info content.
+            They apply on the public QR page when <code>Options</code> is <code>VIEW</code>.
         </p>
 
-        <h2>1. Label lines</h2>
+        <h2>1. Page layout (title + body)</h2>
+        <p>How the artifact <strong>block</strong> is arranged on the public page depends on Basic Info and Local Link.
+            These rules apply only to <code>TEXT</code> — not to file uploads or <code>MESSAGEEMAIL</code>.</p>
+
+        <table class="qrt-guide-table">
+            <thead>
+                <tr><th>Condition</th><th>Serial no.</th><th>Basic Info (title)</th><th>Local Link (body)</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Default</strong> — Basic Info has 2+ characters <em>and</em> Local Link has content</td>
+                    <td>Shown (<code>1.</code>, <code>2.</code>, …)</td>
+                    <td>Left-aligned with icon</td>
+                    <td>Left-aligned (formatted text box)</td>
+                </tr>
+                <tr>
+                    <td><strong>Title only</strong> — Local Link empty</td>
+                    <td>Hidden</td>
+                    <td><strong>Centered</strong> (no link icon)</td>
+                    <td>— (no body)</td>
+                </tr>
+                <tr>
+                    <td><strong>Headless</strong> — Basic Info empty or 1 character only</td>
+                    <td>Hidden</td>
+                    <td>Hidden</td>
+                    <td><strong>Right-aligned</strong> if Local Link has content</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>If both “title only” and “headless” could apply (e.g. empty title <em>and</em> empty Local Link), the
+            <strong>headless</strong> rule wins — an empty block is shown.</p>
+
+        <h3>Examples on the public page</h3>
+
+        <p><strong>Title only</strong> — Basic Info: <code>This is a QRTagAll Demo</code>, Local Link: <em>(empty)</em></p>
+        <div class="qrt-guide-layout-card">
+            <div class="qrt-guide-layout-label">Preview</div>
+            <div class="qrt-text-artifact qrt-text-artifact--title-only">
+                <p class="qrt-text-header qrt-text-header--center"><b>This is a QRTagAll Demo</b></p>
+            </div>
+        </div>
+
+        <p><strong>Headless</strong> — Basic Info: <code>.</code> or empty, Local Link: <code>Call us: 9876543210</code></p>
+        <div class="qrt-guide-layout-card">
+            <div class="qrt-guide-layout-label">Preview</div>
+            <div class="qrt-text-artifact qrt-text-artifact--headless">
+                <div class="qrt-text-body qrt-text-body--right">
+                    <strong style="color:#005aab;">Call us:</strong> 9876543210
+                </div>
+            </div>
+        </div>
+
+        <p><strong>Default</strong> — Basic Info: <code>Product Details</code>, Local Link has formatted lines</p>
+        <div class="qrt-guide-layout-card">
+            <div class="qrt-guide-layout-label">Preview</div>
+            <div class="qrt-text-artifact">
+                <p class="qrt-text-header"><b>2.</b> 🔗 <b>Product Details</b></p>
+                <div class="qrt-text-body">
+                    <strong style="color:#005aab;">Model:</strong> RF28R7351SG<br>
+                    <strong style="color:#005aab;">Warranty:</strong> Active
+                </div>
+            </div>
+        </div>
+
+        <div class="qrt-guide-note">
+            <strong>Tip:</strong> Use <strong>title only</strong> for a centered banner line (demo title, section heading).
+            Use <strong>headless</strong> for a right-aligned footnote or contact line without a visible title.
+        </div>
+
+        <h2>2. Label lines</h2>
         <p>Text before the first <code>:</code> on a line is shown as a <strong style="color:#005aab;">bold blue</strong> label.</p>
         <table class="qrt-guide-table">
             <thead>
@@ -217,9 +339,11 @@
                 <tr><td><code>Vehicle No: MH12AB1234</code></td><td><strong style="color:#005aab;">Vehicle No:</strong> MH12AB1234</td></tr>
             </tbody>
         </table>
-        <p>Up to 10 words before <code>:</code> qualify. URLs like <code>https://</code> are not treated as labels.</p>
+        <p>Up to <strong>10 words</strong> before <code>:</code> qualify. Longer prefixes stay plain text.
+            URLs like <code>https://</code> are not treated as labels. If inline markup already appears in the label
+            part (e.g. <code>"Name": value</code>), label styling is skipped for that line.</p>
 
-        <h2>2. Inline styles</h2>
+        <h2>3. Inline styles</h2>
         <p>Use <strong>matching pairs</strong> only. Plain apostrophes in words (e.g. <code>Owner's</code>) are not styled.</p>
         <table class="qrt-guide-table">
             <thead>
@@ -250,20 +374,35 @@ Status: ==Active==</div>
             </div>
         </div>
 
-        <h2>3. Phone numbers</h2>
-        <p>10-digit Indian-style numbers get <strong>Call</strong> and <strong>WhatsApp</strong> actions. Leading <code>0</code> or <code>+91</code> is handled.</p>
+        <h2>4. Processing order (plain lines)</h2>
+        <p>Outside <code>[HTML]</code> blocks, each non-blank line is processed in this order:</p>
+        <ol>
+            <li>Inline styles (<code>"bold"</code>, <code>'italic'</code>, …)</li>
+            <li>Web URLs → smart link cards</li>
+            <li><code>Label:</code> styling</li>
+            <li>Phone numbers → Call / WhatsApp actions</li>
+        </ol>
+        <p>Blank lines outside HTML blocks are ignored.</p>
+
+        <h2>5. Phone numbers</h2>
+        <p>10-digit Indian-style numbers get <strong>Call</strong> (📞) and <strong>WhatsApp</strong> (💬) actions.
+            Leading <code>0</code> or <code>+91</code> is normalised. Other lengths are left as plain text.</p>
         <p>Example: <code>Mobile: 9876543210</code></p>
 
-        <h2>4. Web links</h2>
-        <p>Lines with <code>https://…</code> become smart link cards (Open / Copy) where supported.</p>
-        <p>Recognised platforms include YouTube, Facebook, Instagram, LinkedIn, X/Twitter, Google Maps, Drive, Docs, Forms, and WhatsApp.</p>
+        <h2>6. Web links</h2>
+        <p><code>https://…</code> URLs become compact smart link cards with <strong>Open</strong> and <strong>Copy</strong>.</p>
+        <p>Recognised platforms (icon + colour): YouTube, Facebook, Instagram, LinkedIn, X/Twitter, Google Drive,
+            Google Docs, Google Forms, Google Maps, WhatsApp, and generic web links.</p>
 
-        <h2>5. Google Drive on a line</h2>
-        <p>Put optional caption text, then a Drive file or folder URL on the <strong>same line</strong>:</p>
+        <h2>7. Google Drive on a line</h2>
+        <p>Put optional caption text, then a Drive <strong>file</strong> URL on the <strong>same line</strong>:</p>
         <p><code>Manual https://drive.google.com/file/d/…</code></p>
-        <p>File links show a thumbnail; folder links show a gallery when available.</p>
+        <p>The line text is replaced by a <strong>thumbnail gallery</strong> at the bottom of the artifact; the caption
+            appears under each thumb. Multiple Drive file lines are combined into one gallery. Use file URLs
+            (<code>/file/d/…</code> or <code>open?id=…</code>) — not the same as a folder gallery
+            (<code>FileType</code> <code>DRIVE</code>).</p>
 
-        <h2>6. HTML blocks (optional)</h2>
+        <h2>8. HTML blocks (optional)</h2>
         <p>Wrap HTML in explicit delimiters. <strong>Outside</strong> the block, normal rules above still apply. <strong>Inside</strong> the block, raw HTML is rendered (with safety filtering).</p>
 
         <h3>Delimiters</h3>
@@ -296,20 +435,22 @@ POLICE: Phone: 112</div>
         <ul>
             <li><strong>Allowed:</strong> headings, paragraphs, lists, tables, links, images, inline styles</li>
             <li><strong>Removed for safety:</strong> <code>&lt;script&gt;</code>, <code>&lt;iframe&gt;</code>, <code>&lt;object&gt;</code>, <code>&lt;embed&gt;</code>, <code>onclick=</code> and other event attributes, <code>javascript:</code> URLs</li>
+            <li><strong>Unclosed block:</strong> <code>[HTML]</code> without a matching <code>[/HTML]</code> is treated as plain text (not HTML)</li>
         </ul>
 
         <div class="qrt-guide-note">
             <strong>Tip:</strong> Use HTML for tables or multi-column layouts. Use plain <code>Label: value</code> lines for simple sticker fields — they are easier to edit on a phone.
         </div>
 
-        <h2>7. Line breaks</h2>
+        <h2>9. Line breaks</h2>
         <ul>
             <li>One logical item per line outside HTML blocks</li>
             <li>Blank lines are ignored outside HTML blocks</li>
             <li>Inside <code>[HTML]</code> blocks, line breaks in your markup are preserved</li>
+            <li>Plain segments and HTML blocks are separated by a line break when both appear in one field</li>
         </ul>
 
-        <h2>8. Vehicle sticker example</h2>
+        <h2>10. Vehicle sticker example</h2>
         <div class="qrt-guide-example-box">
             <div class="qrt-guide-example-label">Sample Local Link content</div>
             <div class="qrt-guide-example-body">VEHICLE NO: "MH12AB1234"
@@ -324,11 +465,13 @@ Mobile No: 9876543210
 POLICE: Phone: 112</div>
         </div>
 
-        <h2>9. What does not apply to TEXT</h2>
+        <h2>11. What does not apply to TEXT</h2>
         <ul>
-            <li><code>NOVIEW</code> artifacts are hidden from visitors (owner still sees them in edit mode)</li>
+            <li><code>NOVIEW</code> (<code>Options</code>) — hidden from visitors; owner still sees the artifact in edit mode</li>
             <li>File uploads use <code>PDFFILE</code>, <code>IMAGEFILE</code>, etc. — not TEXT</li>
-            <li><code>MESSAGEEMAIL</code> is a separate type (Message Owner button)</li>
+            <li><code>MESSAGEEMAIL</code> is a separate type (Contact owner button)</li>
+            <li><code>DRIVE</code> / <code>GDRIVE</code> — folder thumbnail gallery from a folder URL; different from Drive <em>file</em> thumbs inside TEXT</li>
+            <li>Layout rules in section 1 apply to the artifact <strong>frame</strong>; sections 2–10 apply to <strong>Local Link</strong> content inside the frame</li>
         </ul>
     </div>
 
