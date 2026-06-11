@@ -358,13 +358,14 @@ async function sendOwnerMessageEmail({ recipientQrId, content }) {
     return invokeAppsScriptPostJson(payload, AppScriptBaseUrl_New);
 }
 
-/** Server check before adding a new artifact row (Owners MaxArtifact limit). */
-async function checkArtifactLimitBeforeInsert({ sheetId, email }) {
+/** Server check before adding a new artifact row (IDConfig EXTRA_ARTIFACT per prefix). */
+async function checkArtifactLimitBeforeInsert({ sheetId, qrId, email }) {
     if (!sheetId) return;
     const token = await ensureAccessTokenForMutation();
     const params = new URLSearchParams({
         mode: "checkArtifactLimit",
         sheetId,
+        qrId: String(qrId || window.qrId || "").trim(),
         email: String(email || sessionEmail || "").toLowerCase(),
     });
     appendAuthToUrlParams(params, token);
@@ -375,7 +376,7 @@ async function checkArtifactLimitBeforeInsert({ sheetId, email }) {
         throw new Error(
             data?.message ||
                 data?.error ||
-                "Maximum Artifact addition limit reached. Upgrade subscription"
+                "Maximum artifact limit reached for this QR."
         );
     }
 }
@@ -395,7 +396,7 @@ async function saveGdriveArtifactInBrowser({
     }
 
     if (insert) {
-        await checkArtifactLimitBeforeInsert({ sheetId });
+        await checkArtifactLimitBeforeInsert({ sheetId, qrId });
     }
 
     const csvText = await exportSpreadsheetAsCsv(token, sheetId);

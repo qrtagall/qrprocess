@@ -2150,7 +2150,7 @@ function onFileTypeChange() {
 
 
 function openAddModal(afterRowNum, isEditMode = false, linkId = null) {
-    if (!isEditMode && typeof isArtifactTemplateLocked === "function" && isArtifactTemplateLocked()) {
+    if (!isEditMode && typeof canAddArtifacts === "function" && !canAddArtifacts()) {
         return;
     }
 
@@ -2746,7 +2746,7 @@ async function saveArtifactInfo({
 
     if (isInsert && typeof checkArtifactLimitBeforeInsert === "function") {
         try {
-            await checkArtifactLimitBeforeInsert({ sheetId, email: userEmail });
+            await checkArtifactLimitBeforeInsert({ sheetId, qrId: id, email: userEmail });
         } catch (limErr) {
             showSpinner(false);
             if (typeof notify === "function") notify(limErr.message, "error");

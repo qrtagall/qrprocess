@@ -659,7 +659,7 @@ function injectQRBlock(id) {
 }
 
 
-/** Prefix template lock: content-only edits (no add/delete/restructure). */
+/** Prefix artifact policy from MultiSheet fetch (template lock or EXTRA_ARTIFACT cap). */
 function applyArtifactTemplatePolicy(policy) {
     window.qrArtifactPolicy = policy || {
         locked: false,
@@ -673,12 +673,35 @@ function isArtifactTemplateLocked() {
     return !!(window.qrArtifactPolicy && window.qrArtifactPolicy.locked);
 }
 
+function canAddArtifacts() {
+    const p = window.qrArtifactPolicy;
+    if (!p) return true;
+    if (p.locked) return false;
+    return p.allowAdd !== false;
+}
+
+function canDeleteArtifacts() {
+    const p = window.qrArtifactPolicy;
+    if (!p) return true;
+    if (p.locked) return false;
+    return p.allowDelete !== false;
+}
+
+function canAddBelowArtifact() {
+    const p = window.qrArtifactPolicy;
+    if (!p) return true;
+    if (p.locked) return false;
+    return p.allowAddBelow !== false;
+}
+
 /** Centered per-artifact action bar (Edit / Delete / Add Below) */
 function getArtifactActionBarMarkup(index, opts = {}) {
     const { linkId = "", typeUpper = "", legacy = false } = opts;
     const safeType = String(typeUpper).replace(/'/g, "\\'");
     const safeLinkId = String(linkId).replace(/'/g, "\\'");
     const locked = isArtifactTemplateLocked();
+    const allowDelete = canDeleteArtifacts();
+    const allowAddBelow = canAddBelowArtifact();
 
     const editOnclick = legacy
         ? `openAddModal(${index}, true)`
@@ -690,13 +713,13 @@ function getArtifactActionBarMarkup(index, opts = {}) {
         ? `openAddModal(${index})`
         : `setModalLinkAndOpen(${index}, false, '${safeLinkId}')`;
 
-    const deleteBtn = locked
+    const deleteBtn = !allowDelete
         ? ""
         : `<button type="button" class="qrt-artifact-btn qrt-artifact-btn-delete" onclick="${deleteOnclick}">
             <span class="qrt-artifact-btn-icon" aria-hidden="true">🗑️</span>
             <span class="qrt-artifact-btn-label">Delete</span>
         </button>`;
-    const addBtn = locked
+    const addBtn = !allowAddBelow
         ? ""
         : `<button type="button" class="qrt-artifact-btn qrt-artifact-btn-add" onclick="${addOnclick}">
             <span class="qrt-artifact-btn-icon" aria-hidden="true">➕</span>
@@ -714,7 +737,7 @@ function getArtifactActionBarMarkup(index, opts = {}) {
 }
 
 function getAddNewArtifactButtonMarkup(linkId, index = -1) {
-    if (isArtifactTemplateLocked()) return "";
+    if (!canAddArtifacts()) return "";
     const safeLinkId = String(linkId).replace(/'/g, "\\'");
     return `<button type="button" class="qrt-artifact-btn qrt-artifact-btn-new" onclick="setModalLinkAndOpen(${index}, false, '${safeLinkId}')">
         <span class="qrt-artifact-btn-icon" aria-hidden="true">➕</span>
@@ -724,7 +747,7 @@ function getAddNewArtifactButtonMarkup(linkId, index = -1) {
 
 /** Add Artifact at top of asset (no link context yet) */
 function getAddArtifactTopButtonMarkup() {
-    if (isArtifactTemplateLocked()) return "";
+    if (!canAddArtifacts()) return "";
     return `<button type="button" class="qrt-artifact-btn qrt-artifact-btn-new" onclick="openAddModal(-1)">
         <span class="qrt-artifact-btn-icon" aria-hidden="true">➕</span>
         <span class="qrt-artifact-btn-label">Add Artifact</span>
