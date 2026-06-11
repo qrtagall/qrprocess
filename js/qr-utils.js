@@ -8,6 +8,54 @@ const BaseColorNotApproved = "#fedcdc";
 const BaseColorDefault = "#dedede";
 const BaseColorOffset = 20;
 
+/** Deep QR module colors (10 slots); white background keeps scans reliable. */
+const QR_PREFIX_DARK_COLORS = [
+    "#1a237e",
+    "#0d47a1",
+    "#006064",
+    "#1b5e20",
+    "#33691e",
+    "#4a148c",
+    "#880e4f",
+    "#b71c1c",
+    "#bf360c",
+    "#3e2723",
+];
+
+/** Known prefixes can pin a color; others hash stably into the palette. */
+const QR_PREFIX_COLOR_MAP = {
+    IN: "#1a237e",
+    TMP: "#4a148c",
+    TEMP: "#4a148c",
+};
+
+function getQrPrefixFromId(id) {
+    if (!id || typeof id !== "string") return "";
+    const sep = id.indexOf("_");
+    return (sep > 0 ? id.slice(0, sep) : id).toUpperCase();
+}
+
+function getQrColorForPrefix(prefix) {
+    const key = String(prefix || "").toUpperCase();
+    if (QR_PREFIX_COLOR_MAP[key]) return QR_PREFIX_COLOR_MAP[key];
+    if (!key) return "#000000";
+    let h = 0;
+    for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
+    return QR_PREFIX_DARK_COLORS[h % QR_PREFIX_DARK_COLORS.length];
+}
+
+function getQrColorForId(id) {
+    return getQrColorForPrefix(getQrPrefixFromId(id));
+}
+
+function getQrCanvasOptions(id, size = 160) {
+    return {
+        width: size,
+        color: { dark: getQrColorForId(id), light: "#ffffff" },
+        errorCorrectionLevel: "M",
+    };
+}
+
 // ✅ Extract query parameter from URL
 function getQueryParam(param) {
     const urlParams = new URLSearchParams(window.location.search);
@@ -530,7 +578,11 @@ function generateQRCodeCanvas(id, canvasId = "qrCanvas", size = 160) {
             console.warn(`Canvas with id '${canvasId}' not found.`);
             return;
         }
-        QRCode.toCanvas(canvas, qrUrl, { width: size }, (error) => {
+        const qrColor = getQrColorForId(id);
+        const qrPrefix = getQrPrefixFromId(id);
+        canvas.style.border = `1px solid ${qrColor}`;
+        if (qrPrefix) canvas.title = `QR type: ${qrPrefix}`;
+        QRCode.toCanvas(canvas, qrUrl, getQrCanvasOptions(id, size), (error) => {
             if (error) console.error("QR generation failed:", error);
         });
     });
@@ -595,16 +647,20 @@ function injectQRBlock(id) {
     qrLabel.style.color = "#666";
     qrLabel.style.marginBottom = "6px";
 
+    const qrPrefix = getQrPrefixFromId(id);
+    const qrColor = getQrColorForId(id);
+
     const qrCanvas = document.createElement("canvas");
     qrCanvas.id = "qrCanvas";
-    qrCanvas.style.border = "1px solid #ccc";
+    qrCanvas.style.border = `1px solid ${qrColor}`;
     qrCanvas.style.padding = "6px";
     qrCanvas.style.borderRadius = "8px";
     qrCanvas.style.background = "#fff";
     qrCanvas.style.width = "200px";
     qrCanvas.style.height = "200px";
+    if (qrPrefix) qrCanvas.title = `QR type: ${qrPrefix}`;
 
-    QRCode.toCanvas(qrCanvas, qrUrl, { width: 200 });
+    QRCode.toCanvas(qrCanvas, qrUrl, getQrCanvasOptions(id, 200));
 
     const qrLink = document.createElement("a");
     qrLink.href = qrUrl;

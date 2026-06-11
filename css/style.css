@@ -2026,11 +2026,12 @@ body {
 }
 
 #notifyToast {
-    bottom: max(20px, calc(16px + env(safe-area-inset-bottom)));
+    top: max(20px, calc(16px + env(safe-area-inset-top)));
     left: 50%;
     transform: translateX(-50%);
     max-width: min(90vw, 420px);
     font-size: 14px;
+    z-index: 10050;
 }
 
 #scrollToggleBtn {
