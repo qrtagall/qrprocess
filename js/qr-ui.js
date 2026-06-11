@@ -2151,6 +2151,7 @@ function onFileTypeChange() {
 
 function openAddModal(afterRowNum, isEditMode = false, linkId = null) {
     if (!isEditMode && typeof canAddArtifacts === "function" && !canAddArtifacts()) {
+        if (typeof notifyArtifactAddBlocked === "function") notifyArtifactAddBlocked();
         return;
     }
 

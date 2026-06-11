@@ -689,6 +689,19 @@ body {
     color: #1b5e20;
 }
 
+.qrt-artifact-btn-blocked {
+    opacity: 0.55;
+    border-color: #c5d0d8 !important;
+    background: #f4f6f8 !important;
+    color: #6b7c8a !important;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.qrt-artifact-btn-blocked:active {
+    transform: none;
+}
+
 .qrt-artifact-btn-inline {
     flex-direction: row;
     max-width: 220px;

@@ -694,6 +694,25 @@ function canAddBelowArtifact() {
     return p.allowAddBelow !== false;
 }
 
+/** Toast when add is blocked (template mode or EXTRA_ARTIFACT cap). */
+function notifyArtifactAddBlocked() {
+    const text = "Can't add more artifacts in this mode.";
+    if (typeof notify === "function") notify(text, "info", 3500);
+    else if (typeof showToast === "function") showToast(text, "info");
+    else alert(text);
+}
+
+function artifactAddOnclick(index, linkId, legacy) {
+    if (!canAddArtifacts()) return "notifyArtifactAddBlocked()";
+    if (legacy) return `openAddModal(${index})`;
+    const safeLinkId = String(linkId).replace(/'/g, "\\'");
+    return `setModalLinkAndOpen(${index}, false, '${safeLinkId}')`;
+}
+
+function artifactAddBtnClasses(baseClass) {
+    return canAddArtifacts() ? baseClass : `${baseClass} qrt-artifact-btn-blocked`;
+}
+
 /** Centered per-artifact action bar (Edit / Delete / Add Below) */
 function getArtifactActionBarMarkup(index, opts = {}) {
     const { linkId = "", typeUpper = "", legacy = false } = opts;
@@ -709,9 +728,9 @@ function getArtifactActionBarMarkup(index, opts = {}) {
     const deleteOnclick = legacy
         ? `deleteArtifact(${index}, '${safeType}')`
         : `setModalLinkAndDelete(${index}, '${safeType}', '${safeLinkId}')`;
-    const addOnclick = legacy
-        ? `openAddModal(${index})`
-        : `setModalLinkAndOpen(${index}, false, '${safeLinkId}')`;
+    const addOnclick = artifactAddOnclick(index, safeLinkId, legacy);
+    const addBtnClass = artifactAddBtnClasses("qrt-artifact-btn qrt-artifact-btn-add");
+    const addAria = allowAddBelow ? "" : ' aria-disabled="true"';
 
     const deleteBtn = !allowDelete
         ? ""
@@ -719,9 +738,7 @@ function getArtifactActionBarMarkup(index, opts = {}) {
             <span class="qrt-artifact-btn-icon" aria-hidden="true">🗑️</span>
             <span class="qrt-artifact-btn-label">Delete</span>
         </button>`;
-    const addBtn = !allowAddBelow
-        ? ""
-        : `<button type="button" class="qrt-artifact-btn qrt-artifact-btn-add" onclick="${addOnclick}">
+    const addBtn = `<button type="button" class="${addBtnClass}" onclick="${addOnclick}"${addAria}>
             <span class="qrt-artifact-btn-icon" aria-hidden="true">➕</span>
             <span class="qrt-artifact-btn-label">Add Below</span>
         </button>`;
@@ -737,9 +754,11 @@ function getArtifactActionBarMarkup(index, opts = {}) {
 }
 
 function getAddNewArtifactButtonMarkup(linkId, index = -1) {
-    if (!canAddArtifacts()) return "";
     const safeLinkId = String(linkId).replace(/'/g, "\\'");
-    return `<button type="button" class="qrt-artifact-btn qrt-artifact-btn-new" onclick="setModalLinkAndOpen(${index}, false, '${safeLinkId}')">
+    const onclick = artifactAddOnclick(index, safeLinkId, false);
+    const cls = artifactAddBtnClasses("qrt-artifact-btn qrt-artifact-btn-new");
+    const aria = canAddArtifacts() ? "" : ' aria-disabled="true"';
+    return `<button type="button" class="${cls}" onclick="${onclick}"${aria}>
         <span class="qrt-artifact-btn-icon" aria-hidden="true">➕</span>
         <span class="qrt-artifact-btn-label">Add New Artifact</span>
     </button>`;
@@ -747,8 +766,10 @@ function getAddNewArtifactButtonMarkup(linkId, index = -1) {
 
 /** Add Artifact at top of asset (no link context yet) */
 function getAddArtifactTopButtonMarkup() {
-    if (!canAddArtifacts()) return "";
-    return `<button type="button" class="qrt-artifact-btn qrt-artifact-btn-new" onclick="openAddModal(-1)">
+    const onclick = canAddArtifacts() ? "openAddModal(-1)" : "notifyArtifactAddBlocked()";
+    const cls = artifactAddBtnClasses("qrt-artifact-btn qrt-artifact-btn-new");
+    const aria = canAddArtifacts() ? "" : ' aria-disabled="true"';
+    return `<button type="button" class="${cls}" onclick="${onclick}"${aria}>
         <span class="qrt-artifact-btn-icon" aria-hidden="true">➕</span>
         <span class="qrt-artifact-btn-label">Add Artifact</span>
     </button>`;
