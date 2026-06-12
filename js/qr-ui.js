@@ -343,9 +343,7 @@ async function renderInfoBlock(data) {
         const dTime = item.DTime;
 
         const icon = getIconFromTitle(title);
-        let visibilityIcon = isOwner
-            ? (visibility === "NOVIEW" ? "🔒" : "✅")
-            : "";
+        let visibilityIcon = artifactOwnerVisibilityHint(isOwner, visibility);
 
         let fileCreatedText = "";
         if (dTime) {
@@ -1101,6 +1099,13 @@ function assetCountsVisibleSerial(asset) {
 function artifactSerialPrefix(displaySerial) {
     if (displaySerial == null || displaySerial < 1) return "";
     return `<b>${displaySerial}.</b> `;
+}
+
+/** Owner-only suffix on artifact title: 🔒 for NOVIEW; nothing for VIEW. */
+function artifactOwnerVisibilityHint(isArtifactOwner, visibility) {
+    if (!isArtifactOwner) return "";
+    if (String(visibility || "").toUpperCase() === "NOVIEW") return " 🔒";
+    return "";
 }
 
 /**
@@ -3222,9 +3227,7 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
 
 
     const icon = getIconFromTitle(title);
-    //const visibilityIcon = isOwner ? (visibilityUpper === "NOVIEW" ? "🔒" : "✅") : "";
-
-    const visibilityIcon = isArticatOener ? (visibilityUpper === "NOVIEW" ? "🔒" : "✅") : "";
+    const visibilityIcon = artifactOwnerVisibilityHint(isArticatOener, visibilityUpper);
 
 
     if (DTime) {
