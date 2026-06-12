@@ -364,6 +364,18 @@ function getLinkTreeRoleLabel(linkSlot) {
   return "Link";
 }
 
+/** Remote-link banner label: 1→A, 2→B, … 26→Z, 27→AA (distinct from artifact serial 1, 2, 3…). */
+function formatRemoteLinkSerialLabel(oneBasedIndex) {
+  let n = Math.max(1, Math.floor(Number(oneBasedIndex) || 1));
+  let label = "";
+  while (n > 0) {
+    n -= 1;
+    label = String.fromCharCode(65 + (n % 26)) + label;
+    n = Math.floor(n / 26);
+  }
+  return label;
+}
+
 function buildCollapsibleHeader({
     serial,
     storageIcon,
@@ -402,7 +414,11 @@ function buildCollapsibleHeader({
   const titleText = document.createElement("div");
   titleText.style.flexGrow = "1";
   titleText.style.textAlign = "center";
-  const rolePrefix = treeRole ? `${treeRole} · ` : `${serial}. `;
+  const linkLabel =
+    typeof serial === "number"
+      ? formatRemoteLinkSerialLabel(serial)
+      : String(serial || "A").replace(/\.$/, "");
+  const rolePrefix = treeRole ? `${treeRole} · ` : `${linkLabel}. `;
   titleText.innerText = `${rolePrefix}${storageIcon} ${description || "-"}`;
   titleRow.appendChild(titleText);
 

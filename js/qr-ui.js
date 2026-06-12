@@ -629,10 +629,10 @@ function renderMultipleRemoteBlocks(remoteList) {
 
             const maskEmail = maskEmailUser(email);
             const storageIcon = (storageType === "LOCAL") ? "📂" : "🌐";
-            const serial = idx + 1;
+            const linkSerial = formatRemoteLinkSerialLabel(idx + 1);
 
             const headerBlock = buildCollapsibleHeader({
-                serial,
+                serial: linkSerial,
                 storageIcon,
                 description: xdescription, // cleaned for display
                 maskEmail,
@@ -814,7 +814,7 @@ function renderMultipleRemoteBlocks_old(remoteList) {
 
             const maskEmail = maskEmailUser(email);
             const storageIcon = storageType === "LOCAL" ? "📂" : "🌐";
-            const serial = idx + 1;
+            const linkSerial = formatRemoteLinkSerialLabel(idx + 1);
 
             let customColor = null;
             //const colorMatch = xdescription.match(/<\s*COLOR:(\d{1,3})\s*>/i);
@@ -831,7 +831,7 @@ function renderMultipleRemoteBlocks_old(remoteList) {
 
 
             const headerBlock = buildCollapsibleHeader(
-                { serial,
+                { serial: linkSerial,
                     storageIcon,
                     description:xdescription,
                     maskEmail,
