@@ -301,7 +301,7 @@
         }
 
         .qrt-text-header {
-            margin: 0 0 8px;
+            margin: 0 0 4px;
         }
 
         .qrt-text-header--center {
@@ -311,18 +311,18 @@
         }
 
         .qrt-text-body {
-            margin: 0 0 10px 10px;
+            margin: 0 0 4px 8px;
             font-size: 14px;
-            line-height: 1.6;
+            line-height: 1.5;
             background: #f9f9ff;
-            padding: 10px 12px;
+            padding: 8px 10px;
             border-left: 4px solid var(--primary);
             border-radius: 6px;
             text-align: left;
         }
 
         .qrt-text-body--right {
-            margin-left: 0;
+            margin: 0;
             text-align: right;
             border-left: none;
             border-right: 4px solid var(--primary);
@@ -334,6 +334,39 @@
 
         .qrt-text-artifact--title-only .qrt-text-header--center {
             margin-bottom: 0;
+        }
+
+        .artifact-block {
+            position: relative;
+            margin: 0 0 6px;
+            padding: 6px 8px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        .artifact-block:last-child {
+            margin-bottom: 0;
+        }
+
+        .artifact-block > p {
+            margin: 2px 0;
+        }
+
+        .artifact-block iframe {
+            margin: 6px 0 0;
+        }
+
+        #mainContent .remote-content .artifact-block {
+            margin-bottom: 6px;
+        }
+
+        #mainContent .remote-content .artifact-block:last-child {
+            margin-bottom: 0;
+        }
+
+        #mainContent .remote-content .artifact-block > p {
+            margin: 2px 0;
         }
 
 
@@ -410,9 +443,9 @@
         .asset-banner {
             width: 100%;
             max-width: 720px;
-            margin: 12px auto;
+            margin: 8px auto;
             box-sizing: border-box;
-            padding: 12px;
+            padding: 10px 12px;
             border: 1px solid #aaa;
             border-radius: 8px;
             background-color: #fff8e1; /* light yellow */
@@ -489,8 +522,8 @@
             transition: all 0.3s ease;
             width: 100%;
             max-width: 720px;
-            margin: 0 auto 16px auto;
-            padding: 0 14px;
+            margin: 0 auto 8px auto;
+            padding: 0 10px;
             box-sizing: border-box;
             border-radius: 0 0 10px 10px;
             background: #fff;
@@ -504,8 +537,8 @@
             max-height: none; /* large enough to fit full content */
             opacity: 1;
             visibility: visible;
-            padding-top: 14px;
-            padding-bottom: 14px;
+            padding-top: 8px;
+            padding-bottom: 8px;
         }
 
         /* Optional: constrain long content */
@@ -612,9 +645,9 @@ body {
     flex-wrap: wrap;
     justify-content: center;
     align-items: stretch;
-    gap: 10px;
-    margin-top: 14px;
-    padding-top: 12px;
+    gap: 8px;
+    margin-top: 8px;
+    padding-top: 8px;
     border-top: 1px solid #dce4ec;
     width: 100%;
 }
@@ -716,10 +749,10 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    margin-bottom: 20px;
-    padding: 18px 14px;
+    margin-bottom: 8px;
+    padding: 12px 10px;
     border: 1px dashed #b8c9d6;
-    border-radius: 10px;
+    border-radius: 8px;
     text-align: center;
     background: #fafcfe;
 }
@@ -2055,6 +2088,21 @@ body {
     #mainContent {
         padding: 16px 12px;
         margin: 12px auto 20px;
+    }
+
+    .asset-banner {
+        margin: 6px auto;
+        padding: 8px 10px;
+    }
+
+    .asset-banner.active + .remote-content {
+        padding-top: 6px;
+        padding-bottom: 6px;
+    }
+
+    .artifact-block {
+        margin-bottom: 5px;
+        padding: 5px 6px;
     }
 
     #mainContent h2,
