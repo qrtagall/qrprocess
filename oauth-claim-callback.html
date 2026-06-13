@@ -32,6 +32,7 @@
     }
   </style>
   <script src="./js/qr-utils.js?v=20260604b"></script>
+  <script src="./js/qr-cells.js?v=20260613c"></script>
   <script src="./js/qr-fetch.js?v=20260623e"></script>
   <script src="./js/qr-auth.js?v=20260604b"></script>
 </head>
@@ -96,6 +97,9 @@
         if (!email) throw new Error("No email received from Google.");
 
         persistAuthSession(email, accessToken);
+        if (typeof ensureQrCellsReady === "function") {
+          await ensureQrCellsReady();
+        }
         statusEl.textContent =
           storageType === "LOCAL"
             ? "⏳ Registering claim (QRTagAll storage)…"
