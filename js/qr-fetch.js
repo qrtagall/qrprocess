@@ -787,10 +787,10 @@ function qrTemplateRowsToCsv(rows) {
         .join("\n");
 }
 
-const QRTAGALL_DEFAULT_FIRST_ARTIFACT = "New Artifact 1";
+const QRTAGALL_DEFAULT_LINK_BANNER = "Banner-1";
 
 /** Create claim spreadsheet via Drive API only (drive.file — no spreadsheets scope). */
-async function createClaimSpreadsheetInFolder(token, folderId, qrId, assetName) {
+async function createClaimSpreadsheetInFolder(token, folderId, qrId) {
     let csv;
     const templateRows = await fetchClaimTemplateRows(qrId);
     if (templateRows) {
@@ -798,11 +798,10 @@ async function createClaimSpreadsheetInFolder(token, folderId, qrId, assetName) 
     } else {
         csv = [
             `ID,${escapeCsvCell(qrId)}`,
-            "Description,",
+            `Description,${escapeCsvCell(QRTAGALL_DEFAULT_LINK_BANNER)}`,
             ",,",
             ",,",
             "Basic Info,FileType,Options,Local Link,DateTime",
-            `${escapeCsvCell(QRTAGALL_DEFAULT_FIRST_ARTIFACT)},TEXT,VIEW,,${escapeCsvCell(artifactDateTimeStamp())}`,
         ].join("\n");
     }
 
@@ -852,7 +851,7 @@ async function createClaimSpreadsheetInFolder(token, folderId, qrId, assetName) 
 }
 
 /** Register GDrive claim in master registry (browser POST — same auth as LOCAL). */
-async function registerClaimOnMasterFetch({ id, sheetLink, token }) {
+async function registerClaimOnMasterFetch({ id, sheetLink, token, pageDescription }) {
     const body = new URLSearchParams();
     body.set(
         "payload",
@@ -860,7 +859,7 @@ async function registerClaimOnMasterFetch({ id, sheetLink, token }) {
             registerClaim: true,
             id,
             sheet: sheetLink,
-            pageDescription: assetName || "",
+            pageDescription: pageDescription || "",
         })
     );
     body.set(QRTAGALL_AUTH_PARAM, token);
@@ -905,13 +904,17 @@ async function completeRemoteClaimViaDriveApi({ id, assetName, email, onStatus }
     const { url: publicLink } = await createClaimSpreadsheetInFolder(
         token,
         qrFolderId,
-        id,
-        assetName
+        id
     );
 
     const sheetLink = `${normalizedEmail}||${publicLink}||REMOTE`;
     notify("Registering claim…");
-    await registerClaimOnMasterFetch({ id, sheetLink, token });
+    await registerClaimOnMasterFetch({
+        id,
+        sheetLink,
+        token,
+        pageDescription: assetName || "",
+    });
 
     return { publicLink, sheetLink };
 }
