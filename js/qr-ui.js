@@ -141,11 +141,22 @@ function enableEditMode() {
     editMode = true;
     showSpinner(true);
 
+    const id = getQueryParam("id");
+    if (typeof renderPageTitleSection === "function") {
+        renderPageTitleSection(id);
+    }
 
-    renderMultipleRemoteBlocks(globalRemoteAssetList);//remoteList);
+    const editActions = document.getElementById("editActions");
+    if (editActions) {
+        editActions.style.display = "flex";
+    }
+
+    renderMultipleRemoteBlocks(globalRemoteAssetList);
     if (typeof applyEditActionsAvailability === "function") {
         applyEditActionsAvailability();
     }
+
+    showSpinner(false);
 
     /*
 	fetchAssetData(getQueryParam("id")).then(({ data }) => {
@@ -1617,6 +1628,7 @@ function editDescription() {
 function editDescription(linkId = null, currentText = "") {
     const modal = document.getElementById("editDescriptionModal");
     const input = document.getElementById("newDescription");
+    const hintEl = document.getElementById("descTagInfo");
 
     if (!modal || !input) {
         notify("❌ Description modal components missing.", "error");
@@ -1632,12 +1644,24 @@ function editDescription(linkId = null, currentText = "") {
         input.value = rawText.trim();
         modal.setAttribute("data-mode", "link");
         modal.setAttribute("data-link-id", linkId);
+        if (hintEl) {
+            hintEl.innerHTML =
+                "💡 <strong>Link banner</strong> (A, B, …) — saved in that link’s spreadsheet row B2.<br>" +
+                "Optional tags: <code>&lt;NOID&gt;</code> <code>&lt;NOOWNER&gt;</code> " +
+                "<code>&lt;COL:X&gt;</code> <code>&lt;EXPAND&gt;</code> <code>&lt;BALOON:text&gt;</code>";
+        }
     } else {
         input.value = String(
             typeof window.qrPageDescription === "string" ? window.qrPageDescription : ""
         ).trim();
         modal.setAttribute("data-mode", "page");
         modal.removeAttribute("data-link-id");
+        if (hintEl) {
+            hintEl.innerHTML =
+                "💡 <strong>Page title</strong> — shown at the top of this QR page only.<br>" +
+                "Saved in the master registry (<code>Page_Description</code>). Plain text; leave blank to hide the heading.<br>" +
+                "This is separate from each link banner (A, B, …). Use ✏️ on a link banner to edit that link’s title.";
+        }
     }
 
     modal.style.display = "flex";

@@ -510,14 +510,8 @@
         </div>
 
             <div id="descTagInfo" class="qrt-hint-box">
-                💡 <strong>Page title</strong> (top <em>Edit Description</em>): stored in master registry
-                <code>Page_Description</code> — plain text for the QR page heading.<br>
-                <strong>Link banner</strong> (✏️ on A / B): per-link B2; optional tags:<br>
-                <code>&lt;NOID&gt;</code> – Hide ID in banner<br>
-                <code>&lt;NOOWNER&gt;</code> – Hide owner info<br>
-                <code>&lt;COL:X&gt;</code> – Soft color shade X (1-100)<br>
-                <code>&lt;EXPAND&gt;</code> – Auto-expand section<br>
-                <code>&lt;BALOON:Offer!&gt;</code> – Floating promo label on banner (max 15 characters)
+                💡 <strong>Page title</strong> — plain text for the top of this QR page
+                (<code>Page_Description</code> in the master registry). Leave blank to hide the heading.
             </div>
         <div class="qrt-modal-actions">
             <button type="button" class="qrt-btn qrt-btn-secondary qrt-btn-lg" onclick="closeDescriptionModal()">Cancel</button>
@@ -621,7 +615,7 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "7.13";
+    const QRTagAll_Ver_ = "7.14";
 </script>
 
 
@@ -633,8 +627,8 @@
 <script src="./js/qr-fetch.js?v=20260623a"></script>
 <script src="./js/qr-edit.js?v=20260608a"></script>
 <script src="./js/qr-dashboard.js?v=20260610b"></script>
-<script src="./js/qr-ui.js?v=20260623a"></script>
-<script src="./js/qr-main.js?v=20260623a"></script>
+<script src="./js/qr-ui.js?v=20260623b"></script>
+<script src="./js/qr-main.js?v=20260623b"></script>
 <!--   -->
 
 <!-- LOCAL DEV ONLY — do not deploy with file:// script tags (breaks claim/save on process.qrtagall.com)

@@ -227,27 +227,7 @@ async function renderAssetPanel(id) {
 
     isOwner = isSessionUserOwnerOfAnyBlock();
 
-    const isCopiedQR = isCopied(id);
-    console.log("isCopiedQR>>>>>>>", isCopiedQR);
-
-    const rawPageDesc =
-        typeof window.qrPageDescription === "string" ? window.qrPageDescription : "";
-    const parsedPageDesc =
-        typeof parseInlineOptions === "function"
-            ? parseInlineOptions(rawPageDesc)
-            : { cleanText: rawPageDesc };
-    const pageDescDisplay = (parsedPageDesc.cleanText || "").trim();
-    const pageDescHtml = pageDescDisplay
-        ? escapeHtml(pageDescDisplay).replace(/\r?\n/g, "<br>")
-        : "";
-
-    assetTitle.innerHTML = `
-      <div style="text-align: center;">
-        ${pageDescHtml ? `<div class="qrt-page-description">${pageDescHtml}${isCopiedQR ? ` <span style="color:darkred; font-size:10px;">(CLONE)</span>` : ""}</div>` : (isCopiedQR ? `<span style="color:darkred; font-size:10px;">(CLONE)</span>` : "")}
-        ${editMode && !(typeof isPageDataUnavailable === "function" && isPageDataUnavailable()) ? `<div class="qrt-title-edit-actions"><button type="button" class="qrt-artifact-btn qrt-artifact-btn-edit qrt-artifact-btn-inline" onclick="editDescription()"><span class="qrt-artifact-btn-icon" aria-hidden="true">✏️</span><span class="qrt-artifact-btn-label">Edit Description</span></button></div>` : ""}
-      </div>
-      ${editMode && !(typeof isPageDataUnavailable === "function" && isPageDataUnavailable()) ? `<div class="qrt-artifact-add-slot qrt-artifact-add-slot-top">${getAddArtifactTopButtonMarkup()}</div>` : ""}
-    `;
+    renderPageTitleSection(id);
 
     const editActions = document.getElementById("editActions");
     if (editMode && editActions) {
@@ -286,6 +266,34 @@ async function renderAssetPanel(id) {
     };
 
      */
+}
+
+/** Page heading (Page_Description) + edit-mode controls under #assetTitle. */
+function renderPageTitleSection(id) {
+    const assetTitle = document.getElementById("assetTitle");
+    if (!assetTitle) return;
+
+    const isCopiedQR = typeof isCopied === "function" && isCopied(id);
+    const rawPageDesc =
+        typeof window.qrPageDescription === "string" ? window.qrPageDescription : "";
+    const parsedPageDesc =
+        typeof parseInlineOptions === "function"
+            ? parseInlineOptions(rawPageDesc)
+            : { cleanText: rawPageDesc };
+    const pageDescDisplay = (parsedPageDesc.cleanText || "").trim();
+    const pageDescHtml = pageDescDisplay
+        ? escapeHtml(pageDescDisplay).replace(/\r?\n/g, "<br>")
+        : "";
+
+    const showPageEdit =
+        editMode &&
+        !(typeof isPageDataUnavailable === "function" && isPageDataUnavailable());
+
+    assetTitle.innerHTML = `
+      <div style="text-align: center;">
+        ${pageDescHtml ? `<div class="qrt-page-description">${pageDescHtml}${isCopiedQR ? ` <span style="color:darkred; font-size:10px;">(CLONE)</span>` : ""}</div>` : (isCopiedQR ? `<span style="color:darkred; font-size:10px;">(CLONE)</span>` : "")}
+        ${showPageEdit ? `<div class="qrt-title-edit-actions"><button type="button" class="qrt-artifact-btn qrt-artifact-btn-edit qrt-artifact-btn-inline" onclick="editDescription()"><span class="qrt-artifact-btn-icon" aria-hidden="true">✏️</span><span class="qrt-artifact-btn-label">Edit Description</span></button></div>` : ""}
+      </div>`;
 }
 
 

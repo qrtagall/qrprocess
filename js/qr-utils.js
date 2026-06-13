@@ -836,17 +836,6 @@ function getAddNewArtifactButtonMarkup(linkId, index = -1) {
     </button>`;
 }
 
-/** Add Artifact at top of asset (no link context yet) */
-function getAddArtifactTopButtonMarkup() {
-    const onclick = canAddArtifacts() ? "openAddModal(-1)" : "notifyArtifactAddBlocked()";
-    const cls = artifactAddBtnClasses("qrt-artifact-btn qrt-artifact-btn-new");
-    const aria = canAddArtifacts() ? "" : ' aria-disabled="true"';
-    return `<button type="button" class="${cls}" onclick="${onclick}"${aria}>
-        <span class="qrt-artifact-btn-icon" aria-hidden="true">➕</span>
-        <span class="qrt-artifact-btn-label">Add Artifact</span>
-    </button>`;
-}
-
 function createEmptyArtifactPrompt(index, linkId) {
     const wrapper = document.createElement("div");
     wrapper.className = "artifact-block qrt-artifact-add-slot";
