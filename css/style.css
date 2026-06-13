@@ -1637,6 +1637,21 @@ body {
     line-height: 0;
 }
 
+.qrt-qr-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px 12px;
+    margin-top: 8px;
+}
+
+.qrt-qr-actions--modal {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid #e8e8e8;
+}
+
 .qrt-qr-tap:focus-visible {
     outline: 2px solid var(--primary, #0077cc);
     outline-offset: 3px;
