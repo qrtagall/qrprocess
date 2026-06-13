@@ -227,22 +227,23 @@ async function renderAssetPanel(id) {
 
     isOwner = isSessionUserOwnerOfAnyBlock();
 
+    const isCopiedQR = isCopied(id);
+    console.log("isCopiedQR>>>>>>>", isCopiedQR);
 
-    const ownerString = getMaskedOwnerList().join(", ");
-    //document.getElementById("ownerLabel").textContent = ownerString;
-    //const Gid=id;
-    //const Lid=remoteList[0].linkId;
+    const rawPageDesc =
+        typeof window.qrPageDescription === "string" ? window.qrPageDescription : "";
+    const parsedPageDesc =
+        typeof parseInlineOptions === "function"
+            ? parseInlineOptions(rawPageDesc)
+            : { cleanText: rawPageDesc };
+    const pageDescDisplay = (parsedPageDesc.cleanText || "").trim();
+    const pageDescHtml = pageDescDisplay
+        ? escapeHtml(pageDescDisplay).replace(/\r?\n/g, "<br>")
+        : "";
 
-    const isCopiedQR= isCopied(id);
-    console.log("isCopiedQR>>>>>>>",isCopiedQR);
-
-    const maskedOwner = ownerString;//maskEmailUser(ownerEmail);
     assetTitle.innerHTML = `
       <div style="text-align: center;">
-        ${remoteList[0]?.description || "Verified Asset"} ${isCopiedQR ? `<span style="color:darkred; font-size:10px;">(CLONE)</span>` : ""}
-        <div style="font-size: 12px; color: gray;">
-          (${id})<br>Owner: ${maskedOwner}
-        </div>
+        ${pageDescHtml ? `<div class="qrt-page-description">${pageDescHtml}${isCopiedQR ? ` <span style="color:darkred; font-size:10px;">(CLONE)</span>` : ""}</div>` : (isCopiedQR ? `<span style="color:darkred; font-size:10px;">(CLONE)</span>` : "")}
         ${editMode && !(typeof isPageDataUnavailable === "function" && isPageDataUnavailable()) ? `<div class="qrt-title-edit-actions"><button type="button" class="qrt-artifact-btn qrt-artifact-btn-edit qrt-artifact-btn-inline" onclick="editDescription()"><span class="qrt-artifact-btn-icon" aria-hidden="true">✏️</span><span class="qrt-artifact-btn-label">Edit Description</span></button></div>` : ""}
       </div>
       ${editMode && !(typeof isPageDataUnavailable === "function" && isPageDataUnavailable()) ? `<div class="qrt-artifact-add-slot qrt-artifact-add-slot-top">${getAddArtifactTopButtonMarkup()}</div>` : ""}

@@ -426,7 +426,7 @@ function buildCollapsibleHeader({
   if (editMode && artifactOwner) {
       const editBtn = document.createElement("button");
       editBtn.innerText = "✏️";
-      editBtn.title = "Edit Description";
+      editBtn.title = "Edit link description";
       editBtn.style.fontSize = "14px";
       editBtn.style.marginLeft = "10px";
       editBtn.onclick = () => editDescription(linkId);//, description);

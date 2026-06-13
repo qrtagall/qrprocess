@@ -19,7 +19,7 @@
 
 
     <!-- -->
-    <link rel="stylesheet" href="./css/style.css?v=20260622f">
+    <link rel="stylesheet" href="./css/style.css?v=20260623a">
      <!-- -->
 
 </head>
@@ -510,7 +510,9 @@
         </div>
 
             <div id="descTagInfo" class="qrt-hint-box">
-                💡 Supported Tags:<br>
+                💡 <strong>Page title</strong> (top <em>Edit Description</em>): stored in master registry
+                <code>Page_Description</code> — plain text for the QR page heading.<br>
+                <strong>Link banner</strong> (✏️ on A / B): per-link B2; optional tags:<br>
                 <code>&lt;NOID&gt;</code> – Hide ID in banner<br>
                 <code>&lt;NOOWNER&gt;</code> – Hide owner info<br>
                 <code>&lt;COL:X&gt;</code> – Soft color shade X (1-100)<br>
@@ -619,20 +621,20 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "7.12";
+    const QRTagAll_Ver_ = "7.13";
 </script>
 
 
 
 
 <!-- bump ?v= whenever JS changes to force browsers to load the new files -->
-<script src="./js/qr-utils.js?v=20260622g"></script>
+<script src="./js/qr-utils.js?v=20260623a"></script>
 <script src="./js/qr-auth.js?v=20260608b"></script>
-<script src="./js/qr-fetch.js?v=20260622c"></script>
+<script src="./js/qr-fetch.js?v=20260623a"></script>
 <script src="./js/qr-edit.js?v=20260608a"></script>
 <script src="./js/qr-dashboard.js?v=20260610b"></script>
-<script src="./js/qr-ui.js?v=20260622h"></script>
-<script src="./js/qr-main.js?v=20260608b"></script>
+<script src="./js/qr-ui.js?v=20260623a"></script>
+<script src="./js/qr-main.js?v=20260623a"></script>
 <!--   -->
 
 <!-- LOCAL DEV ONLY — do not deploy with file:// script tags (breaks claim/save on process.qrtagall.com)

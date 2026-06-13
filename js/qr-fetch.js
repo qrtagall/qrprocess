@@ -340,6 +340,23 @@ async function sendOwnerReplyEmail({ serial, content }) {
     return invokeAppsScriptPostJson(payload, AppScriptBaseUrl_New);
 }
 
+/** Save master registry Page_Description (page title at top of QR page). */
+async function savePageDescription({ qrId, pageDescription }) {
+    const token = await ensureAccessTokenForMutation();
+    const sender =
+        (typeof sessionEmail === "string" && sessionEmail) ||
+        localStorage.getItem("qr_claimed_email") ||
+        "";
+    const payload = {
+        mode: "updatePageDescription",
+        id: String(qrId || getQueryParam("id") || "").trim(),
+        pageDescription: String(pageDescription != null ? pageDescription : ""),
+        email: String(sender).toLowerCase(),
+        [QRTAGALL_AUTH_PARAM]: token,
+    };
+    return invokeAppsScriptPostJson(payload, AppScriptBaseUrl_New);
+}
+
 /** Guest MESSAGEEMAIL — send via MultiSheet (owner email never exposed to client). */
 async function sendOwnerMessageEmail({ recipientQrId, content }) {
     const token = await ensureAccessTokenForMutation();
@@ -1299,6 +1316,8 @@ async function fetchAllRemoteSheets(id, options = {}) {
                 updateViewCountBadge(window.qrViewCount);
             }
         }
+        window.qrPageDescription =
+            data.pageDescription != null ? String(data.pageDescription) : "";
         const parsed = parseRemoteSheetsPayload(data);
         if (parsed.length === 0 && data.found && data.data && data.data.assets) {
             const keys = Object.keys(data.data.assets);

@@ -357,6 +357,18 @@
             margin: 6px 0 0;
         }
 
+        .qrt-page-description {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+            line-height: 1.35;
+            margin: 0 0 6px;
+        }
+
+        .qrt-title-edit-actions {
+            margin-top: 6px;
+        }
+
         #mainContent .remote-content .artifact-block {
             margin-bottom: 6px;
         }

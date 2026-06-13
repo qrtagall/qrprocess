@@ -1623,31 +1623,20 @@ function editDescription(linkId = null, currentText = "") {
         return;
     }
 
-    let rawText = currentText || "";
-
-    // Title-level "Edit Description" passes no linkId — target the sole owned link
-    // so Save (which only handles link mode) works the same as the per-link pencil.
-    if (!linkId) {
-        linkId = getSoleOwnedLinkId();
-    }
-
     if (linkId) {
-        // 🔍 Look up headerBlock directly, even if clean text passed in
+        let rawText = currentText || "";
         const headerBlock = document.querySelector(`[data-link-id="${linkId}"]`);
         if (headerBlock) {
             rawText = headerBlock.dataset.rawDescription || rawText;
         }
-
         input.value = rawText.trim();
         modal.setAttribute("data-mode", "link");
         modal.setAttribute("data-link-id", linkId);
     } else {
-        // For main/global description
-        const titleEl = document.getElementById("assetTitle");
-        const lines = titleEl.innerText.split("\n");
-        const current = lines[0] || "Untitled";
-        input.value = current.trim();
-        modal.setAttribute("data-mode", "main");
+        input.value = String(
+            typeof window.qrPageDescription === "string" ? window.qrPageDescription : ""
+        ).trim();
+        modal.setAttribute("data-mode", "page");
         modal.removeAttribute("data-link-id");
     }
 
@@ -1702,39 +1691,47 @@ function closeDescriptionModal() {
 
 function saveDescription() {
     const newDesc = document.getElementById("newDescription").value.trim();
+    const modal = document.getElementById("editDescriptionModal");
+    const mode = modal.getAttribute("data-mode");
+    const linkId = modal.getAttribute("data-link-id");
+
+    if (mode === "page") {
+        closeDescriptionModal();
+        const qrId = getQueryParam("id");
+        const spinner = document.getElementById("fullScreenSpinner");
+        if (spinner) spinner.style.display = "flex";
+        savePageDescription({ qrId, pageDescription: newDesc })
+            .then(async (result) => {
+                if (spinner) spinner.style.display = "none";
+                if (result?.success) {
+                    window.qrPageDescription = newDesc;
+                    if (typeof notify === "function") notify("Page description saved.", "success");
+                    await loadAndRenderAsset(qrId);
+                    return;
+                }
+                const msg = result?.message || "Could not save page description.";
+                if (typeof notify === "function") notify(msg, "error");
+                else alert(msg);
+            })
+            .catch((err) => {
+                if (spinner) spinner.style.display = "none";
+                if (typeof notify === "function") notify(err.message || "Save failed.", "error");
+            });
+        return;
+    }
+
     if (!newDesc) {
         notify("⚠️ Description cannot be empty.", "info");
         return;
     }
 
-    const modal = document.getElementById("editDescriptionModal");
-    const mode = modal.getAttribute("data-mode");
-    const linkId = modal.getAttribute("data-link-id");
+    const sheetId = getSheetIdByLinkId(linkId);
 
-    //const sheetId = window.qrLinkSheetMap?.[linkId] || null;
-    const sheetId =getSheetIdByLinkId(linkId);
-
-    console.log("linkeID>>",linkId);
-
-
-    //return;
-    //CMEDIT
+    console.log("linkeID>>", linkId);
 
     if (mode === "link" && sheetId) {
-        // ✅ Save description to LinkX sheet
         saveArtifactInfo({
-            targetLinkId: sheetId,              // Let backend map to correct sheet
-            startCell: "B2",                   // row 2 is still description row
-            basicInfo: newDesc,
-            fileType: "",
-            visibility: "",
-            linkOrText: "",
-            modalId: "editDescriptionModal"
-        });
-    } /*
-    else {
-        // ✅ Save to main asset (current behavior)
-        saveArtifactInfo({
+            targetLinkId: sheetId,
             startCell: "B2",
             basicInfo: newDesc,
             fileType: "",
@@ -1742,8 +1739,10 @@ function saveDescription() {
             linkOrText: "",
             modalId: "editDescriptionModal"
         });
+    } else {
+        notify("Missing spreadsheet link for this remote link.", "error");
+        return;
     }
-    */
 
     closeDescriptionModal();
 }
