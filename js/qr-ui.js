@@ -1604,6 +1604,136 @@ function confirmDialog(message, titleEmoji = "⚠️") {
 
 /********************** EDIT DESCRIPTION ***************/
 
+const MAX_PAGE_SLIDE_IMAGES = 5;
+let pageSlideEditState = null;
+
+function initPageSlideEditState() {
+    const existing =
+        typeof parseSlideImagesPipe === "function"
+            ? parseSlideImagesPipe(window.qrSlideImages)
+            : String(window.qrSlideImages || "")
+                  .split("|")
+                  .map((s) => s.trim())
+                  .filter(Boolean);
+    pageSlideEditState = {
+        keep: existing.map((url) => ({ url })),
+        pending: [],
+    };
+}
+
+function resetPageSlideEditState() {
+    if (pageSlideEditState?.pending) {
+        pageSlideEditState.pending.forEach((p) => {
+            if (p.previewUrl) URL.revokeObjectURL(p.previewUrl);
+        });
+    }
+    pageSlideEditState = null;
+}
+
+function getPageSlideImageCount() {
+    if (!pageSlideEditState) return 0;
+    return pageSlideEditState.keep.length + pageSlideEditState.pending.length;
+}
+
+function driveImagePreviewUrl(url) {
+    const m = String(url || "").match(/\/d\/([^/]+)/);
+    if (m) return `https://drive.google.com/thumbnail?id=${m[1]}&sz=w400`;
+    return url;
+}
+
+function renderPageSlideImagesList() {
+    const listEl = document.getElementById("pageSlideImagesList");
+    const addBtn = document.getElementById("btnAddPageSlideImage");
+    if (!listEl || !pageSlideEditState) return;
+
+    const esc =
+        typeof escapeHtml === "function"
+            ? escapeHtml
+            : (s) =>
+                  String(s || "")
+                      .replace(/&/g, "&amp;")
+                      .replace(/</g, "&lt;")
+                      .replace(/>/g, "&gt;")
+                      .replace(/"/g, "&quot;");
+
+    const total = getPageSlideImageCount();
+    if (addBtn) {
+        addBtn.disabled = total >= MAX_PAGE_SLIDE_IMAGES;
+        addBtn.style.opacity = total >= MAX_PAGE_SLIDE_IMAGES ? "0.5" : "";
+    }
+
+    if (total === 0) {
+        listEl.innerHTML = '<p class="qrt-slide-images-empty">No slide images yet.</p>';
+        return;
+    }
+
+    let html = "";
+    pageSlideEditState.keep.forEach((item, idx) => {
+        const src = driveImagePreviewUrl(item.url);
+        html += `<div class="qrt-slide-image-item">
+            <img src="${esc(src)}" alt="Slide ${idx + 1}">
+            <button type="button" class="qrt-slide-image-remove" title="Remove" onclick="removePageSlideKeepImage(${idx})">×</button>
+        </div>`;
+    });
+    pageSlideEditState.pending.forEach((item, idx) => {
+        const src = item.previewUrl || "";
+        html += `<div class="qrt-slide-image-item">
+            <img src="${esc(src)}" alt="New slide ${idx + 1}">
+            <button type="button" class="qrt-slide-image-remove" title="Remove" onclick="removePageSlidePendingImage(${idx})">×</button>
+        </div>`;
+    });
+    listEl.innerHTML = html;
+}
+
+function removePageSlideKeepImage(index) {
+    if (!pageSlideEditState) return;
+    pageSlideEditState.keep.splice(index, 1);
+    renderPageSlideImagesList();
+}
+
+function removePageSlidePendingImage(index) {
+    if (!pageSlideEditState?.pending) return;
+    const item = pageSlideEditState.pending[index];
+    if (item?.previewUrl) URL.revokeObjectURL(item.previewUrl);
+    pageSlideEditState.pending.splice(index, 1);
+    renderPageSlideImagesList();
+}
+
+function openPageSlideImageUpload() {
+    if (getPageSlideImageCount() >= MAX_PAGE_SLIDE_IMAGES) {
+        notify(`Maximum ${MAX_PAGE_SLIDE_IMAGES} slide images allowed.`, "info");
+        return;
+    }
+    window.uploadContext = "slide";
+    initUploadModalUi();
+    applyArtifactUploadUi("IMAGEFILE");
+    const fileInput = document.getElementById("filePicker");
+    if (fileInput) {
+        fileInput.value = "";
+        fileInput.accept = "image/*";
+        fileInput.setAttribute("capture", "environment");
+    }
+    updateFilePickerPreview();
+    document.getElementById("uploadModal").style.display = "flex";
+}
+
+function addPendingPageSlideImage(file, base64Data) {
+    if (!pageSlideEditState) initPageSlideEditState();
+    if (getPageSlideImageCount() >= MAX_PAGE_SLIDE_IMAGES) {
+        notify(`Maximum ${MAX_PAGE_SLIDE_IMAGES} slide images allowed.`, "error");
+        return;
+    }
+    const previewUrl = URL.createObjectURL(file);
+    pageSlideEditState.pending.push({
+        filename: file.name || `slide_${Date.now()}.jpg`,
+        data: base64Data,
+        mimeType: file.type || "image/jpeg",
+        previewUrl,
+    });
+    renderPageSlideImagesList();
+    notify("Image added. Save to upload.", "success");
+}
+
 /*
 function editDescription() {
     const titleEl = document.getElementById("assetTitle");
@@ -1629,6 +1759,7 @@ function editDescription(linkId = null, currentText = "") {
     const modal = document.getElementById("editDescriptionModal");
     const input = document.getElementById("newDescription");
     const hintEl = document.getElementById("descTagInfo");
+    const slideSection = document.getElementById("pageSlideImagesSection");
 
     if (!modal || !input) {
         notify("❌ Description modal components missing.", "error");
@@ -1636,6 +1767,9 @@ function editDescription(linkId = null, currentText = "") {
     }
 
     if (linkId) {
+        if (slideSection) slideSection.style.display = "none";
+        resetPageSlideEditState();
+        window.uploadContext = "artifact";
         let rawText = currentText || "";
         const headerBlock = document.querySelector(`[data-link-id="${linkId}"]`);
         if (headerBlock) {
@@ -1656,10 +1790,14 @@ function editDescription(linkId = null, currentText = "") {
         ).trim();
         modal.setAttribute("data-mode", "page");
         modal.removeAttribute("data-link-id");
+        if (slideSection) slideSection.style.display = "";
+        initPageSlideEditState();
+        renderPageSlideImagesList();
         if (hintEl) {
             hintEl.innerHTML =
                 "💡 <strong>Page title</strong> — shown at the top of this QR page only.<br>" +
                 "Saved in the master registry (<code>Page_Description</code>). Plain text; leave blank to hide the heading.<br>" +
+                "<strong>Slide images</strong> (optional, max 5) — stored in <code>SlideImages/</code> under your QR folder; registry column <code>Slide_Images</code> (pipe-separated links).<br>" +
                 "This is separate from each link banner (A, B, …). Use ✏️ on a link banner to edit that link’s title.";
         }
     }
@@ -1700,8 +1838,13 @@ function editDescription_old(linkId = null, currentText = "") {
 function closeDescriptionModal() {
    // const spinner = document.getElementById("fullScreenSpinner");
     const modal = document.getElementById("editDescriptionModal");
+    const slideSection = document.getElementById("pageSlideImagesSection");
 
    // if (spinner) spinner.style.display = "none";
+
+    resetPageSlideEditState();
+    window.uploadContext = "artifact";
+    if (slideSection) slideSection.style.display = "none";
 
     if (modal) {
         modal.style.display = "none";
@@ -1720,15 +1863,33 @@ function saveDescription() {
     const linkId = modal.getAttribute("data-link-id");
 
     if (mode === "page") {
+        const keepSlideUrls = (pageSlideEditState?.keep || []).map((i) => i.url);
+        const pendingSlideUploads = (pageSlideEditState?.pending || []).map((p) => ({
+            filename: p.filename,
+            data: p.data,
+            mimeType: p.mimeType,
+        }));
         closeDescriptionModal();
         const qrId = getQueryParam("id");
         const spinner = document.getElementById("fullScreenSpinner");
         if (spinner) spinner.style.display = "flex";
-        savePageDescription({ qrId, pageDescription: newDesc })
+        savePageDescription({
+            qrId,
+            pageDescription: newDesc,
+            keepSlideUrls,
+            pendingSlideUploads,
+        })
             .then(async (result) => {
                 if (spinner) spinner.style.display = "none";
                 if (result?.success) {
                     window.qrPageDescription = newDesc;
+                    window.qrSlideImages =
+                        typeof parseSlideImagesPipe === "function"
+                            ? parseSlideImagesPipe(result.slideImages)
+                            : String(result.slideImages || "")
+                                  .split("|")
+                                  .map((s) => s.trim())
+                                  .filter(Boolean);
                     if (typeof notify === "function") notify("Page description saved.", "success");
                     await loadAndRenderAsset(qrId);
                     return;
@@ -2003,7 +2164,9 @@ function updateFilePickerPreview() {
     const label = document.getElementById("filePickerLabel");
     if (!preview) return;
 
-    const cfg = getArtifactUploadUi(getCurrentArtifactFileType());
+    const cfg = getArtifactUploadUi(
+        window.uploadContext === "slide" ? "IMAGEFILE" : getCurrentArtifactFileType()
+    );
     const file = fileInput?.files?.[0];
     preview.classList.remove("is-selected", "is-empty");
     preview.replaceChildren();
@@ -2029,16 +2192,25 @@ function updateFilePickerPreview() {
 }
 
 function openUploadModal() {
+    window.uploadContext = "artifact";
     initUploadModalUi();
     applyArtifactUploadUi(getCurrentArtifactFileType());
-    document.getElementById("uploadModal").style.display = "flex";
     const fileInput = document.getElementById("filePicker");
-    if (fileInput) fileInput.value = "";
+    if (fileInput) {
+        fileInput.value = "";
+        fileInput.removeAttribute("capture");
+    }
+    document.getElementById("uploadModal").style.display = "flex";
     updateFilePickerPreview();
 }
 
 function closeUploadModal() {
     document.getElementById("uploadModal").style.display = "none";
+    const fileInput = document.getElementById("filePicker");
+    if (fileInput) fileInput.removeAttribute("capture");
+    if (window.uploadContext === "slide") {
+        window.uploadContext = "artifact";
+    }
 }
 
 if (typeof document !== "undefined") {
@@ -2082,7 +2254,10 @@ function simulateUseFile() {
     const file = fileInput.files[0];
 
     if (!file) {
-        const cfg = getArtifactUploadUi(getCurrentArtifactFileType());
+        const cfg =
+            window.uploadContext === "slide"
+                ? getArtifactUploadUi("IMAGEFILE")
+                : getArtifactUploadUi(getCurrentArtifactFileType());
         notify(`❌ ${cfg.pickError}`, "error");
         updateFilePickerPreview();
         return;
@@ -2093,9 +2268,22 @@ function simulateUseFile() {
         return;
     }
 
+    if (window.uploadContext === "slide") {
+        if (!String(file.type || "").startsWith("image/")) {
+            notify("⚠️ Please choose an image file.", "error");
+            return;
+        }
+    }
+
     const reader = new FileReader();
     reader.onload = function (event) {
-        selectedUploadedFileData = event.target.result.split(',')[1]; // base64
+        const base64 = event.target.result.split(",")[1];
+        if (window.uploadContext === "slide") {
+            addPendingPageSlideImage(file, base64);
+            closeUploadModal();
+            return;
+        }
+        selectedUploadedFileData = base64;
         selectedUploadedFileName = file.name;
         setUploadedFileStatus(`✅ Selected file: ${file.name}`, "selected");
         notify("✅ File attached successfully.", "success");

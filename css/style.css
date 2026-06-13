@@ -1672,6 +1672,71 @@ body {
     color: #444;
 }
 
+.qrt-label-muted {
+    font-weight: normal;
+    color: #888;
+    font-size: 12px;
+}
+
+.qrt-slide-images-hint {
+    font-size: 12px;
+    color: #666;
+    margin: 0 0 10px;
+    line-height: 1.45;
+}
+
+.qrt-slide-images-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+    min-height: 0;
+}
+
+.qrt-slide-image-item {
+    position: relative;
+    width: 88px;
+    height: 88px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #ddd;
+    background: #f5f5f5;
+}
+
+.qrt-slide-image-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.qrt-slide-image-remove {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 22px;
+    height: 22px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.65);
+    color: #fff;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+}
+
+.qrt-slide-add-btn {
+    width: 100%;
+    max-width: 280px;
+}
+
+.qrt-slide-images-empty {
+    font-size: 12px;
+    color: #999;
+    margin: 0 0 8px;
+}
+
 .qrt-message-email-btn {
     min-width: 200px;
 }

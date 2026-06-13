@@ -19,7 +19,7 @@
 
 
     <!-- -->
-    <link rel="stylesheet" href="./css/style.css?v=20260623g">
+    <link rel="stylesheet" href="./css/style.css?v=20260624a">
      <!-- -->
 
 </head>
@@ -521,6 +521,15 @@
             <textarea id="newDescription" class="qrt-field qrt-textarea"></textarea>
         </div>
 
+        <div id="pageSlideImagesSection" class="qrt-form-section qrt-section-slide-images" style="display:none;">
+            <label class="qrt-label">Slide images <span class="qrt-label-muted">(max 5)</span></label>
+            <p class="qrt-slide-images-hint">Optional images for the main-page slideshow (step 2). Stored in your QR folder under <code>SlideImages/</code>.</p>
+            <div id="pageSlideImagesList" class="qrt-slide-images-grid" aria-live="polite"></div>
+            <button type="button" id="btnAddPageSlideImage" class="qrt-upload-btn qrt-slide-add-btn" onclick="openPageSlideImageUpload()">
+                📷 Add image
+            </button>
+        </div>
+
             <div id="descTagInfo" class="qrt-hint-box">
                 💡 <strong>Page title</strong> — plain text for the top of this QR page
                 (<code>Page_Description</code> in the master registry). Leave blank to hide the heading.
@@ -627,7 +636,7 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "7.20";
+    const QRTagAll_Ver_ = "7.21";
 </script>
 
 
@@ -636,10 +645,10 @@
 <!-- bump ?v= whenever JS changes to force browsers to load the new files -->
 <script src="./js/qr-utils.js?v=20260623g"></script>
 <script src="./js/qr-auth.js?v=20260608b"></script>
-<script src="./js/qr-fetch.js?v=20260623e"></script>
+<script src="./js/qr-fetch.js?v=20260624a"></script>
 <script src="./js/qr-edit.js?v=20260608a"></script>
 <script src="./js/qr-dashboard.js?v=20260610b"></script>
-<script src="./js/qr-ui.js?v=20260623c"></script>
+<script src="./js/qr-ui.js?v=20260624a"></script>
 <script src="./js/qr-main.js?v=20260623b"></script>
 <!--   -->
 

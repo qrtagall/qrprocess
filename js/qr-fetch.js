@@ -340,20 +340,55 @@ async function sendOwnerReplyEmail({ serial, content }) {
     return invokeAppsScriptPostJson(payload, AppScriptBaseUrl_New);
 }
 
-/** Save master registry Page_Description (page title at top of QR page). */
-async function savePageDescription({ qrId, pageDescription }) {
+/** Save master registry Page_Description + Slide_Images (page title / slideshow). */
+async function savePageDescription({ qrId, pageDescription, keepSlideUrls, pendingSlideUploads }) {
     const token = await ensureAccessTokenForMutation();
     const sender =
         (typeof sessionEmail === "string" && sessionEmail) ||
         localStorage.getItem("qr_claimed_email") ||
         "";
+    const id = String(qrId || getQueryParam("id") || "").trim();
+    const keep = (keepSlideUrls || []).map((u) => String(u || "").trim()).filter(Boolean);
+    const pending = Array.isArray(pendingSlideUploads) ? pendingSlideUploads : [];
+
+    if (keep.length + pending.length > 5) {
+        throw new Error("Maximum 5 slide images allowed.");
+    }
+
+    const storage = resolveMasterQrStorageType();
     const payload = {
         mode: "updatePageDescription",
-        id: String(qrId || getQueryParam("id") || "").trim(),
+        id,
         pageDescription: String(pageDescription != null ? pageDescription : ""),
         email: String(sender).toLowerCase(),
         [QRTAGALL_AUTH_PARAM]: token,
     };
+
+    if (storage === "REMOTE") {
+        const newUrls = [];
+        for (const p of pending) {
+            if (!p?.data) continue;
+            const url = await uploadSlideImageToDriveFolder(
+                token,
+                id,
+                p.data,
+                p.filename || `slide_${Date.now()}.jpg`,
+                p.mimeType || "image/jpeg"
+            );
+            newUrls.push(url);
+        }
+        payload.slideImages = [...keep, ...newUrls].slice(0, 5).join("|");
+    } else if (pending.length) {
+        payload.slideImagesKeep = keep.join("|");
+        payload.slideUploads = pending.map((p) => ({
+            filename: p.filename || "slide.jpg",
+            data: p.data,
+            mimeType: p.mimeType || "image/jpeg",
+        }));
+    } else {
+        payload.slideImages = keep.join("|");
+    }
+
     return invokeAppsScriptPostJson(payload, AppScriptBaseUrl_New);
 }
 
@@ -510,9 +545,13 @@ async function driveApiRequest(token, url, options = {}) {
 }
 
 /** Upload artifact file to user's My Drive/QRTagAll/{qrId} (drive.file — no Apps Script POST). */
-async function uploadRemoteArtifactToDriveFolder(token, qrId, rawfiledata, rawfilename) {
+async function uploadRemoteArtifactToDriveFolder(token, qrId, rawfiledata, rawfilename, opts = {}) {
     const baseFolderId = await findOrCreateDriveFolder(token, "QRTagAll", null);
     const qrFolderId = await findOrCreateDriveFolder(token, qrId, baseFolderId);
+    let parentId = qrFolderId;
+    if (opts.subfolder) {
+        parentId = await findOrCreateDriveFolder(token, opts.subfolder, qrFolderId);
+    }
 
     const binary = atob(rawfiledata);
     const bytes = new Uint8Array(binary.length);
@@ -521,7 +560,7 @@ async function uploadRemoteArtifactToDriveFolder(token, qrId, rawfiledata, rawfi
     }
     const fileBlob = new Blob([bytes]);
     const safeName = rawfilename || `Upload_${Date.now()}`;
-    const metadata = { name: safeName, parents: [qrFolderId] };
+    const metadata = { name: safeName, parents: [parentId] };
 
     const form = new FormData();
     form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }));
@@ -553,6 +592,33 @@ async function uploadRemoteArtifactToDriveFolder(token, qrId, rawfiledata, rawfi
         }
     );
     return data.webViewLink || `https://drive.google.com/file/d/${fileId}/view`;
+}
+
+/** Slide images for page header — stored under QRTagAll/{qrId}/SlideImages/ (REMOTE). */
+async function uploadSlideImageToDriveFolder(token, qrId, rawfiledata, rawfilename, mimeType) {
+    return uploadRemoteArtifactToDriveFolder(token, qrId, rawfiledata, rawfilename, {
+        subfolder: "SlideImages",
+        mimeType,
+    });
+}
+
+/** Root link storage type for master page metadata (Page_Description, Slide_Images). */
+function resolveMasterQrStorageType() {
+    const blocks = typeof globalRemoteAssetList !== "undefined" ? globalRemoteAssetList : [];
+    const root =
+        blocks.find((b) => Number(b.linkSlot) === 1) ||
+        blocks.find((b) => b && b.email && b.email !== "unknown@user") ||
+        blocks[0];
+    return String(root?.storageType || "LOCAL").toUpperCase();
+}
+
+function parseSlideImagesPipe(raw) {
+    if (raw == null || raw === "") return [];
+    if (Array.isArray(raw)) return raw.map((s) => String(s || "").trim()).filter(Boolean);
+    return String(raw)
+        .split("|")
+        .map((s) => s.trim())
+        .filter(Boolean);
 }
 
 async function findOrCreateDriveFolder(token, name, parentId) {
@@ -1325,6 +1391,9 @@ async function fetchAllRemoteSheets(id, options = {}) {
         }
         window.qrPageDescription =
             data.pageDescription != null ? String(data.pageDescription) : "";
+        window.qrSlideImages = parseSlideImagesPipe(
+            data.slideImages != null ? data.slideImages : ""
+        );
         const parsed = parseRemoteSheetsPayload(data);
         if (parsed.length === 0 && data.found && data.data && data.data.assets) {
             const keys = Object.keys(data.data.assets);
