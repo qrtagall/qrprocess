@@ -60,14 +60,18 @@ async function verifyQRIdFromInput(inputId, statusId = "qrVerifyStatus", expectE
             status.textContent = "❌ QR not found (it should already exist)";
             status.style.color = "red";
             valid = false;
-        } else if (result.message.includes("already in use")) {
-            status.textContent = "✅ Existing QR ID verified and accessible";
+        }         else if (result.message.includes("already in use")) {
+            status.textContent = isIdPrefixStrictForCurrentCell()
+                ? "✅ Existing QR ID verified and accessible"
+                : "✅ QR found in registry";
             status.style.color = "green";
             valid = true;
         }
         else
         {
-            status.textContent = "❌ ID may be Invalid ";
+            status.textContent = isIdPrefixStrictForCurrentCell()
+                ? "❌ ID may be Invalid "
+                : "❌ QR not found in this cell's registry";
             status.style.color = "red";
             valid = false;
         }

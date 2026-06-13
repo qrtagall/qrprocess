@@ -56,9 +56,15 @@ function applyIdConfigPrefixesFromFetch(payload) {
     window.qrAllowedIdPrefixes = list
         .map((p) => String(p).trim().toUpperCase())
         .filter(Boolean);
+    window.qrIdPrefixStrict = !!(payload && payload.strict);
+}
+
+function isIdPrefixStrictForCurrentCell() {
+    return window.qrIdPrefixStrict === true;
 }
 
 function getAllowedIdPrefixesForCurrentCell() {
+    if (!isIdPrefixStrictForCurrentCell()) return [];
     const raw = window.qrAllowedIdPrefixes;
     if (Array.isArray(raw) && raw.length) return raw;
     const pageId = typeof getQueryParam === "function" ? getQueryParam("id") : "";
@@ -67,7 +73,7 @@ function getAllowedIdPrefixesForCurrentCell() {
 }
 
 /**
- * Add Linked QR: linked ID must use a prefix configured on this cell (IDConfig).
+ * Add Linked QR: strict cells → IDConfig prefix list; wildcard cells → registry check only.
  * @returns {{ok:boolean, message?:string}}
  */
 function validateLinkedQrPrefixAllowed(qrId) {
@@ -77,6 +83,9 @@ function validateLinkedQrPrefixAllowed(qrId) {
             ok: false,
             message: "❌ Invalid QR ID — must include a letter prefix (e.g. TMP1_…).",
         };
+    }
+    if (!isIdPrefixStrictForCurrentCell()) {
+        return { ok: true };
     }
     const allowed = getAllowedIdPrefixesForCurrentCell();
     if (!allowed.length) {
