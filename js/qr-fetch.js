@@ -745,7 +745,7 @@ function applyArtifactPolicyFromFetch(data) {
     }
 }
 
-/** Pre-fill claim-page asset name from template Description (B2); lock when templated. */
+/** Pre-fill claim-page page description from template B2; lock when templated. */
 function prefillAssetNameFromTemplate(description) {
     const text = String(description || "").trim();
     const input = document.getElementById("assetNameInput");
@@ -787,6 +787,8 @@ function qrTemplateRowsToCsv(rows) {
         .join("\n");
 }
 
+const QRTAGALL_DEFAULT_FIRST_ARTIFACT = "New Artifact 1";
+
 /** Create claim spreadsheet via Drive API only (drive.file — no spreadsheets scope). */
 async function createClaimSpreadsheetInFolder(token, folderId, qrId, assetName) {
     let csv;
@@ -796,10 +798,11 @@ async function createClaimSpreadsheetInFolder(token, folderId, qrId, assetName) 
     } else {
         csv = [
             `ID,${escapeCsvCell(qrId)}`,
-            `Description,${escapeCsvCell(assetName || "")}`,
+            "Description,",
             ",,",
             ",,",
             "Basic Info,FileType,Options,Local Link,DateTime",
+            `${escapeCsvCell(QRTAGALL_DEFAULT_FIRST_ARTIFACT)},TEXT,VIEW,,${escapeCsvCell(artifactDateTimeStamp())}`,
         ].join("\n");
     }
 
@@ -857,6 +860,7 @@ async function registerClaimOnMasterFetch({ id, sheetLink, token }) {
             registerClaim: true,
             id,
             sheet: sheetLink,
+            pageDescription: assetName || "",
         })
     );
     body.set(QRTAGALL_AUTH_PARAM, token);
