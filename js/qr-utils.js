@@ -693,7 +693,7 @@ function getPageSlideImageUrls() {
 
 function driveImagePreviewUrl(url) {
     const m = String(url || "").match(/\/d\/([^/]+)/);
-    if (m) return `https://drive.google.com/thumbnail?id=${m[1]}&sz=w800`;
+    if (m) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
     return url;
 }
 
@@ -834,6 +834,7 @@ function refreshPageHeroCarousel(id) {
         const img = document.createElement("img");
         img.src = driveImagePreviewUrl(url);
         img.alt = `Slide ${idx + 2}`;
+        img.className = "qrt-hero-slide-img";
         img.loading = idx === 0 ? "eager" : "lazy";
         img.decoding = "async";
         slide.appendChild(img);

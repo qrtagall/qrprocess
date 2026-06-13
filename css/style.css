@@ -229,7 +229,7 @@
         }
 
         #mainContent iframe,
-        #mainContent img {
+        #mainContent img:not(.qrt-hero-slide-img) {
             max-width: 100%;
             border: 1px solid #ccc;
             border-radius: 8px;
@@ -1691,13 +1691,19 @@ body {
     border-radius: 0 !important;
 }
 
-.qrt-hero-slide--image img {
+.qrt-hero-slide--image img,
+#mainContent .qrt-hero-slide--image img {
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: cover;
+    object-position: center;
     display: block;
-    border: none;
+    border: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    max-width: none;
     background: transparent;
+    vertical-align: top;
 }
 
 .qrt-hero-dots {
