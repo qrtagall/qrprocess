@@ -815,8 +815,20 @@ function createQrTapElement(id, qrCanvas, qrColor) {
 function refreshPageHeroCarousel(id) {
     stopPageHeroCarousel();
     const host = document.getElementById("pageHeroHost");
+    if (!host) return;
+
     let canvas = document.getElementById("qrCanvasHero");
-    if (!host || !canvas) return;
+    if (!canvas) {
+        const qrUrl = `https://process.qrtagall.com/?id=${encodeURIComponent(id)}`;
+        canvas = document.createElement("canvas");
+        canvas.id = "qrCanvasHero";
+        canvas.style.width = "200px";
+        canvas.style.height = "200px";
+        canvas.style.background = "#fff";
+        const wrapper = document.getElementById("qrWrapper");
+        if (wrapper) wrapper.insertBefore(canvas, host);
+        QRCode.toCanvas(canvas, qrUrl, getQrCanvasOptions(id, 200));
+    }
 
     const qrColor = getQrColorForId(id);
     const extraSlides = getPageSlideImageUrls();
@@ -901,7 +913,7 @@ function injectQRBlock(id) {
     qrDiv.style.textAlign = "center";
     qrDiv.style.marginBottom = "20px";
 
-    const qrUrl = `https://process.qrtagall.com/?id=${id}`;
+    const qrUrl = `https://process.qrtagall.com/?id=${encodeURIComponent(id)}`;
 
     const qrPrefix = getQrPrefixFromId(id);
     const qrColor = getQrColorForId(id);
@@ -920,8 +932,6 @@ function injectQRBlock(id) {
     qrCanvas.style.height = "200px";
     if (qrPrefix) qrCanvas.title = `QR type: ${qrPrefix}`;
 
-    QRCode.toCanvas(qrCanvas, qrUrl, getQrCanvasOptions(id, 200));
-
     const qrActions = document.createElement("div");
     qrActions.className = "qrt-qr-actions";
     qrActions.innerHTML = getQrActionButtonsMarkup(id);
@@ -930,7 +940,16 @@ function injectQRBlock(id) {
     qrDiv.appendChild(qrActions);
     container.insertBefore(qrDiv, document.getElementById("assetTitle"));
 
-    refreshPageHeroCarousel(id);
+    // Canvas must be in the document before refreshPageHeroCarousel (getElementById).
+    qrDiv.insertBefore(qrCanvas, heroHost);
+
+    QRCode.toCanvas(qrCanvas, qrUrl, getQrCanvasOptions(id, 200), (error) => {
+        if (error) {
+            console.error("Hero QR generation failed:", error);
+            return;
+        }
+        refreshPageHeroCarousel(id);
+    });
 }
 
 /** Tap QR image → small info popup (ID + masked owners). No navigation. */
