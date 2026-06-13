@@ -842,20 +842,6 @@ function refreshPageHeroCarousel(id) {
 
     viewport.appendChild(track);
 
-    const prevBtn = document.createElement("button");
-    prevBtn.type = "button";
-    prevBtn.className = "qrt-hero-nav qrt-hero-nav--prev";
-    prevBtn.setAttribute("aria-label", "Previous slide");
-    prevBtn.innerHTML = "‹";
-    prevBtn.addEventListener("click", () => goToPageHeroSlide(pageHeroCarouselIndex - 1, true));
-
-    const nextBtn = document.createElement("button");
-    nextBtn.type = "button";
-    nextBtn.className = "qrt-hero-nav qrt-hero-nav--next";
-    nextBtn.setAttribute("aria-label", "Next slide");
-    nextBtn.innerHTML = "›";
-    nextBtn.addEventListener("click", () => goToPageHeroSlide(pageHeroCarouselIndex + 1, true));
-
     const dots = document.createElement("div");
     dots.className = "qrt-hero-dots";
     dots.setAttribute("role", "tablist");
@@ -871,8 +857,6 @@ function refreshPageHeroCarousel(id) {
     }
 
     carousel.appendChild(viewport);
-    carousel.appendChild(prevBtn);
-    carousel.appendChild(nextBtn);
     carousel.appendChild(dots);
     host.appendChild(carousel);
 
