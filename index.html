@@ -19,7 +19,7 @@
 
 
     <!-- -->
-    <link rel="stylesheet" href="./css/style.css?v=20260623a">
+    <link rel="stylesheet" href="./css/style.css?v=20260623f">
      <!-- -->
 
 </head>
@@ -331,6 +331,18 @@
     </div>
 </div>
 
+<div id="qrInfoModal" class="qrt-modal" style="display:none;">
+    <div class="qrt-modal-panel qrt-modal-panel-center qrt-modal-panel-owner">
+        <div class="qrt-modal-header-stripe qrt-stripe-desc">
+            <h3>QR details</h3>
+        </div>
+        <div id="qrInfoBody" class="qrt-modal-body-text"></div>
+        <div class="qrt-modal-actions qrt-modal-actions-center">
+            <button type="button" class="qrt-btn qrt-btn-primary qrt-btn-lg" onclick="closeQrInfoModal()">Close</button>
+        </div>
+    </div>
+</div>
+
 
 <div id="fullScreenSpinner" style="
 	  display: none;
@@ -615,14 +627,14 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "7.17";
+    const QRTagAll_Ver_ = "7.18";
 </script>
 
 
 
 
 <!-- bump ?v= whenever JS changes to force browsers to load the new files -->
-<script src="./js/qr-utils.js?v=20260623c"></script>
+<script src="./js/qr-utils.js?v=20260623f"></script>
 <script src="./js/qr-auth.js?v=20260608b"></script>
 <script src="./js/qr-fetch.js?v=20260623e"></script>
 <script src="./js/qr-edit.js?v=20260608a"></script>

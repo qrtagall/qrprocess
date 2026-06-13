@@ -1630,6 +1630,33 @@ body {
     color: #fff;
 }
 
+.qrt-qr-tap {
+    display: inline-block;
+    cursor: pointer;
+    border-radius: 10px;
+    line-height: 0;
+}
+
+.qrt-qr-tap:focus-visible {
+    outline: 2px solid var(--primary, #0077cc);
+    outline-offset: 3px;
+}
+
+.qrt-qr-info-lines {
+    text-align: left;
+    line-height: 1.55;
+}
+
+.qrt-qr-info-lines > div + div {
+    margin-top: 12px;
+}
+
+.qrt-qr-info-id {
+    font-size: 13px;
+    word-break: break-all;
+    color: #444;
+}
+
 .qrt-message-email-btn {
     min-width: 200px;
 }

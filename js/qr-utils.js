@@ -657,12 +657,6 @@ function injectQRBlock(id) {
 
     const qrUrl = `https://process.qrtagall.com/?id=${id}`;
 
-    const qrLabel = document.createElement("div");
-    qrLabel.textContent = "🔗 Scan this QR to access again";
-    qrLabel.style.fontSize = "14px";
-    qrLabel.style.color = "#666";
-    qrLabel.style.marginBottom = "6px";
-
     const qrPrefix = getQrPrefixFromId(id);
     const qrColor = getQrColorForId(id);
 
@@ -678,10 +672,23 @@ function injectQRBlock(id) {
 
     QRCode.toCanvas(qrCanvas, qrUrl, getQrCanvasOptions(id, 200));
 
-    const qrLink = document.createElement("a");
-    qrLink.href = qrUrl;
-    qrLink.target = "_blank";
-    qrLink.appendChild(qrCanvas);
+    const qrTap = document.createElement("div");
+    qrTap.className = "qrt-qr-tap";
+    qrTap.setAttribute("role", "button");
+    qrTap.setAttribute("tabindex", "0");
+    qrTap.setAttribute("aria-label", "Show QR ID and owner details");
+    qrTap.title = "Show QR details";
+    qrTap.appendChild(qrCanvas);
+    qrTap.addEventListener("click", (e) => {
+        e.preventDefault();
+        openQrInfoModal(id);
+    });
+    qrTap.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            openQrInfoModal(id);
+        }
+    });
 
     const qrActions = document.createElement("div");
     qrActions.style.marginTop = "8px";
@@ -724,10 +731,52 @@ function injectQRBlock(id) {
     `;
 
 
-    qrDiv.appendChild(qrLabel);
-    qrDiv.appendChild(qrLink);
+    qrDiv.appendChild(qrTap);
     qrDiv.appendChild(qrActions);
     container.insertBefore(qrDiv, document.getElementById("assetTitle"));
+}
+
+/** Tap QR image → small info popup (ID + masked owners). No navigation. */
+function openQrInfoModal(qrId) {
+    const modal = document.getElementById("qrInfoModal");
+    const body = document.getElementById("qrInfoBody");
+    if (!modal || !body) return;
+
+    const esc =
+        typeof escapeHtml === "function"
+            ? escapeHtml
+            : (s) =>
+                  String(s || "")
+                      .replace(/&/g, "&amp;")
+                      .replace(/</g, "&lt;")
+                      .replace(/>/g, "&gt;")
+                      .replace(/"/g, "&quot;");
+
+    const id = String(qrId || (typeof getQueryParam === "function" ? getQueryParam("id") : "") || "-");
+    const owners =
+        typeof getMaskedOwnerList === "function" ? getMaskedOwnerList(true) : [];
+
+    let ownerBlock;
+    if (!owners.length) {
+        ownerBlock = '<span style="color:#888;">Not claimed yet</span>';
+    } else if (owners.length === 1) {
+        ownerBlock = esc(owners[0]);
+    } else {
+        ownerBlock = owners.map((o) => `• ${esc(o)}`).join("<br>");
+    }
+
+    body.innerHTML = `
+      <div class="qrt-qr-info-lines">
+        <div><strong>🆔 ID</strong><br><span class="qrt-qr-info-id">${esc(id)}</span></div>
+        <div><strong>👤 Owner</strong><br>${ownerBlock}</div>
+      </div>`;
+
+    modal.style.display = "flex";
+}
+
+function closeQrInfoModal() {
+    const modal = document.getElementById("qrInfoModal");
+    if (modal) modal.style.display = "none";
 }
 
 
