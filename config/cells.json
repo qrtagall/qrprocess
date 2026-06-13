@@ -6,7 +6,8 @@
     "TEMP": "IN",
 	"VEH": "IN",
 	"PLT": "IN",
-	"QRTAG": "IN"
+	"QRTAG": "IN",
+	"": "IN",
 	
   },
   "cells": {
