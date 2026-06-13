@@ -3,7 +3,8 @@
 // GS deployment map (source of truth: Cursor_code/GS/)
 // | GS file                  | Constant                 | Role                                      |
 // |--------------------------|--------------------------|-------------------------------------------|
-// | QRTagAll_MultiSheet.txt  | AppScriptBaseUrl_New     | Fetch assets, logClaim, clone, save       |
+// | QRTagAll_MultiSheet.txt  | getMultiSheetUrl(id)     | Fetch assets, logClaim, clone, save       |
+// | config/cells.json        | prefix → multiSheetUrl   | Tenant cell routing (see qr-cells.js)     |
 // | QRTagall.txt             | AppScriptBaseUrl         | resolve URLs, legacy logClaim             |
 // | QRTagAll_ClaimHandler.txt| AppScriptUserUrl         | Legacy; saves only — not used for claim     |
 // | SelfClaim.txt            | AppScriptUserUrlLOCAL    | Legacy; not used for claim                  |
@@ -16,8 +17,20 @@ const AppScriptUserUrl = "https://script.google.com/macros/s/AKfycbzlXNlTnCL9MWY
 const AppScriptUserUrlLOCAL = "https://script.google.com/macros/s/AKfycbxoAVj1O4ZAaaDRCzp3-sNaS_v1XmwQbO7oCWWi8ZnauoidAaXj0E1zZGVnIcKEg8JfQQ/exec";
 const AppScriptDriveViewUserUrl = "https://script.google.com/macros/s/AKfycbxrLNo-pwzQWtkfl6QBUeZDyxsAxBub-QQsW6jqMLxPz6KPV-62wb8igpgbp21FQhND/exec";
 
-/** Master registry + fetch — deploy GS/QRTagAll_MultiSheet.txt here */
+/** @deprecated Use getMultiSheetUrl(qrId) — kept for legacy references */
 const AppScriptBaseUrl_New = "https://script.google.com/macros/s/AKfycbytl1ePW3PbGoAUlnwBtCvKruI5SMQUcYxypyK399mjau981sjwtyEcSzMkYSTlOLmY/exec";
+
+function resolveQrIdForRouting(explicitId) {
+    return String(explicitId || getQueryParam("id") || "").trim();
+}
+
+function multiSheetUrlForQr(explicitId) {
+    const qrId = resolveQrIdForRouting(explicitId);
+    if (typeof getMultiSheetUrl === "function") {
+        return getMultiSheetUrl(qrId || (typeof getDefaultCellKey === "function" ? getDefaultCellKey() : ""));
+    }
+    return AppScriptBaseUrl_New;
+}
 
 // Global to hold asset metadata
 let sheetID = "";  // populated after fetch
@@ -35,15 +48,20 @@ function normalizeStorageType(storageType) {
     return t === "LOCAL" ? "LOCAL" : "REMOTE";
 }
 
-function getClaimScriptUrl(storageType) {
-    return normalizeStorageType(storageType) === "LOCAL"
-        ? QRTAGALL_CLAIM_URL_LOCAL
-        : QRTAGALL_CLAIM_URL_REMOTE;
+function getClaimScriptUrl(storageType, qrId) {
+    const id = resolveQrIdForRouting(qrId);
+    if (normalizeStorageType(storageType) === "LOCAL") {
+        return multiSheetUrlForQr(id);
+    }
+    if (typeof getClaimRemoteUrl === "function") {
+        return getClaimRemoteUrl(id);
+    }
+    return QRTAGALL_CLAIM_URL_REMOTE;
 }
 
 /** Artifact saves: LOCAL → MultiSheet; REMOTE → browser Drive API (see saveGdriveArtifactInBrowser) */
-function getArtifactSaveScriptUrl(storageType) {
-    return getClaimScriptUrl(storageType);
+function getArtifactSaveScriptUrl(storageType, qrId) {
+    return getClaimScriptUrl(storageType, qrId);
 }
 
 /** @deprecated Use getClaimScriptUrl(storageType) */
@@ -252,7 +270,7 @@ async function invokeSaveRequest(targetUrl, callbackName) {
  * Token stays in payload JSON, not in redirect URL.
  */
 async function invokeAppsScriptPostJson(payload, scriptUrl) {
-    const url = scriptUrl || getArtifactSaveScriptUrl(payload.storageType);
+    const url = scriptUrl || getArtifactSaveScriptUrl(payload.storageType, payload.id || getQueryParam("id"));
     const token = payload[QRTAGALL_AUTH_PARAM] || payload.access_token || getStoredAccessToken();
     const payloadForJson = { ...payload };
     delete payloadForJson[QRTAGALL_AUTH_PARAM];
@@ -337,7 +355,7 @@ async function sendOwnerReplyEmail({ serial, content }) {
         email: String(sender).toLowerCase(),
         [QRTAGALL_AUTH_PARAM]: token,
     };
-    return invokeAppsScriptPostJson(payload, AppScriptBaseUrl_New);
+    return invokeAppsScriptPostJson(payload, multiSheetUrlForQr());
 }
 
 /** Save master registry Page_Description + Slide_Images (page title / slideshow). */
@@ -389,7 +407,7 @@ async function savePageDescription({ qrId, pageDescription, keepSlideUrls, pendi
         payload.slideImages = keep.join("|");
     }
 
-    return invokeAppsScriptPostJson(payload, AppScriptBaseUrl_New);
+    return invokeAppsScriptPostJson(payload, multiSheetUrlForQr(id));
 }
 
 /** Guest MESSAGEEMAIL — send via MultiSheet (owner email never exposed to client). */
@@ -407,7 +425,7 @@ async function sendOwnerMessageEmail({ recipientQrId, content }) {
         email: String(sender).toLowerCase(),
         [QRTAGALL_AUTH_PARAM]: token,
     };
-    return invokeAppsScriptPostJson(payload, AppScriptBaseUrl_New);
+    return invokeAppsScriptPostJson(payload, multiSheetUrlForQr(recipientQrId));
 }
 
 /** Server check before adding a new artifact row (IDConfig EXTRA_ARTIFACT per prefix). */
@@ -422,7 +440,7 @@ async function checkArtifactLimitBeforeInsert({ sheetId, qrId, email }) {
     });
     appendAuthToUrlParams(params, token);
     const cb = "qrArtifactLimit_" + Date.now();
-    const url = `${AppScriptBaseUrl_New}?${params.toString()}&callback=${cb}`;
+    const url = `${multiSheetUrlForQr(qrId)}?${params.toString()}&callback=${cb}`;
     const data = await invokeAppsScriptGet(url, cb, { timeoutMs: 30000, softFail: false });
     if (!data || data.success === false) {
         throw new Error(
@@ -837,7 +855,7 @@ function artifactDateTimeStamp() {
 /** Claim template rows for REMOTE CSV create (falls back to empty sheet). */
 async function fetchClaimTemplateRows(qrId) {
     const callbackName = "claimTpl_" + Date.now();
-    const url = `${AppScriptBaseUrl_New}?mode=claimTemplate&id=${encodeURIComponent(qrId)}&callback=${callbackName}`;
+    const url = `${multiSheetUrlForQr(qrId)}?mode=claimTemplate&id=${encodeURIComponent(qrId)}&callback=${callbackName}`;
     const data = await invokeAppsScriptGet(url, callbackName, { timeoutMs: 30000, softFail: true });
     if (!data || data.success === false) return null;
     applyArtifactPolicyFromFetch(data);
@@ -930,7 +948,7 @@ async function registerClaimOnMasterFetch({ id, sheetLink, token, pageDescriptio
     );
     body.set(QRTAGALL_AUTH_PARAM, token);
 
-    const res = await fetch(QRTAGALL_CLAIM_URL_LOCAL, {
+    const res = await fetch(multiSheetUrlForQr(id), {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: body.toString(),
@@ -1008,7 +1026,7 @@ function fireClaimBeacon(claimUrl) {
 }
 
 function buildInitClaimUrl({ id, asset, email, storageType, claimScriptUrl, callbackName, accessToken }) {
-    const base = claimScriptUrl || QRTAGALL_CLAIM_URL_LOCAL;
+    const base = claimScriptUrl || multiSheetUrlForQr(id);
     const token = accessToken || getStoredAccessToken();
     let url =
         `${base}?initClaim=${encodeURIComponent(id)}` +
@@ -1029,7 +1047,7 @@ function buildInitClaimUrl({ id, asset, email, storageType, claimScriptUrl, call
 /** POST initClaim — authToken in form body (reliable; GET may strip token on redirect). */
 async function requestClaimViaPost({ id, asset, email, storageType, claimScriptUrl }) {
     const accessToken = await ensureAccessTokenForMutation();
-    const base = claimScriptUrl || QRTAGALL_CLAIM_URL_LOCAL;
+    const base = claimScriptUrl || multiSheetUrlForQr(id);
     const payload = {
         initClaim: id,
         asset: asset || "Unnamed Asset",
@@ -1110,7 +1128,7 @@ async function requestClaimViaJsonp({ id, asset, email, storageType, claimScript
 function submitRemoteClaimFormPost({ id, assetName, email, claimScriptUrl, authToken, redirect }) {
     const form = document.createElement("form");
     form.method = "POST";
-    form.action = claimScriptUrl || QRTAGALL_CLAIM_URL_REMOTE;
+    form.action = claimScriptUrl || getClaimRemoteUrl(id);
     form.target = "_self";
     form.style.display = "none";
 
@@ -1153,7 +1171,7 @@ async function waitForClaimedAsset(id, maxAttempts = 10, delayMs = 2000) {
  */
 async function completeQRClaim({ id, assetName, email, storageType, onStatus }) {
     const storage = normalizeStorageType(storageType);
-    const claimScriptUrl = getClaimScriptUrl(storage);
+    const claimScriptUrl = getClaimScriptUrl(storage, id);
     const notify = (msg) => {
         if (typeof onStatus === "function") onStatus(msg);
         console.log("[claim]", msg);
@@ -1347,7 +1365,7 @@ function renderThumbnailGrid(thumbnails) {
 
 async function fetchAllRemoteSheets(id, options = {}) {
     const callbackName = "handleQRTagAllResponse_" + Date.now();
-    let url = `${AppScriptBaseUrl_New}?id=${encodeURIComponent(id)}&callback=${callbackName}`;
+    let url = `${multiSheetUrlForQr(id)}?id=${encodeURIComponent(id)}&callback=${callbackName}`;
 
     // Count a view only when explicitly requested (initial page load). The
     // server excludes the owner; pass the logged-in email so owner visits skip.
@@ -1449,7 +1467,7 @@ function triggerLink_get(params, modalId = null) {
     const urlParams = new URLSearchParams(params);
     const storageType = urlParams.get("storageType") || "REMOTE";
 
-    const baseUrl = storageType === "LOCAL" ? AppScriptBaseUrl_New : AppScriptUserUrl;
+    const baseUrl = storageType === "LOCAL" ? multiSheetUrlForQr(id) : getClaimRemoteUrl(id);
 
 
 
@@ -1533,10 +1551,11 @@ async function triggerLink_get(params, modalId = null) {
             const payload = Object.fromEntries(urlParams.entries());
             payload[QRTAGALL_AUTH_PARAM] = token;
             payload.access_token = token;
+            const pageQrId = getQueryParam("id") || payload.id || "";
 
             let result;
             if (storageType === "LOCAL") {
-                result = await invokeAppsScriptPostJson(payload, AppScriptBaseUrl_New);
+                result = await invokeAppsScriptPostJson(payload, multiSheetUrlForQr(pageQrId));
                 const authMsg = result?.message || "";
                 if (
                     !result?.success &&
@@ -1548,7 +1567,7 @@ async function triggerLink_get(params, modalId = null) {
                     token = await getAccessToken();
                     payload[QRTAGALL_AUTH_PARAM] = token;
                     payload.access_token = token;
-                    result = await invokeAppsScriptPostJson(payload, AppScriptBaseUrl_New);
+                    result = await invokeAppsScriptPostJson(payload, multiSheetUrlForQr(pageQrId));
                     window.__qrSaveAuthRetried = false;
                 }
             } else {
@@ -1582,7 +1601,7 @@ async function triggerLink_get(params, modalId = null) {
                             String(resolvedStorage).toUpperCase() === "LOCAL");
                     if (shouldUseLocal || driveFileDenied) {
                         payload.storageType = "LOCAL";
-                        result = await invokeAppsScriptPostJson(payload, AppScriptBaseUrl_New);
+                        result = await invokeAppsScriptPostJson(payload, multiSheetUrlForQr(pageQrId));
                         if (result?.success) {
                             await finishPostSave(result);
                             return;
@@ -1639,7 +1658,10 @@ async function triggerLink_get(params, modalId = null) {
                     : (localStorage.getItem("qr_claimed_email") || sessionStorage.getItem("qr_claimed_email") || "");
             if (email) postPayload.email = email;
 
-            const scriptUrl = getArtifactSaveScriptUrl(postPayload.storageType || "LOCAL");
+            const scriptUrl = getArtifactSaveScriptUrl(
+                postPayload.storageType || "LOCAL",
+                postPayload.id || getQueryParam("id")
+            );
             const result = await invokeAppsScriptPostJson(postPayload, scriptUrl);
             if (spinner) spinner.style.display = "none";
             if (modalId) {
@@ -1740,7 +1762,7 @@ async function triggerLink_get(params, modalId = null) {
     };
 
     const storageType = urlParams.get("storageType") || "REMOTE";
-    const baseUrl = getArtifactSaveScriptUrl(storageType);
+    const baseUrl = getArtifactSaveScriptUrl(storageType, urlParams.get("id") || getQueryParam("id"));
     const buildSaveUrl = () => {
         const sep = params.includes("?") ? "&" : "?";
         return `${baseUrl}?${params}${sep}callback=${callbackName}`;
@@ -1850,7 +1872,7 @@ async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null
         return;
     }
 
-    const baseUrl = getArtifactSaveScriptUrl(paramStorage);
+    const baseUrl = getArtifactSaveScriptUrl(paramStorage, urlParams.get("id") || getQueryParam("id"));
     if (modalId) {
         const modal = document.getElementById(modalId);
         if (modal) modal.style.display = "none";
@@ -1980,8 +2002,12 @@ async function getAccessToken() {
 
 
 
-async function fetchThumbnails(folderId) {
-    const endpoint = `https://script.google.com/macros/s/AKfycbxrLNo-pwzQWtkfl6QBUeZDyxsAxBub-QQsW6jqMLxPz6KPV-62wb8igpgbp21FQhND/exec?mode=thumbnails&folderId=${folderId}`;
+async function fetchThumbnails(folderId, qrId) {
+    const viewBase =
+        typeof getViewDriveUrl === "function"
+            ? getViewDriveUrl(qrId || getQueryParam("id"))
+            : AppScriptDriveViewUserUrl;
+    const endpoint = `${viewBase}?mode=thumbnails&folderId=${encodeURIComponent(folderId)}`;
 
     try {
         const res = await fetch(endpoint);
@@ -2057,7 +2083,7 @@ async function fetchUserDashboard() {
     params.set(QRTAGALL_AUTH_PARAM, token);
 
     const cb = "qrUserDash_" + Date.now();
-    const url = `${AppScriptBaseUrl_New}?${params.toString()}&callback=${encodeURIComponent(cb)}`;
+    const url = `${multiSheetUrlForQr()}?${params.toString()}&callback=${encodeURIComponent(cb)}`;
     return invokeAppsScriptGet(url, cb, { timeoutMs: 45000, softFail: false });
 }
 
@@ -2084,7 +2110,7 @@ async function fetchUserDashboardDeepScanOne(scanId) {
     params.set(QRTAGALL_AUTH_PARAM, token);
 
     const cb = "qrUserDashOne_" + Date.now();
-    const url = `${AppScriptBaseUrl_New}?${params.toString()}&callback=${encodeURIComponent(cb)}`;
+    const url = `${multiSheetUrlForQr(scanId)}?${params.toString()}&callback=${encodeURIComponent(cb)}`;
     return invokeAppsScriptGet(url, cb, { timeoutMs: 90000, softFail: false });
 }
 
@@ -2121,7 +2147,7 @@ async function verifyTransferTargetEmail(masterId, targetEmail) {
     params.set(QRTAGALL_AUTH_PARAM, token);
 
     const cb = "qrXferVerify_" + Date.now();
-    const url = `${AppScriptBaseUrl_New}?${params.toString()}&callback=${encodeURIComponent(cb)}`;
+    const url = `${multiSheetUrlForQr(masterId)}?${params.toString()}&callback=${encodeURIComponent(cb)}`;
     return invokeAppsScriptGet(url, cb, { timeoutMs: 45000, softFail: false });
 }
 
@@ -2144,7 +2170,7 @@ async function invokeTransferOwnership({ masterId, targetEmail }) {
         email: session,
         [QRTAGALL_AUTH_PARAM]: token,
     };
-    return invokeAppsScriptPostJson(payload, AppScriptBaseUrl_New);
+    return invokeAppsScriptPostJson(payload, multiSheetUrlForQr(masterId));
 }
 
 

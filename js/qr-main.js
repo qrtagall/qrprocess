@@ -33,6 +33,10 @@ window.qrLinkSheetMap = {};
  */
 async function initQRTagAll() {
 
+    if (typeof ensureQrCellsReady === "function") {
+        await ensureQrCellsReady();
+    }
+
     const id = getQueryParam("id");
     const resultDiv = document.getElementById("result");
     const spinner = document.getElementById("spinner");
@@ -90,6 +94,9 @@ async function initQRTagAll() {
         const result = await Verifyidx(id);
         if (result === "VALID") {
             localStorage.setItem(cacheKey, "VALID");
+            if (typeof rememberActiveQrCell === "function") {
+                rememberActiveQrCell(id);
+            }
             await loadAndRenderAsset(id);
         } else {
             throw new Error("INVALID");

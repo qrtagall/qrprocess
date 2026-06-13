@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "defaultCell": "IN",
+  "prefixAliases": {
+    "TMP": "IN",
+    "TEMP": "IN",
+	"VEH": "IN",
+	"PLT": "IN",
+	"QRTAG": "IN"
+	
+  },
+  "cells": {
+    "IN": {
+      "active": true,
+      "label": "QRTagAll default (legacy + production)",
+      "multiSheetUrl": "https://script.google.com/macros/s/AKfycbytl1ePW3PbGoAUlnwBtCvKruI5SMQUcYxypyK399mjau981sjwtyEcSzMkYSTlOLmY/exec",
+      "legacyResolveUrl": "https://script.google.com/macros/s/AKfycby4lP7EpKCXew58BDqgZn39yxg_FmT1VilLPP0pthiDuTV2k6KCoOrSvbkM8mEBJvLUww/exec",
+      "viewDriveUrl": "https://script.google.com/macros/s/AKfycbxrLNo-pwzQWtkfl6QBUeZDyxsAxBub-QQsW6jqMLxPz6KPV-62wb8igpgbp21FQhND/exec",
+      "claimRemoteUrl": "https://script.google.com/macros/s/AKfycbzlXNlTnCL9MWYfu6ejMBXfSzhQp0SPTjL5YzmKiXTG7-3Lk4GhuBi-A8gzgf05WJdo/exec",
+      "masterRegistryId": "1k1artWJ9sE472JRPH4GuLaDYkrrRmSRuDjMBfAIUKCE",
+      "masterRegistryUrl": "https://docs.google.com/spreadsheets/d/1k1artWJ9sE472JRPH4GuLaDYkrrRmSRuDjMBfAIUKCE/edit"
+    }
+  }
+}

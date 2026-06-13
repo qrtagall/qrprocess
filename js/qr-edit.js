@@ -818,7 +818,7 @@ async function deleteSelectedQRs(selected) {
             email: (typeof sessionEmail === "string" ? sessionEmail : "") || "",
         };
 
-        const result = await invokeAppsScriptPostJson(payload, getArtifactSaveScriptUrl("LOCAL"));
+        const result = await invokeAppsScriptPostJson(payload, getArtifactSaveScriptUrl("LOCAL", masterId));
 
         if (spinner) spinner.style.display = "none";
 
