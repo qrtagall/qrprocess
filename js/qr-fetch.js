@@ -1393,6 +1393,9 @@ async function fetchAllRemoteSheets(id, options = {}) {
         } else if (data.claimStorage) {
             window.qrClaimStorageOptions = data.claimStorage;
         }
+        if (data.idConfigPrefixes && typeof applyIdConfigPrefixesFromFetch === "function") {
+            applyIdConfigPrefixesFromFetch(data.idConfigPrefixes);
+        }
         applyArtifactPolicyFromFetch(data);
         if (data.templateDescription) {
             prefillAssetNameFromTemplate(data.templateDescription);

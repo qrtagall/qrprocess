@@ -50,6 +50,47 @@ function getRoutingPrefixFromId(id) {
     return prefix;
 }
 
+/** Active ID_PREFIX list from this cell's MasterConfig IDConfig (set on fetch). */
+function applyIdConfigPrefixesFromFetch(payload) {
+    const list = payload && Array.isArray(payload.prefixes) ? payload.prefixes : [];
+    window.qrAllowedIdPrefixes = list
+        .map((p) => String(p).trim().toUpperCase())
+        .filter(Boolean);
+}
+
+function getAllowedIdPrefixesForCurrentCell() {
+    const raw = window.qrAllowedIdPrefixes;
+    if (Array.isArray(raw) && raw.length) return raw;
+    const pageId = typeof getQueryParam === "function" ? getQueryParam("id") : "";
+    const pagePrefix = getQrPrefixFromId(pageId);
+    return pagePrefix ? [pagePrefix] : [];
+}
+
+/**
+ * Add Linked QR: linked ID must use a prefix configured on this cell (IDConfig).
+ * @returns {{ok:boolean, message?:string}}
+ */
+function validateLinkedQrPrefixAllowed(qrId) {
+    const prefix = getQrPrefixFromId(qrId);
+    if (!prefix || isLegacyNumericQrPrefix(prefix)) {
+        return {
+            ok: false,
+            message: "❌ Invalid QR ID — must include a letter prefix (e.g. TMP1_…).",
+        };
+    }
+    const allowed = getAllowedIdPrefixesForCurrentCell();
+    if (!allowed.length) {
+        return { ok: true };
+    }
+    if (!allowed.includes(prefix)) {
+        return {
+            ok: false,
+            message: `❌ Prefix "${prefix}" is not allowed on this cell. Allowed: ${allowed.join(", ")}`,
+        };
+    }
+    return { ok: true };
+}
+
 function getQrColorForPrefix(prefix) {
     const key = String(prefix || "").toUpperCase();
     if (QR_PREFIX_COLOR_MAP[key]) return QR_PREFIX_COLOR_MAP[key];

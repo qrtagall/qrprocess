@@ -42,6 +42,15 @@ async function verifyQRIdFromInput(inputId, statusId = "qrVerifyStatus", expectE
     status.textContent = "⏳ Verifying QR ID...";
     status.style.color = "gray";
 
+    if (expectExisting && typeof validateLinkedQrPrefixAllowed === "function") {
+        const prefixCheck = validateLinkedQrPrefixAllowed(newId);
+        if (!prefixCheck.ok) {
+            status.textContent = prefixCheck.message;
+            status.style.color = "red";
+            return false;
+        }
+    }
+
     const result = await verifyQRIdValue(newId);
     let valid = result.valid;
 
