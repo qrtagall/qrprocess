@@ -309,6 +309,9 @@ async function loadAndRenderUserDashboard() {
         if (typeof ensureQrCellsReady === "function") {
             await ensureQrCellsReady();
         }
+        if (typeof prefetchClientScriptsFromMultiSheet === "function") {
+            await prefetchClientScriptsFromMultiSheet();
+        }
         const data = await fetchUserDashboard();
         qrDashboardBaseData = data;
         renderUserDashboardContent(data);

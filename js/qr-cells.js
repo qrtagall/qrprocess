@@ -1,34 +1,34 @@
 /**
- * Tenant cell routing — prefix → backend URLs (Layer 2).
- * Loaded from config/cells.json; embedded defaults match today's single deployment.
- * OAuth stays on process.qrtagall.com (no subdomain cells).
+ * Tenant cell routing — prefix → MultiSheet exec URL (Layer 2 bootstrap).
+ * Helper script URLs (viewDrive, legacy resolve) come from GeneralConfig via
+ * MultiSheet fetch response (clientScripts) — not cells.json.
  */
 (function () {
+    const EMBEDDED_CLIENT_SCRIPTS = {
+        viewDriveUrl:
+            "https://script.google.com/macros/s/AKfycbxrLNo-pwzQWtkfl6QBUeZDyxsAxBub-QQsW6jqMLxPz6KPV-62wb8igpgbp21FQhND/exec",
+        legacyResolveUrl:
+            "https://script.google.com/macros/s/AKfycby4lP7EpKCXew58BDqgZn39yxg_FmT1VilLPP0pthiDuTV2k6KCoOrSvbkM8mEBJvLUww/exec",
+        claimRemoteUrl:
+            "https://script.google.com/macros/s/AKfycbzlXNlTnCL9MWYfu6ejMBXfSzhQp0SPTjL5YzmKiXTG7-3Lk4GhuBi-A8gzgf05WJdo/exec",
+    };
+
     const EMBEDDED_CELLS = {
         version: 1,
         defaultCell: "IN",
         prefixAliases: { TMP: "IN", TEMP: "IN", VEH: "IN", PLT: "IN", QRTAG: "IN" },
         cells: {
             IN: {
-                active: true,
-                label: "QRTagAll default",
                 multiSheetUrl:
                     "https://script.google.com/macros/s/AKfycbytl1ePW3PbGoAUlnwBtCvKruI5SMQUcYxypyK399mjau981sjwtyEcSzMkYSTlOLmY/exec",
-                legacyResolveUrl:
-                    "https://script.google.com/macros/s/AKfycby4lP7EpKCXew58BDqgZn39yxg_FmT1VilLPP0pthiDuTV2k6KCoOrSvbkM8mEBJvLUww/exec",
-                viewDriveUrl:
-                    "https://script.google.com/macros/s/AKfycbxrLNo-pwzQWtkfl6QBUeZDyxsAxBub-QQsW6jqMLxPz6KPV-62wb8igpgbp21FQhND/exec",
-                claimRemoteUrl:
-                    "https://script.google.com/macros/s/AKfycbzlXNlTnCL9MWYfu6ejMBXfSzhQp0SPTjL5YzmKiXTG7-3Lk4GhuBi-A8gzgf05WJdo/exec",
-                masterRegistryId: "1k1artWJ9sE472JRPH4GuLaDYkrrRmSRuDjMBfAIUKCE",
-                masterRegistryUrl:
-                    "https://docs.google.com/spreadsheets/d/1k1artWJ9sE472JRPH4GuLaDYkrrRmSRuDjMBfAIUKCE/edit",
             },
         },
     };
 
     let cellsConfig = null;
     let cellsLoadPromise = null;
+    let clientScripts = { ...EMBEDDED_CLIENT_SCRIPTS };
+    let clientScriptsLoadPromise = null;
 
     function cloneEmbeddedConfig() {
         return JSON.parse(JSON.stringify(EMBEDDED_CELLS));
@@ -53,6 +53,49 @@
             cellsConfig = normalizeCellsConfig(null);
         }
         return cellsConfig;
+    }
+
+    function mergeClientScripts(partial) {
+        if (!partial || typeof partial !== "object") return;
+        if (partial.viewDriveUrl) clientScripts.viewDriveUrl = String(partial.viewDriveUrl);
+        if (partial.legacyResolveUrl) clientScripts.legacyResolveUrl = String(partial.legacyResolveUrl);
+        if (partial.claimRemoteUrl) clientScripts.claimRemoteUrl = String(partial.claimRemoteUrl);
+    }
+
+    function applyClientScriptsFromServer(data) {
+        if (data && data.clientScripts) {
+            mergeClientScripts(data.clientScripts);
+        }
+    }
+
+    async function prefetchClientScriptsFromMultiSheet(qrIdOrPrefix) {
+        if (clientScriptsLoadPromise) {
+            return clientScriptsLoadPromise;
+        }
+        const baseUrl =
+            typeof getMultiSheetUrl === "function"
+                ? getMultiSheetUrl(qrIdOrPrefix || "")
+                : EMBEDDED_CELLS.cells.IN.multiSheetUrl;
+        if (!baseUrl) return clientScripts;
+
+        clientScriptsLoadPromise = (async () => {
+            try {
+                const cb = "qrClientCfg_" + Date.now();
+                const url = `${baseUrl}?mode=clientConfig&callback=${encodeURIComponent(cb)}`;
+                if (typeof invokeAppsScriptGet === "function") {
+                    const data = await invokeAppsScriptGet(url, cb, {
+                        timeoutMs: 20000,
+                        softFail: true,
+                    });
+                    applyClientScriptsFromServer(data);
+                }
+            } catch (err) {
+                console.warn("[qr-cells] clientConfig prefetch failed — using embedded defaults", err);
+            }
+            return clientScripts;
+        })();
+
+        return clientScriptsLoadPromise;
     }
 
     function isLegacyNumericPrefix(prefix) {
@@ -140,17 +183,20 @@
         return getQrCell(qrIdOrPrefix).multiSheetUrl;
     }
 
-    function getLegacyResolveUrl(qrIdOrPrefix) {
-        return getQrCell(qrIdOrPrefix).legacyResolveUrl;
+    function getLegacyResolveUrl() {
+        return clientScripts.legacyResolveUrl || EMBEDDED_CLIENT_SCRIPTS.legacyResolveUrl;
     }
 
-    function getViewDriveUrl(qrIdOrPrefix) {
-        return getQrCell(qrIdOrPrefix).viewDriveUrl;
+    function getViewDriveUrl() {
+        return clientScripts.viewDriveUrl || EMBEDDED_CLIENT_SCRIPTS.viewDriveUrl;
     }
 
     function getClaimRemoteUrl(qrIdOrPrefix) {
-        const cell = getQrCell(qrIdOrPrefix);
-        return cell.claimRemoteUrl || cell.multiSheetUrl;
+        return (
+            clientScripts.claimRemoteUrl ||
+            getMultiSheetUrl(qrIdOrPrefix) ||
+            EMBEDDED_CLIENT_SCRIPTS.claimRemoteUrl
+        );
     }
 
     function getDefaultCellKey() {
@@ -171,4 +217,6 @@
     window.getClaimRemoteUrl = getClaimRemoteUrl;
     window.getDefaultCellKey = getDefaultCellKey;
     window.rememberActiveQrCell = rememberActiveQrCell;
+    window.applyClientScriptsFromServer = applyClientScriptsFromServer;
+    window.prefetchClientScriptsFromMultiSheet = prefetchClientScriptsFromMultiSheet;
 })();

@@ -1385,6 +1385,9 @@ async function fetchAllRemoteSheets(id, options = {}) {
             console.warn("fetchAllRemoteSheets: no response");
             return [];
         }
+        if (typeof applyClientScriptsFromServer === "function") {
+            applyClientScriptsFromServer(data);
+        }
         if (data.claimStorage && typeof applyClaimStorageOptions === "function") {
             applyClaimStorageOptions(data.claimStorage);
         } else if (data.claimStorage) {
@@ -2002,11 +2005,9 @@ async function getAccessToken() {
 
 
 
-async function fetchThumbnails(folderId, qrId) {
+async function fetchThumbnails(folderId) {
     const viewBase =
-        typeof getViewDriveUrl === "function"
-            ? getViewDriveUrl(qrId || getQueryParam("id"))
-            : AppScriptDriveViewUserUrl;
+        typeof getViewDriveUrl === "function" ? getViewDriveUrl() : AppScriptDriveViewUserUrl;
     const endpoint = `${viewBase}?mode=thumbnails&folderId=${encodeURIComponent(folderId)}`;
 
     try {

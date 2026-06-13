@@ -463,7 +463,7 @@ async function resolveAndRender(value, i, customTitle = `Link ${i}`) {
 
     try {
         if (isGoogleDrive) {
-            const resolveUrl = `${getLegacyResolveUrl(getQueryParam("id"))}?resolve=${encodeURIComponent(value)}`;
+            const resolveUrl = `${getLegacyResolveUrl()}?resolve=${encodeURIComponent(value)}`;
             const res = await fetch(resolveUrl);
             const json = await res.json();
             if (json.error) return `<p>⚠️ Couldn’t load ${customTitle}</p>`;
@@ -559,7 +559,7 @@ async function resolveAndRender(value, i, customTitle = `Link ${i}`) {
     try {
         // 🔁 Only resolve via Apps Script if it's a Google Drive link
         if (isGoogleDrive) {
-            const resolveUrl = `${getLegacyResolveUrl(getQueryParam("id"))}?resolve=${encodeURIComponent(value)}`;
+            const resolveUrl = `${getLegacyResolveUrl()}?resolve=${encodeURIComponent(value)}`;
             const res = await fetch(resolveUrl);
             const json = await res.json();
 
