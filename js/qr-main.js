@@ -255,6 +255,10 @@ async function renderAssetPanel(id) {
         applyEditActionsAvailability();
     }
 
+    if (typeof refreshPageHeroCarousel === "function") {
+        refreshPageHeroCarousel(id);
+    }
+
     editBtn.disabled = false;
     editBtn.classList.remove("disabled-button");
     editBtn.classList.add("enabled");

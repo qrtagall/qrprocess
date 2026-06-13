@@ -1711,7 +1711,7 @@ function openPageSlideImageUpload() {
     if (fileInput) {
         fileInput.value = "";
         fileInput.accept = "image/*";
-        fileInput.setAttribute("capture", "environment");
+        fileInput.removeAttribute("capture");
     }
     updateFilePickerPreview();
     document.getElementById("uploadModal").style.display = "flex";

@@ -1630,6 +1630,117 @@ body {
     color: #fff;
 }
 
+.qrt-hero-host {
+    margin: 0 auto;
+}
+
+.qrt-hero-host--qr-only {
+    display: inline-block;
+}
+
+.qrt-hero-carousel {
+    position: relative;
+    width: 212px;
+    max-width: min(100%, 280px);
+    margin: 0 auto;
+}
+
+.qrt-hero-viewport {
+    width: 200px;
+    height: 200px;
+    max-width: 100%;
+    margin: 0 auto;
+    overflow: hidden;
+    border-radius: 10px;
+    background: #fff;
+    touch-action: pan-y;
+}
+
+.qrt-hero-track {
+    display: flex;
+    height: 100%;
+    transition: transform 0.35s ease;
+    will-change: transform;
+}
+
+.qrt-hero-slide {
+    flex: 0 0 100%;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+.qrt-hero-slide .qrt-qr-tap {
+    line-height: 0;
+}
+
+.qrt-hero-slide .qrt-qr-tap canvas {
+    width: 200px !important;
+    height: 200px !important;
+    max-width: 100%;
+}
+
+.qrt-hero-slide--image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    background: #fff;
+}
+
+.qrt-hero-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.45);
+    color: #fff;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    z-index: 2;
+}
+
+.qrt-hero-nav--prev {
+    left: 0;
+}
+
+.qrt-hero-nav--next {
+    right: 0;
+}
+
+.qrt-hero-dots {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 7px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+.qrt-hero-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: none;
+    padding: 0;
+    background: #c8c8c8;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.qrt-hero-dot.active {
+    background: var(--primary, #0077cc);
+    transform: scale(1.15);
+}
+
 .qrt-qr-tap {
     display: inline-block;
     cursor: pointer;

@@ -673,10 +673,220 @@ function getQrActionButtonsMarkup(id) {
 
 //V1
 
+const PAGE_HERO_SLIDE_MS = 10000;
+let pageHeroCarouselTimer = null;
+let pageHeroCarouselIndex = 0;
+let pageHeroCarouselSlideCount = 1;
+
+function getPageSlideImageUrls() {
+    if (typeof parseSlideImagesPipe === "function") {
+        return parseSlideImagesPipe(window.qrSlideImages);
+    }
+    if (Array.isArray(window.qrSlideImages)) {
+        return window.qrSlideImages.map((s) => String(s || "").trim()).filter(Boolean);
+    }
+    return String(window.qrSlideImages || "")
+        .split("|")
+        .map((s) => s.trim())
+        .filter(Boolean);
+}
+
+function driveImagePreviewUrl(url) {
+    const m = String(url || "").match(/\/d\/([^/]+)/);
+    if (m) return `https://drive.google.com/thumbnail?id=${m[1]}&sz=w800`;
+    return url;
+}
+
+function stopPageHeroCarousel() {
+    if (pageHeroCarouselTimer) {
+        clearInterval(pageHeroCarouselTimer);
+        pageHeroCarouselTimer = null;
+    }
+}
+
+function startPageHeroCarouselTimer() {
+    stopPageHeroCarousel();
+    if (pageHeroCarouselSlideCount <= 1) return;
+    pageHeroCarouselTimer = setInterval(() => {
+        goToPageHeroSlide(pageHeroCarouselIndex + 1, false);
+    }, PAGE_HERO_SLIDE_MS);
+}
+
+function goToPageHeroSlide(index, userInitiated) {
+    const carousel = document.getElementById("pageHeroCarousel");
+    if (!carousel) return;
+    const total = pageHeroCarouselSlideCount;
+    if (total <= 1) return;
+
+    pageHeroCarouselIndex = ((index % total) + total) % total;
+
+    const track = carousel.querySelector(".qrt-hero-track");
+    if (track) {
+        track.style.transform = `translateX(-${pageHeroCarouselIndex * 100}%)`;
+    }
+
+    carousel.querySelectorAll(".qrt-hero-dot").forEach((dot, i) => {
+        dot.classList.toggle("active", i === pageHeroCarouselIndex);
+        dot.setAttribute("aria-selected", i === pageHeroCarouselIndex ? "true" : "false");
+    });
+
+    if (userInitiated) startPageHeroCarouselTimer();
+}
+
+function bindPageHeroCarouselSwipe(carousel) {
+    const viewport = carousel.querySelector(".qrt-hero-viewport");
+    if (!viewport || viewport.dataset.swipeBound === "1") return;
+    viewport.dataset.swipeBound = "1";
+
+    let startX = 0;
+    let dragging = false;
+
+    viewport.addEventListener(
+        "touchstart",
+        (e) => {
+            if (e.touches.length !== 1) return;
+            startX = e.touches[0].clientX;
+            dragging = true;
+        },
+        { passive: true }
+    );
+
+    viewport.addEventListener(
+        "touchend",
+        (e) => {
+            if (!dragging || !e.changedTouches.length) return;
+            dragging = false;
+            const delta = e.changedTouches[0].clientX - startX;
+            if (Math.abs(delta) < 40) return;
+            if (delta < 0) goToPageHeroSlide(pageHeroCarouselIndex + 1, true);
+            else goToPageHeroSlide(pageHeroCarouselIndex - 1, true);
+        },
+        { passive: true }
+    );
+}
+
+function createQrTapElement(id, qrCanvas, qrColor) {
+    const qrTap = document.createElement("div");
+    qrTap.className = "qrt-qr-tap";
+    qrTap.setAttribute("role", "button");
+    qrTap.setAttribute("tabindex", "0");
+    qrTap.setAttribute("aria-label", "Show QR ID and owner details");
+    qrTap.title = "Show QR details";
+    if (qrColor) qrTap.style.borderColor = qrColor;
+    qrTap.appendChild(qrCanvas);
+    qrTap.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openQrInfoModal(id);
+    });
+    qrTap.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            openQrInfoModal(id);
+        }
+    });
+    return qrTap;
+}
+
+/** Top hero: QR only, or QR + Slide_Images carousel (10s auto, swipe, dots). */
+function refreshPageHeroCarousel(id) {
+    stopPageHeroCarousel();
+    const host = document.getElementById("pageHeroHost");
+    let canvas = document.getElementById("qrCanvas");
+    if (!host || !canvas) return;
+
+    const qrColor = getQrColorForId(id);
+    const extraSlides = getPageSlideImageUrls();
+    pageHeroCarouselSlideCount = 1 + extraSlides.length;
+    pageHeroCarouselIndex = 0;
+
+    if (canvas.parentNode) {
+        canvas.parentNode.removeChild(canvas);
+    }
+    host.replaceChildren();
+
+    if (extraSlides.length === 0) {
+        host.className = "qrt-hero-host qrt-hero-host--qr-only";
+        host.appendChild(createQrTapElement(id, canvas, qrColor));
+        return;
+    }
+
+    host.className = "qrt-hero-host qrt-hero-host--carousel";
+
+    const carousel = document.createElement("div");
+    carousel.className = "qrt-hero-carousel";
+    carousel.id = "pageHeroCarousel";
+
+    const viewport = document.createElement("div");
+    viewport.className = "qrt-hero-viewport";
+
+    const track = document.createElement("div");
+    track.className = "qrt-hero-track";
+
+    const slideQr = document.createElement("div");
+    slideQr.className = "qrt-hero-slide";
+    slideQr.appendChild(createQrTapElement(id, canvas, qrColor));
+    track.appendChild(slideQr);
+
+    extraSlides.forEach((url, idx) => {
+        const slide = document.createElement("div");
+        slide.className = "qrt-hero-slide qrt-hero-slide--image";
+        const img = document.createElement("img");
+        img.src = driveImagePreviewUrl(url);
+        img.alt = `Slide ${idx + 2}`;
+        img.loading = idx === 0 ? "eager" : "lazy";
+        img.decoding = "async";
+        slide.appendChild(img);
+        track.appendChild(slide);
+    });
+
+    viewport.appendChild(track);
+
+    const prevBtn = document.createElement("button");
+    prevBtn.type = "button";
+    prevBtn.className = "qrt-hero-nav qrt-hero-nav--prev";
+    prevBtn.setAttribute("aria-label", "Previous slide");
+    prevBtn.innerHTML = "‹";
+    prevBtn.addEventListener("click", () => goToPageHeroSlide(pageHeroCarouselIndex - 1, true));
+
+    const nextBtn = document.createElement("button");
+    nextBtn.type = "button";
+    nextBtn.className = "qrt-hero-nav qrt-hero-nav--next";
+    nextBtn.setAttribute("aria-label", "Next slide");
+    nextBtn.innerHTML = "›";
+    nextBtn.addEventListener("click", () => goToPageHeroSlide(pageHeroCarouselIndex + 1, true));
+
+    const dots = document.createElement("div");
+    dots.className = "qrt-hero-dots";
+    dots.setAttribute("role", "tablist");
+    dots.setAttribute("aria-label", "Slide position");
+    for (let i = 0; i < pageHeroCarouselSlideCount; i++) {
+        const dot = document.createElement("button");
+        dot.type = "button";
+        dot.className = "qrt-hero-dot" + (i === 0 ? " active" : "");
+        dot.setAttribute("aria-label", `Go to slide ${i + 1}`);
+        dot.setAttribute("aria-selected", i === 0 ? "true" : "false");
+        dot.addEventListener("click", () => goToPageHeroSlide(i, true));
+        dots.appendChild(dot);
+    }
+
+    carousel.appendChild(viewport);
+    carousel.appendChild(prevBtn);
+    carousel.appendChild(nextBtn);
+    carousel.appendChild(dots);
+    host.appendChild(carousel);
+
+    bindPageHeroCarouselSwipe(carousel);
+    startPageHeroCarouselTimer();
+}
+
 function injectQRBlock(id) {
     const container = document.getElementById("mainContent");
     const existingQRDiv = document.getElementById("qrWrapper");
-    if (existingQRDiv) existingQRDiv.remove();
+    if (existingQRDiv) {
+        stopPageHeroCarousel();
+        existingQRDiv.remove();
+    }
 
     const qrDiv = document.createElement("div");
     qrDiv.id = "qrWrapper";
@@ -687,6 +897,10 @@ function injectQRBlock(id) {
 
     const qrPrefix = getQrPrefixFromId(id);
     const qrColor = getQrColorForId(id);
+
+    const heroHost = document.createElement("div");
+    heroHost.id = "pageHeroHost";
+    heroHost.className = "qrt-hero-host";
 
     const qrCanvas = document.createElement("canvas");
     qrCanvas.id = "qrCanvas";
@@ -700,32 +914,15 @@ function injectQRBlock(id) {
 
     QRCode.toCanvas(qrCanvas, qrUrl, getQrCanvasOptions(id, 200));
 
-    const qrTap = document.createElement("div");
-    qrTap.className = "qrt-qr-tap";
-    qrTap.setAttribute("role", "button");
-    qrTap.setAttribute("tabindex", "0");
-    qrTap.setAttribute("aria-label", "Show QR ID and owner details");
-    qrTap.title = "Show QR details";
-    qrTap.appendChild(qrCanvas);
-    qrTap.addEventListener("click", (e) => {
-        e.preventDefault();
-        openQrInfoModal(id);
-    });
-    qrTap.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            openQrInfoModal(id);
-        }
-    });
-
     const qrActions = document.createElement("div");
     qrActions.className = "qrt-qr-actions";
     qrActions.innerHTML = getQrActionButtonsMarkup(id);
 
-
-    qrDiv.appendChild(qrTap);
+    qrDiv.appendChild(heroHost);
     qrDiv.appendChild(qrActions);
     container.insertBefore(qrDiv, document.getElementById("assetTitle"));
+
+    refreshPageHeroCarousel(id);
 }
 
 /** Tap QR image → small info popup (ID + masked owners). No navigation. */
