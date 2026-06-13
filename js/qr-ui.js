@@ -2635,11 +2635,6 @@ function saveArtifact() {
         }
     }
 
-    if (!basicInfo) {
-        notify("Please enter Basic Info.", "error");
-        document.getElementById("artifactBasicInfo")?.focus();
-        return;
-    }
     if (!fileType) {
         notify("Please select a File Type.", "error");
         return;
@@ -2651,14 +2646,9 @@ function saveArtifact() {
 
     if (isMsgEmail) {
         // No link/text body required — button-only artifact.
-    } else if (isText) {
+    } else if (isText && fileType !== "TEXT") {
         if (!textInfo) {
-            notify(
-                fileType === "DRIVE" || fileType === "GDRIVE"
-                    ? "Please enter a Google Drive link."
-                    : "Please enter text or link info.",
-                "error"
-            );
+            notify("Please enter a Google Drive link.", "error");
             document.getElementById("artifactTextInfo")?.focus();
             return;
         }
@@ -2857,7 +2847,7 @@ async function saveArtifactInfo({
 
 /************* DELETE ARTIFACT *****************/
 
- function deleteArtifact(rowNum, fileType,linkId = null) {
+ function deleteArtifact(rowNum, fileType, linkId = null) {
     const type = (fileType || "").toUpperCase();
 
     if (type.includes("DRIVE")) {
@@ -2866,15 +2856,18 @@ async function saveArtifactInfo({
 		return;
     }
 
-    //cmedit
-
-    //const modal = document.getElementById("addArtifactModal");
-    //linkId = modal.getAttribute("data-link-id");
-
-    const modal = document.getElementById("addArtifactModal");
-    //if(!linkId)
-    linkId = modal.getAttribute("data-link-id");
-    const sheetId =getSheetIdByLinkId(linkId);
+    if (!linkId) {
+        const modal = document.getElementById("addArtifactModal");
+        linkId = modal?.getAttribute("data-link-id") || "";
+    }
+    if (!linkId && typeof getSoleOwnedLinkId === "function") {
+        linkId = getSoleOwnedLinkId();
+    }
+    const sheetId = getSheetIdByLinkId(linkId);
+    if (!sheetId) {
+        notify("Missing spreadsheet link for this artifact. Refresh the page.", "error");
+        return;
+    }
 
     //console.log("Detail>>>>",linkId,rowNum);
 

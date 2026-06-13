@@ -581,8 +581,8 @@ function setModalLinkAndOpen(index, isEdit, linkId) {
 
 function setModalLinkAndDelete(index, fileType, linkId) {
     const modal = document.getElementById("addArtifactModal");
-    modal.setAttribute("data-link-id", linkId);
-    deleteArtifact(index, fileType);
+    if (modal) modal.setAttribute("data-link-id", linkId);
+    deleteArtifact(index, fileType, linkId);
 }
 
 
