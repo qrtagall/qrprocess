@@ -4,11 +4,9 @@
   "prefixAliases": {
     "TMP": "IN",
     "TEMP": "IN",
-	"VEH": "IN",
-	"PLT": "IN",
-	"QRTAG": "IN",
-	"2025": "IN",
-	
+    "VEH": "IN",
+    "PLT": "IN",
+    "QRTAG": "IN"
   },
   "cells": {
     "IN": {

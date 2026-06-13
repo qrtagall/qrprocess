@@ -50,14 +50,8 @@ async function initQRTagAll() {
         return;
     }
 
-    // ✅ Show QR as early as possible
-    //generateQRCodeCanvas(id);
-
-    window.onload = () => {
-        generateQRCodeCanvas(id);
-    };
-
-    //return;
+    // Popup QR (verify / unclaimed claim) — distinct id from hero #qrCanvas in mainContent
+    generateQRCodeCanvas(id, "qrCanvasPopup");
 
     document.getElementById("spinner").innerText = "⏳ Verifying ID...";
     idText.textContent = id;

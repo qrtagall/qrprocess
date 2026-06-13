@@ -35,6 +35,21 @@ function getQrPrefixFromId(id) {
     return (sep > 0 ? id.slice(0, sep) : id).toUpperCase();
 }
 
+/** True for legacy IDs like 20250427021715747_89fb2a05 (timestamp-only, no letter prefix). */
+function isLegacyNumericQrPrefix(prefix) {
+    return /^\d+$/.test(String(prefix || "").trim());
+}
+
+/**
+ * Prefix used for tenant cell routing. Legacy numeric timestamps → "" (defaultCell).
+ * Do not use year shortcuts in cells.json (e.g. "2025") — they won't match.
+ */
+function getRoutingPrefixFromId(id) {
+    const prefix = getQrPrefixFromId(id);
+    if (!prefix || isLegacyNumericQrPrefix(prefix)) return "";
+    return prefix;
+}
+
 function getQrColorForPrefix(prefix) {
     const key = String(prefix || "").toUpperCase();
     if (QR_PREFIX_COLOR_MAP[key]) return QR_PREFIX_COLOR_MAP[key];
@@ -190,8 +205,16 @@ function copyQRLink() {
 
 
 
+function getActiveQrCanvasElement() {
+    return (
+        document.getElementById("qrCanvasHero") ||
+        document.getElementById("qrCanvasPopup") ||
+        document.getElementById("qrCanvas")
+    );
+}
+
 function downloadQR() {
-    const qrCanvas = document.getElementById("qrCanvas");
+    const qrCanvas = getActiveQrCanvasElement();
     const id = getQueryParam("id");
     if (!qrCanvas || !id) return;
 
@@ -228,7 +251,7 @@ function downloadQR() {
 
 
 function printQR() {
-    const canvas = document.getElementById("qrCanvas");
+    const canvas = getActiveQrCanvasElement();
     const id = getQueryParam("id");  // Get the ID from URL or define globally
     if (!canvas || !id) return;
 
@@ -792,7 +815,7 @@ function createQrTapElement(id, qrCanvas, qrColor) {
 function refreshPageHeroCarousel(id) {
     stopPageHeroCarousel();
     const host = document.getElementById("pageHeroHost");
-    let canvas = document.getElementById("qrCanvas");
+    let canvas = document.getElementById("qrCanvasHero");
     if (!host || !canvas) return;
 
     const qrColor = getQrColorForId(id);
@@ -888,7 +911,7 @@ function injectQRBlock(id) {
     heroHost.className = "qrt-hero-host";
 
     const qrCanvas = document.createElement("canvas");
-    qrCanvas.id = "qrCanvas";
+    qrCanvas.id = "qrCanvasHero";
     qrCanvas.style.border = `1px solid ${qrColor}`;
     qrCanvas.style.padding = "6px";
     qrCanvas.style.borderRadius = "8px";

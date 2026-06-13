@@ -7,7 +7,7 @@
     const EMBEDDED_CELLS = {
         version: 1,
         defaultCell: "IN",
-        prefixAliases: { TMP: "IN", TEMP: "IN" },
+        prefixAliases: { TMP: "IN", TEMP: "IN", VEH: "IN", PLT: "IN", QRTAG: "IN" },
         cells: {
             IN: {
                 active: true,
@@ -55,10 +55,19 @@
         return cellsConfig;
     }
 
+    function isLegacyNumericPrefix(prefix) {
+        if (typeof isLegacyNumericQrPrefix === "function") {
+            return isLegacyNumericQrPrefix(prefix);
+        }
+        return /^\d+$/.test(String(prefix || "").trim());
+    }
+
     function resolveCellKey(prefix) {
         const cfg = getCellsConfigSync();
         const key = String(prefix || "").trim().toUpperCase();
-        if (!key) return cfg.defaultCell;
+        if (!key || isLegacyNumericPrefix(key)) {
+            return cfg.defaultCell;
+        }
 
         const alias = cfg.prefixAliases && cfg.prefixAliases[key];
         if (alias) {
@@ -77,7 +86,12 @@
         const cfg = getCellsConfigSync();
         let prefix = String(qrIdOrPrefix || "").trim();
         if (prefix.includes("_")) {
-            prefix = typeof getQrPrefixFromId === "function" ? getQrPrefixFromId(prefix) : prefix.split("_")[0];
+            prefix =
+                typeof getRoutingPrefixFromId === "function"
+                    ? getRoutingPrefixFromId(prefix)
+                    : typeof getQrPrefixFromId === "function"
+                      ? getQrPrefixFromId(prefix)
+                      : prefix.split("_")[0];
         }
         const cellKey = resolveCellKey(prefix);
         const cell = cfg.cells[cellKey] || cfg.cells[cfg.defaultCell];
