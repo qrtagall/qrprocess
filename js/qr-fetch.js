@@ -1156,8 +1156,59 @@ function submitRemoteClaimFormPost({ id, assetName, email, claimScriptUrl, authT
     form.submit();
 }
 
-async function waitForClaimedAsset(id, maxAttempts = 10, delayMs = 2000) {
+const QRTAGALL_AUTH_PARAM = "authToken";
+const QR_CLAIM_PENDING_PREFIX = "qr_claim_pending_";
+
+function pendingClaimStorageKey(id) {
+    return QR_CLAIM_PENDING_PREFIX + String(id || "").trim();
+}
+
+function storePendingClaimResult(id, payload) {
+    if (!id || !payload) return;
+    try {
+        sessionStorage.setItem(pendingClaimStorageKey(id), JSON.stringify(payload));
+    } catch (e) {
+        console.warn("storePendingClaimResult:", e);
+    }
+}
+
+function extractGoogleSheetIdFromUrl(url) {
+    const m = String(url || "").match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    return m ? m[1] : "";
+}
+
+/** Bootstrap list when registry fetch lags but claim just succeeded (same-tab session). */
+function buildRemoteListFromPendingClaim(id) {
+    try {
+        const raw = sessionStorage.getItem(pendingClaimStorageKey(id));
+        if (!raw) return [];
+        const pending = JSON.parse(raw);
+        if (!pending?.spreadsheetUrl) return [];
+        sessionStorage.removeItem(pendingClaimStorageKey(id));
+        const sheetId = pending.sheetId || extractGoogleSheetIdFromUrl(pending.spreadsheetUrl);
+        return [
+            {
+                email: (pending.email || "").toLowerCase(),
+                storageType: pending.storageType || "LOCAL",
+                linkId: id,
+                description: pending.assetName || "",
+                sheetId,
+                linkSlot: 1,
+                dataUnavailable: false,
+                assets: Array.isArray(pending.assets) ? pending.assets : [],
+            },
+        ];
+    } catch (e) {
+        console.warn("buildRemoteListFromPendingClaim:", e);
+        return [];
+    }
+}
+
+async function waitForClaimedAsset(id, maxAttempts = 10, delayMs = 2000, onProgress) {
     for (let i = 0; i < maxAttempts; i++) {
+        if (typeof onProgress === "function") {
+            onProgress(i + 1, maxAttempts);
+        }
         const list = await fetchAllRemoteSheets(id);
         if (list?.length > 0) return list;
         await new Promise((r) => setTimeout(r, delayMs));
@@ -1193,25 +1244,40 @@ async function completeQRClaim({ id, assetName, email, storageType, onStatus }) 
         storageType: "LOCAL",
         claimScriptUrl,
     });
+    if (claimResult?.spreadsheetUrl) {
+        storePendingClaimResult(id, {
+            spreadsheetUrl: claimResult.spreadsheetUrl,
+            email: (email || "").toLowerCase(),
+            storageType: "LOCAL",
+            assetName,
+            sheetId: extractGoogleSheetIdFromUrl(claimResult.spreadsheetUrl),
+        });
+    }
     notify("Claim accepted, loading asset…");
 
     // Registry row should be visible immediately after initClaim; short poll only.
-    const list = await waitForClaimedAsset(id, 5, 1500);
+    const list = await waitForClaimedAsset(id, 8, 1500, (n, max) =>
+        notify(`Waiting for registry (${n}/${max})…`)
+    );
     if (list?.length > 0) return list;
 
     if (claimResult?.spreadsheetUrl) {
         return [
             {
                 id,
+                email: (email || "").toLowerCase(),
                 url: claimResult.spreadsheetUrl,
                 storageType: "LOCAL",
-                email: (email || "").toLowerCase(),
+                linkId: id,
+                description: assetName || "",
+                sheetId: extractGoogleSheetIdFromUrl(claimResult.spreadsheetUrl),
+                assets: [],
             },
         ];
     }
 
     notify("Waiting for asset data…");
-    return waitForClaimedAsset(id, 10, 2000);
+    return waitForClaimedAsset(id, 6, 2000);
 }
 
 

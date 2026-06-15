@@ -193,7 +193,17 @@ async function renderAssetPanel(id) {
 
     if ((remoteList?.length || 0) === 0 && getQueryParam("claimed") === "1") {
         console.log("⏳ claimed=1 but no data yet — polling master registry…");
-        remoteList = await waitForClaimedAsset(id, 20, 2500);
+        const spinnerEl = document.getElementById("spinner");
+        remoteList = await waitForClaimedAsset(id, 12, 2000, (n, max) => {
+            if (spinnerEl) spinnerEl.innerText = `⏳ Syncing claim (${n}/${max})…`;
+        });
+    }
+
+    if ((remoteList?.length || 0) === 0 && typeof buildRemoteListFromPendingClaim === "function") {
+        remoteList = buildRemoteListFromPendingClaim(id);
+        if (remoteList.length > 0) {
+            console.log("Using pending claim session bootstrap for", id);
+        }
     }
 
     globalRemoteAssetList = remoteList;
