@@ -19,7 +19,7 @@
 
 
     <!-- -->
-    <link rel="stylesheet" href="./css/style.css?v=20260624d">
+    <link rel="stylesheet" href="./css/style.css?v=20260604a">
 
 </head>
 <body>
@@ -119,11 +119,11 @@
 
     <!-- Dynamically insert QR Div here later (after tagline) -->
 
-    <h2 id="assetTitle" style="color:var(--primary); font-size:24px;"></h2>
+    <h2 id="assetTitle"></h2>
 
     <div id="assetLinks" style="margin-top:10px;"></div>
 
-    <hr style="border: none; height: 3px; width: 80%; background: linear-gradient(to right, orange, #ffa500); margin: 60px auto 30px auto; border-radius: 5px;">
+    <hr class="qrt-theme-divider">
 
     <!-- Action buttons visible only in editMode -->
     <!-- Action buttons visible only in editMode -->
@@ -635,21 +635,21 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "8.7";
+    const QRTagAll_Ver_ = "9.0";
 </script>
 
 
 
 
 <!-- bump ?v= whenever JS changes to force browsers to load the new files -->
-<script src="./js/qr-utils.js?v=20260613e"></script>
+<script src="./js/qr-utils.js?v=20260604a"></script>
 <script src="./js/qr-cells.js?v=20260613c"></script>
 <script src="./js/qr-auth.js?v=20260608b"></script>
 <script src="./js/qr-fetch.js?v=20260613d"></script>
 <script src="./js/qr-edit.js?v=20260613e"></script>
 <script src="./js/qr-dashboard.js?v=20260613a"></script>
-<script src="./js/qr-ui.js?v=20260624b"></script>
-<script src="./js/qr-main.js?v=20260613a"></script>
+<script src="./js/qr-ui.js?v=20260604a"></script>
+<script src="./js/qr-main.js?v=20260604a"></script>
 <!--   -->
 
 <!-- LOCAL DEV ONLY — do not deploy with file:// script tags (breaks claim/save on process.qrtagall.com)

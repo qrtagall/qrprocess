@@ -113,6 +113,123 @@ function getQrColorForId(id) {
     return getQrColorForPrefix(getQrPrefixFromId(id));
 }
 
+function parseHexColor(hex) {
+    const h = String(hex || "").replace("#", "").trim();
+    if (h.length === 3) {
+        return {
+            r: parseInt(h[0] + h[0], 16),
+            g: parseInt(h[1] + h[1], 16),
+            b: parseInt(h[2] + h[2], 16),
+        };
+    }
+    if (h.length >= 6) {
+        return {
+            r: parseInt(h.slice(0, 2), 16),
+            g: parseInt(h.slice(2, 4), 16),
+            b: parseInt(h.slice(4, 6), 16),
+        };
+    }
+    return { r: 0, g: 90, b: 171 };
+}
+
+function hexToRgbString(hex) {
+    const { r, g, b } = parseHexColor(hex);
+    return `${r}, ${g}, ${b}`;
+}
+
+/** Mix theme color toward white; higher whiteWeight = lighter tint. */
+function mixHexWithWhite(hex, whiteWeight = 0.9) {
+    const { r, g, b } = parseHexColor(hex);
+    const w = Math.max(0, Math.min(1, whiteWeight));
+    const mix = (c) => Math.round(c * (1 - w) + 255 * w);
+    return `#${[mix(r), mix(g), mix(b)]
+        .map((n) => n.toString(16).padStart(2, "0"))
+        .join("")}`;
+}
+
+/** Apply prefix-linked theme tokens to the page shell (chrome only; buttons stay --primary). */
+function applyQrPageTheme(id) {
+    const theme = getQrColorForId(id);
+    const prefix = getQrPrefixFromId(id);
+    const root = document.documentElement;
+    root.style.setProperty("--qr-theme", theme);
+    root.style.setProperty("--qr-theme-rgb", hexToRgbString(theme));
+    root.style.setProperty("--qr-theme-surface", mixHexWithWhite(theme, 0.92));
+    root.style.setProperty("--qr-theme-border", mixHexWithWhite(theme, 0.78));
+    root.style.setProperty("--qr-theme-soft", mixHexWithWhite(theme, 0.945));
+    root.style.setProperty("--qr-theme-muted", `rgba(${hexToRgbString(theme)}, 0.14)`);
+
+    document.body.classList.add("qrt-page-themed");
+    const main = document.getElementById("mainContent");
+    if (main) {
+        main.classList.add("qrt-page-panel");
+        if (prefix) main.dataset.qrPrefix = prefix;
+        else delete main.dataset.qrPrefix;
+    }
+}
+
+function appendLinkAccessChip(headerBlock, kind) {
+    const labels = { owned: "Your link", other: "Other owner" };
+    if (!labels[kind]) return;
+    const chip = document.createElement("span");
+    chip.className = `qrt-link-access-chip qrt-link-access-chip--${kind}`;
+    chip.textContent = labels[kind];
+    const info = headerBlock.querySelector(".asset-banner-info");
+    if (info) {
+        info.insertBefore(chip, info.firstChild);
+    } else {
+        headerBlock.appendChild(chip);
+    }
+}
+
+/** Prefix-themed link card chrome; owner hint via chip, not full green/red fill. */
+function applyLinkBlockTheme(headerBlock, contentDiv, opts = {}) {
+    const { artifactOwner, sessionEmail, editModeLocked, pastel } = opts;
+    headerBlock.classList.add("qrt-link-card");
+    contentDiv.classList.add("qrt-link-content");
+
+    headerBlock.style.backgroundColor = "";
+    contentDiv.style.backgroundColor = "";
+    headerBlock.querySelectorAll(".qrt-link-access-chip").forEach((el) => el.remove());
+
+    headerBlock.classList.remove(
+        "qrt-link-owned",
+        "qrt-link-other",
+        "qrt-link-guest",
+        "qrt-link-locked"
+    );
+    contentDiv.classList.remove(
+        "qrt-link-owned",
+        "qrt-link-other",
+        "qrt-link-guest",
+        "qrt-link-locked"
+    );
+
+    if (pastel) {
+        headerBlock.style.backgroundColor = pastel;
+        contentDiv.style.backgroundColor = pastel;
+    }
+
+    if (editModeLocked) {
+        headerBlock.classList.add("qrt-link-locked");
+        contentDiv.classList.add("qrt-link-locked");
+        return;
+    }
+
+    if (sessionEmail && artifactOwner) {
+        headerBlock.classList.add("qrt-link-owned");
+        contentDiv.classList.add("qrt-link-owned");
+        appendLinkAccessChip(headerBlock, "owned");
+    } else if (sessionEmail && !artifactOwner) {
+        headerBlock.classList.add("qrt-link-other");
+        contentDiv.classList.add("qrt-link-other");
+        appendLinkAccessChip(headerBlock, "other");
+    } else {
+        headerBlock.classList.add("qrt-link-guest");
+        contentDiv.classList.add("qrt-link-guest");
+    }
+}
+
 function getQrCanvasOptions(id, size = 160) {
     return {
         width: size,
@@ -951,6 +1068,8 @@ function refreshPageHeroCarousel(id) {
 }
 
 function injectQRBlock(id) {
+    applyQrPageTheme(id);
+
     const container = document.getElementById("mainContent");
     const existingQRDiv = document.getElementById("qrWrapper");
     if (existingQRDiv) {
@@ -960,8 +1079,7 @@ function injectQRBlock(id) {
 
     const qrDiv = document.createElement("div");
     qrDiv.id = "qrWrapper";
-    qrDiv.style.textAlign = "center";
-    qrDiv.style.marginBottom = "20px";
+    qrDiv.className = "qrt-hero-panel";
 
     const qrUrl = `https://process.qrtagall.com/?id=${encodeURIComponent(id)}`;
 

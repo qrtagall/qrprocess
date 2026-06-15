@@ -36,10 +36,30 @@ function generateQRCodeCanvas(id, canvasId = "qrCanvas", size = 160) {
 
  */
 
-// Update background panel color based on access type
+// Owner hint: thin accent bar only (prefix theme owns panel background).
 function updatePanelBackground(colorCode) {
     const panel = document.getElementById("mainContent");
-    if (panel) panel.style.backgroundColor = colorCode;
+    if (!panel) return;
+
+    panel.style.backgroundColor = "";
+    let bar = document.getElementById("qrtOwnerStatusBar");
+    const neutral =
+        !colorCode ||
+        colorCode === BaseColorDefault ||
+        colorCode === adjustColor(BaseColorDefault, BaseColorOffset * 0);
+
+    if (neutral) {
+        if (bar) bar.remove();
+        return;
+    }
+
+    if (!bar) {
+        bar = document.createElement("div");
+        bar.id = "qrtOwnerStatusBar";
+        bar.className = "qrt-owner-status-bar";
+        panel.insertBefore(bar, panel.firstChild);
+    }
+    bar.style.backgroundColor = colorCode;
 }
 
 // Place view badge below #taglineWrapper (black ribbon), not over the tagline on mobile.
@@ -90,6 +110,9 @@ function ensureViewCountBadge() {
         document.body.appendChild(badge);
     }
     // Inline styles guarantee visibility regardless of style.css.
+    const themeRgb =
+        getComputedStyle(document.documentElement).getPropertyValue("--qr-theme-rgb").trim() ||
+        "0, 90, 171";
     Object.assign(badge.style, {
         position: "fixed",
         right: "14px",
@@ -98,7 +121,7 @@ function ensureViewCountBadge() {
         alignItems: "center",
         gap: "6px",
         padding: "6px 12px",
-        background: "rgba(0, 90, 171, 0.92)",
+        background: `rgba(${themeRgb}, 0.92)`,
         color: "#fff",
         fontFamily: "'Segoe UI', sans-serif",
         fontSize: "14px",
@@ -658,33 +681,23 @@ function renderMultipleRemoteBlocks(remoteList) {
             const contentDiv = document.createElement("div");
             contentDiv.className = "remote-content";
 
-            // Color logic
-            const shadeApproved    = adjustColor(BaseColorApproved,    BaseColorOffset * 0);
-            const shadeNotApproved = adjustColor(BaseColorNotApproved, BaseColorOffset * 0);
-            const shadeDefault     = adjustColor(BaseColorDefault,     BaseColorOffset * 0);
-
-            // If a custom color was provided, use that pastel; otherwise use your normal shades
             const pastel = customColorVal ? getSoftColor(customColorVal) : null;
 
-            if (sessionEmail) {
-                if (artifactOwner) {
-                    headerBlock.style.backgroundColor = pastel || shadeApproved;
-                    contentDiv.style.backgroundColor  = pastel || shadeApproved;
-                    EditLinkID = linkId;
+            applyLinkBlockTheme(headerBlock, contentDiv, {
+                artifactOwner,
+                sessionEmail,
+                pastel,
+            });
 
-                    if (editMode && !dataUnavailable) {
-                        const placeholder = document.createElement("div");
-                        placeholder.className = "artifact-block qrt-artifact-add-slot";
-                        placeholder.innerHTML = getAddNewArtifactButtonMarkup(linkId, -1);
-                        contentDiv.appendChild(placeholder);
-                    }
-                } else {
-                    headerBlock.style.backgroundColor = pastel || shadeNotApproved;
-                    contentDiv.style.backgroundColor  = pastel || shadeNotApproved;
+            if (sessionEmail && artifactOwner) {
+                EditLinkID = linkId;
+
+                if (editMode && !dataUnavailable) {
+                    const placeholder = document.createElement("div");
+                    placeholder.className = "artifact-block qrt-artifact-add-slot";
+                    placeholder.innerHTML = getAddNewArtifactButtonMarkup(linkId, -1);
+                    contentDiv.appendChild(placeholder);
                 }
-            } else {
-                headerBlock.style.backgroundColor = pastel || shadeDefault;
-                contentDiv.style.backgroundColor  = pastel || shadeDefault;
             }
 
             // Asset loading
@@ -749,7 +762,12 @@ function renderMultipleRemoteBlocks(remoteList) {
                     headerBlock.onclick();
                 }
             } else if (editMode && !artifactOwner) {
-                headerBlock.style.backgroundColor = "#bbb";
+                applyLinkBlockTheme(headerBlock, contentDiv, {
+                    artifactOwner,
+                    sessionEmail,
+                    editModeLocked: true,
+                    pastel,
+                });
                 headerBlock.onclick = () => alert("You can't edit this Artifact!");
             }
 
@@ -965,7 +983,12 @@ function renderMultipleRemoteBlocks_old(remoteList) {
                     headerBlock.onclick();
                 }
             } else if (editMode && !artifactOwner) {
-                headerBlock.style.backgroundColor = "#bbb";
+                applyLinkBlockTheme(headerBlock, contentDiv, {
+                    artifactOwner,
+                    sessionEmail,
+                    editModeLocked: true,
+                    pastel: customColor ? getSoftColor(customColor) : null,
+                });
                 headerBlock.onclick = () => alert("You can't edit this Artifact!");
             }
 
