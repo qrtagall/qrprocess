@@ -5,7 +5,8 @@
     <title>QRTagAll — TEXT Formatting Guide</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="description" content="Formatting rules for TEXT artifacts in QRTagAll — labels, inline styles, HTML blocks, phones, and links.">
-    <link rel="stylesheet" href="./css/style.css?v=20260622b">
+    <link rel="stylesheet" href="./css/qrtag-theme-tokens.css?v=20260604d">
+    <link rel="stylesheet" href="./css/style.css?v=20260604d">
     <style>
         body.qrt-guide-body {
             font-family: 'Segoe UI', sans-serif;
@@ -214,9 +215,9 @@
             margin: 0 0 10px 10px;
             font-size: 14px;
             line-height: 1.6;
-            background: #f9f9ff;
+            background: var(--qrt-text-body-bg, var(--qr-theme-soft));
             padding: 10px 12px;
-            border-left: 4px solid var(--primary);
+            border-left: var(--qrt-text-accent-width, 2px) solid var(--qrt-text-accent-color, var(--qr-theme));
             border-radius: 6px;
             text-align: left;
         }
@@ -225,7 +226,7 @@
             margin: 0;
             text-align: right;
             border-left: none;
-            border-right: 4px solid var(--primary);
+            border-right: var(--qrt-text-accent-width, 2px) solid var(--qrt-text-accent-color, var(--qr-theme));
         }
 
         .qrt-guide-layout-label {
@@ -309,7 +310,7 @@
             <div class="qrt-guide-layout-label">Preview</div>
             <div class="qrt-text-artifact qrt-text-artifact--headless">
                 <div class="qrt-text-body qrt-text-body--right">
-                    <strong style="color:#005aab;">Call us:</strong> 9876543210
+                    <span class="qrt-text-label">Call us:</span> 9876543210
                 </div>
             </div>
         </div>
@@ -320,8 +321,8 @@
             <div class="qrt-text-artifact">
                 <p class="qrt-text-header"><b>2.</b> 🔗 <b>Product Details</b></p>
                 <div class="qrt-text-body">
-                    <strong style="color:#005aab;">Model:</strong> RF28R7351SG<br>
-                    <strong style="color:#005aab;">Warranty:</strong> Active
+                    <span class="qrt-text-label">Model:</span> RF28R7351SG<br>
+                    <span class="qrt-text-label">Warranty:</span> Active
                 </div>
             </div>
         </div>
@@ -332,19 +333,22 @@
         </div>
 
         <h2>2. Label lines</h2>
-        <p>Text before the first <code>:</code> on a line is shown as a <strong style="color:#005aab;">bold blue</strong> label.</p>
+        <p>Text before the first <code>:</code> on a line is shown as a <span class="qrt-text-label">bold theme label</span>
+            — the color matches the scanned QR’s <strong>prefix theme</strong> (same accent as the page chrome and text box border),
+            not a fixed brand blue.</p>
         <table class="qrt-guide-table">
             <thead>
                 <tr><th>You type</th><th>Displayed as</th></tr>
             </thead>
             <tbody>
-                <tr><td><code>Phone: 9876543210</code></td><td><strong style="color:#005aab;">Phone:</strong> 9876543210</td></tr>
-                <tr><td><code>Vehicle No: MH12AB1234</code></td><td><strong style="color:#005aab;">Vehicle No:</strong> MH12AB1234</td></tr>
+                <tr><td><code>Phone: 9876543210</code></td><td><span class="qrt-text-label">Phone:</span> 9876543210</td></tr>
+                <tr><td><code>Vehicle No: MH12AB1234</code></td><td><span class="qrt-text-label">Vehicle No:</span> MH12AB1234</td></tr>
             </tbody>
         </table>
         <p>Up to <strong>10 words</strong> before <code>:</code> qualify. Longer prefixes stay plain text.
             URLs like <code>https://</code> are not treated as labels. If inline markup already appears in the label
-            part (e.g. <code>"Name": value</code>), label styling is skipped for that line.</p>
+            part (e.g. <code>"Name": value</code>), label styling is skipped for that line.
+            On the live QR page, label color follows the scanned ID’s prefix (e.g. <code>IN</code>, <code>TMP</code>).</p>
 
         <h2>3. Inline styles</h2>
         <p>Use <strong>matching pairs</strong> only. Plain apostrophes in words (e.g. <code>Owner's</code>) are not styled.</p>
@@ -370,9 +374,9 @@ Status: ==Active==</div>
             <div class="qrt-guide-example-box">
                 <div class="qrt-guide-example-label">Preview (simplified)</div>
                 <div class="qrt-guide-preview">
-                    <strong style="color:#005aab;">Name:</strong> <strong>Chandan Kumar</strong><br>
-                    <strong style="color:#005aab;">Plate:</strong> <code class="qrt-inline-code">MH12AB1234</code><br>
-                    <strong style="color:#005aab;">Status:</strong> <mark class="qrt-inline-mark">Active</mark>
+                    <span class="qrt-text-label">Name:</span> <strong>Chandan Kumar</strong><br>
+                    <span class="qrt-text-label">Plate:</span> <code class="qrt-inline-code">MH12AB1234</code><br>
+                    <span class="qrt-text-label">Status:</span> <mark class="qrt-inline-mark">Active</mark>
                 </div>
             </div>
         </div>

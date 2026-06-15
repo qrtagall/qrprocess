@@ -1922,6 +1922,17 @@ body.qrt-page-themed .qrt-text-body--right {
     border-color: var(--qrt-text-accent-color, var(--qr-theme));
 }
 
+.qrt-text-label {
+    color: var(--qrt-text-label-color, var(--qr-theme, var(--primary)));
+    font-weight: 700;
+    display: inline-block;
+    margin-bottom: 2px;
+}
+
+.qrt-text-line {
+    color: #333;
+}
+
 body.qrt-page-themed .qrt-hero-panel {
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }

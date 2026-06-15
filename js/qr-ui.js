@@ -317,38 +317,6 @@ function setFieldDisabled(el, disabled) {
         return "🔗"; // default
     }
 	
-	
-	function boldLeadingLabels(text) {
-        return text.split('<br>').map(line => {
-            if (line.includes('<a ') || line.includes('</a>')) return line;
-
-            const colonIndex = line.indexOf(':');
-            if (colonIndex === -1) {
-                return line.includes('<') ? line : `<span style="color:#333;">${line}</span>`;
-            }
-
-            const prefix = line.slice(0, colonIndex + 1).trim();
-            const suffix = line.slice(colonIndex + 1);
-
-            // Skip label styling when inline markup already applied to the label
-            if (prefix.includes('<') || prefix.includes('>')) {
-                return line;
-            }
-
-            // 🚫 If prefix is part of a URL (ending in :// or contains http), skip
-            if (/https?:\/\/[^ ]*$/i.test(prefix) || /^https?:\/\//i.test(prefix)) {
-                return `<span style="color:#333;">${line}</span>`;
-            }
-
-            // ✅ Also allow trailing "Text:" to be bolded
-            const prefixWordCount = prefix.split(/\s+/).length;
-            if (prefixWordCount <= 10) {
-                return `<span style="color:#005aab; font-weight:bold; display:inline-block; margin-bottom:2px;">${prefix}</span>${suffix}`;
-            }
-
-            return `<span style="color:#333;">${line}</span>`;
-        }).join('<br>');
-    }
 
 
 
@@ -2038,7 +2006,7 @@ const TEXT_FORMATTING_GUIDE_URL = "./text-formatting-guide.html";
 /** Inline help below Text Info / upload fields in Add Artifact modal */
 const ARTIFACT_TEXT_HINTS = {
     TEXT: `💡 Text formatting — quick tips:<br>
-<code>Label: value</code> · <code>"bold"</code> · <code>'italic'</code> · <code>\`code\`</code> · phones &amp; <code>https://</code> links auto-format<br>
+<code>Label: value</code> (label uses the QR prefix theme color) · <code>"bold"</code> · <code>'italic'</code> · <code>\`code\`</code> · phones &amp; <code>https://</code> links auto-format<br>
 <a href="${TEXT_FORMATTING_GUIDE_URL}" target="_blank" rel="noopener" class="qrt-formatting-guide-link">📖 Full formatting guide (labels, HTML blocks, examples)</a>`,
     DRIVE: `💡 Google Drive link:<br>
 <code>https://drive.google.com/file/d/…</code> – inline file preview<br>

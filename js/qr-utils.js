@@ -166,6 +166,7 @@ function applyQrPageTheme(id) {
     );
     root.style.setProperty("--qrt-text-body-bg", mixHexWithWhite(theme, 0.965));
     root.style.setProperty("--qrt-text-accent-color", theme);
+    root.style.setProperty("--qrt-text-label-color", theme);
 
     document.body.classList.add("qrt-page-themed");
     const main = document.getElementById("mainContent");
@@ -309,23 +310,33 @@ function convertDriveUrl(value) {
     return value;
 }
 
-// ✅ Bold labels like "Name:", "Address:" but not URLs
+// ✅ Bold labels like "Name:", "Address:" but not URLs (color via .qrt-text-label / prefix theme)
 function boldLeadingLabels(text) {
-    return text.split('<br>').map(line => {
-        if (line.includes('<a ') || line.includes('</a>')) return line;
-        const colonIndex = line.indexOf(':');
-        if (colonIndex === -1) return `<span style="color:#333;">${line}</span>`;
+    return text.split("<br>").map((line) => {
+        if (line.includes("<a ") || line.includes("</a>")) return line;
+
+        const colonIndex = line.indexOf(":");
+        if (colonIndex === -1) {
+            return line.includes("<") ? line : `<span class="qrt-text-line">${line}</span>`;
+        }
+
         const prefix = line.slice(0, colonIndex + 1).trim();
         const suffix = line.slice(colonIndex + 1);
-        if (/https?:\/\/[^ ]*$/i.test(prefix) || /^https?:\/\//i.test(prefix)) {
-            return `<span style="color:#333;">${line}</span>`;
+
+        if (prefix.includes("<") || prefix.includes(">")) {
+            return line;
         }
+
+        if (/https?:\/\/[^ ]*$/i.test(prefix) || /^https?:\/\//i.test(prefix)) {
+            return `<span class="qrt-text-line">${line}</span>`;
+        }
+
         const prefixWordCount = prefix.split(/\s+/).length;
         if (prefixWordCount <= 10) {
-            return `<span style="color:#005aab; font-weight:bold; display:inline-block; margin-bottom:2px;">${prefix}</span>${suffix}`;
+            return `<span class="qrt-text-label">${prefix}</span>${suffix}`;
         }
-        return `<span style="color:#333;">${line}</span>`;
-    }).join('<br>');
+        return `<span class="qrt-text-line">${line}</span>`;
+    }).join("<br>");
 }
 
 

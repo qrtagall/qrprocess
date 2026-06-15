@@ -15,4 +15,5 @@
     --qrt-text-accent-width: 2px;
     --qrt-text-accent-color: var(--qr-theme);
     --qrt-text-body-bg: var(--qr-theme-soft);
+    --qrt-text-label-color: var(--qr-theme);
 }
