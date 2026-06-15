@@ -2016,9 +2016,10 @@ const ARTIFACT_VISIBILITY_HINT = `💡 Visibility:<br>
 <code>NOVIEW</code> – hidden from others; only the owner sees it (🔒)`;
 
 const ARTIFACT_MESSAGEEMAIL_HINT = `💡 Contact by Email artifact:<br>
-Guests click <strong>Send Email</strong>, sign in with Google, then send a short message (max <strong>150</strong> characters).<br>
+<strong>Basic Info</strong> is the artifact header (e.g. “Message owner”). The button label is always <strong>Send Email</strong>.<br>
+Guests sign in with Google, then send a short message (max <strong>150</strong> characters).<br>
 Only <strong>one</strong> MESSAGEEMAIL artifact per QR link block.<br>
-Owner email is never shown to visitors. Basic Info title is for your records only — visitors always see <strong>Send Email</strong>.`;
+Owner email is never shown to visitors.`;
 
 const GUEST_MESSAGE_MAX_LEN = 150;
 const MESSAGEEMAIL_BUTTON_LABEL = "Send Email";
@@ -3386,9 +3387,10 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
     }
 
     if (typeUpper === "MESSAGEEMAIL") {
+        const headerTitle = escapeHtml(title || "Contact");
         const rid = escapeHtml(linkId || "");
         mainBlock.innerHTML = `
-            <p>${serialPrefixOrFallback} ${visibilityIcon}</p>
+            <p>${serialPrefixOrFallback}<b>${headerTitle}</b> ${visibilityIcon}</p>
             <div class="qrt-message-email-wrap">
                 <button type="button" class="qrt-btn qrt-message-email-btn" data-recipient-qr-id="${rid}">
                     ${MESSAGEEMAIL_BUTTON_LABEL}
