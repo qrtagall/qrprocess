@@ -371,17 +371,6 @@ function isYouTubeUrl(url) {
     return /youtube\.com|youtu\.be/i.test(url);
 }
 
-function openYouTubeEmbedModal(encodedUrl) {
-    const url = decodeURIComponent(String(encodedUrl || ""));
-    const embed = normaliseYouTubeEmbed(url);
-    if (!embed) {
-        if (url) window.open(url, "_blank", "noopener,noreferrer");
-        return;
-    }
-    const src = `${embed}${embed.includes("?") ? "&" : "?"}autoplay=1`;
-    openPreviewModal(src, "YOUTUBE");
-}
-
 function copyTextLink(encodedUrl) {
     const url = decodeURIComponent(String(encodedUrl || ""));
     if (!url) return;
@@ -389,6 +378,174 @@ function copyTextLink(encodedUrl) {
         .writeText(url)
         .then(() => alert("✅ Link copied to clipboard!"))
         .catch(() => alert("❌ Failed to copy link"));
+}
+
+function openUrlInNewTab(url) {
+    const u = String(url || "").trim();
+    if (!u) return;
+    const opened = window.open(u, "_blank", "noopener,noreferrer");
+    if (!opened) {
+        window.location.assign(u);
+    }
+}
+
+function escapeHtmlAttr(value) {
+    return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+}
+
+/** Platforms that block iframing — open in new tab directly. */
+const SMART_LINK_NEW_TAB_ONLY = new Set([
+    "Facebook_Link",
+    "Instagram_Link",
+    "Linkedin_Link",
+    "Twitter_Link",
+    "Whatsapp_Link",
+]);
+
+function detectSmartLinkIconKey(url) {
+    const lower = String(url || "").toLowerCase();
+    if (isYouTubeUrl(url) || lower.includes("youtube") || lower.includes("youtu.be")) {
+        return "Youtube_Link";
+    }
+    if (lower.includes("facebook.com") || lower.includes("fb.com")) return "Facebook_Link";
+    if (lower.includes("instagram.com")) return "Instagram_Link";
+    if (lower.includes("linkedin.com")) return "Linkedin_Link";
+    if (lower.includes("twitter.com") || lower.includes("x.com")) return "Twitter_Link";
+    if (lower.includes("drive.google.com")) return "Gdrive_Link";
+    if (lower.includes("docs.google.com/document")) return "Gdoc_Link";
+    if (lower.includes("forms.gle") || lower.includes("docs.google.com/forms")) return "Gform_Link";
+    if (
+        lower.includes("maps.google.") ||
+        lower.includes("maps.app.goo.gl") ||
+        lower.includes("google.com/maps") ||
+        /\/maps\//.test(lower)
+    ) {
+        return "Gmap_Link";
+    }
+    if (lower.includes("wa.me") || lower.includes("whatsapp.com")) return "Whatsapp_Link";
+    return "WebLink";
+}
+
+function isGoogleMapsUrl(url) {
+    if (!url) return false;
+    return /google\.com\/maps|maps\.google\.|maps\.app\.goo\.gl|goo\.gl\/maps/i.test(url);
+}
+
+/** Best-effort Maps embed URL (no API key). */
+function normaliseGoogleMapsEmbed(url) {
+    if (!url || !isGoogleMapsUrl(url)) return null;
+    const raw = String(url).trim();
+    if (/\/maps\/embed/i.test(raw)) return raw.split('"')[0].trim();
+
+    try {
+        const parsed = new URL(raw);
+        const atMatch = raw.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+        if (atMatch) {
+            return `https://maps.google.com/maps?q=${atMatch[1]},${atMatch[2]}&z=15&output=embed`;
+        }
+        const q = parsed.searchParams.get("q");
+        if (q) {
+            return `https://maps.google.com/maps?q=${encodeURIComponent(q)}&output=embed`;
+        }
+        const placeMatch = parsed.pathname.match(/\/place\/([^/]+)/);
+        if (placeMatch) {
+            const place = decodeURIComponent(placeMatch[1].replace(/\+/g, " "));
+            return `https://maps.google.com/maps?q=${encodeURIComponent(place)}&output=embed`;
+        }
+    } catch (_) {
+        /* fall through */
+    }
+
+    return `https://maps.google.com/maps?q=${encodeURIComponent(raw)}&output=embed`;
+}
+
+function buildFullFrameIframeHtml(src, opts = {}) {
+    const allow = opts.allow || "autoplay; encrypted-media; fullscreen";
+    return `<iframe class="qrt-preview-iframe qrt-preview-iframe--full"
+        src="${escapeHtmlAttr(src)}"
+        allow="${allow}"
+        referrerpolicy="no-referrer-when-downgrade"
+        loading="lazy"></iframe>`;
+}
+
+function buildWebEmbedShellHtml(url) {
+    const safe = escapeHtmlAttr(url);
+    const enc = encodeURIComponent(url);
+    return `<div class="qrt-web-embed-shell" data-original-url="${safe}">
+        ${buildFullFrameIframeHtml(url, { allow: "fullscreen" })}
+        <div class="qrt-preview-web-bar">
+            <span class="qrt-preview-web-hint">Page not loading?</span>
+            <button type="button" class="qrt-btn qrt-btn-secondary qrt-btn-sm" onclick="openUrlInNewTab(decodeURIComponent('${enc}'))">Open in new tab</button>
+            <button type="button" class="qrt-btn qrt-btn-secondary qrt-btn-sm" onclick="copyTextLink('${enc}')">Copy link</button>
+        </div>
+    </div>`;
+}
+
+function initWebEmbedShell(container) {
+    const iframe = container?.querySelector?.(".qrt-web-embed-shell .qrt-preview-iframe");
+    if (!iframe) return;
+    iframe.addEventListener("error", () => {
+        const enc = encodeURIComponent(iframe.getAttribute("src") || "");
+        if (enc) openUrlInNewTab(decodeURIComponent(enc));
+    });
+}
+
+/** Unified smart-link opener for TEXT artifact cards. */
+function openSmartLinkModal(encodedUrl, linkKind) {
+    const url = decodeURIComponent(String(encodedUrl || ""));
+    if (!url) return;
+
+    const kind = linkKind || detectSmartLinkIconKey(url);
+
+    if (SMART_LINK_NEW_TAB_ONLY.has(kind)) {
+        openUrlInNewTab(url);
+        return;
+    }
+
+    if (kind === "Youtube_Link" || normaliseYouTubeEmbed(url)) {
+        const embed = normaliseYouTubeEmbed(url);
+        if (embed) {
+            const src = `${embed}${embed.includes("?") ? "&" : "?"}autoplay=1`;
+            openPreviewModal(src, "YOUTUBE");
+            return;
+        }
+        openUrlInNewTab(url);
+        return;
+    }
+
+    if (kind === "Gmap_Link" || isGoogleMapsUrl(url)) {
+        const embed = normaliseGoogleMapsEmbed(url);
+        openPreviewModal(embed || url, "MAP");
+        return;
+    }
+
+    if (kind === "Gdrive_Link" && /drive\.google\.com\/file\//i.test(url)) {
+        openPreviewModal(url, "FILE");
+        return;
+    }
+
+    if (/\.pdf($|\?|#)/i.test(url)) {
+        openPreviewModal(url, "PDF");
+        return;
+    }
+    if (/\.(jpg|jpeg|png|gif|webp)($|\?|#)/i.test(url)) {
+        openPreviewModal(url, "IMAGE");
+        return;
+    }
+    if (/\.(mp4|webm|ogg|mov)($|\?|#)/i.test(url)) {
+        openPreviewModal(url, "VIDEO");
+        return;
+    }
+
+    openPreviewModal(url, "WEBPAGE");
+}
+
+function openYouTubeEmbedModal(encodedUrl) {
+    openSmartLinkModal(encodedUrl, "Youtube_Link");
 }
 
 // ✅ Bold labels like "Name:", "Address:" but not URLs (color via .qrt-text-label / prefix theme)
@@ -1774,86 +1931,85 @@ function openPreviewModal(url, type = "auto") {
 function openPreviewModal(url, type = "auto") {
     const modal = document.getElementById("previewModal");
     const inner = document.getElementById("previewInner");
+    const panel = document.getElementById("previewContent");
     if (!modal || !inner) return;
 
     inner.innerHTML = "";
+    inner.classList.remove("qrt-preview-inner--web");
+    if (panel) panel.classList.remove("qrt-preview-panel--wide");
 
-    // Normalize and upper-case type for easy matching
     let typeUpper = (type || "auto").toUpperCase();
 
-    // ✅ Detect Google Drive file ID (for /file/d/xxx/ or id=xxx)
     let fileId = null;
     const match = url.match(/\/d\/([^/]+)/) || url.match(/[?&]id=([-\w]{10,})/);
     if (match) fileId = match[1];
 
-    // ✅ Auto-detect Drive file type if type === "auto"
     if (typeUpper === "AUTO" && /drive\.google\.com\/file\//.test(url) && fileId) {
         typeUpper = "FILE";
+    }
+    if (typeUpper === "AUTO" && normaliseYouTubeEmbed(url)) {
+        typeUpper = "YOUTUBE";
+    }
+    if (typeUpper === "AUTO" && isGoogleMapsUrl(url)) {
+        typeUpper = "MAP";
+    }
+    if (
+        typeUpper === "AUTO" &&
+        /^https?:\/\//i.test(url) &&
+        !/drive\.google\.com\/file\//.test(url)
+    ) {
+        typeUpper = "WEBPAGE";
     }
 
     let html = "";
 
-
-    // ✅ CASE 1: Drive-hosted file (IMAGEFILE, VIDEOFILE, PDFFILE, etc.)
     if (typeUpper.includes("FILE") && /drive\.google\.com/.test(url) && fileId) {
         const iframeUrl = `https://drive.google.com/file/d/${fileId}/preview`;
-        html = `
-      <iframe src="${iframeUrl}"
-              frameborder="0"
-              allow="autoplay; encrypted-media; fullscreen"
-              sandbox="allow-scripts allow-same-origin allow-presentation"
-              style="
-                width:98vw;
-                height:94vh;
-                max-width:98vw;
-                max-height:94vh;
-                border:none;
-                border-radius:10px;
-                background:#000;">
-      </iframe>`;
-    }
-
-    // ✅ CASE 2: Regular image
-    else if (typeUpper === "IMAGE" || /\.(jpg|jpeg|png|gif|webp)$/i.test(url)) {
-        html = `<img src="${url}" style="max-width:100%; max-height:90vh; border-radius:8px;">`;
-    }
-
-    // ✅ CASE 3: Regular video
-    else if (typeUpper === "VIDEO" || /\.(mp4|webm|ogg|mov)$/i.test(url)) {
-        html = `<video controls autoplay style="max-width:100%; max-height:85vh; border-radius:8px; background:#000;">
-              <source src="${url}" type="video/mp4">
+        if (panel) panel.classList.add("qrt-preview-panel--wide");
+        html = buildFullFrameIframeHtml(iframeUrl, {
+            allow: "autoplay; encrypted-media; fullscreen",
+        });
+    } else if (typeUpper === "IMAGE" || /\.(jpg|jpeg|png|gif|webp)$/i.test(url)) {
+        html = `<img src="${escapeHtmlAttr(url)}" class="qrt-preview-image" alt="">`;
+    } else if (typeUpper === "VIDEO" || /\.(mp4|webm|ogg|mov)$/i.test(url)) {
+        html = `<video controls autoplay class="qrt-preview-video">
+              <source src="${escapeHtmlAttr(url)}" type="video/mp4">
               Your browser does not support video.
             </video>`;
-    }
-
-    // ✅ CASE 4: PDF
-    else if (typeUpper === "PDF" || /\.pdf$/i.test(url)) {
-        html = `<iframe src="${url}" style="width:90vw; height:85vh; border:none; border-radius:8px; background:#fff;"></iframe>`;
-    }
-
-    // ✅ CASE 5: YouTube embed (in-page modal)
-    else if (typeUpper === "YOUTUBE" || (typeUpper === "AUTO" && normaliseYouTubeEmbed(url))) {
+    } else if (typeUpper === "PDF" || /\.pdf$/i.test(url)) {
+        if (panel) panel.classList.add("qrt-preview-panel--wide");
+        html = buildFullFrameIframeHtml(url);
+    } else if (typeUpper === "YOUTUBE" || (typeUpper === "AUTO" && normaliseYouTubeEmbed(url))) {
         const src =
             typeUpper === "YOUTUBE" && /youtube\.com\/embed\//i.test(url)
                 ? url
                 : `${normaliseYouTubeEmbed(url)}?autoplay=1`;
-        html = `<iframe src="${src}"
+        html = `<iframe class="qrt-preview-iframe qrt-preview-iframe--video"
+              src="${escapeHtmlAttr(src)}"
               allow="autoplay; encrypted-media; fullscreen"
-              allowfullscreen
-              style="display:block;width:min(96vw,800px);height:min(54vw,450px);max-height:85vh;border:none;border-radius:12px;background:#000;"></iframe>`;
-    }
-
-    // ✅ CASE 6: Generic link
-    else {
-        html = `
-      <div style="color:#fff; font-size:16px; text-align:center;">
-        <p>Cannot preview this file inline.</p>
-        <a href="${url}" target="_blank"
-           style="color:#0af; text-decoration:underline;">Open in new tab</a>
+              allowfullscreen></iframe>`;
+    } else if (typeUpper === "MAP") {
+        const src =
+            /output=embed|\/maps\/embed/i.test(url) ? url : normaliseGoogleMapsEmbed(url) || url;
+        if (panel) panel.classList.add("qrt-preview-panel--wide");
+        inner.classList.add("qrt-preview-inner--web");
+        html = buildWebEmbedShellHtml(src);
+    } else if (typeUpper === "WEBPAGE") {
+        if (panel) panel.classList.add("qrt-preview-panel--wide");
+        inner.classList.add("qrt-preview-inner--web");
+        html = buildWebEmbedShellHtml(url);
+    } else {
+        const enc = encodeURIComponent(url);
+        html = `<div class="qrt-preview-fallback">
+        <p>This link cannot be previewed inline.</p>
+        <button type="button" class="qrt-btn qrt-btn-primary qrt-btn-sm" onclick="openUrlInNewTab(decodeURIComponent('${enc}'))">Open in new tab</button>
       </div>`;
     }
 
     inner.innerHTML = html;
+    if (typeUpper === "WEBPAGE" || typeUpper === "MAP") {
+        initWebEmbedShell(inner);
+    }
     modal.style.display = "flex";
 }
 
@@ -1862,8 +2018,16 @@ function openPreviewModal(url, type = "auto") {
 function closePreviewModal() {
     const modal = document.getElementById("previewModal");
     const inner = document.getElementById("previewInner");
+    const panel = document.getElementById("previewContent");
     if (modal) modal.style.display = "none";
-    if (inner) inner.innerHTML = "";
+    if (inner) {
+        inner.querySelectorAll("iframe").forEach((frame) => {
+            frame.src = "about:blank";
+        });
+        inner.innerHTML = "";
+        inner.classList.remove("qrt-preview-inner--web");
+    }
+    if (panel) panel.classList.remove("qrt-preview-panel--wide");
 }
 
 

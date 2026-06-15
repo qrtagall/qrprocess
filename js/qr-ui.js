@@ -575,19 +575,21 @@ async function resolveAndRender(value, i, customTitle = `Link ${i}`) {
         } else if (/video|mp4|webm|ogg/.test(contentType)) {
             return `<div><b>${icon} ${customTitle}</b><br><video controls width="100%"><source src="${finalUrl}"></video></div>`;
         } else if (/pdf/.test(contentType)) {
+            const encUrl = encodeURIComponent(finalUrl);
             return `
               <p><b>${icon} ${customTitle}</b></p>
               <div style="margin-left:10px; margin-bottom: 10px;">
-                <a href="${finalUrl}" target="_blank" style="color:var(--primary); text-decoration:underline;">📄 Open PDF</a>
+                <button type="button" onclick="openSmartLinkModal('${encUrl}')" style="color:var(--primary); background:none; border:none; padding:0; font:inherit; cursor:pointer; text-decoration:underline;">📄 Open PDF</button>
               </div>`;
         } else {
             const linkHost = finalUrl.match(/https?:\/\/([^/]+)/)?.[1] || "link";
+            const encUrl = encodeURIComponent(finalUrl);
             return `
               <div class="qrt-link-preview-card" style="display:flex; align-items:center; padding:12px; border-radius:10px; margin-bottom:10px;">
                 <img src="https://www.google.com/s2/favicons?domain=${linkHost}&sz=64" alt="favicon" style="width:32px;height:32px;margin-right:10px;">
                 <div style="flex-grow:1;">
                   <div style="font-size:15px; font-weight:500; color:#333;">${icon} ${customTitle}</div>
-                  <a href="${finalUrl}" target="_blank" style="font-size:14px; color:var(--primary); text-decoration:none;">↗️ Visit</a>
+                  <button type="button" onclick="openSmartLinkModal('${encUrl}')" style="font-size:14px; color:var(--primary); background:none; border:none; padding:0; font:inherit; cursor:pointer;">↗️ Visit</button>
                 </div>
               </div>`;
         }
@@ -1335,37 +1337,11 @@ function formatTextContent(text) {
 
 
 function urlToContext(url) {
-    const lower = url.toLowerCase();
-    const ytEmbed = typeof normaliseYouTubeEmbed === "function" ? normaliseYouTubeEmbed(url) : null;
-
     const iconKey =
-        (typeof isYouTubeUrl === "function" && isYouTubeUrl(url)) || lower.includes("youtube") || lower.includes("youtu.be")
-            ? "Youtube_Link"
-            : lower.includes("facebook")
-              ? "Facebook_Link"
-              : lower.includes("instagram")
-                ? "Instagram_Link"
-                : lower.includes("linkedin")
-                  ? "Linkedin_Link"
-                  : lower.includes("twitter") || lower.includes("x.com")
-                    ? "Twitter_Link"
-                    : lower.includes("drive.google.com")
-                      ? "Gdrive_Link"
-                      : lower.includes("docs.google.com/document")
-                        ? "Gdoc_Link"
-                        : lower.includes("forms.gle") || lower.includes("docs.google.com/forms")
-                          ? "Gform_Link"
-                          : lower.includes("maps.google.") ||
-                              lower.includes("maps.app.goo") ||
-                              lower.includes("/maps/")
-                            ? "Gmap_Link"
-                            : lower.includes("wa.me") || lower.includes("whatsapp.com")
-                              ? "Whatsapp_Link"
-                              : "WebLink";
+        typeof detectSmartLinkIconKey === "function" ? detectSmartLinkIconKey(url) : "WebLink";
 
     const label = iconKey.replace(/_Link$/i, "");
     const iconSvg = ICON_MAP[iconKey] || ICON_MAP.WebLink;
-    const safeUrl = escapeHtml(url);
     const encUrl = encodeURIComponent(url);
 
     const brandColors = {
@@ -1384,10 +1360,7 @@ function urlToContext(url) {
 
     const color = brandColors[iconKey] || "#005AAB";
 
-    const openControl =
-        iconKey === "Youtube_Link" && ytEmbed
-            ? `<button type="button" class="qrt-og-action qrt-og-action--open" onclick="openYouTubeEmbedModal('${encUrl}')">Open</button>`
-            : `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="qrt-og-action qrt-og-action--open">Open</a>`;
+    const openControl = `<button type="button" class="qrt-og-action qrt-og-action--open" onclick="openSmartLinkModal('${encUrl}', '${iconKey}')">Open</button>`;
 
     const cardHTML = `
     <div class="og-preview qrt-smart-link-card" data-link-kind="${iconKey}" style="

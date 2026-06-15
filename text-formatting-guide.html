@@ -402,7 +402,14 @@ Status: ==Active==</div>
             Google Docs, Google Forms, Google Maps, WhatsApp, and generic web links.</p>
         <p><strong>YouTube:</strong> supports <code>youtube.com/watch?v=…</code>, <code>youtu.be/…</code>,
             <code>/shorts/…</code>, and <code>/embed/…</code> links. <strong>Open</strong> plays the video in an
-            in-page frame (same as QRTagAll journey use-case videos), not a new browser tab.</p>
+            in-page preview modal.</p>
+        <p><strong>Google Maps:</strong> place and share links open an embedded map in the same modal, with
+            <strong>Open in new tab</strong> and <strong>Copy link</strong> in the footer if the embed fails.</p>
+        <p><strong>Generic web links:</strong> <strong>Open</strong> tries an in-page preview first (same modal),
+            with footer actions to open in a new tab or copy the URL. Some sites block embedding — use the footer
+            if the page stays blank.</p>
+        <p><strong>Facebook, Instagram, LinkedIn, X/Twitter, WhatsApp:</strong> these platforms block in-page
+            previews, so <strong>Open</strong> goes straight to a new browser tab.</p>
 
         <h2>7. Google Drive on a line</h2>
         <p>Put optional caption text, then a Drive <strong>file</strong> URL on the <strong>same line</strong>:</p>
