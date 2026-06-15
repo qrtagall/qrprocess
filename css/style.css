@@ -454,9 +454,9 @@
         .asset-banner {
             width: 100%;
             max-width: 720px;
-            margin: 8px auto;
+            margin: 6px auto;
             box-sizing: border-box;
-            padding: 10px 12px;
+            padding: 8px 10px;
             border: 1px solid #aaa;
             border-radius: 8px;
             background-color: #fff8e1; /* light yellow */
@@ -533,8 +533,8 @@
             transition: all 0.3s ease;
             width: 100%;
             max-width: 720px;
-            margin: 0 auto 8px auto;
-            padding: 0 10px;
+            margin: 0 auto 6px auto;
+            padding: 0 6px;
             box-sizing: border-box;
             border-radius: 0 0 10px 10px;
             background: #fff;
@@ -548,8 +548,8 @@
             max-height: none; /* large enough to fit full content */
             opacity: 1;
             visibility: visible;
-            padding-top: 8px;
-            padding-bottom: 8px;
+            padding-top: 6px;
+            padding-bottom: 6px;
         }
 
         /* Optional: constrain long content */
@@ -635,10 +635,10 @@ body {
 }
 
 #mainContent {
-    width: min(800px, calc(100vw - 20px));
+    width: min(800px, calc(100vw - 12px));
     box-sizing: border-box;
-    margin: 16px auto 24px;
-    padding: 20px 16px;
+    margin: 12px auto 20px;
+    padding: 16px 10px;
 }
 
 .edit-actions-bar {
@@ -1762,9 +1762,10 @@ body.qrt-page-themed #viewCountBadge {
 body.qrt-page-themed #mainContent.qrt-page-panel {
     background: linear-gradient(180deg, #fff 0%, var(--qr-theme-soft) 220px, #fff 100%);
     border: 1px solid var(--qr-theme-border);
-    border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(var(--qr-theme-rgb), 0.1);
+    border-radius: 14px;
+    box-shadow: 0 6px 24px rgba(var(--qr-theme-rgb), 0.08);
     animation: qrtFadeUp 0.45s ease;
+    padding: 14px 10px;
 }
 
 .qrt-owner-status-bar {
@@ -1774,13 +1775,14 @@ body.qrt-page-themed #mainContent.qrt-page-panel {
     margin: 0 0 16px;
 }
 
-.qrt-hero-panel {
+#qrWrapper,
+.qrt-hero-strip {
     text-align: center;
-    margin-bottom: 20px;
-    padding: 16px 12px 12px;
-    border-radius: 14px;
-    background: var(--qr-theme-hero-bg, var(--qr-theme-soft));
-    border: 1px solid var(--qr-theme-border);
+    margin-bottom: 12px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
 }
 
 .qrt-page-title-block {
@@ -1907,8 +1909,8 @@ body.qrt-page-themed .qrt-page-description {
 
 body.qrt-page-themed .artifact-block {
     position: relative;
-    margin: 0 0 10px;
-    padding: 12px 14px;
+    margin: 0 0 8px;
+    padding: 10px 11px;
     border: 1px solid var(--qr-theme-border);
     border-radius: 12px;
     box-sizing: border-box;
@@ -1957,10 +1959,6 @@ body.qrt-page-themed .qrt-text-body--right {
 
 .qrt-text-line {
     color: #333;
-}
-
-body.qrt-page-themed .qrt-hero-panel {
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 
 body.qrt-page-themed .qrt-stripe-desc,
@@ -2562,22 +2560,23 @@ body.qrt-page-themed .qrt-link-preview-card {
     }
 
     #mainContent {
-        padding: 16px 12px;
-        margin: 12px auto 20px;
+        padding: 12px 8px;
+        margin: 10px auto 16px;
+        width: min(800px, calc(100vw - 8px));
     }
 
     .asset-banner {
-        margin: 6px auto;
-        padding: 8px 10px;
+        margin: 5px auto;
+        padding: 7px 8px;
     }
 
     .asset-banner.active + .remote-content {
-        padding-top: 6px;
-        padding-bottom: 6px;
+        padding-top: 5px;
+        padding-bottom: 5px;
     }
 
     .artifact-block {
-        margin-bottom: 5px;
+        margin-bottom: 4px;
         padding: 5px 6px;
     }
 

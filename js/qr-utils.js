@@ -1177,7 +1177,7 @@ function injectQRBlock(id) {
 
     const qrDiv = document.createElement("div");
     qrDiv.id = "qrWrapper";
-    qrDiv.className = "qrt-hero-panel";
+    qrDiv.className = "qrt-hero-strip";
 
     const qrUrl = `https://process.qrtagall.com/?id=${encodeURIComponent(id)}`;
 
@@ -1191,7 +1191,7 @@ function injectQRBlock(id) {
     const qrCanvas = document.createElement("canvas");
     qrCanvas.id = "qrCanvasHero";
     qrCanvas.style.border = `1px solid ${qrColor}`;
-    qrCanvas.style.padding = "6px";
+    qrCanvas.style.padding = "4px";
     qrCanvas.style.borderRadius = "8px";
     qrCanvas.style.background = "#fff";
     qrCanvas.style.width = "200px";
