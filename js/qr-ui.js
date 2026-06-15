@@ -1336,22 +1336,37 @@ function formatTextContent(text) {
 
 function urlToContext(url) {
     const lower = url.toLowerCase();
+    const ytEmbed = typeof normaliseYouTubeEmbed === "function" ? normaliseYouTubeEmbed(url) : null;
 
     const iconKey =
-        lower.includes("youtube") ? "Youtube_Link" :
-            lower.includes("facebook") ? "Facebook_Link" :
-                lower.includes("instagram") ? "Instagram_Link" :
-                    lower.includes("linkedin") ? "Linkedin_Link" :
-                        lower.includes("twitter") || lower.includes("x.com") ? "Twitter_Link" :
-                            lower.includes("drive.google.com") ? "Gdrive_Link" :
-                                lower.includes("docs.google.com/document") ? "Gdoc_Link" :
-                                    lower.includes("forms.gle") || lower.includes("docs.google.com/forms") ? "Gform_Link" :
-                                        lower.includes("maps.google.") || lower.includes("maps.app.goo") || lower.includes("/maps/") ? "Gmap_Link" :
-                                            lower.includes("wa.me") || lower.includes("whatsapp.com") ? "Whatsapp_Link" :
-                                                "WebLink";
+        (typeof isYouTubeUrl === "function" && isYouTubeUrl(url)) || lower.includes("youtube") || lower.includes("youtu.be")
+            ? "Youtube_Link"
+            : lower.includes("facebook")
+              ? "Facebook_Link"
+              : lower.includes("instagram")
+                ? "Instagram_Link"
+                : lower.includes("linkedin")
+                  ? "Linkedin_Link"
+                  : lower.includes("twitter") || lower.includes("x.com")
+                    ? "Twitter_Link"
+                    : lower.includes("drive.google.com")
+                      ? "Gdrive_Link"
+                      : lower.includes("docs.google.com/document")
+                        ? "Gdoc_Link"
+                        : lower.includes("forms.gle") || lower.includes("docs.google.com/forms")
+                          ? "Gform_Link"
+                          : lower.includes("maps.google.") ||
+                              lower.includes("maps.app.goo") ||
+                              lower.includes("/maps/")
+                            ? "Gmap_Link"
+                            : lower.includes("wa.me") || lower.includes("whatsapp.com")
+                              ? "Whatsapp_Link"
+                              : "WebLink";
 
     const label = iconKey.replace(/_Link$/i, "");
     const iconSvg = ICON_MAP[iconKey] || ICON_MAP.WebLink;
+    const safeUrl = escapeHtml(url);
+    const encUrl = encodeURIComponent(url);
 
     const brandColors = {
         Youtube_Link: "#FF0000",
@@ -1364,58 +1379,26 @@ function urlToContext(url) {
         Gform_Link: "#673AB7",
         Gmap_Link: "#EA4335",
         Whatsapp_Link: "#25D366",
-        WebLink: "#005AAB"
+        WebLink: "#005AAB",
     };
 
     const color = brandColors[iconKey] || "#005AAB";
 
-    // ✅ new inline copy handler
-    const copyHandler = `
-      navigator.clipboard.writeText('${url}')
-        .then(() => alert('✅ Link copied to clipboard!'))
-        .catch(() => alert('❌ Failed to copy link'));
-    `;
+    const openControl =
+        iconKey === "Youtube_Link" && ytEmbed
+            ? `<button type="button" class="qrt-og-action qrt-og-action--open" onclick="openYouTubeEmbedModal('${encUrl}')">Open</button>`
+            : `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="qrt-og-action qrt-og-action--open">Open</a>`;
 
     const cardHTML = `
-    <div class="og-preview" style="
-      display:flex;
-      align-items:center;
-      gap:8px;
-      border:1px solid ${color}40;
-      border-left:4px solid ${color};
-      border-radius:8px;
-      background:#fafafa;
-      padding:8px 10px;
-      max-width:420px;
-      font-size:14px;
-      box-shadow:0 1px 3px rgba(0,0,0,0.05);
-      transition:all 0.15s ease;
-    "
-    onmouseover="this.style.background='${color}08';"
-    onmouseout="this.style.background='#fafafa';">
-      <div style="width:18px;height:18px;display:flex;align-items:center;justify-content:center;">
-        ${iconSvg}
-      </div>
-      <div style="font-weight:600;color:#202124;">${label}</div>
-      <div style="flex:1;"></div>
-
-      <a href="${url}" target="_blank" style="
-        color:${color};
-        font-size:13px;
-        text-decoration:underline;
-        font-weight:500;
-        white-space:nowrap;
-        margin-right:10px;
-      ">Open</a>
-
-      <span onclick="${copyHandler}" style="
-        color:${color};
-        font-size:13px;
-        text-decoration:underline;
-        font-weight:500;
-        cursor:pointer;
-        white-space:nowrap;
-      ">Copy</span>
+    <div class="og-preview qrt-smart-link-card" data-link-kind="${iconKey}" style="
+      border-color: ${color}40;
+      --qrt-smart-accent: ${color};
+    ">
+      <div class="qrt-smart-link-icon">${iconSvg}</div>
+      <div class="qrt-smart-link-label">${label}</div>
+      <div class="qrt-smart-link-spacer"></div>
+      ${openControl}
+      <button type="button" class="qrt-og-action qrt-og-action--copy" onclick="copyTextLink('${encUrl}')">Copy</button>
     </div>`;
 
     return cardHTML;

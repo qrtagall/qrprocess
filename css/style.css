@@ -1943,6 +1943,72 @@ body.qrt-page-themed .og-preview {
     background: #fff !important;
 }
 
+.qrt-smart-link-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid rgba(var(--qr-theme-rgb, 0, 90, 171), 0.18);
+    border-left: var(--qrt-text-accent-width, 2px) solid var(--qr-theme, var(--qrt-smart-accent, #005aab));
+    border-radius: 10px;
+    background: #fff;
+    padding: 8px 10px;
+    max-width: 100%;
+    font-size: 14px;
+    box-shadow: 0 1px 3px rgba(var(--qr-theme-rgb, 0, 90, 171), 0.05);
+    box-sizing: border-box;
+}
+
+.qrt-smart-link-icon {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+}
+
+.qrt-smart-link-label {
+    font-weight: 600;
+    color: #202124;
+}
+
+.qrt-smart-link-spacer {
+    flex: 1 1 auto;
+    min-width: 8px;
+}
+
+.qrt-og-action {
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    color: var(--qrt-smart-accent, var(--qr-theme, #005aab));
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    text-decoration: underline;
+    font-family: inherit;
+}
+
+.qrt-og-action--open {
+    margin-right: 10px;
+}
+
+a.qrt-og-action--open {
+    display: inline;
+}
+
+.qrt-og-action:hover {
+    opacity: 0.85;
+}
+
+body.qrt-page-themed .qrt-smart-link-card[data-link-kind="Youtube_Link"] .qrt-og-action {
+    color: #c62828;
+}
+
+body.qrt-page-themed .qrt-smart-link-card[data-link-kind="Youtube_Link"] {
+    border-left-color: #ff0000;
+}
+
 /* Phase C: prefix-tinted hero wash + text accent alignment */
 body.qrt-page-themed .qrt-text-body,
 body.qrt-page-themed .qrt-text-body--right {

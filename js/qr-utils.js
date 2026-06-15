@@ -310,6 +310,87 @@ function convertDriveUrl(value) {
     return value;
 }
 
+/** Extract YouTube video id from watch, youtu.be, embed, shorts, /v/ URLs. */
+function parseYouTubeVideoId(url) {
+    if (!url || typeof url !== "string") return null;
+    const raw = url.trim();
+    if (!raw) return null;
+
+    try {
+        const parsed = new URL(raw);
+        const host = parsed.hostname.replace(/^www\./i, "").toLowerCase();
+
+        if (host === "youtu.be") {
+            const id = parsed.pathname.replace(/^\//, "").split("/")[0];
+            return id && /^[\w-]{6,12}$/.test(id) ? id : null;
+        }
+
+        if (
+            host === "youtube.com" ||
+            host === "m.youtube.com" ||
+            host === "music.youtube.com"
+        ) {
+            if (parsed.pathname === "/watch") {
+                const id = parsed.searchParams.get("v");
+                return id && /^[\w-]{6,12}$/.test(id) ? id : null;
+            }
+            const pathMatch = parsed.pathname.match(/^\/(embed|shorts|live|v)\/([^/?#]+)/i);
+            if (pathMatch && /^[\w-]{6,12}$/.test(pathMatch[2])) return pathMatch[2];
+        }
+    } catch (_) {
+        /* fall through to string patterns */
+    }
+
+    if (/youtu\.be\//i.test(raw)) {
+        const id = raw.split(/youtu\.be\//i)[1].split(/[?&#/]/)[0];
+        if (id && /^[\w-]{6,12}$/.test(id)) return id;
+    }
+    if (/[?&]v=/i.test(raw)) {
+        const id = raw.split(/[?&]v=/i)[1].split(/[&?#/]/)[0];
+        if (id && /^[\w-]{6,12}$/.test(id)) return id;
+    }
+    if (/\/shorts\//i.test(raw)) {
+        const id = raw.split(/\/shorts\//i)[1].split(/[?&#/]/)[0];
+        if (id && /^[\w-]{6,12}$/.test(id)) return id;
+    }
+    if (/\/embed\//i.test(raw)) {
+        const id = raw.split(/\/embed\//i)[1].split(/[?&#/]/)[0];
+        if (id && /^[\w-]{6,12}$/.test(id)) return id;
+    }
+    return null;
+}
+
+function normaliseYouTubeEmbed(url) {
+    const id = parseYouTubeVideoId(url);
+    return id ? `https://www.youtube.com/embed/${id}` : null;
+}
+
+function isYouTubeUrl(url) {
+    if (!url || typeof url !== "string") return false;
+    if (parseYouTubeVideoId(url)) return true;
+    return /youtube\.com|youtu\.be/i.test(url);
+}
+
+function openYouTubeEmbedModal(encodedUrl) {
+    const url = decodeURIComponent(String(encodedUrl || ""));
+    const embed = normaliseYouTubeEmbed(url);
+    if (!embed) {
+        if (url) window.open(url, "_blank", "noopener,noreferrer");
+        return;
+    }
+    const src = `${embed}${embed.includes("?") ? "&" : "?"}autoplay=1`;
+    openPreviewModal(src, "YOUTUBE");
+}
+
+function copyTextLink(encodedUrl) {
+    const url = decodeURIComponent(String(encodedUrl || ""));
+    if (!url) return;
+    navigator.clipboard
+        .writeText(url)
+        .then(() => alert("✅ Link copied to clipboard!"))
+        .catch(() => alert("❌ Failed to copy link"));
+}
+
 // ✅ Bold labels like "Name:", "Address:" but not URLs (color via .qrt-text-label / prefix theme)
 function boldLeadingLabels(text) {
     return text.split("<br>").map((line) => {
@@ -1750,7 +1831,19 @@ function openPreviewModal(url, type = "auto") {
         html = `<iframe src="${url}" style="width:90vw; height:85vh; border:none; border-radius:8px; background:#fff;"></iframe>`;
     }
 
-    // ✅ CASE 5: Generic link
+    // ✅ CASE 5: YouTube embed (in-page modal)
+    else if (typeUpper === "YOUTUBE" || (typeUpper === "AUTO" && normaliseYouTubeEmbed(url))) {
+        const src =
+            typeUpper === "YOUTUBE" && /youtube\.com\/embed\//i.test(url)
+                ? url
+                : `${normaliseYouTubeEmbed(url)}?autoplay=1`;
+        html = `<iframe src="${src}"
+              allow="autoplay; encrypted-media; fullscreen"
+              allowfullscreen
+              style="display:block;width:min(96vw,800px);height:min(54vw,450px);max-height:85vh;border:none;border-radius:12px;background:#000;"></iframe>`;
+    }
+
+    // ✅ CASE 6: Generic link
     else {
         html = `
       <div style="color:#fff; font-size:16px; text-align:center;">
@@ -1778,7 +1871,7 @@ function closePreviewModal() {
 // ICON MAP (Platform SVG Icons)
 // ------------------------------------------
 const ICON_MAP = {
-    Youtube_Link: `<svg width="16" height="16" viewBox="0 0 24 24" fill="#FF0000"><path d="M10 15l5.19-3L10 9v6zm12-3c0-1.66-.34-3.17-.95-4.58A3.86 3.86 0 0 0 18.1 5H5.9a3.86 3.86 0 0 0-2.95 2.42C2.34 8.83 2 10.34 2 12c0 1.66.34 3.17.95 4.58A3.86 3.86 0 0 0 5.9 19h12.2a3.86 3.86 0 0 0 2.95-2.42c.61-1.41.95-2.92.95-4.58z"/></svg>`,
+    Youtube_Link: `<svg width="22" height="16" viewBox="0 0 22 16" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><rect width="22" height="16" rx="4" fill="#FF0000"/><path d="M9 5.2v5.6l5.2-2.8L9 5.2z" fill="#FFFFFF"/></svg>`,
     Facebook_Link: `<svg width="16" height="16" viewBox="0 0 24 24" fill="#1877F2" xmlns="http://www.w3.org/2000/svg"><path d="M22.675 0h-21.35C.596 0 0 .6 0 1.326v21.348C0 23.404.596 24 1.325 24h11.494v-9.294H9.69V11.01h3.13V8.414c0-3.1 1.893-4.788 4.657-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.796.715-1.796 1.763v2.31h3.587l-.467 3.696h-3.12V24h6.116C23.404 24 24 23.404 24 22.674V1.326C24 .6 23.404 0 22.675 0z"/></svg>`,
 
     Instagram_Link: `<svg width="16" height="16" viewBox="0 0 24 24" fill="#E4405F" xmlns="http://www.w3.org/2000/svg"><path d="M7 2C4.2 2 2 4.2 2 7v10c0 2.8 2.2 5 5 5h10c2.8 0 5-2.2 5-5V7c0-2.8-2.2-5-5-5H7zm10 2c1.7 0 3 1.3 3 3v10c0 1.7-1.3 3-3 3H7c-1.7 0-3-1.3-3-3V7c0-1.7 1.3-3 3-3h10zm-5 3a5 5 0 1 -0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 -0 6 3 3 0 -0 1 0-6zm4.8-.9a1.1 1.1 0 1 -0 0-2.2 1.1 1.1 0 0 0 0 2.2z"></path></svg>`,
