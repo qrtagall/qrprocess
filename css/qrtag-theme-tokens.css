@@ -1,0 +1,18 @@
+/**
+ * Shared QRTagAll design tokens (prefix theme + text accents).
+ * Loaded by process.qrtagall.com; qrjourney can @import the same file for alignment.
+ * Runtime overrides: applyQrPageTheme() in qr-utils.js
+ */
+:root {
+    --primary: #005aab;
+    --qr-theme: #005aab;
+    --qr-theme-rgb: 0, 90, 171;
+    --qr-theme-surface: #f4f9ff;
+    --qr-theme-border: #c5daf5;
+    --qr-theme-soft: #f7fafc;
+    --qr-theme-muted: rgba(0, 90, 171, 0.14);
+    --qr-theme-hero-bg: var(--qr-theme-soft);
+    --qrt-text-accent-width: 2px;
+    --qrt-text-accent-color: var(--qr-theme);
+    --qrt-text-body-bg: var(--qr-theme-soft);
+}

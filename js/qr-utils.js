@@ -158,6 +158,14 @@ function applyQrPageTheme(id) {
     root.style.setProperty("--qr-theme-border", mixHexWithWhite(theme, 0.78));
     root.style.setProperty("--qr-theme-soft", mixHexWithWhite(theme, 0.945));
     root.style.setProperty("--qr-theme-muted", `rgba(${hexToRgbString(theme)}, 0.14)`);
+    const heroLight = mixHexWithWhite(theme, 0.965);
+    const heroMid = mixHexWithWhite(theme, 0.94);
+    root.style.setProperty(
+        "--qr-theme-hero-bg",
+        `linear-gradient(165deg, ${heroLight} 0%, #ffffff 52%, ${heroMid} 100%)`
+    );
+    root.style.setProperty("--qrt-text-body-bg", mixHexWithWhite(theme, 0.965));
+    root.style.setProperty("--qrt-text-accent-color", theme);
 
     document.body.classList.add("qrt-page-themed");
     const main = document.getElementById("mainContent");

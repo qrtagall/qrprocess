@@ -1,15 +1,7 @@
 
         :root {
-            --primary: #005aab;
             --valid: #00cc88;
             --error: #ff4444;
-            /* Prefix theme (set by applyQrPageTheme); fallbacks match brand blue */
-            --qr-theme: #005aab;
-            --qr-theme-rgb: 0, 90, 171;
-            --qr-theme-surface: #f4f9ff;
-            --qr-theme-border: #c5daf5;
-            --qr-theme-soft: #f7fafc;
-            --qr-theme-muted: rgba(0, 90, 171, 0.14);
             /* Set by JS from #taglineWrapper height; fallback for first paint */
             --qrtag-ribbon-bottom: 48px;
         }
@@ -321,9 +313,9 @@
             margin: 0 0 4px 8px;
             font-size: 14px;
             line-height: 1.5;
-            background: #f9f9ff;
+            background: var(--qrt-text-body-bg, var(--qr-theme-soft, #f9f9ff));
             padding: 8px 10px;
-            border-left: 4px solid var(--primary);
+            border-left: var(--qrt-text-accent-width, 2px) solid var(--qrt-text-accent-color, var(--qr-theme, var(--primary)));
             border-radius: 6px;
             text-align: left;
         }
@@ -332,7 +324,7 @@
             margin: 0;
             text-align: right;
             border-left: none;
-            border-right: 4px solid var(--primary);
+            border-right: var(--qrt-text-accent-width, 2px) solid var(--qrt-text-accent-color, var(--qr-theme, var(--primary)));
         }
 
         .qrt-text-artifact--headless .qrt-text-body--right {
@@ -1765,7 +1757,7 @@ body.qrt-page-themed #viewCountBadge {
 }
 
 body.qrt-page-themed #mainContent.qrt-page-panel {
-    background: #fff;
+    background: linear-gradient(180deg, #fff 0%, var(--qr-theme-soft) 220px, #fff 100%);
     border: 1px solid var(--qr-theme-border);
     border-radius: 16px;
     box-shadow: 0 8px 32px rgba(var(--qr-theme-rgb), 0.1);
@@ -1784,7 +1776,7 @@ body.qrt-page-themed #mainContent.qrt-page-panel {
     margin-bottom: 20px;
     padding: 16px 12px 12px;
     border-radius: 14px;
-    background: var(--qr-theme-soft);
+    background: var(--qr-theme-hero-bg, var(--qr-theme-soft));
     border: 1px solid var(--qr-theme-border);
 }
 
@@ -1918,9 +1910,20 @@ body.qrt-page-themed .artifact-block.qrt-artifact--owned > div {
 }
 
 body.qrt-page-themed .og-preview {
-    border-left-width: 3px !important;
+    border-left: var(--qrt-text-accent-width, 2px) solid var(--qr-theme) !important;
     border-radius: 10px !important;
     background: #fff !important;
+}
+
+/* Phase C: prefix-tinted hero wash + text accent alignment */
+body.qrt-page-themed .qrt-text-body,
+body.qrt-page-themed .qrt-text-body--right {
+    background: var(--qrt-text-body-bg, var(--qr-theme-soft));
+    border-color: var(--qrt-text-accent-color, var(--qr-theme));
+}
+
+body.qrt-page-themed .qrt-hero-panel {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 
 body.qrt-page-themed .qrt-stripe-desc,
