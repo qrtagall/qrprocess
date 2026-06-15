@@ -1156,7 +1156,6 @@ function submitRemoteClaimFormPost({ id, assetName, email, claimScriptUrl, authT
     form.submit();
 }
 
-const QRTAGALL_AUTH_PARAM = "authToken";
 const QR_CLAIM_PENDING_PREFIX = "qr_claim_pending_";
 
 function pendingClaimStorageKey(id) {
