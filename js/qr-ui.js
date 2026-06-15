@@ -2016,11 +2016,12 @@ const ARTIFACT_VISIBILITY_HINT = `💡 Visibility:<br>
 <code>NOVIEW</code> – hidden from others; only the owner sees it (🔒)`;
 
 const ARTIFACT_MESSAGEEMAIL_HINT = `💡 Contact by Email artifact:<br>
-Guests sign in with Google, then send a short message (max <strong>150</strong> characters).<br>
+Guests click <strong>Send Email</strong>, sign in with Google, then send a short message (max <strong>150</strong> characters).<br>
 Only <strong>one</strong> MESSAGEEMAIL artifact per QR link block.<br>
-Owner email is never shown to visitors.`;
+Owner email is never shown to visitors. Basic Info title is for your records only — visitors always see <strong>Send Email</strong>.`;
 
 const GUEST_MESSAGE_MAX_LEN = 150;
+const MESSAGEEMAIL_BUTTON_LABEL = "Send Email";
 let guestMessageRecipientQrId = "";
 let ownerReplySerial = "";
 
@@ -3094,7 +3095,7 @@ function updateGuestMessageCharCount() {
     counter.textContent = `${len} / ${GUEST_MESSAGE_MAX_LEN}`;
 }
 
-function openGuestMessageModal(recipientQrId, buttonLabel) {
+function openGuestMessageModal(recipientQrId) {
     const modal = document.getElementById("guestMessageModal");
     const titleEl = document.getElementById("guestMessageModalTitle");
     const input = document.getElementById("guestMessageInput");
@@ -3111,8 +3112,7 @@ function openGuestMessageModal(recipientQrId, buttonLabel) {
     }
 
     resetContactModalUi("guest");
-    const label = String(buttonLabel || "Contact owner by Email").trim();
-    if (titleEl) titleEl.textContent = `✉️ ${label}`;
+    if (titleEl) titleEl.textContent = `✉️ ${MESSAGEEMAIL_BUTTON_LABEL}`;
     input.value = sessionStorage.getItem("qrtagall_guest_msg_draft") || "";
     updateGuestMessageCharCount();
     modal.style.display = "flex";
@@ -3321,7 +3321,7 @@ function maybeResumeGuestMessageFlow() {
     window.history.replaceState({}, "", cleanUrl.pathname + cleanUrl.search);
 
     setTimeout(() => {
-        openGuestMessageModal(recipientQrId, "Contact owner by Email");
+        openGuestMessageModal(recipientQrId);
     }, 300);
 }
 
@@ -3386,19 +3386,18 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
     }
 
     if (typeUpper === "MESSAGEEMAIL") {
-        const btnLabel = escapeHtml(title || "Contact owner by Email");
         const rid = escapeHtml(linkId || "");
         mainBlock.innerHTML = `
-            <p>${serialPrefixOrFallback}<b>${btnLabel}</b> ${visibilityIcon}</p>
-            <div style="margin: 8px 0 10px 10px;">
-                <button type="button" class="qrt-btn qrt-btn-primary qrt-message-email-btn" data-recipient-qr-id="${rid}">
-                    ✉️ ${btnLabel}
+            <p>${serialPrefixOrFallback} ${visibilityIcon}</p>
+            <div class="qrt-message-email-wrap">
+                <button type="button" class="qrt-btn qrt-message-email-btn" data-recipient-qr-id="${rid}">
+                    ${MESSAGEEMAIL_BUTTON_LABEL}
                 </button>
             </div>`;
         wrapper.appendChild(mainBlock);
         const btn = mainBlock.querySelector(".qrt-message-email-btn");
         if (btn) {
-            btn.addEventListener("click", () => openGuestMessageModal(linkId, title || "Contact owner by Email"));
+            btn.addEventListener("click", () => openGuestMessageModal(linkId));
         }
         if (isEditable && editMode) {
             const actionBar = document.createElement("div");

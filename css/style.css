@@ -2158,8 +2158,24 @@ body.qrt-page-themed .qrt-link-preview-card {
     margin: 0 0 8px;
 }
 
+.qrt-message-email-wrap {
+    margin: 8px 0 10px 10px;
+}
+
 .qrt-message-email-btn {
     min-width: 200px;
+    background: var(--qr-theme, var(--primary));
+    border: 1px solid var(--qr-theme, var(--primary));
+    color: #fff;
+    font-weight: 600;
+}
+
+.qrt-message-email-btn:hover {
+    filter: brightness(0.92);
+}
+
+body.qrt-page-themed .qrt-message-email-btn {
+    box-shadow: 0 1px 4px rgba(var(--qr-theme-rgb, 0, 90, 171), 0.28);
 }
 
 .qrt-guest-msg-count {
