@@ -109,26 +109,23 @@ function ensureViewCountBadge() {
             '<span id="viewCountValue">0</span>';
         document.body.appendChild(badge);
     }
-    // Inline styles guarantee visibility regardless of style.css.
-    const themeRgb =
-        getComputedStyle(document.documentElement).getPropertyValue("--qr-theme-rgb").trim() ||
-        "0, 90, 171";
+    // Drop legacy solid inline colors so CSS pill-style fade applies.
+    ["background", "color", "border", "box-shadow"].forEach((prop) =>
+        badge.style.removeProperty(prop)
+    );
+    // Inline layout only — colors come from style.css (pill-style fade).
     Object.assign(badge.style, {
         position: "fixed",
         right: "14px",
         zIndex: "999",
-        display: "inline-flex",
         alignItems: "center",
         gap: "6px",
-        padding: "6px 12px",
-        background: `rgba(${themeRgb}, 0.92)`,
-        color: "#fff",
+        padding: "5px 11px",
         fontFamily: "'Segoe UI', sans-serif",
-        fontSize: "14px",
+        fontSize: "13px",
         fontWeight: "600",
         lineHeight: "1",
         borderRadius: "999px",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
     });
     syncViewCountBadgePosition();
     return badge;

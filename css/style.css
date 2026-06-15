@@ -15,16 +15,16 @@
             display: none;
             align-items: center;
             gap: 6px;
-            padding: 6px 12px;
-            background: rgba(0, 90, 171, 0.92);
-            color: #fff;
+            padding: 5px 11px;
+            background: rgba(var(--qr-theme-rgb, 0, 90, 171), 0.1);
+            color: var(--qr-theme, #005aab);
+            border: 1px solid rgba(var(--qr-theme-rgb, 0, 90, 171), 0.16);
             font-family: 'Segoe UI', sans-serif;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             line-height: 1;
             border-radius: 999px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-            backdrop-filter: blur(2px);
+            box-shadow: 0 1px 3px rgba(var(--qr-theme-rgb, 0, 90, 171), 0.05);
             user-select: none;
         }
 
@@ -1753,7 +1753,10 @@ body.qrt-page-themed #taglineWrapper {
 }
 
 body.qrt-page-themed #viewCountBadge {
-    background: rgba(var(--qr-theme-rgb), 0.92);
+    background: rgba(var(--qr-theme-rgb), 0.1);
+    color: var(--qr-theme);
+    border-color: rgba(var(--qr-theme-rgb), 0.16);
+    box-shadow: 0 1px 3px rgba(var(--qr-theme-rgb), 0.05);
 }
 
 body.qrt-page-themed #mainContent.qrt-page-panel {
