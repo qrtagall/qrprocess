@@ -72,10 +72,10 @@
     -->
 
     <div id="loginSection" class="login-options" style="display:none; font-size:13.5px; text-align:center;">
-        <p style="font-weight: normal;">Page description (shown at top; can edit later)</p>
+        <p style="font-weight: normal;">Page description (shown at top of QR page)</p>
 
-        <!-- Claim page title → master registry Page_Description (not artifact Basic Info) -->
-        <input id="assetNameInput" type="text" placeholder="Enter page description"
+        <!-- Claim page title → master registry Page_Description -->
+        <input id="assetNameInput" type="text" placeholder="Page description (from template when set)"
                style="margin-bottom:10px; padding:8px; width:80%; border-radius:6px; border:1px solid #ccc;" />
 
         <p style="font-weight: normal;">Select Storage space where Asset Info shall be stored:</p>
@@ -640,21 +640,21 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "10.1";
+    const QRTagAll_Ver_ = "10.2";
 </script>
 
 
 
 
 <!-- bump ?v= whenever JS changes to force browsers to load the new files -->
-<script src="./js/qr-utils.js?v=20260604i"></script>
+<script src="./js/qr-utils.js?v=20260616a"></script>
 <script src="./js/qr-cells.js?v=20260615a"></script>
 <script src="./js/qr-auth.js?v=20260608b"></script>
-<script src="./js/qr-fetch.js?v=20260615c"></script>
+<script src="./js/qr-fetch.js?v=20260616a"></script>
 <script src="./js/qr-edit.js?v=20260613e"></script>
 <script src="./js/qr-dashboard.js?v=20260613a"></script>
-<script src="./js/qr-ui.js?v=20260604k"></script>
-<script src="./js/qr-main.js?v=20260615a"></script>
+<script src="./js/qr-ui.js?v=20260616a"></script>
+<script src="./js/qr-main.js?v=20260616a"></script>
 <!--   -->
 
 <!-- LOCAL DEV ONLY — do not deploy with file:// script tags (breaks claim/save on process.qrtagall.com)

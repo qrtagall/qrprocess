@@ -829,13 +829,17 @@ function applyArtifactPolicyFromFetch(data) {
     }
 }
 
-/** Pre-fill claim-page page description from template B2; lock when templated. */
-function prefillAssetNameFromTemplate(description) {
-    const text = String(description || "").trim();
+/** Pre-fill claim page title from template Page_Description; lock when templated. */
+function prefillClaimFieldsFromTemplate(data) {
+    const pageDesc = String(
+        (data && data.templatePageDescription) ||
+            (data && data.templateDescription) ||
+            ""
+    ).trim();
     const input = document.getElementById("assetNameInput");
     if (!input) return;
-    if (text) {
-        input.value = text;
+    if (pageDesc) {
+        input.value = pageDesc;
         input.disabled = true;
         input.readOnly = true;
         input.style.opacity = "0.75";
@@ -846,6 +850,11 @@ function prefillAssetNameFromTemplate(description) {
         input.style.opacity = "";
         input.style.cursor = "";
     }
+}
+
+/** @deprecated use prefillClaimFieldsFromTemplate */
+function prefillAssetNameFromTemplate(description) {
+    prefillClaimFieldsFromTemplate({ templatePageDescription: description });
 }
 
 function artifactDateTimeStamp() {
@@ -1462,8 +1471,8 @@ async function fetchAllRemoteSheets(id, options = {}) {
             applyIdConfigPrefixesFromFetch(data.idConfigPrefixes);
         }
         applyArtifactPolicyFromFetch(data);
-        if (data.templateDescription) {
-            prefillAssetNameFromTemplate(data.templateDescription);
+        if (data.templateDescription || data.templatePageDescription) {
+            prefillClaimFieldsFromTemplate(data);
         }
         if (data.found === false) {
             return [];

@@ -1725,7 +1725,7 @@ function editDescription(linkId = null, currentText = "") {
         modal.setAttribute("data-link-id", linkId);
         if (hintEl) {
             hintEl.innerHTML =
-                "💡 <strong>Link banner</strong> (A, B, …) — saved in that link’s spreadsheet row B2.<br>" +
+                "💡 <strong>Banner description</strong> (link A, B, …) — saved in that link’s spreadsheet row B2.<br>" +
                 "Optional tags: <code>&lt;NOID&gt;</code> <code>&lt;NOOWNER&gt;</code> " +
                 "<code>&lt;COL:X&gt;</code> <code>&lt;EXPAND&gt;</code> <code>&lt;BALOON:text&gt;</code>";
         }
@@ -1740,10 +1740,10 @@ function editDescription(linkId = null, currentText = "") {
         renderPageSlideImagesList();
         if (hintEl) {
             hintEl.innerHTML =
-                "💡 <strong>Page title</strong> — shown at the top of this QR page only.<br>" +
+                "💡 <strong>Page description</strong> — shown at the top of this QR page only.<br>" +
                 "Saved in the master registry (<code>Page_Description</code>). Plain text; leave blank to hide the heading.<br>" +
                 "<strong>Slide images</strong> (optional, max 5) — stored in <code>SlideImages/</code> under your QR folder; registry column <code>Slide_Images</code> (pipe-separated links).<br>" +
-                "This is separate from each link banner (A, B, …). Use ✏️ on a link banner to edit that link’s title.";
+                "Banner descriptions (A, B, …) are separate — use ✏️ on a link banner to edit B2.";
         }
     }
 

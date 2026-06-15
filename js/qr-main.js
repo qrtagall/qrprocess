@@ -302,7 +302,8 @@ function renderPageTitleSection(id) {
 
     const showPageEdit =
         editMode &&
-        !(typeof isPageDataUnavailable === "function" && isPageDataUnavailable());
+        !(typeof isPageDataUnavailable === "function" && isPageDataUnavailable()) &&
+        (typeof canEditPageDescription !== "function" || canEditPageDescription());
 
     assetTitle.innerHTML = `
       <div class="qrt-page-title-block">

@@ -948,8 +948,8 @@ function buildCollapsibleHeader({
   titleText.innerHTML = `${roleBit}${serialPill} ${esc(description || "-")}`;
   titleRow.appendChild(titleText);
 
-  // Edit button (if owner)
-  if (editMode && artifactOwner) {
+  // Edit button (if owner + banner editable)
+  if (editMode && artifactOwner && typeof canEditLinkBanner === "function" && canEditLinkBanner()) {
       const editBtn = document.createElement("button");
       editBtn.innerText = "✏️";
       editBtn.title = "Edit link description";
@@ -1511,7 +1511,23 @@ function applyArtifactTemplatePolicy(policy) {
         allowAdd: true,
         allowDelete: true,
         allowAddBelow: true,
+        pageDescriptionEditable: true,
+        linkBannerEditable: true,
     };
+}
+
+function canEditPageDescription() {
+    const p = window.qrArtifactPolicy;
+    if (!p) return true;
+    if (p.pageDescriptionEditable === false) return false;
+    if (p.locked && p.pageDescriptionEditable !== true) return false;
+    return true;
+}
+
+function canEditLinkBanner() {
+    const p = window.qrArtifactPolicy;
+    if (!p) return true;
+    return p.linkBannerEditable !== false;
 }
 
 function isArtifactTemplateLocked() {
