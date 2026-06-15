@@ -118,6 +118,17 @@
             if (cfg.cells[aliasKey]) return aliasKey;
         }
 
+        if (!cfg.cells[key] || cfg.cells[key].active === false) {
+            const urlFallback =
+                typeof getQueryParam === "function" ? getQueryParam("fallback") : null;
+            if (urlFallback) {
+                const fbKey = String(urlFallback).trim().toUpperCase();
+                if (cfg.cells[fbKey] && cfg.cells[fbKey].active !== false) {
+                    return fbKey;
+                }
+            }
+        }
+
         if (cfg.cells[key] && cfg.cells[key].active !== false) {
             return key;
         }
