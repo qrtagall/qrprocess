@@ -230,6 +230,20 @@ function applyLinkBlockTheme(headerBlock, contentDiv, opts = {}) {
     }
 }
 
+/** Artifact row tone: owned = subtle green; everyone else = neutral gray (no pink when logged in). */
+function applyArtifactBlockTone(wrapper, mainBlock, isArtifactOwner) {
+    if (!wrapper) return;
+    wrapper.classList.remove("qrt-artifact--owned", "qrt-artifact--view");
+    wrapper.style.background = "";
+    if (mainBlock) {
+        mainBlock.classList.remove("qrt-artifact--owned", "qrt-artifact--view");
+        mainBlock.style.background = "";
+    }
+    const tone = isArtifactOwner ? "qrt-artifact--owned" : "qrt-artifact--view";
+    wrapper.classList.add(tone);
+    if (mainBlock) mainBlock.classList.add(tone);
+}
+
 function getQrCanvasOptions(id, size = 160) {
     return {
         width: size,

@@ -365,9 +365,9 @@
         }
 
         .qrt-page-description {
-            font-size: 24px;
-            font-weight: bold;
-            color: var(--primary);
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1a202c;
             line-height: 1.35;
             margin: 0 0 6px;
         }
@@ -1752,6 +1752,8 @@ body {
 
 body.qrt-page-themed {
     background: var(--qr-theme-soft);
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+    color: #1a202c;
 }
 
 body.qrt-page-themed #taglineWrapper {
@@ -1843,7 +1845,6 @@ body.qrt-page-themed #assetTitle {
 body.qrt-page-themed .asset-banner.qrt-link-card {
     background: var(--qr-theme-surface);
     border: 1px solid var(--qr-theme-border);
-    border-left: 4px solid var(--qr-theme);
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(var(--qr-theme-rgb), 0.06);
 }
@@ -1852,7 +1853,6 @@ body.qrt-page-themed .asset-banner.active + .remote-content.qrt-link-content {
     background: #fff;
     border: 1px solid var(--qr-theme-border);
     border-top: none;
-    border-left: 4px solid var(--qr-theme);
     border-radius: 0 0 12px 12px;
 }
 
@@ -1878,6 +1878,73 @@ body.qrt-page-themed .asset-banner.qrt-link-locked {
 .qrt-link-access-chip--other {
     background: rgba(255, 68, 68, 0.12);
     color: #8b1a1a;
+}
+
+/* ========== Phase B: typography, artifacts, themed modals ========== */
+body.qrt-page-themed #assetTitle,
+body.qrt-page-themed .qrt-page-title-block,
+body.qrt-page-themed .qrt-page-description {
+    font-family: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+}
+
+body.qrt-page-themed .artifact-block {
+    position: relative;
+    margin: 0 0 10px;
+    padding: 12px 14px;
+    border: 1px solid var(--qr-theme-border);
+    border-radius: 12px;
+    box-sizing: border-box;
+    box-shadow: 0 2px 10px rgba(var(--qr-theme-rgb), 0.05);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+body.qrt-page-themed .artifact-block:last-child {
+    margin-bottom: 0;
+}
+
+body.qrt-page-themed .artifact-block.qrt-artifact--view {
+    background: #f8f9fb;
+    border-color: #dce4ec;
+}
+
+body.qrt-page-themed .artifact-block.qrt-artifact--owned {
+    background: rgba(0, 204, 136, 0.07);
+    border-color: rgba(0, 204, 136, 0.35);
+}
+
+body.qrt-page-themed .artifact-block.qrt-artifact--view > div,
+body.qrt-page-themed .artifact-block.qrt-artifact--owned > div {
+    background: transparent !important;
+}
+
+body.qrt-page-themed .og-preview {
+    border-left-width: 3px !important;
+    border-radius: 10px !important;
+    background: #fff !important;
+}
+
+body.qrt-page-themed .qrt-stripe-desc,
+body.qrt-page-themed .qrt-stripe-artifact {
+    background: linear-gradient(
+        135deg,
+        var(--qr-theme) 0%,
+        rgba(var(--qr-theme-rgb), 0.72) 100%
+    );
+}
+
+body.qrt-page-themed .qrt-modal-panel {
+    border: 1px solid var(--qr-theme-border);
+    box-shadow: 0 12px 40px rgba(var(--qr-theme-rgb), 0.14);
+}
+
+body.qrt-page-themed .qrt-artifact-add-slot {
+    border-color: var(--qr-theme-border);
+    background: var(--qr-theme-soft);
+}
+
+body.qrt-page-themed .qrt-link-preview-card {
+    border: 1px solid var(--qr-theme-border);
+    background: #fff;
 }
 
 .qrt-qr-tap {

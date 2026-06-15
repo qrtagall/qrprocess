@@ -618,7 +618,7 @@ async function resolveAndRender(value, i, customTitle = `Link ${i}`) {
         } else {
             const linkHost = finalUrl.match(/https?:\/\/([^/]+)/)?.[1] || "link";
             return `
-              <div style="display:flex; align-items:center; border:1px solid #ddd; padding:12px; border-radius:8px; margin-bottom:10px;">
+              <div class="qrt-link-preview-card" style="display:flex; align-items:center; padding:12px; border-radius:10px; margin-bottom:10px;">
                 <img src="https://www.google.com/s2/favicons?domain=${linkHost}&sz=64" alt="favicon" style="width:32px;height:32px;margin-right:10px;">
                 <div style="flex-grow:1;">
                   <div style="font-size:15px; font-weight:500; color:#333;">${icon} ${customTitle}</div>
@@ -3440,19 +3440,6 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
     const serialPrefix = artifactSerialPrefix(displaySerial);
     const serialPrefixOrFallback = serialPrefix || `<b>${serialForHeader}.</b> `;
 
-    let shadeApproved = adjustColor(BaseColorApproved, BaseColorOffset*1);
-    let shadeNotApproved = adjustColor(BaseColorNotApproved, BaseColorOffset*1);
-    let shadeDefault = adjustColor(BaseColorDefault, BaseColorOffset*1);
-
-    if(isArticatOener)
-        wrapper.style.background = shadeApproved;
-    else if (sessionEmail)
-        wrapper.style.background = shadeNotApproved;
-    else
-        wrapper.style.background = shadeDefault;
-
-
-
     const icon = getIconFromTitle(title);
     const visibilityIcon = artifactOwnerVisibilityHint(isArticatOener, visibilityUpper);
 
@@ -3470,22 +3457,10 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
 
     const mainBlock = document.createElement("div");
 
-
-    // shadeApproved = adjustColor(BaseColorApproved, BaseColorOffset*1.5);
-    // shadeNotApproved = adjustColor(BaseColorNotApproved, BaseColorOffset*1.5);
-    // shadeDefault = adjustColor(BaseColorDefault, BaseColorOffset*1.5);
-
-    if(isArticatOener)
-        mainBlock.style.background = shadeApproved;
-    else if (sessionEmail)
-        mainBlock.style.background = shadeNotApproved;
-    else
-        mainBlock.style.background = shadeDefault;
-
-
     if (visibilityUpper === "NOVIEW" && !isArticatOener) {
         mainBlock.innerHTML = `<p>${serialPrefix}${icon} <b>${title}</b> <span style="color:gray;">(🔒 No view permission)</span></p>`;
         wrapper.appendChild(mainBlock);
+        applyArtifactBlockTone(wrapper, mainBlock, isArticatOener);
         return wrapper;
     }
 
@@ -3509,6 +3484,7 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
             actionBar.innerHTML = getArtifactActionBarMarkup(index, { linkId, typeUpper });
             wrapper.appendChild(actionBar);
         }
+        applyArtifactBlockTone(wrapper, mainBlock, isArticatOener);
         return wrapper;
     }
 
@@ -3557,7 +3533,7 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
             });
         }
     } else if (url.startsWith("http")) {
-
+        applyArtifactBlockTone(wrapper, null, isArticatOener);
         resolveAndRender(url, serialForHeader, title).then((html) => {
             const temp = document.createElement("div");
             temp.innerHTML = html;
@@ -3580,5 +3556,6 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
         wrapper.appendChild(actionBar);
     }
 
+    applyArtifactBlockTone(wrapper, mainBlock, isArticatOener);
     return wrapper;
 }
