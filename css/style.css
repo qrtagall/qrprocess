@@ -1793,17 +1793,40 @@ body.qrt-page-themed #assetTitle {
     font-weight: 600;
 }
 
-.qrt-prefix-pill {
+.qrt-prefix-pill,
+.qrt-serial-pill {
     display: inline-block;
-    font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    padding: 4px 12px;
+    letter-spacing: 0.04em;
+    padding: 3px 10px;
     border-radius: 999px;
-    background: var(--qr-theme-muted);
+    background: rgba(var(--qr-theme-rgb), 0.16);
     color: var(--qr-theme);
-    margin-bottom: 10px;
+    border: 1px solid rgba(var(--qr-theme-rgb), 0.24);
+    vertical-align: middle;
+    line-height: 1.25;
+}
+
+.qrt-serial-pill--link {
+    font-size: 12px;
+    min-width: 1.75em;
+    text-align: center;
+    margin-right: 6px;
+}
+
+.qrt-serial-pill--artifact {
+    font-size: 10px;
+    font-weight: 700;
+    margin-right: 4px;
+    letter-spacing: 0.02em;
+}
+
+.qrt-qr-info-lines .qrt-qr-info-row {
+    margin-bottom: 14px;
+}
+
+.qrt-qr-info-lines .qrt-qr-info-row:last-child {
+    margin-bottom: 0;
 }
 
 .qrt-page-description {

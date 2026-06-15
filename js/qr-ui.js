@@ -337,7 +337,7 @@ async function renderInfoBlock(data) {
             visibleSerial += 1;
             displaySerial = visibleSerial;
         }
-        const serialMark = artifactSerialPrefix(displaySerial);
+        const serialMark = artifactSerialMarkup("A", displaySerial, index + 1);
         const title = item.title || `Asset ${index + 1}`;
         const type = (item.type || "").toUpperCase();
         const visibility = (item.visibility || "").toUpperCase();
@@ -363,28 +363,28 @@ async function renderInfoBlock(data) {
         }
 
         if (visibility === "NOVIEW" && !isOwner) {
-            html += `<p>${artifactSerialPrefix(displaySerial)}${icon} <b>${title}</b> <span style="color:gray;">(🔒 No view permission)</span></p>`;
+            html += `<p>${artifactSerialMarkup("A", displaySerial, null)}<b>${title}</b> <span style="color:gray;">(🔒 No view permission)</span></p>`;
         } else if (type === "TEXT") {
             html += buildTextArtifactInnerHtml({
                 title,
                 url,
                 displaySerial,
-                icon,
+                linkSerial: "A",
                 visibilityIcon,
             });
         } else if (!url || url.trim() === "" || url.toLowerCase() === "not available") {
-            html += `<p>${serialMark}${icon} <b>${title}</b> <span style="color:gray;">(🔗 Link not available)</span></p>`;
+            html += `<p>${serialMark}<b>${title}</b> <span style="color:gray;">(🔗 Link not available)</span></p>`;
         } else if (type.includes("FILE") && /drive\.google\.com/.test(url)) {
             const match = url.match(/\/d\/([^/]+)/);
             const fileId = match ? match[1] : null;
             if (fileId) {
                 const iframe = `https://drive.google.com/file/d/${fileId}/preview`;
-                html += `<p>${serialMark}${icon} <b>${title}</b> ${visibilityIcon}</p>
+                html += `<p>${serialMark}<b>${title}</b> ${visibilityIcon}</p>
                          <iframe src="${iframe}" width="100%" height="400" frameborder="0"
                              allow="autoplay; encrypted-media"
                              sandbox="allow-scripts allow-same-origin allow-presentation"></iframe>`;
             } else {
-                html += `<p>${serialMark}${icon} <b>${title}</b>: <a href="${url}" target="_blank">${url}</a></p>`;
+                html += `<p>${serialMark}<b>${title}</b>: <a href="${url}" target="_blank">${url}</a></p>`;
             }
         }
 		
@@ -394,7 +394,7 @@ async function renderInfoBlock(data) {
 				const folderId = match ? match[1] : null;
 
 				html += `
-				  <p>${serialMark}${icon} <b>${title}</b> ${visibilityIcon}</p>
+				  <p>${serialMark}<b>${title}</b> ${visibilityIcon}</p>
 				  <div id="thumbnailGallery_${index}">
 					<div class="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 10px auto;"></div>
 				  </div>
@@ -425,7 +425,7 @@ async function renderInfoBlock(data) {
 		else if (url.startsWith("http")) {
             html += await resolveAndRender(url, displaySerial || index + 1, title);
         } else {
-            html += `<p>${serialMark}${icon} <b>${title}</b>: ${url}</p>`;
+            html += `<p>${serialMark}<b>${title}</b>: ${url}</p>`;
         }
 
         if (editMode) {
@@ -628,12 +628,10 @@ function renderMultipleRemoteBlocks(remoteList) {
             const balloonText    = parsed.balloon || null;
 
             const maskEmail = maskEmailUser(email);
-            const storageIcon = (storageType === "LOCAL") ? "📂" : "🌐";
             const linkSerial = formatRemoteLinkSerialLabel(idx + 1);
 
             const headerBlock = buildCollapsibleHeader({
                 serial: linkSerial,
-                storageIcon,
                 description: xdescription, // cleaned for display
                 maskEmail,
                 linkId,
@@ -701,7 +699,7 @@ function renderMultipleRemoteBlocks(remoteList) {
                             displaySerial = visibleSerial;
                         }
                         const block = createAssetBlockFromHTML(
-                            asset, i, isBlockEditable, artifactOwner, linkId, displaySerial
+                            asset, i, isBlockEditable, artifactOwner, linkId, displaySerial, linkSerial
                         );
                         contentDiv.appendChild(block);
                     });
@@ -808,7 +806,6 @@ function renderMultipleRemoteBlocks_old(remoteList) {
             }*/
 
             const maskEmail = maskEmailUser(email);
-            const storageIcon = storageType === "LOCAL" ? "📂" : "🌐";
             const linkSerial = formatRemoteLinkSerialLabel(idx + 1);
 
             let customColor = null;
@@ -827,7 +824,6 @@ function renderMultipleRemoteBlocks_old(remoteList) {
 
             const headerBlock = buildCollapsibleHeader(
                 { serial: linkSerial,
-                    storageIcon,
                     description:xdescription,
                     maskEmail,
                     linkId,
@@ -1045,15 +1041,14 @@ function escapeHtml(unsafe) {
  * a) Empty Local Link → no serial; Basic Info centered.
  * b) Basic Info ≤1 char → no serial, no title; Local Link right-aligned (if present).
  */
-function buildTextArtifactInnerHtml({ title, url, displaySerial, icon, visibilityIcon }) {
+function buildTextArtifactInnerHtml({ title, url, displaySerial, linkSerial, visibilityIcon }) {
     const titleTrim = String(title || "").trim();
     const urlTrim = String(url || "").trim();
     const isUrlEmpty = !urlTrim || urlTrim.toLowerCase() === "not available";
     const isTitleShort = titleTrim.length <= 1;
     const safeTitle = escapeHtml(titleTrim);
     const formattedText = isUrlEmpty ? "" : formatTextContent(urlTrim);
-    const serialPrefix =
-        displaySerial != null && displaySerial > 0 ? `<b>${displaySerial}.</b> ` : "";
+    const serialPrefix = formatArtifactSerialPillHtml(linkSerial, displaySerial);
 
     if (isTitleShort) {
         if (isUrlEmpty) {
@@ -1076,7 +1071,7 @@ function buildTextArtifactInnerHtml({ title, url, displaySerial, icon, visibilit
 
     return (
         `<div class="qrt-text-artifact">` +
-        `<p class="qrt-text-header">${serialPrefix}${icon} <b>${safeTitle}</b> ${visibilityIcon}</p>` +
+        `<p class="qrt-text-header">${serialPrefix}<b>${safeTitle}</b> ${visibilityIcon}</p>` +
         `<div class="qrt-text-body">${formattedText}</div>` +
         `</div>`
     );
@@ -1098,9 +1093,15 @@ function assetCountsVisibleSerial(asset) {
     return true;
 }
 
-function artifactSerialPrefix(displaySerial) {
-    if (displaySerial == null || displaySerial < 1) return "";
-    return `<b>${displaySerial}.</b> `;
+function artifactSerialMarkup(linkSerial, displaySerial, fallbackIndex) {
+    const n =
+        displaySerial != null && displaySerial > 0
+            ? displaySerial
+            : fallbackIndex != null && fallbackIndex > 0
+              ? fallbackIndex
+              : 0;
+    if (n < 1) return "";
+    return formatArtifactSerialPillHtml(linkSerial, n);
 }
 
 /** Owner-only suffix on artifact title: 🔒 for NOVIEW; nothing for VIEW. */
@@ -3387,7 +3388,7 @@ function initGuestMessageModalUi() {
 document.addEventListener("DOMContentLoaded", initGuestMessageModalUi);
 
 /*************** Great Helper ********************/
-function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOener = false, linkId = null, displaySerial = null) {
+function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOener = false, linkId = null, displaySerial = null, linkSerial = "A") {
     const {
         title = `Asset ${index + 1}`,
         type = "TEXT",
@@ -3405,10 +3406,9 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
 
     const serialForHeader =
         displaySerial != null && displaySerial > 0 ? displaySerial : index + 1;
-    const serialPrefix = artifactSerialPrefix(displaySerial);
-    const serialPrefixOrFallback = serialPrefix || `<b>${serialForHeader}.</b> `;
+    const serialPrefix = artifactSerialMarkup(linkSerial, displaySerial, null);
+    const serialPrefixOrFallback = artifactSerialMarkup(linkSerial, displaySerial, index + 1);
 
-    const icon = getIconFromTitle(title);
     const visibilityIcon = artifactOwnerVisibilityHint(isArticatOener, visibilityUpper);
 
 
@@ -3426,7 +3426,7 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
     const mainBlock = document.createElement("div");
 
     if (visibilityUpper === "NOVIEW" && !isArticatOener) {
-        mainBlock.innerHTML = `<p>${serialPrefix}${icon} <b>${title}</b> <span style="color:gray;">(🔒 No view permission)</span></p>`;
+        mainBlock.innerHTML = `<p>${serialPrefix}<b>${title}</b> <span style="color:gray;">(🔒 No view permission)</span></p>`;
         wrapper.appendChild(mainBlock);
         applyArtifactBlockTone(wrapper, mainBlock, isArticatOener);
         return wrapper;
@@ -3436,7 +3436,7 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
         const btnLabel = escapeHtml(title || "Contact owner by Email");
         const rid = escapeHtml(linkId || "");
         mainBlock.innerHTML = `
-            <p>${serialPrefixOrFallback}${icon} <b>${btnLabel}</b> ${visibilityIcon}</p>
+            <p>${serialPrefixOrFallback}<b>${btnLabel}</b> ${visibilityIcon}</p>
             <div style="margin: 8px 0 10px 10px;">
                 <button type="button" class="qrt-btn qrt-btn-primary qrt-message-email-btn" data-recipient-qr-id="${rid}">
                     ✉️ ${btnLabel}
@@ -3461,19 +3461,19 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
             title,
             url,
             displaySerial,
-            icon,
+            linkSerial,
             visibilityIcon,
         });
         wrapper.appendChild(mainBlock);
     } else if (!url || url.trim() === "" || url.toLowerCase() === "not available") {
-        mainBlock.innerHTML = `<p>${serialPrefixOrFallback}${icon} <b>${title}</b> <span style="color:gray;">(🔗 Link not available)</span></p>`;
+        mainBlock.innerHTML = `<p>${serialPrefixOrFallback}<b>${title}</b> <span style="color:gray;">(🔗 Link not available)</span></p>`;
         wrapper.appendChild(mainBlock);
     } else if (typeUpper.includes("FILE") && /drive\.google\.com/.test(url)) {
         const match = url.match(/\/d\/([^/]+)/);
         const fileId = match ? match[1] : null;
         if (fileId) {
             const iframe = `https://drive.google.com/file/d/${fileId}/preview`;
-            mainBlock.innerHTML = `<p>${serialPrefixOrFallback}${icon} <b>${title}</b> ${visibilityIcon}</p>
+            mainBlock.innerHTML = `<p>${serialPrefixOrFallback}<b>${title}</b> ${visibilityIcon}</p>
                                    <iframe src="${iframe}" width="100%" height="400" frameborder="0"
                                        allow="autoplay; encrypted-media"
                                        sandbox="allow-scripts allow-same-origin allow-presentation"></iframe>`;
@@ -3484,7 +3484,7 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
         const folderId = match ? match[1] : null;
         const galleryId = `thumbnailGallery_${index}`;
         mainBlock.innerHTML = `
-            <p>${serialPrefixOrFallback}${icon} <b>${title}</b> ${visibilityIcon}</p>
+            <p>${serialPrefixOrFallback}<b>${title}</b> ${visibilityIcon}</p>
             <div id="${galleryId}">
                 <div class="spinner" style="margin:10px auto;"></div>
             </div>`;
@@ -3510,7 +3510,7 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
 
 
     } else {
-        mainBlock.innerHTML = `<p>${serialPrefixOrFallback}${icon} <b>${title}</b>: ${url}</p>`;
+        mainBlock.innerHTML = `<p>${serialPrefixOrFallback}<b>${title}</b>: ${url}</p>`;
         wrapper.appendChild(mainBlock);
     }
 

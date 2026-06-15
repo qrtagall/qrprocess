@@ -294,14 +294,8 @@ function renderPageTitleSection(id) {
         editMode &&
         !(typeof isPageDataUnavailable === "function" && isPageDataUnavailable());
 
-    const prefix = typeof getQrPrefixFromId === "function" ? getQrPrefixFromId(id) : "";
-    const showPrefixPill =
-        prefix &&
-        !(typeof isLegacyNumericQrPrefix === "function" && isLegacyNumericQrPrefix(prefix));
-
     assetTitle.innerHTML = `
       <div class="qrt-page-title-block">
-        ${showPrefixPill ? `<span class="qrt-prefix-pill">${escapeHtml(prefix)}</span>` : ""}
         ${pageDescHtml ? `<div class="qrt-page-description">${pageDescHtml}${isCopiedQR ? ` <span class="qrt-clone-tag">(CLONE)</span>` : ""}</div>` : (isCopiedQR ? `<span class="qrt-clone-tag">(CLONE)</span>` : "")}
         ${showPageEdit ? `<div class="qrt-title-edit-actions"><button type="button" class="qrt-artifact-btn qrt-artifact-btn-edit qrt-artifact-btn-inline" onclick="editDescription()"><span class="qrt-artifact-btn-icon" aria-hidden="true">✏️</span><span class="qrt-artifact-btn-label">Edit Description</span></button></div>` : ""}
       </div>`;

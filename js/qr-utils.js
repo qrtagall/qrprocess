@@ -599,6 +599,61 @@ function formatRemoteLinkSerialLabel(oneBasedIndex) {
   return label;
 }
 
+function normalizeLinkSerialLabel(serial) {
+  return String(serial || "A").replace(/\.$/, "").trim() || "A";
+}
+
+/** Theme-tinted pill for link banner serial (A, B, C…). */
+function formatLinkSerialPillHtml(linkLabel) {
+  const label = normalizeLinkSerialLabel(linkLabel);
+  return `<span class="qrt-serial-pill qrt-serial-pill--link">${label}</span>`;
+}
+
+/** Theme-tinted pill for artifact serial under a link (A1, A2, B1…). */
+function formatArtifactSerialPillHtml(linkLabel, childIndex) {
+  const n = Math.floor(Number(childIndex) || 0);
+  if (n < 1) return "";
+  const letter = normalizeLinkSerialLabel(linkLabel);
+  return `<span class="qrt-serial-pill qrt-serial-pill--artifact">${letter}${n}</span> `;
+}
+
+function formatStorageTypeLabel(storageType) {
+  return storageType === "LOCAL"
+    ? "Local (QRTagAll shared space)"
+    : "Remote (Google Drive)";
+}
+
+function buildQrInfoStorageHtml() {
+  const list =
+    typeof globalRemoteAssetList !== "undefined" && Array.isArray(globalRemoteAssetList)
+      ? globalRemoteAssetList
+      : [];
+  if (!list.length) return "";
+
+  const esc =
+    typeof escapeHtml === "function"
+      ? escapeHtml
+      : (s) =>
+          String(s || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+
+  if (list.length === 1) {
+    return `<div class="qrt-qr-info-row"><strong>📦 Storage type</strong><br>${esc(formatStorageTypeLabel(list[0].storageType))}</div>`;
+  }
+
+  const lines = list
+    .map((b, idx) => {
+      const letter = formatRemoteLinkSerialLabel(idx + 1);
+      return esc(`${letter}: ${formatStorageTypeLabel(b.storageType)}`);
+    })
+    .join("<br>");
+
+  return `<div class="qrt-qr-info-row"><strong>📦 Storage type</strong><br>${lines}</div>`;
+}
+
 function buildCollapsibleHeader({
     serial,
     storageIcon,
@@ -640,9 +695,19 @@ function buildCollapsibleHeader({
   const linkLabel =
     typeof serial === "number"
       ? formatRemoteLinkSerialLabel(serial)
-      : String(serial || "A").replace(/\.$/, "");
-  const rolePrefix = treeRole ? `${treeRole} · ` : `${linkLabel}. `;
-  titleText.innerText = `${rolePrefix}${storageIcon} ${description || "-"}`;
+      : normalizeLinkSerialLabel(serial);
+  const esc =
+    typeof escapeHtml === "function"
+      ? escapeHtml
+      : (s) =>
+          String(s || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+  const serialPill = formatLinkSerialPillHtml(linkLabel);
+  const roleBit = treeRole ? `${esc(treeRole)} · ` : "";
+  titleText.innerHTML = `${roleBit}${serialPill} ${esc(description || "-")}`;
   titleRow.appendChild(titleText);
 
   // Edit button (if owner)
@@ -1184,8 +1249,9 @@ function openQrInfoModal(qrId) {
 
     body.innerHTML = `
       <div class="qrt-qr-info-lines">
-        <div><strong>🆔 ID</strong><br><span class="qrt-qr-info-id">${esc(id)}</span></div>
-        <div><strong>👤 Owner</strong><br>${ownerBlock}</div>
+        <div class="qrt-qr-info-row"><strong>🆔 ID</strong><br><span class="qrt-qr-info-id">${esc(id)}</span></div>
+        <div class="qrt-qr-info-row"><strong>👤 Owner</strong><br>${ownerBlock}</div>
+        ${buildQrInfoStorageHtml()}
       </div>
       <div class="qrt-qr-actions qrt-qr-actions--modal" aria-label="QR actions">
         ${getQrActionButtonsMarkup(id)}
