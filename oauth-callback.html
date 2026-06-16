@@ -8,6 +8,7 @@
   <style>
     body { margin: 0; padding: 24px 16px; text-align: center; font-family: 'Segoe UI', sans-serif; box-sizing: border-box; }
   </style>
+  <script src="./js/qr-auth.js?v=20260617c"></script>
 </head>
 <body>
   <h3>⏳ Verifying your login...</h3>
@@ -21,30 +22,48 @@
       return { id: rawState };
     }
 
-    const hash = new URLSearchParams(window.location.hash.slice(1));
-    const token = hash.get("access_token");
-    const idToken = hash.get("id_token");
-    const stateRaw = hash.get("state");
+    async function finishOAuthCallback() {
+      const hash = new URLSearchParams(window.location.hash.slice(1));
+      const token = hash.get("access_token");
+      const idToken = hash.get("id_token");
+      const stateRaw = hash.get("state");
+      const oauthError = hash.get("error");
+      const oauthErrorDesc = hash.get("error_description");
 
-    if (token) {
-      fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
-        headers: { Authorization: "Bearer " + token }
-      })
-      .then(res => res.json())
-      .then(profile => {
-        const email = profile.email;
-        console.log("✅ Logged in as:", email);
+      if (oauthError) {
+        document.body.innerHTML =
+          "<p><strong>Google sign-in failed</strong><br><br>" +
+          (oauthErrorDesc || oauthError) +
+          "<br><br><a href=\"./index.html\">← Back</a></p>";
+        return;
+      }
 
-        const normalized = (email || "").toLowerCase();
-        localStorage.setItem("qr_claimed_email", normalized);
-        localStorage.setItem("qr_access_token", token);
-        sessionStorage.setItem("qr_claimed_email", normalized);
-        sessionStorage.setItem("qr_access_token", token);
-        if (idToken) {
-          localStorage.setItem("qr_id_token", idToken);
-          sessionStorage.setItem("qr_id_token", idToken);
+      if (!token) {
+        document.body.innerHTML = "<p>⚠️ Login token missing.</p>";
+        return;
+      }
+
+      try {
+        if (idToken && typeof verifyIdTokenNonce === "function") {
+          const nonceOk = await verifyIdTokenNonce(idToken);
+          if (!nonceOk) {
+            document.body.innerHTML =
+              "<p>⚠️ Sign-in verification failed. Please try again from the QR page.</p>";
+            return;
+          }
         }
 
+        const res = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+          headers: { Authorization: "Bearer " + token }
+        });
+        const profile = await res.json();
+        const email = profile.email;
+        if (!email) throw new Error("No email from Google");
+
+        console.log("✅ Logged in as:", email);
+        persistAuthSession(email, token, idToken || undefined);
+
+        const normalized = (email || "").toLowerCase();
         const stateObj = parseOAuthState(stateRaw);
 
         if (stateObj.intent === "dashboard") {
@@ -88,20 +107,18 @@
         }
 
         const qrId = stateObj.id || stateRaw || "";
-        const redirectUrl =
+        window.location.href =
           "https://process.qrtagall.com/index.html?id=" +
           encodeURIComponent(qrId) +
           "&verified=1&email=" +
           encodeURIComponent(email || "");
-        window.location.href = redirectUrl;
-      })
-      .catch(err => {
+      } catch (err) {
         console.error("❌ Failed to fetch email:", err);
         document.body.innerHTML = "<p>⚠️ Login failed. Please try again.</p>";
-      });
-    } else {
-      document.body.innerHTML = "<p>⚠️ Login token missing.</p>";
+      }
     }
+
+    finishOAuthCallback();
   </script>
 </body>
 </html>

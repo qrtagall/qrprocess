@@ -31,6 +31,75 @@ const QRTAGALL_OAUTH_RESPONSE_TYPE = "token id_token";
 const QR_CLAIMED_EMAIL_KEY = "qr_claimed_email";
 const QR_ACCESS_TOKEN_KEY = "qr_access_token";
 const QR_ID_TOKEN_KEY = "qr_id_token";
+const QR_OAUTH_NONCE_KEY = "qr_oauth_nonce";
+
+/** Random nonce — Google requires this when response_type includes id_token. */
+function createOAuthNonce() {
+    const bytes = new Uint8Array(16);
+    if (window.crypto?.getRandomValues) {
+        window.crypto.getRandomValues(bytes);
+    } else {
+        for (let i = 0; i < bytes.length; i++) {
+            bytes[i] = Math.floor(Math.random() * 256);
+        }
+    }
+    return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function storeOAuthNonce(nonce) {
+    sessionStorage.setItem(QR_OAUTH_NONCE_KEY, nonce);
+}
+
+function consumeStoredOAuthNonce() {
+    const nonce = sessionStorage.getItem(QR_OAUTH_NONCE_KEY) || "";
+    sessionStorage.removeItem(QR_OAUTH_NONCE_KEY);
+    return nonce;
+}
+
+/**
+ * Confirm id_token nonce matches the value sent on the authorize redirect.
+ * @returns {Promise<boolean>}
+ */
+async function verifyIdTokenNonce(idToken) {
+    if (!idToken) return true;
+    const expected = consumeStoredOAuthNonce();
+    if (!expected) {
+        console.warn("OAuth: no stored nonce — skipping id_token nonce check");
+        return true;
+    }
+    try {
+        const res = await fetch(
+            `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`
+        );
+        if (!res.ok) return false;
+        const info = await res.json();
+        if (info.error) return false;
+        if (String(info.aud || "") !== QRTAGALL_OAUTH_CLIENT_ID) return false;
+        return String(info.nonce || "") === expected;
+    } catch (e) {
+        console.warn("verifyIdTokenNonce:", e);
+        return false;
+    }
+}
+
+/**
+ * Build Google OAuth authorize URL (implicit: access_token + id_token + nonce).
+ * @param {{ redirectUri: string, scope: string, state: string }} opts — state must already be encoded for URL
+ */
+function buildGoogleOAuthRedirectUrl({ redirectUri, scope, state }) {
+    const nonce = createOAuthNonce();
+    storeOAuthNonce(nonce);
+    return (
+        `https://accounts.google.com/o/oauth2/v2/auth` +
+        `?response_type=${encodeURIComponent(QRTAGALL_OAUTH_RESPONSE_TYPE)}` +
+        `&client_id=${encodeURIComponent(QRTAGALL_OAUTH_CLIENT_ID)}` +
+        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+        `&scope=${encodeURIComponent(scope)}` +
+        `&state=${state}` +
+        `&nonce=${encodeURIComponent(nonce)}` +
+        `&include_granted_scopes=true`
+    );
+}
 
 async function validateStoredAccessToken(token) {
     if (!token) return false;
@@ -354,6 +423,7 @@ function cleandata()
     sessionStorage.removeItem(QR_CLAIMED_EMAIL_KEY);
     sessionStorage.removeItem(QR_ACCESS_TOKEN_KEY);
     sessionStorage.removeItem(QR_ID_TOKEN_KEY);
+    sessionStorage.removeItem(QR_OAUTH_NONCE_KEY);
     sessionStorage.removeItem("qr_claimed_email");
 
     // 🔒 Attempt to revoke Gmail token (optional but good hygiene)
@@ -467,16 +537,7 @@ async function redirectToClaimOAuth(storageType) {
         JSON.stringify({ id, asset: assetName, storageType: storage })
     );
 
-    const authUrl =
-        `https://accounts.google.com/o/oauth2/v2/auth` +
-        `?response_type=${encodeURIComponent(QRTAGALL_OAUTH_RESPONSE_TYPE)}` +
-        `&client_id=${encodeURIComponent(QRTAGALL_OAUTH_CLIENT_ID)}` +
-        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-        `&scope=${encodeURIComponent(scope)}` +
-        `&state=${state}` +
-        `&include_granted_scopes=true`;
-
-    window.location.href = authUrl;
+    window.location.href = buildGoogleOAuthRedirectUrl({ redirectUri, scope, state });
 }
 
 // 🔑 Data in GDrive — same-tab redirect (not a popup)
@@ -521,8 +582,6 @@ async function googleLoginForEdit(id) {
         }
     }
 
-    // Token missing, expired, or owner mismatch — do a full-page redirect to Google.
-    const clientId = QRTAGALL_OAUTH_CLIENT_ID;
     const redirectUri = "https://process.qrtagall.com/oauth-callback.html";
     let scope = QRTAGALL_EMAIL_ONLY_SCOPES;
     if (
@@ -532,21 +591,15 @@ async function googleLoginForEdit(id) {
         scope = QRTAGALL_GDRIVE_CLAIM_SCOPES;
     }
 
-    const authUrl =
-        `https://accounts.google.com/o/oauth2/v2/auth` +
-        `?response_type=${encodeURIComponent(QRTAGALL_OAUTH_RESPONSE_TYPE)}` +
-        `&client_id=${encodeURIComponent(clientId)}` +
-        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-        `&scope=${encodeURIComponent(scope)}` +
-        `&state=${encodeURIComponent(id)}` +
-        `&include_granted_scopes=true`;
-
-    window.location.href = authUrl;
+    window.location.href = buildGoogleOAuthRedirectUrl({
+        redirectUri,
+        scope,
+        state: encodeURIComponent(id),
+    });
 }
 
 /** Full-page OAuth before guest sends MESSAGEEMAIL (email scope only). */
 function googleLoginForSendMessage(pageQrId, recipientQrId) {
-    const clientId = QRTAGALL_OAUTH_CLIENT_ID;
     const redirectUri = "https://process.qrtagall.com/oauth-callback.html";
     const scope = QRTAGALL_EMAIL_ONLY_SCOPES;
     const state = encodeURIComponent(
@@ -557,21 +610,11 @@ function googleLoginForSendMessage(pageQrId, recipientQrId) {
         })
     );
 
-    const authUrl =
-        `https://accounts.google.com/o/oauth2/v2/auth` +
-        `?response_type=${encodeURIComponent(QRTAGALL_OAUTH_RESPONSE_TYPE)}` +
-        `&client_id=${encodeURIComponent(clientId)}` +
-        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-        `&scope=${encodeURIComponent(scope)}` +
-        `&state=${state}` +
-        `&include_granted_scopes=true`;
-
-    window.location.href = authUrl;
+    window.location.href = buildGoogleOAuthRedirectUrl({ redirectUri, scope, state });
 }
 
 /** Full-page OAuth before owner sends anonymous reply (email scope only). */
 function googleLoginForOwnerReply(pageQrId, serial) {
-    const clientId = QRTAGALL_OAUTH_CLIENT_ID;
     const redirectUri = "https://process.qrtagall.com/oauth-callback.html";
     const scope = QRTAGALL_EMAIL_ONLY_SCOPES;
     const state = encodeURIComponent(
@@ -582,16 +625,7 @@ function googleLoginForOwnerReply(pageQrId, serial) {
         })
     );
 
-    const authUrl =
-        `https://accounts.google.com/o/oauth2/v2/auth` +
-        `?response_type=${encodeURIComponent(QRTAGALL_OAUTH_RESPONSE_TYPE)}` +
-        `&client_id=${encodeURIComponent(clientId)}` +
-        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-        `&scope=${encodeURIComponent(scope)}` +
-        `&state=${state}` +
-        `&include_granted_scopes=true`;
-
-    window.location.href = authUrl;
+    window.location.href = buildGoogleOAuthRedirectUrl({ redirectUri, scope, state });
 }
 
 /** Full-page OAuth for User Dashboard (userlogin.html — email scope only). */
@@ -605,23 +639,13 @@ function googleLoginForDashboard() {
         return;
     }
 
-    const clientId = QRTAGALL_OAUTH_CLIENT_ID;
     const redirectUri = "https://process.qrtagall.com/oauth-callback.html";
     const scope = QRTAGALL_EMAIL_ONLY_SCOPES;
     const state = encodeURIComponent(
         JSON.stringify({ intent: "dashboard", expectedEmail: email })
     );
 
-    const authUrl =
-        `https://accounts.google.com/o/oauth2/v2/auth` +
-        `?response_type=${encodeURIComponent(QRTAGALL_OAUTH_RESPONSE_TYPE)}` +
-        `&client_id=${encodeURIComponent(clientId)}` +
-        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-        `&scope=${encodeURIComponent(scope)}` +
-        `&state=${state}` +
-        `&include_granted_scopes=true`;
-
-    window.location.href = authUrl;
+    window.location.href = buildGoogleOAuthRedirectUrl({ redirectUri, scope, state });
 }
 
 // 🔁 Toggles info popup for storage options

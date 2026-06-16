@@ -34,7 +34,7 @@
   <script src="./js/qr-utils.js?v=20260604b"></script>
   <script src="./js/qr-cells.js?v=20260613c"></script>
   <script src="./js/qr-fetch.js?v=20260617a"></script>
-  <script src="./js/qr-auth.js?v=20260617b"></script>
+  <script src="./js/qr-auth.js?v=20260617c"></script>
 </head>
 <body>
   <h2>🔐 Finalizing QR Claim</h2>
@@ -96,6 +96,13 @@
         const email = userInfo.email;
 
         if (!email) throw new Error("No email received from Google.");
+
+        if (idToken && typeof verifyIdTokenNonce === "function") {
+          const nonceOk = await verifyIdTokenNonce(idToken);
+          if (!nonceOk) {
+            throw new Error("Sign-in verification failed. Please try claim again from the QR page.");
+          }
+        }
 
         persistAuthSession(email, accessToken, idToken);
         if (typeof ensureQrCellsReady === "function") {
