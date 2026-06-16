@@ -476,6 +476,7 @@
             left: 10px;
             top: -16px;
             z-index: 3;
+            display: inline-block;
             max-width: 140px;
             padding: 5px 12px;
             border-radius: 14px;
@@ -485,10 +486,12 @@
             font-weight: 700;
             line-height: 1.2;
             white-space: nowrap;
-            overflow: hidden;
+            overflow: visible;
             text-overflow: ellipsis;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
             pointer-events: none;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
         }
 
         .qrt-promo-balloon::after {
@@ -501,21 +504,34 @@
             border-left: 7px solid transparent;
             border-right: 7px solid transparent;
             border-top: 8px solid #ff9800;
+            pointer-events: none;
         }
 
-        @keyframes qrt-promo-balloon-glow {
+        @keyframes qrt-promo-balloon-pulse {
             0%,
             100% {
-                background: #ff9800;
-                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.14), 0 0 4px rgba(255, 152, 0, 0.25);
+                background-color: #ff9800;
+                transform: translateZ(0) scale(1);
             }
             50% {
-                background: #ffb74d;
-                box-shadow: 0 2px 14px rgba(0, 0, 0, 0.22), 0 0 20px rgba(255, 152, 0, 0.85);
+                background-color: #ffb74d;
+                transform: translateZ(0) scale(1.05);
             }
         }
 
-        @keyframes qrt-promo-balloon-tail-glow {
+        @keyframes qrt-promo-balloon-halo {
+            0%,
+            100% {
+                opacity: 0.2;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.75;
+                transform: scale(1.15);
+            }
+        }
+
+        @keyframes qrt-promo-balloon-tail-pulse {
             0%,
             100% {
                 border-top-color: #ff9800;
@@ -526,17 +542,35 @@
         }
 
         .qrt-promo-balloon--animate {
-            animation: qrt-promo-balloon-glow var(--qrt-balloon-animate-sec, 1s) ease-in-out infinite;
+            animation: qrt-promo-balloon-pulse 1s ease-in-out infinite;
+            -webkit-animation: qrt-promo-balloon-pulse 1s ease-in-out infinite;
+            will-change: transform, background-color;
+        }
+
+        .qrt-promo-balloon--animate::before {
+            content: "";
+            position: absolute;
+            inset: -4px;
+            border-radius: 18px;
+            background: #ff9800;
+            opacity: 0.35;
+            z-index: -1;
+            pointer-events: none;
+            animation: qrt-promo-balloon-halo 1s ease-in-out infinite;
+            -webkit-animation: qrt-promo-balloon-halo 1s ease-in-out infinite;
         }
 
         .qrt-promo-balloon--animate::after {
-            animation: qrt-promo-balloon-tail-glow var(--qrt-balloon-animate-sec, 1s) ease-in-out infinite;
+            animation: qrt-promo-balloon-tail-pulse 1s ease-in-out infinite;
+            -webkit-animation: qrt-promo-balloon-tail-pulse 1s ease-in-out infinite;
         }
 
         @media (prefers-reduced-motion: reduce) {
             .qrt-promo-balloon--animate,
+            .qrt-promo-balloon--animate::before,
             .qrt-promo-balloon--animate::after {
                 animation: none;
+                -webkit-animation: none;
             }
         }
 

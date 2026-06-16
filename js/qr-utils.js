@@ -924,7 +924,6 @@ function buildCollapsibleHeader({
         if (balloonAnimate) {
             wrapper.classList.add("asset-banner--has-balloon-animate");
             balloon.classList.add("qrt-promo-balloon--animate");
-            balloon.style.setProperty("--qrt-balloon-animate-sec", "1s");
         }
         wrapper.appendChild(balloon);
     }
