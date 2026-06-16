@@ -55,9 +55,13 @@ function syncSessionFromStorage() {
         });
     }
 
-    const logoutBtn = document.getElementById("logoutBtn");
-    if (logoutBtn) {
-        logoutBtn.style.display = sessionEmail ? "block" : "none";
+    if (typeof updateSessionActionButtons === "function") {
+        updateSessionActionButtons();
+    } else {
+        const logoutBtn = document.getElementById("logoutBtn");
+        if (logoutBtn) {
+            logoutBtn.classList.toggle("qrt-session-hidden", !sessionEmail);
+        }
     }
 
     if (sessionEmail) {
@@ -79,8 +83,12 @@ function persistAuthSession(email, accessToken) {
         window.GToken = accessToken;
     }
 
-    const logoutBtn = document.getElementById("logoutBtn");
-    if (logoutBtn) logoutBtn.style.display = "block";
+    if (typeof updateSessionActionButtons === "function") {
+        updateSessionActionButtons();
+    } else {
+        const logoutBtn = document.getElementById("logoutBtn");
+        if (logoutBtn) logoutBtn.classList.remove("qrt-session-hidden");
+    }
 }
 
 /** Status text while claiming (Data in QRTagAll on main page). */
@@ -294,9 +302,7 @@ function initSessionFromUrlAndStorage() {
 let sessionEmail = localStorage.getItem(QR_CLAIMED_EMAIL_KEY) || "";
 if (sessionEmail) sessionEmail = sessionEmail.toLowerCase();
 
-const logoutBtnEarly = document.getElementById("logoutBtn");
-if (sessionEmail && logoutBtnEarly) {
-    logoutBtnEarly.style.display = "block";
+if (sessionEmail) {
     console.log("📧 Logged in as:", sessionEmail);
 }
 
@@ -353,6 +359,11 @@ function handleLogout() {
     // 🧹 Clear local/global state
 
     cleandata();
+
+    if (typeof updateSessionActionButtons === "function") {
+        updateSessionActionButtons();
+    }
+
     alert("🔓 You have been logged out.");
 
     // ✅ Reload just content (if possible), fallback to full reload

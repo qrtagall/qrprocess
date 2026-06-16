@@ -181,7 +181,6 @@ async function renderAssetPanel(id) {
 
     const assetTitle = document.getElementById("assetTitle");
     const assetLinks = document.getElementById("assetLinks");
-    const editBtn = document.getElementById("editBtn");
 
      spinner.style.display = "block";
 
@@ -247,10 +246,8 @@ async function renderAssetPanel(id) {
         editActions.style.display = "none";
     }
 
-    if (isOwner) {
-        editBtn.innerHTML = "✏️ Edit Details";
-    } else {
-        editBtn.innerHTML = sessionEmail ? "🔐 Log-in as Owner<br>to Edit Details" : "🔐 Log-in to Edit Details";
+    if (typeof updateSessionActionButtons === "function") {
+        updateSessionActionButtons();
     }
 
     renderMultipleRemoteBlocks(remoteList);
@@ -269,10 +266,6 @@ async function renderAssetPanel(id) {
     if (typeof refreshPageHeroCarousel === "function") {
         refreshPageHeroCarousel(id);
     }
-
-    editBtn.disabled = false;
-    editBtn.classList.remove("disabled-button");
-    editBtn.classList.add("enabled");
 
     /*
     editBtn.onclick = () => {

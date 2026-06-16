@@ -156,6 +156,77 @@ if (document.readyState === "loading") {
     syncViewCountBadgePosition();
 }
 
+/** Refresh login / edit / logout bar on the ID page (guest, wrong account, owner). */
+function updateSessionActionButtons() {
+    const editBtn = document.getElementById("editBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    if (!editBtn) return;
+
+    if (!editBtn.querySelector(".qrt-session-btn-icon")) {
+        editBtn.innerHTML =
+            '<span class="qrt-session-btn-icon" aria-hidden="true"></span>' +
+            '<span class="qrt-session-btn-text">' +
+            '<span class="qrt-session-btn-label"></span>' +
+            '<span class="qrt-session-btn-hint"></span>' +
+            "</span>";
+    }
+
+    const owner =
+        typeof isSessionUserOwnerOfAnyBlock === "function" && isSessionUserOwnerOfAnyBlock();
+    if (typeof isOwner !== "undefined") isOwner = owner;
+
+    let icon;
+    let label;
+    let hint;
+    let variant;
+
+    if (owner) {
+        icon = "✏️";
+        label = "Edit details";
+        hint =
+            typeof editMode !== "undefined" && editMode ? "Editing enabled" : "You own this ID";
+        variant = "qrt-session-btn--owner";
+        editBtn.setAttribute("aria-label", "Edit this ID");
+    } else if (sessionEmail) {
+        icon = "🔐";
+        label = "Log in as owner";
+        hint = "Switch account to edit";
+        variant = "qrt-session-btn--wrong-account";
+        editBtn.setAttribute("aria-label", "Log in as the owner to edit");
+    } else {
+        icon = "🔐";
+        label = "Log in to edit";
+        hint = "Sign in with Google";
+        variant = "qrt-session-btn--guest";
+        editBtn.setAttribute("aria-label", "Log in to edit this ID");
+    }
+
+    editBtn.classList.remove(
+        "qrt-session-btn--owner",
+        "qrt-session-btn--guest",
+        "qrt-session-btn--wrong-account",
+        "qrt-session-btn--active"
+    );
+    editBtn.classList.add(variant);
+    if (typeof editMode !== "undefined" && editMode && owner) {
+        editBtn.classList.add("qrt-session-btn--active");
+    }
+
+    editBtn.querySelector(".qrt-session-btn-icon").textContent = icon;
+    editBtn.querySelector(".qrt-session-btn-label").textContent = label;
+    const hintEl = editBtn.querySelector(".qrt-session-btn-hint");
+    if (hintEl) {
+        hintEl.textContent = hint;
+        hintEl.hidden = !hint;
+    }
+
+    editBtn.disabled = false;
+
+    if (logoutBtn) {
+        logoutBtn.classList.toggle("qrt-session-hidden", !sessionEmail);
+    }
+}
+
 // Edit mode activation
 function enableEditMode() {
     editMode = true;
@@ -174,6 +245,10 @@ function enableEditMode() {
     renderMultipleRemoteBlocks(globalRemoteAssetList);
     if (typeof applyEditActionsAvailability === "function") {
         applyEditActionsAvailability();
+    }
+
+    if (typeof updateSessionActionButtons === "function") {
+        updateSessionActionButtons();
     }
 
     showSpinner(false);

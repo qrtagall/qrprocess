@@ -24,7 +24,7 @@
 
     <!-- -->
     <link rel="stylesheet" href="./css/qrtag-theme-tokens.css?v=20260604e">
-    <link rel="stylesheet" href="./css/style.css?v=20260616e">
+    <link rel="stylesheet" href="./css/style.css?v=20260617a">
 
 </head>
 <body>
@@ -314,9 +314,18 @@
     </div>
     -->
 
-    <div class="main-action-buttons">
-        <button id="editBtn" class="enabled qrt-btn-main" type="button" onclick="editAlert()">🔐 Log-in to Edit Detail-s</button>
-        <button id="logoutBtn" class="enabled qrt-btn-main qrt-btn-logout" type="button" onclick="handleLogout()" style="display: none;">🔓 Log Out</button>
+    <div class="qrt-session-bar" id="sessionActionBar" aria-label="Account actions">
+        <button id="editBtn" class="qrt-session-btn qrt-session-btn--edit qrt-session-btn--guest" type="button" onclick="editAlert()" aria-label="Log in to edit this ID">
+            <span class="qrt-session-btn-icon" aria-hidden="true">🔐</span>
+            <span class="qrt-session-btn-text">
+                <span class="qrt-session-btn-label">Log in to edit</span>
+                <span class="qrt-session-btn-hint">Sign in with Google</span>
+            </span>
+        </button>
+        <button id="logoutBtn" class="qrt-session-btn qrt-session-btn--logout qrt-session-hidden" type="button" onclick="handleLogout()" aria-label="Log out of your account">
+            <span class="qrt-session-btn-icon" aria-hidden="true">↪</span>
+            <span class="qrt-session-btn-label">Log out</span>
+        </button>
     </div>
 
 </div>
@@ -640,7 +649,7 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "10.8";
+    const QRTagAll_Ver_ = "10.9";
 </script>
 
 
@@ -649,12 +658,12 @@
 <!-- bump ?v= whenever JS changes to force browsers to load the new files -->
 <script src="./js/qr-utils.js?v=20260616e"></script>
 <script src="./js/qr-cells.js?v=20260619"></script>
-<script src="./js/qr-auth.js?v=20260616c"></script>
+<script src="./js/qr-auth.js?v=20260617a"></script>
 <script src="./js/qr-fetch.js?v=20260616c"></script>
 <script src="./js/qr-edit.js?v=20260613e"></script>
 <script src="./js/qr-dashboard.js?v=20260613a"></script>
-<script src="./js/qr-ui.js?v=20260616d"></script>
-<script src="./js/qr-main.js?v=20260616a"></script>
+<script src="./js/qr-ui.js?v=20260617a"></script>
+<script src="./js/qr-main.js?v=20260617a"></script>
 <!--   -->
 
 <!-- LOCAL DEV ONLY — do not deploy with file:// script tags (breaks claim/save on process.qrtagall.com)
