@@ -94,6 +94,8 @@ function getStoredAccessToken() {
 function clearStoredAccessTokens() {
     localStorage.removeItem("qr_access_token");
     sessionStorage.removeItem("qr_access_token");
+    localStorage.removeItem("qr_id_token");
+    sessionStorage.removeItem("qr_id_token");
     window.GToken = null;
 }
 
@@ -131,13 +133,38 @@ async function ensureAccessTokenForMutation() {
 
 /** Parameter name for Apps Script (avoid access_token — may be stripped on script.google.com redirects). */
 const QRTAGALL_AUTH_PARAM = "authToken";
+/** OpenID id_token — server-verified identity when access-token email lookup fails. */
+const QRTAGALL_ID_TOKEN_PARAM = "idToken";
+
+function getStoredIdToken() {
+    return (
+        localStorage.getItem("qr_id_token") ||
+        sessionStorage.getItem("qr_id_token") ||
+        ""
+    );
+}
+
+/** Attach OAuth credentials to Apps Script POST body (token + optional id_token). */
+function appendServerAuthToFormBody(body, accessToken) {
+    const token = accessToken || getStoredAccessToken();
+    if (token) {
+        body.set(QRTAGALL_AUTH_PARAM, token);
+    }
+    const idToken = getStoredIdToken();
+    if (idToken) {
+        body.set(QRTAGALL_ID_TOKEN_PARAM, idToken);
+    }
+}
 
 function appendAuthToUrlParams(urlParams, token) {
     if (token) {
         urlParams.set(QRTAGALL_AUTH_PARAM, token);
     }
-    // Always send email alongside the token so the server owner-fallback can
-    // use it when Apps Script cannot read email from the token directly.
+    const idToken = getStoredIdToken();
+    if (idToken) {
+        urlParams.set(QRTAGALL_ID_TOKEN_PARAM, idToken);
+    }
+    // Legacy hint for logs — server ignores client email for authorization.
     const email =
         typeof sessionEmail === "string" && sessionEmail
             ? sessionEmail
@@ -278,9 +305,7 @@ async function invokeAppsScriptPostJson(payload, scriptUrl) {
 
     const body = new URLSearchParams();
     body.set("payload", JSON.stringify(payloadForJson));
-    if (token) {
-        body.set(QRTAGALL_AUTH_PARAM, token);
-    }
+    appendServerAuthToFormBody(body, token);
 
     const res = await fetch(url, {
         method: "POST",
@@ -955,7 +980,7 @@ async function registerClaimOnMasterFetch({ id, sheetLink, token, pageDescriptio
             pageDescription: pageDescription || "",
         })
     );
-    body.set(QRTAGALL_AUTH_PARAM, token);
+    appendServerAuthToFormBody(body, token);
 
     const res = await fetch(multiSheetUrlForQr(id), {
         method: "POST",
@@ -1047,6 +1072,10 @@ function buildInitClaimUrl({ id, asset, email, storageType, claimScriptUrl, call
     if (token) {
         url += `&${QRTAGALL_AUTH_PARAM}=${encodeURIComponent(token)}`;
     }
+    const idToken = getStoredIdToken();
+    if (idToken) {
+        url += `&${QRTAGALL_ID_TOKEN_PARAM}=${encodeURIComponent(idToken)}`;
+    }
     if (callbackName) {
         url += `&callback=${encodeURIComponent(callbackName)}`;
     }
@@ -1065,7 +1094,7 @@ async function requestClaimViaPost({ id, asset, email, storageType, claimScriptU
     };
     const body = new URLSearchParams();
     body.set("payload", JSON.stringify(payload));
-    body.set(QRTAGALL_AUTH_PARAM, accessToken);
+    appendServerAuthToFormBody(body, accessToken);
 
     const res = await fetch(base, {
         method: "POST",
@@ -1160,6 +1189,15 @@ function submitRemoteClaimFormPost({ id, assetName, email, claimScriptUrl, authT
     tokenInput.name = QRTAGALL_AUTH_PARAM;
     tokenInput.value = authToken || "";
     form.appendChild(tokenInput);
+
+    const idToken = getStoredIdToken();
+    if (idToken) {
+        const idTokenInput = document.createElement("input");
+        idTokenInput.type = "hidden";
+        idTokenInput.name = QRTAGALL_ID_TOKEN_PARAM;
+        idTokenInput.value = idToken;
+        form.appendChild(idTokenInput);
+    }
 
     document.body.appendChild(form);
     form.submit();

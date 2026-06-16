@@ -11,13 +11,26 @@ const QRTAGALL_OAUTH_CLIENT_ID =
  * See GS/OAUTH_SETUP.txt
  */
 /** GDrive claim + in-browser edits (email + drive.file only — OAuth verification). */
+const QRTAGALL_OPENID_SCOPE = "openid";
+
+/** Email-only OAuth (LOCAL claim, edit login, guest message, dashboard). */
+const QRTAGALL_EMAIL_ONLY_SCOPES = [
+    QRTAGALL_OPENID_SCOPE,
+    "https://www.googleapis.com/auth/userinfo.email",
+].join(" ");
+
 const QRTAGALL_GDRIVE_CLAIM_SCOPES = [
+    QRTAGALL_OPENID_SCOPE,
     "https://www.googleapis.com/auth/userinfo.email",
     "https://www.googleapis.com/auth/drive.file",
 ].join(" ");
 
+/** Implicit redirect — access_token + id_token (server verifies id_token when tokeninfo fails). */
+const QRTAGALL_OAUTH_RESPONSE_TYPE = "token id_token";
+
 const QR_CLAIMED_EMAIL_KEY = "qr_claimed_email";
 const QR_ACCESS_TOKEN_KEY = "qr_access_token";
+const QR_ID_TOKEN_KEY = "qr_id_token";
 
 async function validateStoredAccessToken(token) {
     if (!token) return false;
@@ -69,8 +82,8 @@ function syncSessionFromStorage() {
     }
 }
 
-/** Persist email (+ optional OAuth access token) after successful Google sign-in. */
-function persistAuthSession(email, accessToken) {
+/** Persist email (+ optional OAuth access / id tokens) after successful Google sign-in. */
+function persistAuthSession(email, accessToken, idToken) {
     if (!email) return;
     const normalized = String(email).toLowerCase();
     localStorage.setItem(QR_CLAIMED_EMAIL_KEY, normalized);
@@ -81,6 +94,10 @@ function persistAuthSession(email, accessToken) {
         localStorage.setItem(QR_ACCESS_TOKEN_KEY, accessToken);
         sessionStorage.setItem(QR_ACCESS_TOKEN_KEY, accessToken);
         window.GToken = accessToken;
+    }
+    if (idToken) {
+        localStorage.setItem(QR_ID_TOKEN_KEY, idToken);
+        sessionStorage.setItem(QR_ID_TOKEN_KEY, idToken);
     }
 
     if (typeof updateSessionActionButtons === "function") {
@@ -232,7 +249,7 @@ function requestGoogleToken(scopes, prompt) {
 
 /** Email only — QRTagAll shared storage (LOCAL) claim. */
 function requestGoogleEmailToken() {
-    return requestGoogleToken("https://www.googleapis.com/auth/userinfo.email", "");
+    return requestGoogleToken(QRTAGALL_EMAIL_ONLY_SCOPES, "");
 }
 
 /** GDrive claim + edits (email + drive.file). */
@@ -333,8 +350,10 @@ function cleandata()
     // 🗑️ Clear stored email/token
     localStorage.removeItem(QR_CLAIMED_EMAIL_KEY);
     localStorage.removeItem(QR_ACCESS_TOKEN_KEY);
+    localStorage.removeItem(QR_ID_TOKEN_KEY);
     sessionStorage.removeItem(QR_CLAIMED_EMAIL_KEY);
     sessionStorage.removeItem(QR_ACCESS_TOKEN_KEY);
+    sessionStorage.removeItem(QR_ID_TOKEN_KEY);
     sessionStorage.removeItem("qr_claimed_email");
 
     // 🔒 Attempt to revoke Gmail token (optional but good hygiene)
@@ -405,7 +424,7 @@ async function redirectToClaimOAuth(storageType) {
     }
     const scope =
         storage === "LOCAL"
-            ? "https://www.googleapis.com/auth/userinfo.email"
+            ? QRTAGALL_EMAIL_ONLY_SCOPES
             : QRTAGALL_GDRIVE_CLAIM_SCOPES;
 
     setClaimButtonsEnabled(false);
@@ -450,7 +469,7 @@ async function redirectToClaimOAuth(storageType) {
 
     const authUrl =
         `https://accounts.google.com/o/oauth2/v2/auth` +
-        `?response_type=token` +
+        `?response_type=${encodeURIComponent(QRTAGALL_OAUTH_RESPONSE_TYPE)}` +
         `&client_id=${encodeURIComponent(QRTAGALL_OAUTH_CLIENT_ID)}` +
         `&redirect_uri=${encodeURIComponent(redirectUri)}` +
         `&scope=${encodeURIComponent(scope)}` +
@@ -505,7 +524,7 @@ async function googleLoginForEdit(id) {
     // Token missing, expired, or owner mismatch — do a full-page redirect to Google.
     const clientId = QRTAGALL_OAUTH_CLIENT_ID;
     const redirectUri = "https://process.qrtagall.com/oauth-callback.html";
-    let scope = "https://www.googleapis.com/auth/userinfo.email";
+    let scope = QRTAGALL_EMAIL_ONLY_SCOPES;
     if (
         typeof globalRemoteAssetList !== "undefined" &&
         globalRemoteAssetList?.some((b) => String(b.storageType || "").toUpperCase() === "REMOTE")
@@ -515,7 +534,7 @@ async function googleLoginForEdit(id) {
 
     const authUrl =
         `https://accounts.google.com/o/oauth2/v2/auth` +
-        `?response_type=token` +
+        `?response_type=${encodeURIComponent(QRTAGALL_OAUTH_RESPONSE_TYPE)}` +
         `&client_id=${encodeURIComponent(clientId)}` +
         `&redirect_uri=${encodeURIComponent(redirectUri)}` +
         `&scope=${encodeURIComponent(scope)}` +
@@ -529,7 +548,7 @@ async function googleLoginForEdit(id) {
 function googleLoginForSendMessage(pageQrId, recipientQrId) {
     const clientId = QRTAGALL_OAUTH_CLIENT_ID;
     const redirectUri = "https://process.qrtagall.com/oauth-callback.html";
-    const scope = "https://www.googleapis.com/auth/userinfo.email";
+    const scope = QRTAGALL_EMAIL_ONLY_SCOPES;
     const state = encodeURIComponent(
         JSON.stringify({
             intent: "sendMessage",
@@ -540,7 +559,7 @@ function googleLoginForSendMessage(pageQrId, recipientQrId) {
 
     const authUrl =
         `https://accounts.google.com/o/oauth2/v2/auth` +
-        `?response_type=token` +
+        `?response_type=${encodeURIComponent(QRTAGALL_OAUTH_RESPONSE_TYPE)}` +
         `&client_id=${encodeURIComponent(clientId)}` +
         `&redirect_uri=${encodeURIComponent(redirectUri)}` +
         `&scope=${encodeURIComponent(scope)}` +
@@ -554,7 +573,7 @@ function googleLoginForSendMessage(pageQrId, recipientQrId) {
 function googleLoginForOwnerReply(pageQrId, serial) {
     const clientId = QRTAGALL_OAUTH_CLIENT_ID;
     const redirectUri = "https://process.qrtagall.com/oauth-callback.html";
-    const scope = "https://www.googleapis.com/auth/userinfo.email";
+    const scope = QRTAGALL_EMAIL_ONLY_SCOPES;
     const state = encodeURIComponent(
         JSON.stringify({
             intent: "ownerReply",
@@ -565,7 +584,7 @@ function googleLoginForOwnerReply(pageQrId, serial) {
 
     const authUrl =
         `https://accounts.google.com/o/oauth2/v2/auth` +
-        `?response_type=token` +
+        `?response_type=${encodeURIComponent(QRTAGALL_OAUTH_RESPONSE_TYPE)}` +
         `&client_id=${encodeURIComponent(clientId)}` +
         `&redirect_uri=${encodeURIComponent(redirectUri)}` +
         `&scope=${encodeURIComponent(scope)}` +
@@ -588,14 +607,14 @@ function googleLoginForDashboard() {
 
     const clientId = QRTAGALL_OAUTH_CLIENT_ID;
     const redirectUri = "https://process.qrtagall.com/oauth-callback.html";
-    const scope = "https://www.googleapis.com/auth/userinfo.email";
+    const scope = QRTAGALL_EMAIL_ONLY_SCOPES;
     const state = encodeURIComponent(
         JSON.stringify({ intent: "dashboard", expectedEmail: email })
     );
 
     const authUrl =
         `https://accounts.google.com/o/oauth2/v2/auth` +
-        `?response_type=token` +
+        `?response_type=${encodeURIComponent(QRTAGALL_OAUTH_RESPONSE_TYPE)}` +
         `&client_id=${encodeURIComponent(clientId)}` +
         `&redirect_uri=${encodeURIComponent(redirectUri)}` +
         `&scope=${encodeURIComponent(scope)}` +

@@ -23,6 +23,7 @@
 
     const hash = new URLSearchParams(window.location.hash.slice(1));
     const token = hash.get("access_token");
+    const idToken = hash.get("id_token");
     const stateRaw = hash.get("state");
 
     if (token) {
@@ -39,6 +40,10 @@
         localStorage.setItem("qr_access_token", token);
         sessionStorage.setItem("qr_claimed_email", normalized);
         sessionStorage.setItem("qr_access_token", token);
+        if (idToken) {
+          localStorage.setItem("qr_id_token", idToken);
+          sessionStorage.setItem("qr_id_token", idToken);
+        }
 
         const stateObj = parseOAuthState(stateRaw);
 
