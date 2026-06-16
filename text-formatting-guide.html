@@ -5,8 +5,8 @@
     <title>QRTagAll — TEXT Formatting Guide</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="description" content="Formatting rules for TEXT artifacts in QRTagAll — labels, inline styles, HTML blocks, phones, and links.">
-    <link rel="stylesheet" href="./css/qrtag-theme-tokens.css?v=20260616b">
-    <link rel="stylesheet" href="./css/style.css?v=20260616b">
+    <link rel="stylesheet" href="./css/qrtag-theme-tokens.css?v=20260616d">
+    <link rel="stylesheet" href="./css/style.css?v=20260616d">
     <style>
         body.qrt-guide-body {
             font-family: 'Segoe UI', sans-serif;
@@ -496,10 +496,10 @@ POLICE: Phone: 112</div>
                 <tr><td><code>&lt;COL:X&gt;</code></td><td>Soft pastel background shade (<code>X</code> = 1–100)</td></tr>
                 <tr><td><code>&lt;EXPAND&gt;</code> or <code>&lt;EX&gt;</code></td><td>Open this link section by default</td></tr>
                 <tr><td><code>&lt;BALOON:text&gt;</code> or <code>&lt;BALOON&gt;text&lt;/BALOON&gt;</code></td><td>Orange capsule promo label (max <strong>15</strong> chars) floating on the banner — visible even when collapsed</td></tr>
-                <tr><td><code>&lt;ANIMATE:Sec&gt;</code></td><td>Slow glow ↔ dim pulse on the promo capsule only; <code>Sec</code> = seconds per full cycle (0.5–60). Use with <code>&lt;BALOON:…&gt;</code></td></tr>
+                <tr><td><code>&lt;ANIMATE&gt;</code></td><td>1-second glow ↔ dim pulse on the promo capsule only. Use with <code>&lt;BALOON:…&gt;</code></td></tr>
             </tbody>
         </table>
-        <p>Example: <code>&lt;BALOON:Offer!&gt;&lt;ANIMATE:3&gt; Summer sale items</code> — animated “Offer!” capsule,
+        <p>Example: <code>&lt;BALOON:Offer!&gt;&lt;ANIMATE&gt; Summer sale items</code> — animated “Offer!” capsule (1s pulse),
             title <strong>Summer sale items</strong>.</p>
 
         <h2>12. What does not apply to TEXT</h2>

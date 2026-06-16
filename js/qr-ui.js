@@ -625,7 +625,7 @@ function renderMultipleRemoteBlocks(remoteList) {
             const hideID         = parsed.noid;
             const hideOwner      = parsed.noowner;
             const balloonText    = parsed.balloon || null;
-            const balloonAnimateSec = parsed.balloonAnimateSec || null;
+            const balloonAnimate = !!parsed.balloonAnimate;
 
             const maskEmail = maskEmailUser(email);
             const linkSerial = formatRemoteLinkSerialLabel(idx + 1);
@@ -639,7 +639,7 @@ function renderMultipleRemoteBlocks(remoteList) {
                 hideID,
                 hideOwner,
                 balloonText,
-                balloonAnimateSec,
+                balloonAnimate,
             });
             headerBlock.classList.add("asset-banner");
             headerBlock.dataset.rawDescription = rawDescription; // preserve raw for edit UI
@@ -1730,7 +1730,7 @@ function editDescription(linkId = null, currentText = "") {
                 "💡 <strong>Banner description</strong> (link A, B, …) — saved in that link’s spreadsheet row B2.<br>" +
                 "Optional tags: <code>&lt;NOID&gt;</code> <code>&lt;NOOWNER&gt;</code> " +
                 "<code>&lt;COL:X&gt;</code> <code>&lt;EXPAND&gt;</code> " +
-                "<code>&lt;BALOON:text&gt;</code> <code>&lt;ANIMATE:Sec&gt;</code> (balloon glow; Sec = seconds per pulse)";
+                "<code>&lt;BALOON:text&gt;</code> <code>&lt;ANIMATE&gt;</code> (1s glow pulse on balloon)";
         }
     } else {
         input.value = String(

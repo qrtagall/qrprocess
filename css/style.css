@@ -526,11 +526,11 @@
         }
 
         .qrt-promo-balloon--animate {
-            animation: qrt-promo-balloon-glow var(--qrt-balloon-animate-sec, 3s) ease-in-out infinite;
+            animation: qrt-promo-balloon-glow var(--qrt-balloon-animate-sec, 1s) ease-in-out infinite;
         }
 
         .qrt-promo-balloon--animate::after {
-            animation: qrt-promo-balloon-tail-glow var(--qrt-balloon-animate-sec, 3s) ease-in-out infinite;
+            animation: qrt-promo-balloon-tail-glow var(--qrt-balloon-animate-sec, 1s) ease-in-out infinite;
         }
 
         @media (prefers-reduced-motion: reduce) {

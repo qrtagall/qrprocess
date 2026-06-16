@@ -739,7 +739,7 @@ function parseInlineOptions(text) {
         noid: false,
         noowner: false,
         balloon: null,
-        balloonAnimateSec: null,
+        balloonAnimate: false,
     };
     if (text == null || text === "") return out;
 
@@ -784,14 +784,10 @@ function parseInlineOptions(text) {
         }
     }
 
-    // --- Balloon glow pulse interval (seconds), e.g. <ANIMATE:3> — applies to BALOON only ---
-    const animateMatch = clean.match(/<\s*ANIMATE:\s*(\d+(?:\.\d+)?)\s*>/i);
-    if (animateMatch) {
-        const sec = parseFloat(animateMatch[1]);
-        if (!isNaN(sec) && sec > 0) {
-            out.balloonAnimateSec = Math.max(0.5, Math.min(60, sec));
-        }
-        clean = clean.replace(/<\s*ANIMATE:\s*\d+(?:\.\d+)?\s*>/ig, "");
+    // --- Balloon glow pulse (1s cycle), e.g. <ANIMATE> — applies with BALOON only ---
+    if (/<\s*ANIMATE(?::\s*\d+(?:\.\d+)?)?\s*>/i.test(clean)) {
+        out.balloonAnimate = true;
+        clean = clean.replace(/<\s*ANIMATE(?::\s*\d+(?:\.\d+)?)?\s*>/ig, "");
     }
 
     out.cleanText = clean.trim();
@@ -914,7 +910,7 @@ function buildCollapsibleHeader({
     hideOwner,
     treeRole,
     balloonText,
-    balloonAnimateSec,
+    balloonAnimate,
 }) {
     const wrapper = document.createElement("div");
     wrapper.className = "asset-banner";
@@ -925,10 +921,10 @@ function buildCollapsibleHeader({
         balloon.className = "qrt-promo-balloon";
         balloon.textContent = balloonText;
         balloon.setAttribute("aria-label", "Promotion: " + balloonText);
-        if (balloonAnimateSec) {
+        if (balloonAnimate) {
             wrapper.classList.add("asset-banner--has-balloon-animate");
             balloon.classList.add("qrt-promo-balloon--animate");
-            balloon.style.setProperty("--qrt-balloon-animate-sec", `${balloonAnimateSec}s`);
+            balloon.style.setProperty("--qrt-balloon-animate-sec", "1s");
         }
         wrapper.appendChild(balloon);
     }
