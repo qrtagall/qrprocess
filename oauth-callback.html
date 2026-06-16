@@ -7,11 +7,30 @@
   <link rel="stylesheet" href="./css/style.css" />
   <style>
     body { margin: 0; padding: 24px 16px; text-align: center; font-family: 'Segoe UI', sans-serif; box-sizing: border-box; }
+    .oauth-callback-spinner {
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #3498db;
+      border-radius: 50%;
+      width: 44px;
+      height: 44px;
+      animation: spin 1s linear infinite;
+      margin: 16px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    #statusLine { color: #555; font-size: 14px; margin-top: 8px; }
+    #emailHint { color: #666; font-size: 13px; margin-top: 6px; }
   </style>
-  <script src="./js/qr-auth.js?v=20260617c"></script>
+  <script src="./js/qr-auth.js?v=20260618b"></script>
 </head>
 <body>
   <h3>⏳ Verifying your login...</h3>
+  <p id="statusLine">Confirming Google account…</p>
+  <p id="emailHint" style="display:none;"></p>
+  <div class="oauth-callback-spinner" id="oauthSpinner"></div>
+
   <script>
     function parseOAuthState(rawState) {
       if (!rawState) return { id: "" };
@@ -22,6 +41,16 @@
       return { id: rawState };
     }
 
+    function setOAuthCallbackStatus(message, isError) {
+      const line = document.getElementById("statusLine");
+      const spinner = document.getElementById("oauthSpinner");
+      if (line) {
+        line.textContent = message;
+        line.style.color = isError ? "#b91c1c" : "#555";
+      }
+      if (spinner) spinner.style.display = isError ? "none" : "block";
+    }
+
     async function finishOAuthCallback() {
       const hash = new URLSearchParams(window.location.hash.slice(1));
       const token = hash.get("access_token");
@@ -29,26 +58,26 @@
       const stateRaw = hash.get("state");
       const oauthError = hash.get("error");
       const oauthErrorDesc = hash.get("error_description");
+      const emailHint = document.getElementById("emailHint");
 
       if (oauthError) {
-        document.body.innerHTML =
-          "<p><strong>Google sign-in failed</strong><br><br>" +
-          (oauthErrorDesc || oauthError) +
-          "<br><br><a href=\"./index.html\">← Back</a></p>";
+        setOAuthCallbackStatus("Google sign-in failed: " + (oauthErrorDesc || oauthError), true);
+        document.body.innerHTML += "<p><a href=\"./index.html\">← Back</a></p>";
         return;
       }
 
       if (!token) {
-        document.body.innerHTML = "<p>⚠️ Login token missing.</p>";
+        setOAuthCallbackStatus("Login token missing.", true);
         return;
       }
 
       try {
+        setOAuthCallbackStatus("Confirming Google account…");
+
         if (idToken && typeof verifyIdTokenNonce === "function") {
           const nonceOk = await verifyIdTokenNonce(idToken);
           if (!nonceOk) {
-            document.body.innerHTML =
-              "<p>⚠️ Sign-in verification failed. Please try again from the QR page.</p>";
+            setOAuthCallbackStatus("Sign-in verification failed. Try again from the QR page.", true);
             return;
           }
         }
@@ -60,8 +89,13 @@
         const email = profile.email;
         if (!email) throw new Error("No email from Google");
 
-        console.log("✅ Logged in as:", email);
+        if (emailHint) {
+          emailHint.style.display = "block";
+          emailHint.textContent = "Signed in as " + email;
+        }
+
         persistAuthSession(email, token, idToken || undefined);
+        setOAuthCallbackStatus("Redirecting…");
 
         const normalized = (email || "").toLowerCase();
         const stateObj = parseOAuthState(stateRaw);
@@ -69,9 +103,10 @@
         if (stateObj.intent === "dashboard") {
           const expected = String(stateObj.expectedEmail || "").toLowerCase().trim();
           if (expected && expected !== normalized) {
-            document.body.innerHTML =
-              "<p>⚠️ Google account (" + email + ") does not match the email you entered (" +
-              stateObj.expectedEmail + "). Please try again.</p>";
+            setOAuthCallbackStatus(
+              "Google account (" + email + ") does not match " + stateObj.expectedEmail + ".",
+              true
+            );
             return;
           }
           window.location.href =
@@ -114,7 +149,7 @@
           encodeURIComponent(email || "");
       } catch (err) {
         console.error("❌ Failed to fetch email:", err);
-        document.body.innerHTML = "<p>⚠️ Login failed. Please try again.</p>";
+        setOAuthCallbackStatus("Login failed. Please try again.", true);
       }
     }
 
