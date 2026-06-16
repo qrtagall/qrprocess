@@ -82,6 +82,18 @@
 
         <p id="claimStatusLine" style="display:none; font-size:13px; color:#555; margin:8px auto; max-width:90%;"></p>
 
+        <div id="claimSpinner" style="display:none; margin:12px auto;">
+            <div style="
+                border:4px solid #f3f3f3;
+                border-top:4px solid #3498db;
+                border-radius:50%;
+                width:36px;
+                height:36px;
+                animation:spin 1s linear infinite;
+                margin:0 auto 8px;
+            "></div>
+        </div>
+
         <!-- 👇 Vertical layout with floating info button -->
         <div id="claimButtonsWrap" class="claim-buttons-wrap">
 
@@ -649,7 +661,7 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "10.11";
+    const QRTagAll_Ver_ = "10.12";
 </script>
 
 
@@ -658,7 +670,7 @@
 <!-- bump ?v= whenever JS changes to force browsers to load the new files -->
 <script src="./js/qr-utils.js?v=20260616e"></script>
 <script src="./js/qr-cells.js?v=20260619"></script>
-<script src="./js/qr-auth.js?v=20260617c"></script>
+<script src="./js/qr-auth.js?v=20260618a"></script>
 <script src="./js/qr-fetch.js?v=20260617a"></script>
 <script src="./js/qr-edit.js?v=20260613e"></script>
 <script src="./js/qr-dashboard.js?v=20260613a"></script>

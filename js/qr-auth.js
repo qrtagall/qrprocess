@@ -84,12 +84,13 @@ async function verifyIdTokenNonce(idToken) {
 
 /**
  * Build Google OAuth authorize URL (implicit: access_token + id_token + nonce).
- * @param {{ redirectUri: string, scope: string, state: string }} opts — state must already be encoded for URL
+ * @param {{ redirectUri: string, scope: string, state: string, prompt?: string }} opts
+ *   — state must already be encoded for URL; prompt e.g. "select_account" for account chooser
  */
-function buildGoogleOAuthRedirectUrl({ redirectUri, scope, state }) {
+function buildGoogleOAuthRedirectUrl({ redirectUri, scope, state, prompt }) {
     const nonce = createOAuthNonce();
     storeOAuthNonce(nonce);
-    return (
+    let url =
         `https://accounts.google.com/o/oauth2/v2/auth` +
         `?response_type=${encodeURIComponent(QRTAGALL_OAUTH_RESPONSE_TYPE)}` +
         `&client_id=${encodeURIComponent(QRTAGALL_OAUTH_CLIENT_ID)}` +
@@ -97,8 +98,11 @@ function buildGoogleOAuthRedirectUrl({ redirectUri, scope, state }) {
         `&scope=${encodeURIComponent(scope)}` +
         `&state=${state}` +
         `&nonce=${encodeURIComponent(nonce)}` +
-        `&include_granted_scopes=true`
-    );
+        `&include_granted_scopes=true`;
+    if (prompt) {
+        url += `&prompt=${encodeURIComponent(prompt)}`;
+    }
+    return url;
 }
 
 async function validateStoredAccessToken(token) {
@@ -189,6 +193,19 @@ function setClaimStatus(message, isError) {
     el.style.display = "block";
     el.textContent = message;
     el.style.color = isError ? "#b91c1c" : "#555";
+}
+
+/** Full-screen + inline spinner while claim OAuth / registration is in progress. */
+function setClaimSpinner(show, statusMessage) {
+    const overlay = document.getElementById("fullScreenSpinner");
+    if (overlay) overlay.style.display = show ? "flex" : "none";
+
+    const inline = document.getElementById("claimSpinner");
+    if (inline) inline.style.display = show ? "block" : "none";
+
+    if (show && statusMessage) {
+        setClaimStatus(statusMessage);
+    }
 }
 
 function setClaimButtonEnabled(btn, enabled) {
@@ -498,46 +515,24 @@ async function redirectToClaimOAuth(storageType) {
             : QRTAGALL_GDRIVE_CLAIM_SCOPES;
 
     setClaimButtonsEnabled(false);
-
-    const creds = await storedTokenMeetsClaimRequirements(storage);
-    if (creds && typeof completeQRClaim === "function") {
-        setClaimStatus(
-            storage === "LOCAL"
-                ? "Registering claim with your Google session…"
-                : "Creating QRTagAll folder in your Google Drive…"
-        );
-        try {
-            persistAuthSession(creds.email, creds.token);
-            await completeQRClaim({
-                id,
-                assetName,
-                email: creds.email,
-                storageType: storage,
-                onStatus: (msg) => setClaimStatus(msg),
-            });
-            redirectAfterClaim(id, creds.email);
-            return;
-        } catch (err) {
-            console.warn("Inline claim with stored token failed:", err);
-            if (typeof clearStoredAccessTokens === "function") {
-                clearStoredAccessTokens();
-            } else {
-                localStorage.removeItem(QR_ACCESS_TOKEN_KEY);
-                sessionStorage.removeItem(QR_ACCESS_TOKEN_KEY);
-                window.GToken = null;
-            }
-            setClaimStatus("Redirecting to Google sign-in…");
-        }
-    } else {
-        setClaimStatus("Redirecting to Google sign-in…");
-    }
+    setClaimSpinner(true, "Choose your Google account…");
 
     const redirectUri = "https://process.qrtagall.com/oauth-claim-callback.html";
     const state = encodeURIComponent(
         JSON.stringify({ id, asset: assetName, storageType: storage })
     );
 
-    window.location.href = buildGoogleOAuthRedirectUrl({ redirectUri, scope, state });
+    // Paint spinner before leaving for Google account chooser.
+    await new Promise((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(resolve));
+    });
+
+    window.location.href = buildGoogleOAuthRedirectUrl({
+        redirectUri,
+        scope,
+        state,
+        prompt: "select_account",
+    });
 }
 
 // 🔑 Data in GDrive — same-tab redirect (not a popup)
@@ -547,17 +542,18 @@ function googleLoginNew() {
     redirectToClaimOAuth("REMOTE").catch((err) => {
         console.error("Claim redirect failed:", err);
         setClaimButtonsEnabled(true);
+        setClaimSpinner(false);
         setClaimStatus("Could not start claim. Try again.", true);
     });
 }
 
 
 
-// 🔐 Login for Edit access (separate redirect)
+// 🔐 Login for Edit access — Google account chooser, then return to this QR in edit mode.
 async function googleLoginForEdit(id) {
-    // If the stored OAuth token is still alive, skip the Google redirect entirely.
-    // Re-verify the email from the token so we can restore the session and enter
-    // edit mode without asking the user to go through the consent screen again.
+    const qrId = id || getQueryParam("id") || "";
+
+    // Fast path: already signed in as an owner of this page (no account chooser needed).
     const storedToken =
         localStorage.getItem(QR_ACCESS_TOKEN_KEY) ||
         sessionStorage.getItem(QR_ACCESS_TOKEN_KEY);
@@ -572,13 +568,11 @@ async function googleLoginForEdit(id) {
                     typeof enableEditMode === "function"
                 ) {
                     enableEditMode();
-                    return; // skip Google redirect — already authenticated as owner
+                    return;
                 }
-                // Token valid but this account is not the owner of the current QR.
-                // Fall through to redirect so the user can switch to the right account.
             }
         } catch (_) {
-            // Network error — fall through to redirect
+            /* fall through to account chooser */
         }
     }
 
@@ -591,10 +585,16 @@ async function googleLoginForEdit(id) {
         scope = QRTAGALL_GDRIVE_CLAIM_SCOPES;
     }
 
+    setClaimSpinner(true, "Choose your Google account to edit…");
+    await new Promise((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(resolve));
+    });
+
     window.location.href = buildGoogleOAuthRedirectUrl({
         redirectUri,
         scope,
-        state: encodeURIComponent(id),
+        state: encodeURIComponent(qrId),
+        prompt: "select_account",
     });
 }
 
@@ -675,6 +675,7 @@ function QRTagAllLoginNew() {
     redirectToClaimOAuth("LOCAL").catch((err) => {
         console.error("Claim redirect failed:", err);
         setClaimButtonsEnabled(true);
+        setClaimSpinner(false);
         setClaimStatus("Could not start claim. Try again.", true);
     });
 }

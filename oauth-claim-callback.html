@@ -15,33 +15,56 @@
       margin: 0;
       box-sizing: border-box;
     }
-    .spinner {
-      margin-top: 20px;
-      font-size: 22px;
-      animation: blink 1s infinite;
+    .claim-callback-spinner {
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #3498db;
+      border-radius: 50%;
+      width: 44px;
+      height: 44px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto 12px;
     }
-    @keyframes blink {
-      0% { opacity: 0.2; }
-      50% { opacity: 1; }
-      100% { opacity: 0.2; }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
     .info {
       font-size: 14px;
-      color: #777;
+      color: #555;
       margin-top: 10px;
+      max-width: 420px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.45;
+    }
+    .email-hint {
+      font-size: 13px;
+      color: #666;
+      margin-top: 6px;
     }
   </style>
   <script src="./js/qr-utils.js?v=20260604b"></script>
   <script src="./js/qr-cells.js?v=20260613c"></script>
   <script src="./js/qr-fetch.js?v=20260617a"></script>
-  <script src="./js/qr-auth.js?v=20260617c"></script>
+  <script src="./js/qr-auth.js?v=20260618a"></script>
 </head>
 <body>
   <h2>🔐 Finalizing QR Claim</h2>
-  <p class="info" id="status">Just a moment while we register your QR...</p>
-  <div class="spinner">⏳</div>
+  <p class="info" id="status">Verifying your Google account…</p>
+  <p class="email-hint" id="emailHint" style="display:none;"></p>
+  <div class="claim-callback-spinner" id="claimSpinner" aria-hidden="true"></div>
 
   <script>
+    function setClaimCallbackStatus(message, isError) {
+      const statusEl = document.getElementById("status");
+      const spinnerEl = document.getElementById("claimSpinner");
+      if (statusEl) {
+        statusEl.textContent = message;
+        statusEl.style.color = isError ? "#b91c1c" : "#555";
+      }
+      if (spinnerEl) spinnerEl.style.display = isError ? "none" : "block";
+    }
+
     async function finalizeQRClaim() {
       const hashParams = new URLSearchParams(window.location.hash.slice(1));
       const accessToken = hashParams.get("access_token");
@@ -49,20 +72,18 @@
       const oauthError = hashParams.get("error");
       const oauthErrorDesc = hashParams.get("error_description");
       const rawState = hashParams.get("state");
-      const statusEl = document.getElementById("status");
+      const emailHintEl = document.getElementById("emailHint");
 
       let id = null;
       let asset = null;
       let storageType = "REMOTE";
 
       if (oauthError) {
-        statusEl.innerHTML =
-          "<strong>Google sign-in blocked (403)</strong><br><br>" +
-          "While the app is in <b>Testing</b> mode, only emails listed as <b>Test users</b> " +
-          "on the Google Cloud OAuth consent screen may sign in.<br><br>" +
-          "Add your Gmail under <b>Test users</b>. GDrive claims need email + drive.file; " +
-          "QRTagAll storage needs email only.<br><br>" +
-          "Details: " + (oauthErrorDesc || oauthError) +
+        setClaimCallbackStatus(
+          "Google sign-in was cancelled or blocked. " + (oauthErrorDesc || oauthError),
+          true
+        );
+        document.getElementById("status").innerHTML +=
           "<br><br><a href=\"./index.html\">← Back to QR</a>";
         return;
       }
@@ -79,16 +100,18 @@
       }
 
       if (!accessToken) {
-        statusEl.textContent = "❌ Missing access token. Try claim again from the QR page.";
+        setClaimCallbackStatus("Missing access token. Try claim again from the QR page.", true);
         return;
       }
 
       if (!id) {
-        statusEl.textContent = "❌ Missing QR ID.";
+        setClaimCallbackStatus("Missing QR ID.", true);
         return;
       }
 
       try {
+        setClaimCallbackStatus("Verifying your Google account…");
+
         const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
@@ -97,7 +120,13 @@
 
         if (!email) throw new Error("No email received from Google.");
 
+        if (emailHintEl) {
+          emailHintEl.style.display = "block";
+          emailHintEl.textContent = "Signed in as " + email;
+        }
+
         if (idToken && typeof verifyIdTokenNonce === "function") {
+          setClaimCallbackStatus("Confirming sign-in…");
           const nonceOk = await verifyIdTokenNonce(idToken);
           if (!nonceOk) {
             throw new Error("Sign-in verification failed. Please try claim again from the QR page.");
@@ -108,32 +137,34 @@
         if (typeof ensureQrCellsReady === "function") {
           await ensureQrCellsReady();
         }
-        statusEl.textContent =
+
+        setClaimCallbackStatus(
           storageType === "LOCAL"
-            ? "⏳ Registering claim (QRTagAll storage)…"
-            : "⏳ Creating QRTagAll folder in your Google Drive…";
+            ? "Registering claim (QRTagAll storage)…"
+            : "Creating QRTagAll folder in your Google Drive…"
+        );
 
         const list = await completeQRClaim({
           id,
           assetName: asset || "Unnamed Asset",
           email: email.toLowerCase(),
           storageType,
-          onStatus: (msg) => { statusEl.textContent = "⏳ " + msg; }
+          onStatus: (msg) => setClaimCallbackStatus(msg)
         });
 
         const finalRedirectUrl =
           `${window.location.origin}/?id=${encodeURIComponent(id)}&claimed=1&email=${encodeURIComponent(email)}`;
 
         if (list.length > 0) {
-          statusEl.textContent = "✅ Claim complete. Redirecting…";
+          setClaimCallbackStatus("Claim complete. Redirecting…");
           window.location.replace(finalRedirectUrl);
         } else {
-          statusEl.textContent = "⚠️ Claim registered; opening QR…";
+          setClaimCallbackStatus("Claim registered. Opening your QR…");
           setTimeout(() => window.location.replace(finalRedirectUrl), 1500);
         }
       } catch (err) {
         console.error("❌ Error:", err);
-        statusEl.textContent = `❌ Error: ${err.message}`;
+        setClaimCallbackStatus("Error: " + (err.message || "Claim failed."), true);
       }
     }
 
