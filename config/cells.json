@@ -1,4 +1,5 @@
 {
+  "_comment": "Routing table: prefixAliases maps QR prefix → cell key. Change only here to move prefixes between IN/TMP1/etc.",
   "version": 2,
   "defaultCell": "IN",
   "prefixAliases": {

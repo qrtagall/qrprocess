@@ -1,9 +1,18 @@
 /**
- * Tenant cell routing — prefix → MultiSheet exec URL (Layer 2 bootstrap).
+ * Tenant cell routing — prefix → MultiSheet exec URL.
+ *
+ * **Single source of truth:** `config/cells.json` (prefixAliases + cells).
+ * Edit routing there only — e.g. move SERA from IN to TMP1:
+ *   "SERA": "TMP1"  in prefixAliases
+ *
  * Helper script URLs (viewDrive, legacy resolve) come from GeneralConfig via
- * MultiSheet fetch response (clientScripts) — not cells.json.
+ * MultiSheet fetch (clientScripts) — not cells.json.
  */
 (function () {
+    /** Bootstrap until cells.json loads; must match defaultCell in cells.json. */
+    const BOOTSTRAP_MULTI_SHEET_URL =
+        "https://script.google.com/macros/s/AKfycbytl1ePW3PbGoAUlnwBtCvKruI5SMQUcYxypyK399mjau981sjwtyEcSzMkYSTlOLmY/exec";
+
     const EMBEDDED_CLIENT_SCRIPTS = {
         viewDriveUrl:
             "https://script.google.com/macros/s/AKfycbxrLNo-pwzQWtkfl6QBUeZDyxsAxBub-QQsW6jqMLxPz6KPV-62wb8igpgbp21FQhND/exec",
@@ -13,61 +22,12 @@
             "https://script.google.com/macros/s/AKfycbzlXNlTnCL9MWYfu6ejMBXfSzhQp0SPTjL5YzmKiXTG7-3Lk4GhuBi-A8gzgf05WJdo/exec",
     };
 
-    const EMBEDDED_PREFIX_ALIASES = {
-        TMP: "IN",
-        TEMP: "IN",
-        VEH: "IN",
-        PLT: "IN",
-        QRTAG: "IN",
-        SER: "IN",
-        SERA: "IN",
-        SERB: "IN",
-        SERC: "IN",
-        SERD: "IN",
-        CAC: "IN",
-        CACA: "IN",
-        CACB: "IN",
-        CACC: "IN",
-        EP: "IN",
-        EPA: "IN",
-        EPB: "IN",
-        EPC: "IN",
-        MC: "IN",
-        MCA: "IN",
-        MCB: "IN",
-        MCC: "IN",
-        MCD: "IN",
-        PN: "IN",
-        PNA: "IN",
-        PNB: "IN",
-        HP: "IN",
-        HPA: "IN",
-        HPB: "IN",
-        HPC: "IN",
-        HPD: "IN",
-        HPE: "IN",
-        HPF: "IN",
-        EO: "IN",
-        EOA: "IN",
-        EOB: "IN",
-        EOC: "IN",
-        EOD: "IN",
-        EOE: "IN",
-        EOF: "IN",
-        EOG: "IN",
-        EOH: "IN",
-        TMP1: "TMP1",
-    };
-
-    const EMBEDDED_CELLS = {
+    const BOOTSTRAP_CELLS = {
         version: 2,
         defaultCell: "IN",
-        prefixAliases: EMBEDDED_PREFIX_ALIASES,
+        prefixAliases: {},
         cells: {
-            IN: {
-                multiSheetUrl:
-                    "https://script.google.com/macros/s/AKfycbytl1ePW3PbGoAUlnwBtCvKruI5SMQUcYxypyK399mjau981sjwtyEcSzMkYSTlOLmY/exec",
-            },
+            IN: { multiSheetUrl: BOOTSTRAP_MULTI_SHEET_URL },
         },
     };
 
@@ -76,20 +36,20 @@
     let clientScripts = { ...EMBEDDED_CLIENT_SCRIPTS };
     let clientScriptsLoadPromise = null;
 
-    function cloneEmbeddedConfig() {
-        return JSON.parse(JSON.stringify(EMBEDDED_CELLS));
+    function bootstrapConfig() {
+        return JSON.parse(JSON.stringify(BOOTSTRAP_CELLS));
     }
 
     function normalizeCellsConfig(raw) {
-        const cfg = raw && typeof raw === "object" ? raw : cloneEmbeddedConfig();
+        const cfg = raw && typeof raw === "object" ? raw : bootstrapConfig();
         if (!cfg.cells || typeof cfg.cells !== "object") {
-            cfg.cells = cloneEmbeddedConfig().cells;
+            cfg.cells = bootstrapConfig().cells;
         }
         if (!cfg.defaultCell || !cfg.cells[cfg.defaultCell]) {
-            cfg.defaultCell = EMBEDDED_CELLS.defaultCell;
+            cfg.defaultCell = BOOTSTRAP_CELLS.defaultCell;
         }
         if (!cfg.prefixAliases || typeof cfg.prefixAliases !== "object") {
-            cfg.prefixAliases = { ...(EMBEDDED_CELLS.prefixAliases || {}) };
+            cfg.prefixAliases = {};
         }
         return cfg;
     }
@@ -121,7 +81,7 @@
         const baseUrl =
             typeof getMultiSheetUrl === "function"
                 ? getMultiSheetUrl(qrIdOrPrefix || "")
-                : EMBEDDED_CELLS.cells.IN.multiSheetUrl;
+                : BOOTSTRAP_MULTI_SHEET_URL;
         if (!baseUrl) return clientScripts;
 
         clientScriptsLoadPromise = (async () => {
@@ -161,17 +121,8 @@
         const alias = cfg.prefixAliases && cfg.prefixAliases[key];
         if (alias) {
             const aliasKey = String(alias).trim().toUpperCase();
-            if (cfg.cells[aliasKey]) return aliasKey;
-        }
-
-        if (!cfg.cells[key] || cfg.cells[key].active === false) {
-            const urlFallback =
-                typeof getQueryParam === "function" ? getQueryParam("fallback") : null;
-            if (urlFallback) {
-                const fbKey = String(urlFallback).trim().toUpperCase();
-                if (cfg.cells[fbKey] && cfg.cells[fbKey].active !== false) {
-                    return fbKey;
-                }
+            if (cfg.cells[aliasKey] && cfg.cells[aliasKey].active !== false) {
+                return aliasKey;
             }
         }
 
@@ -195,7 +146,7 @@
         }
         const cellKey = resolveCellKey(prefix);
         const cell = cfg.cells[cellKey] || cfg.cells[cfg.defaultCell];
-        const fallback = cfg.cells[cfg.defaultCell] || EMBEDDED_CELLS.cells.IN;
+        const fallback = cfg.cells[cfg.defaultCell] || BOOTSTRAP_CELLS.cells.IN;
         const merged = { ...(fallback || {}), ...(cell || {}), cellKey: cellKey || cfg.defaultCell };
         return merged;
     }
@@ -216,18 +167,25 @@
                         : null;
                 if (base) {
                     const configUrl = new URL("config/cells.json", base);
-                    configUrl.searchParams.set("v", String(EMBEDDED_CELLS.version || 1));
+                    configUrl.searchParams.set("v", String(BOOTSTRAP_CELLS.version || 1));
                     const res = await fetch(configUrl.toString(), { cache: "no-store" });
                     if (res.ok) {
                         const json = await res.json();
                         cellsConfig = normalizeCellsConfig(json);
-                        console.log("[qr-cells] loaded", configUrl.pathname, "defaultCell=", cellsConfig.defaultCell);
+                        console.log(
+                            "[qr-cells] loaded",
+                            configUrl.pathname,
+                            "defaultCell=",
+                            cellsConfig.defaultCell,
+                            "aliases=",
+                            Object.keys(cellsConfig.prefixAliases || {}).length
+                        );
                         return cellsConfig;
                     }
-                    console.warn("[qr-cells] config HTTP", res.status, "— using embedded defaults");
+                    console.warn("[qr-cells] config HTTP", res.status, "— using bootstrap defaults");
                 }
             } catch (err) {
-                console.warn("[qr-cells] config load failed — using embedded defaults", err);
+                console.warn("[qr-cells] config load failed — using bootstrap defaults", err);
             }
             cellsConfig = normalizeCellsConfig(null);
             return cellsConfig;
