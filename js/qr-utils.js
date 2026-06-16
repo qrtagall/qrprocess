@@ -739,6 +739,7 @@ function parseInlineOptions(text) {
         noid: false,
         noowner: false,
         balloon: null,
+        balloonAnimateSec: null,
     };
     if (text == null || text === "") return out;
 
@@ -781,6 +782,16 @@ function parseInlineOptions(text) {
             out.balloon = String(balloonPair[1] || "").trim().slice(0, 15);
             clean = clean.replace(/<\s*BALOON\s*>[^<]{1,40}<\s*\/\s*BALOON\s*>/ig, "");
         }
+    }
+
+    // --- Balloon glow pulse interval (seconds), e.g. <ANIMATE:3> — applies to BALOON only ---
+    const animateMatch = clean.match(/<\s*ANIMATE:\s*(\d+(?:\.\d+)?)\s*>/i);
+    if (animateMatch) {
+        const sec = parseFloat(animateMatch[1]);
+        if (!isNaN(sec) && sec > 0) {
+            out.balloonAnimateSec = Math.max(0.5, Math.min(60, sec));
+        }
+        clean = clean.replace(/<\s*ANIMATE:\s*\d+(?:\.\d+)?\s*>/ig, "");
     }
 
     out.cleanText = clean.trim();
@@ -903,6 +914,7 @@ function buildCollapsibleHeader({
     hideOwner,
     treeRole,
     balloonText,
+    balloonAnimateSec,
 }) {
     const wrapper = document.createElement("div");
     wrapper.className = "asset-banner";
@@ -913,6 +925,11 @@ function buildCollapsibleHeader({
         balloon.className = "qrt-promo-balloon";
         balloon.textContent = balloonText;
         balloon.setAttribute("aria-label", "Promotion: " + balloonText);
+        if (balloonAnimateSec) {
+            wrapper.classList.add("asset-banner--has-balloon-animate");
+            balloon.classList.add("qrt-promo-balloon--animate");
+            balloon.style.setProperty("--qrt-balloon-animate-sec", `${balloonAnimateSec}s`);
+        }
         wrapper.appendChild(balloon);
     }
 
