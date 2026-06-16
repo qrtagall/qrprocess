@@ -51,7 +51,6 @@ function syncSessionFromStorage() {
                 localStorage.removeItem(QR_ACCESS_TOKEN_KEY);
                 sessionStorage.removeItem(QR_ACCESS_TOKEN_KEY);
                 window.GToken = null;
-                maybeRefreshTokenForSession();
             }
         });
     }
@@ -145,6 +144,60 @@ function isClaimStorageAllowed(storageType) {
     return st === "LOCAL" ? opts.local !== false : opts.remote !== false;
 }
 
+/** True when stored OAuth token is still valid for the requested claim storage type. */
+async function storedTokenMeetsClaimRequirements(storageType) {
+    const token =
+        localStorage.getItem(QR_ACCESS_TOKEN_KEY) ||
+        sessionStorage.getItem(QR_ACCESS_TOKEN_KEY) ||
+        "";
+    if (!token) return null;
+
+    const storage = String(storageType || "REMOTE").toUpperCase() === "LOCAL" ? "LOCAL" : "REMOTE";
+    let email = "";
+
+    try {
+        const infoRes = await fetch(
+            `https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(token)}`
+        );
+        if (infoRes.ok) {
+            const info = await infoRes.json();
+            if (info.error) return null;
+            email = String(info.email || "").toLowerCase();
+            const scopes = String(info.scope || "").split(/\s+/).filter(Boolean);
+            const hasEmailScope = scopes.some(
+                (s) => s.includes("userinfo.email") || s.endsWith("/email")
+            );
+            if (!hasEmailScope) return null;
+            if (storage === "REMOTE") {
+                const hasDrive = scopes.some((s) => s.includes("drive.file"));
+                if (!hasDrive) return null;
+            }
+        }
+    } catch (_) {
+        /* fall through to userinfo check */
+    }
+
+    if (!(await validateStoredAccessToken(token))) return null;
+    if (!email) {
+        email = await fetchUserEmail(token);
+    }
+    if (!email) return null;
+
+    if (storage === "REMOTE") {
+        try {
+            const probe = await fetch(
+                "https://www.googleapis.com/drive/v3/about?fields=user&supportsAllDrives=true",
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            if (!probe.ok) return null;
+        } catch (_) {
+            return null;
+        }
+    }
+
+    return { token, email };
+}
+
 /** GIS token request — prompt "" reuses prior consent when scopes already granted. */
 function requestGoogleToken(scopes, prompt) {
     return new Promise((resolve, reject) => {
@@ -198,7 +251,7 @@ function redirectAfterClaim(id, email) {
 
 /**
  * Logged-in UI uses sessionEmail, but saves need a valid OAuth token.
- * Silently refresh when email is known but token is missing/expired.
+ * Re-validates stored token only — never opens GIS / account picker on its own.
  */
 async function maybeRefreshTokenForSession() {
     if (!sessionEmail) return;
@@ -209,26 +262,11 @@ async function maybeRefreshTokenForSession() {
         window.GToken = existing;
         return;
     }
-    if (!window.google?.accounts?.oauth2) return;
-
-    const tokenRequest = pageUsesGdriveStorage()
-        ? requestGdriveAccessToken("")
-        : requestGoogleEmailToken();
-
-    tokenRequest
-        .then(async (token) => {
-            const verified = await fetchUserEmail(token);
-            return { token, verified };
-        })
-        .then(({ token, verified }) => {
-            if (verified && verified === sessionEmail.toLowerCase()) {
-                persistAuthSession(verified, token);
-                console.log("🔐 OAuth token refreshed for", verified);
-            }
-        })
-        .catch(() => {
-            /* user may dismiss GIS prompt */
-        });
+    if (existing) {
+        localStorage.removeItem(QR_ACCESS_TOKEN_KEY);
+        sessionStorage.removeItem(QR_ACCESS_TOKEN_KEY);
+        window.GToken = null;
+    }
 }
 
 /**
@@ -251,24 +289,19 @@ function initSessionFromUrlAndStorage() {
             });
         }
     }
-
-    maybeRefreshTokenForSession();
 }
 
 let sessionEmail = localStorage.getItem(QR_CLAIMED_EMAIL_KEY) || "";
 if (sessionEmail) sessionEmail = sessionEmail.toLowerCase();
-//let sessionEmail = "dev.chandan2002x@gmail.com";//localStorage.getItem("qr_claimed_email");
-//let sessionEmail = "chandan2002x@gmail.com";//localStorage.getItem("qr_claimed_email");
 
+const logoutBtnEarly = document.getElementById("logoutBtn");
+if (sessionEmail && logoutBtnEarly) {
+    logoutBtnEarly.style.display = "block";
+    console.log("📧 Logged in as:", sessionEmail);
+}
 
 let ownerEmail = ""; // will be assigned after fetch
 let StorageType = ""; // will be set in fetchAssetData()
-
-// ✅ Show logout button if session exists
-if (sessionEmail) {
-    document.getElementById("logoutBtn").style.display = "block";
-    console.log("📧 Logged in as:", sessionEmail);
-}
 
 /*
 // 🔓 Logout handler
@@ -338,11 +371,12 @@ function handleLogout() {
 }
 
 /** Full-page OAuth claim (works on mobile; no GIS popup). */
-function redirectToClaimOAuth(storageType) {
+async function redirectToClaimOAuth(storageType) {
     const id = getQueryParam("id");
     const assetName = document.getElementById("assetNameInput")?.value.trim() || "Unnamed Asset";
     if (!id) {
         alert("❌ No QR ID in URL.");
+        setClaimButtonsEnabled(true);
         return;
     }
 
@@ -363,6 +397,41 @@ function redirectToClaimOAuth(storageType) {
             ? "https://www.googleapis.com/auth/userinfo.email"
             : QRTAGALL_GDRIVE_CLAIM_SCOPES;
 
+    setClaimButtonsEnabled(false);
+
+    const creds = await storedTokenMeetsClaimRequirements(storage);
+    if (creds && typeof completeQRClaim === "function") {
+        setClaimStatus(
+            storage === "LOCAL"
+                ? "Registering claim with your Google session…"
+                : "Creating QRTagAll folder in your Google Drive…"
+        );
+        try {
+            persistAuthSession(creds.email, creds.token);
+            await completeQRClaim({
+                id,
+                assetName,
+                email: creds.email,
+                storageType: storage,
+                onStatus: (msg) => setClaimStatus(msg),
+            });
+            redirectAfterClaim(id, creds.email);
+            return;
+        } catch (err) {
+            console.warn("Inline claim with stored token failed:", err);
+            if (typeof clearStoredAccessTokens === "function") {
+                clearStoredAccessTokens();
+            } else {
+                localStorage.removeItem(QR_ACCESS_TOKEN_KEY);
+                sessionStorage.removeItem(QR_ACCESS_TOKEN_KEY);
+                window.GToken = null;
+            }
+            setClaimStatus("Redirecting to Google sign-in…");
+        }
+    } else {
+        setClaimStatus("Redirecting to Google sign-in…");
+    }
+
     const redirectUri = "https://process.qrtagall.com/oauth-claim-callback.html";
     const state = encodeURIComponent(
         JSON.stringify({ id, asset: assetName, storageType: storage })
@@ -382,7 +451,13 @@ function redirectToClaimOAuth(storageType) {
 
 // 🔑 Data in GDrive — same-tab redirect (not a popup)
 function googleLoginNew() {
-    redirectToClaimOAuth("REMOTE");
+    setClaimButtonsEnabled(false);
+    setClaimStatus("Starting claim…");
+    redirectToClaimOAuth("REMOTE").catch((err) => {
+        console.error("Claim redirect failed:", err);
+        setClaimButtonsEnabled(true);
+        setClaimStatus("Could not start claim. Try again.", true);
+    });
 }
 
 
@@ -542,8 +617,12 @@ async function fetchUserEmail(token) {
 // 🚀 Data in QRTagAll — same-tab redirect as GDrive (no GIS popup; mobile-safe)
 function QRTagAllLoginNew() {
     setClaimButtonsEnabled(false);
-    setClaimStatus("Redirecting to Google sign-in…");
-    redirectToClaimOAuth("LOCAL");
+    setClaimStatus("Starting claim…");
+    redirectToClaimOAuth("LOCAL").catch((err) => {
+        console.error("Claim redirect failed:", err);
+        setClaimButtonsEnabled(true);
+        setClaimStatus("Could not start claim. Try again.", true);
+    });
 }
 
 
