@@ -237,6 +237,114 @@
             color: #666;
             margin-bottom: 8px;
         }
+
+        /* Section 13 — Unicode emoji reference */
+        .qrt-emoji-ref-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin: 12px 0 14px;
+        }
+
+        .qrt-emoji-ref-search {
+            flex: 1 1 200px;
+            min-height: 40px;
+            padding: 8px 12px;
+            font-size: 14px;
+            border: 1px solid #dde3ea;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        .qrt-emoji-ref-select {
+            min-height: 40px;
+            padding: 8px 10px;
+            font-size: 14px;
+            border: 1px solid #dde3ea;
+            border-radius: 8px;
+            background: #fff;
+            max-width: 100%;
+        }
+
+        .qrt-emoji-ref-meta {
+            font-size: 12px;
+            color: #666;
+            margin: 0 0 10px;
+        }
+
+        .qrt-emoji-ref-status {
+            font-size: 13px;
+            color: var(--primary);
+            min-height: 20px;
+            margin: 0 0 8px;
+        }
+
+        .qrt-emoji-ref-loading {
+            padding: 28px 12px;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .qrt-emoji-ref-group {
+            margin: 18px 0 22px;
+        }
+
+        .qrt-emoji-ref-group > h3 {
+            margin: 0 0 10px;
+            font-size: 1rem;
+            color: #333;
+            border-bottom: 1px solid #e8eef5;
+            padding-bottom: 4px;
+        }
+
+        .qrt-emoji-ref-sub {
+            margin: 14px 0 8px;
+        }
+
+        .qrt-emoji-ref-sub-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #777;
+            text-transform: capitalize;
+            margin: 0 0 6px;
+        }
+
+        .qrt-emoji-ref-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .qrt-emoji-ref-btn {
+            width: 42px;
+            height: 42px;
+            font-size: 24px;
+            line-height: 1;
+            border: 1px solid #e4eaf2;
+            border-radius: 8px;
+            background: #fff;
+            cursor: pointer;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+        }
+
+        .qrt-emoji-ref-btn:hover,
+        .qrt-emoji-ref-btn:focus-visible {
+            background: #f0f5fb;
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        .qrt-emoji-ref-empty {
+            padding: 16px;
+            color: #666;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body class="qrt-guide-body">
@@ -364,6 +472,8 @@
                 <tr><td><code>==text==</code></td><td><mark class="qrt-inline-mark">highlight</mark></td></tr>
             </tbody>
         </table>
+        <p>Unicode emoji paste as-is (e.g. <code>Status: ✅ Active</code>). See
+            <a href="#emojiReferenceCard">section 13</a> for the full list — click to copy.</p>
         <div class="qrt-guide-example">
             <div class="qrt-guide-example-box">
                 <div class="qrt-guide-example-label">You type</div>
@@ -512,11 +622,165 @@ POLICE: Phone: 112</div>
         </ul>
     </div>
 
+    <div class="qrt-guide-card" id="emojiReferenceCard">
+        <h2>13. Emoji reference (copy &amp; paste)</h2>
+        <p>Click any emoji to copy it to the clipboard, then paste into TEXT <strong>Local Link</strong> content, page descriptions, or link banners.
+            List sourced from the <a href="https://unicode.org/emoji/charts/full-emoji-list.html" target="_blank" rel="noopener">Unicode Full Emoji List</a>
+            (v<span id="emojiRefVersion">17.0</span>).</p>
+        <div class="qrt-emoji-ref-toolbar">
+            <input type="search" id="emojiRefSearch" class="qrt-emoji-ref-search" placeholder="Search by name, code (U+1F600), or group…" autocomplete="off">
+            <select id="emojiRefGroupFilter" class="qrt-emoji-ref-select" aria-label="Filter by emoji group">
+                <option value="">All groups</option>
+            </select>
+        </div>
+        <p class="qrt-emoji-ref-meta" id="emojiRefCount">Loading emoji…</p>
+        <p class="qrt-emoji-ref-status" id="emojiRefStatus" aria-live="polite"></p>
+        <div id="emojiRefRoot" class="qrt-emoji-ref-loading">Loading emoji reference…</div>
+    </div>
+
     <p class="qrt-guide-footer">
         <a href="https://process.qrtagall.com" style="color:var(--primary);">process.qrtagall.com</a>
         · <a href="https://qrtagall.com" style="color:var(--primary);">qrtagall.com</a>
     </p>
 </div>
+
+<script>
+(function initEmojiReference() {
+    const root = document.getElementById("emojiRefRoot");
+    const statusEl = document.getElementById("emojiRefStatus");
+    const countEl = document.getElementById("emojiRefCount");
+    const searchEl = document.getElementById("emojiRefSearch");
+    const groupEl = document.getElementById("emojiRefGroupFilter");
+    const versionEl = document.getElementById("emojiRefVersion");
+    if (!root || !searchEl || !groupEl) return;
+
+    let allItems = [];
+
+    function esc(s) {
+        return String(s || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+    }
+
+    function copyEmoji(emoji, name) {
+        const done = () => {
+            statusEl.textContent = "Copied " + emoji + " — " + name;
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(emoji).then(done).catch(() => {
+                statusEl.textContent = "Copy failed — select and copy manually: " + emoji;
+            });
+        } else {
+            statusEl.textContent = "Copy: " + emoji + " (" + name + ")";
+        }
+    }
+
+    function render() {
+        const q = searchEl.value.trim().toLowerCase();
+        const groupFilter = groupEl.value;
+        const filtered = allItems.filter((item) => {
+            if (groupFilter && item.group !== groupFilter) return false;
+            if (!q) return true;
+            return (
+                item.name.toLowerCase().includes(q) ||
+                item.group.toLowerCase().includes(q) ||
+                (item.sub && item.sub.toLowerCase().includes(q)) ||
+                item.code.toLowerCase().includes(q) ||
+                item.emoji.includes(q)
+            );
+        });
+
+        countEl.textContent =
+            filtered.length === allItems.length
+                ? filtered.length + " emoji — click to copy"
+                : filtered.length + " of " + allItems.length + " emoji — click to copy";
+
+        if (!filtered.length) {
+            root.className = "qrt-emoji-ref-empty";
+            root.textContent = "No emoji match your search.";
+            return;
+        }
+
+        root.className = "";
+        root.replaceChildren();
+
+        let currentGroup = "";
+        let currentSub = "";
+        let groupElDom = null;
+        let subElDom = null;
+        let gridEl = null;
+
+        function ensureGroup(group) {
+            if (group === currentGroup) return;
+            currentGroup = group;
+            currentSub = "";
+            groupElDom = document.createElement("section");
+            groupElDom.className = "qrt-emoji-ref-group";
+            const h3 = document.createElement("h3");
+            h3.textContent = group;
+            groupElDom.appendChild(h3);
+            root.appendChild(groupElDom);
+            subElDom = null;
+            gridEl = null;
+        }
+
+        function ensureSub(sub) {
+            const key = sub || "(general)";
+            if (key === currentSub && subElDom) return;
+            currentSub = key;
+            subElDom = document.createElement("div");
+            subElDom.className = "qrt-emoji-ref-sub";
+            if (sub) {
+                const t = document.createElement("p");
+                t.className = "qrt-emoji-ref-sub-title";
+                t.textContent = sub.replace(/-/g, " ");
+                subElDom.appendChild(t);
+            }
+            gridEl = document.createElement("div");
+            gridEl.className = "qrt-emoji-ref-grid";
+            subElDom.appendChild(gridEl);
+            groupElDom.appendChild(subElDom);
+        }
+
+        filtered.forEach((item) => {
+            ensureGroup(item.group);
+            ensureSub(item.sub);
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "qrt-emoji-ref-btn";
+            btn.textContent = item.emoji;
+            btn.title = item.name + " (" + item.code + ")";
+            btn.setAttribute("aria-label", "Copy " + item.name);
+            btn.addEventListener("click", () => copyEmoji(item.emoji, item.name));
+            gridEl.appendChild(btn);
+        });
+    }
+
+    fetch("./data/emoji-reference.json?v=17")
+        .then((res) => {
+            if (!res.ok) throw new Error("HTTP " + res.status);
+            return res.json();
+        })
+        .then((data) => {
+            allItems = Array.isArray(data.items) ? data.items : [];
+            if (versionEl && data.version) versionEl.textContent = data.version;
+            const groups = [...new Set(allItems.map((i) => i.group))];
+            groupEl.innerHTML =
+                '<option value="">All groups</option>' +
+                groups.map((g) => '<option value="' + esc(g) + '">' + esc(g) + "</option>").join("");
+            searchEl.addEventListener("input", render);
+            groupEl.addEventListener("change", render);
+            render();
+        })
+        .catch(() => {
+            root.className = "qrt-emoji-ref-empty";
+            root.textContent = "Could not load emoji reference. Check that data/emoji-reference.json is deployed.";
+            countEl.textContent = "";
+        });
+})();
+</script>
 
 </body>
 </html>
