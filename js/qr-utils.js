@@ -261,27 +261,42 @@ function getQrCanvasOptions(id, size = 160) {
     };
 }
 
-/** Paint prefix emoji at QR center — white halo follows icon shape (no square box). */
+/** White margin around center prefix (emoji or image). */
+function getPrefixIconPad(size) {
+    return Math.max(4, Math.round(size * 0.018));
+}
+
+function fillPrefixWhitePad(ctx, x, y, outerW, outerH) {
+    const r = Math.max(3, Math.round(Math.min(outerW, outerH) * 0.12));
+    ctx.fillStyle = "#ffffff";
+    if (typeof ctx.roundRect === "function") {
+        ctx.beginPath();
+        ctx.roundRect(x, y, outerW, outerH, r);
+        ctx.fill();
+    } else {
+        ctx.fillRect(x, y, outerW, outerH);
+    }
+}
+
+/** Paint prefix emoji at QR center — white pad behind glyph (matches image icons). */
 function paintPrefixEmojiOnCanvas(ctx, icon, size) {
     const glyph = Math.round(size * 0.2);
     const cx = size / 2;
     const cy = size / 2;
     const fontSize = Math.round(glyph * 0.92);
-    const outline = Math.max(3, Math.round(glyph * 0.16));
+    const pad = getPrefixIconPad(size);
 
     ctx.save();
     ctx.font = `${fontSize}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.lineJoin = "round";
-    ctx.miterLimit = 2;
 
-    ctx.strokeStyle = "#ffffff";
-    for (const w of [outline * 1.35, outline * 0.85]) {
-        ctx.lineWidth = w;
-        ctx.strokeText(icon, cx, cy);
-    }
+    const textW = Math.max(ctx.measureText(icon).width, fontSize * 0.85);
+    const textH = fontSize * 1.05;
+    const outerW = textW + pad * 2;
+    const outerH = textH + pad * 2;
 
+    fillPrefixWhitePad(ctx, cx - outerW / 2, cy - outerH / 2, outerW, outerH);
     ctx.fillText(icon, cx, cy);
     ctx.restore();
 }
@@ -320,7 +335,7 @@ function paintPrefixImageOnCanvas(ctx, img, size) {
     const box = Math.round(size * 0.22);
     const cx = size / 2;
     const cy = size / 2;
-    const pad = Math.max(2, Math.round(size * 0.008));
+    const pad = getPrefixIconPad(size);
     const iw = img.naturalWidth || img.width || 1;
     const ih = img.naturalHeight || img.height || 1;
     const scale = Math.min(box / iw, box / ih);
@@ -330,17 +345,9 @@ function paintPrefixImageOnCanvas(ctx, img, size) {
     const outerH = dh + pad * 2;
     const x = cx - outerW / 2;
     const y = cy - outerH / 2;
-    const r = Math.max(3, Math.round(Math.min(outerW, outerH) * 0.12));
 
     ctx.save();
-    ctx.fillStyle = "#ffffff";
-    if (typeof ctx.roundRect === "function") {
-        ctx.beginPath();
-        ctx.roundRect(x, y, outerW, outerH, r);
-        ctx.fill();
-    } else {
-        ctx.fillRect(x, y, outerW, outerH);
-    }
+    fillPrefixWhitePad(ctx, x, y, outerW, outerH);
     ctx.drawImage(img, cx - dw / 2, cy - dh / 2, dw, dh);
     ctx.restore();
 }
