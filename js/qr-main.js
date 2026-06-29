@@ -38,6 +38,8 @@ function setVerifyResultMessage(text, color, opts) {
     const resultDiv = document.getElementById("result");
     const msgEl = document.getElementById("resultMessage");
     const actions = document.getElementById("verifyFailActions");
+    const spinner = document.getElementById("spinner");
+    if (spinner) spinner.style.display = "none";
     if (actions) actions.style.display = opts && opts.showDeleteEntry ? "block" : "none";
     if (resultDiv) {
         resultDiv.style.display = "block";
@@ -50,9 +52,27 @@ function setVerifyResultMessage(text, color, opts) {
     }
 }
 
-async function handleVerifyFailure(id) {
+/** Hide verify error UI and show branded spinner (registry check / delete prep). */
+function showVerifyPopupLoading(message, phase) {
+    const resultDiv = document.getElementById("result");
     const verifyingLabel = document.getElementById("verifyingLabel");
+    const spinner = document.getElementById("spinner");
+    if (resultDiv) resultDiv.style.display = "none";
     if (verifyingLabel) verifyingLabel.style.display = "none";
+    if (spinner) spinner.style.display = "block";
+    if (typeof setInlineSpinnerMessage === "function") {
+        setInlineSpinnerMessage(message || "Loading…", phase || "fetch");
+    }
+}
+
+function restoreVerifyFailScreen() {
+    setVerifyResultMessage("❌ Invalid ID or Signature Mismatch", "var(--error)", {
+        showDeleteEntry: !!window.__qrVerifyFailRegistryExists,
+    });
+}
+
+async function handleVerifyFailure(id) {
+    showVerifyPopupLoading("Checking registry…", "fetch");
 
     let hasRegistry = false;
     try {
@@ -63,24 +83,70 @@ async function handleVerifyFailure(id) {
         console.warn("Registry lookup failed:", err);
     }
 
-    setVerifyResultMessage("❌ Invalid ID or Signature Mismatch", "var(--error)", {
-        showDeleteEntry: hasRegistry,
-    });
+    window.__qrVerifyFailRegistryExists = hasRegistry;
 
-    const pending =
-        typeof sessionStorage !== "undefined"
-            ? sessionStorage.getItem("qr_pending_registry_delete")
-            : "";
+    const pendingOAuth =
+        getQueryParam("verifyFailDelete") === "1" ||
+        (typeof sessionStorage !== "undefined" &&
+            sessionStorage.getItem("qr_pending_registry_delete") === id);
+
     if (
         hasRegistry &&
-        pending === id &&
+        pendingOAuth &&
         typeof sessionEmail === "string" &&
         sessionEmail &&
         typeof openVerifyFailDeleteEntry === "function"
     ) {
-        sessionStorage.removeItem("qr_pending_registry_delete");
-        openVerifyFailDeleteEntry({ skipLoginRedirect: true });
+        try {
+            sessionStorage.removeItem("qr_pending_registry_delete");
+        } catch (_) {
+            /* ignore */
+        }
+        if (typeof history !== "undefined" && history.replaceState) {
+            const cleanUrl = new URL(window.location.href);
+            cleanUrl.searchParams.delete("verifyFailDelete");
+            history.replaceState(null, "", cleanUrl.pathname + cleanUrl.search);
+        }
+        openVerifyFailDeleteEntry({ afterOAuth: true });
+        return;
     }
+
+    setVerifyResultMessage("❌ Invalid ID or Signature Mismatch", "var(--error)", {
+        showDeleteEntry: hasRegistry,
+    });
+}
+
+/**
+ * After registry delete from verify-failure screen: re-verify and show unclaimed if valid.
+ */
+async function resumeAfterVerifyFailDelete(id) {
+    const qrId = String(id || getQueryParam("id") || "").trim();
+    if (!qrId) return;
+
+    window.__qrFromVerifyFailDelete = false;
+    window.__qrVerifyFailRegistryExists = false;
+    localStorage.removeItem(`verified_${qrId}`);
+
+    showVerifyPopupLoading("Refreshing QR status…", "verify");
+
+    try {
+        const result = await Verifyidx(qrId);
+        if (result === "VALID") {
+            localStorage.setItem(`verified_${qrId}`, "VALID");
+            if (typeof rememberActiveQrCell === "function") {
+                rememberActiveQrCell(qrId);
+            }
+            if (typeof setInlineSpinnerMessage === "function") {
+                setInlineSpinnerMessage("Fetching asset info…", "fetch");
+            }
+            await loadAndRenderAsset(qrId);
+            return;
+        }
+    } catch (err) {
+        console.warn("resumeAfterVerifyFailDelete verify:", err);
+    }
+
+    await handleVerifyFailure(qrId);
 }
 
 /**
@@ -142,12 +208,14 @@ async function initQRTagAll() {
             if (typeof rememberActiveQrCell === "function") {
                 rememberActiveQrCell(id);
             }
+            if (typeof setInlineSpinnerMessage === "function") {
+                setInlineSpinnerMessage("Fetching asset info…", "fetch");
+            }
             await loadAndRenderAsset(id);
         } else {
             throw new Error("INVALID");
         }
     } catch (err) {
-        if (spinner) spinner.style.display = "none";
         await handleVerifyFailure(id);
         console.log("Error>>>>>", err);
     }

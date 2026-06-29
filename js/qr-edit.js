@@ -525,7 +525,8 @@ async function confirmAddLinkedQR() {
 
 /**
  * Delete registry entry from verify-failure screen (invalid signature but row exists).
- * @param {{ skipLoginRedirect?: boolean }} [options]
+ * Step 1: sign in. Step 2 (after OAuth): load registry and open delete modal.
+ * @param {{ afterOAuth?: boolean }} [options]
  */
 async function openVerifyFailDeleteEntry(options) {
     const opts = options || {};
@@ -535,25 +536,25 @@ async function openVerifyFailDeleteEntry(options) {
         return;
     }
 
-    const me = (typeof sessionEmail === "string" ? sessionEmail : "").toLowerCase().trim();
-    if (!me) {
+    if (!opts.afterOAuth) {
         try {
             sessionStorage.setItem("qr_pending_registry_delete", id);
         } catch (_) {
             /* ignore */
         }
-        notify("Sign in as the QR owner to delete this registry entry.", "info");
-        if (!opts.skipLoginRedirect && typeof googleLoginForEdit === "function") {
+        showVerifyPopupLoading("Redirecting to sign in…", "verify");
+        if (typeof googleLoginForVerifyFailDelete === "function") {
+            googleLoginForVerifyFailDelete(id);
+        } else if (typeof googleLoginForEdit === "function") {
             await googleLoginForEdit(id);
+        } else {
+            notify("Sign-in is not available. Refresh the page and try again.", "error");
+            restoreVerifyFailScreen();
         }
         return;
     }
 
-    if (typeof setInlineSpinnerMessage === "function") {
-        setInlineSpinnerMessage("Loading registry…", "fetch");
-    } else if (typeof showSpinner === "function") {
-        showSpinner(true, "fetch");
-    }
+    showVerifyPopupLoading("Loading registry…", "fetch");
 
     try {
         globalRemoteAssetList =
@@ -561,17 +562,17 @@ async function openVerifyFailDeleteEntry(options) {
     } catch (err) {
         console.warn("openVerifyFailDeleteEntry:", err);
         globalRemoteAssetList = [];
-    } finally {
-        const inline = document.getElementById("spinner");
-        if (inline) inline.style.display = "none";
-        if (typeof showSpinner === "function") showSpinner(false);
     }
 
     if (!getDeletableQRsForDeleteModal().length) {
         notify("You are not signed in as the owner of this registry entry.", "error");
+        restoreVerifyFailScreen();
         return;
     }
 
+    const spinner = document.getElementById("spinner");
+    if (spinner) spinner.style.display = "none";
+    window.__qrFromVerifyFailDelete = true;
     openDeleteDialog();
 }
 
@@ -815,10 +816,17 @@ function buildDeleteConfirmMessage(selected) {
     );
 }
 
-function closeDeleteQRModal() {
+function closeDeleteQRModal(restoreVerifyFail) {
     const modal = document.getElementById("deleteQRModal");
     if (modal) modal.style.display = "none";
     window.__qrDeleteCandidates = null;
+    if (
+        restoreVerifyFail &&
+        window.__qrFromVerifyFailDelete &&
+        typeof restoreVerifyFailScreen === "function"
+    ) {
+        restoreVerifyFailScreen();
+    }
 }
 
 async function confirmDeleteSelectedQRs() {
@@ -839,8 +847,14 @@ async function confirmDeleteSelectedQRs() {
 
 async function deleteSelectedQRs(selected) {
     const masterId = getQueryParam("id");
+    const fromVerifyFail = !!window.__qrFromVerifyFailDelete;
     const spinner = document.getElementById("fullScreenSpinner");
-    if (spinner) spinner.style.display = "flex";
+
+    if (fromVerifyFail && typeof showVerifyPopupLoading === "function") {
+        showVerifyPopupLoading("Deleting registry entry…", "save");
+    } else if (spinner) {
+        spinner.style.display = "flex";
+    }
 
     try {
         const token = await ensureAccessTokenForMutation();
@@ -889,15 +903,25 @@ async function deleteSelectedQRs(selected) {
 
         if (result?.success) {
             notify(result.message || "QR deleted.", "success");
+            if (fromVerifyFail && typeof resumeAfterVerifyFailDelete === "function") {
+                setTimeout(() => resumeAfterVerifyFailDelete(masterId), 400);
+                return;
+            }
             setTimeout(() => {
                 window.location.href = `index.html?id=${encodeURIComponent(masterId)}`;
             }, 700);
         } else {
             if (result?.hint) console.warn("Delete hint:", result.hint);
             notify(result?.message || "Delete failed.", "error");
+            if (fromVerifyFail && typeof restoreVerifyFailScreen === "function") {
+                restoreVerifyFailScreen();
+            }
         }
     } catch (err) {
         if (spinner) spinner.style.display = "none";
+        if (fromVerifyFail && typeof restoreVerifyFailScreen === "function") {
+            restoreVerifyFailScreen();
+        }
         notify(err.message || "Delete failed.", "error");
     }
 }

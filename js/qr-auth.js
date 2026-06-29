@@ -549,6 +549,23 @@ function googleLoginNew() {
 
 
 
+/** Full-page OAuth before deleting a registry entry from verify-failure screen. */
+function googleLoginForVerifyFailDelete(qrId) {
+    const redirectUri = "https://process.qrtagall.com/oauth-callback.html";
+    const state = encodeURIComponent(
+        JSON.stringify({
+            intent: "verifyFailDelete",
+            id: qrId || getQueryParam("id") || "",
+        })
+    );
+    window.location.href = buildGoogleOAuthRedirectUrl({
+        redirectUri,
+        scope: QRTAGALL_GDRIVE_CLAIM_SCOPES,
+        state,
+        prompt: "select_account",
+    });
+}
+
 // 🔐 Login for Edit access — Google account chooser, then return to this QR in edit mode.
 async function googleLoginForEdit(id) {
     const qrId = id || getQueryParam("id") || "";

@@ -23,7 +23,7 @@
     #statusLine { color: #555; font-size: 14px; margin-top: 8px; }
     #emailHint { color: #666; font-size: 13px; margin-top: 6px; }
   </style>
-  <script src="./js/qr-auth.js?v=20260618b"></script>
+  <script src="./js/qr-auth.js?v=20260618c"></script>
 </head>
 <body>
   <h3>⏳ Verifying your login...</h3>
@@ -137,6 +137,16 @@
             "&reply=1&serial=" +
             encodeURIComponent(serial) +
             "&verified=1&email=" +
+            encodeURIComponent(email || "");
+          return;
+        }
+
+        if (stateObj.intent === "verifyFailDelete") {
+          const pageQrId = stateObj.id || stateObj.pageQrId || "";
+          window.location.href =
+            "https://process.qrtagall.com/index.html?id=" +
+            encodeURIComponent(pageQrId) +
+            "&verifyFailDelete=1&email=" +
             encodeURIComponent(email || "");
           return;
         }
