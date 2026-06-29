@@ -803,6 +803,8 @@ function showSpinner(show, phase) {
     if (!spinner) return;
     spinner.style.display = show ? "flex" : "none";
     if (show) {
+        const inline = document.getElementById("spinner");
+        if (inline) inline.style.display = "none";
         applySpinnerPhaseColor(phase || "save", spinner);
     }
 }
@@ -811,6 +813,8 @@ function showSpinner(show, phase) {
 function setInlineSpinnerMessage(message, phase) {
     const block = document.getElementById("spinner");
     const statusEl = document.getElementById("spinnerStatus");
+    const overlay = document.getElementById("fullScreenSpinner");
+    if (overlay) overlay.style.display = "none";
     if (block) block.style.display = "block";
     if (statusEl) statusEl.textContent = message || "";
     applySpinnerPhaseColor(phase || "default", block || document);

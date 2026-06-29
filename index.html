@@ -24,7 +24,7 @@
 
     <!-- -->
     <link rel="stylesheet" href="./css/qrtag-theme-tokens.css?v=20260604e">
-    <link rel="stylesheet" href="./css/style.css?v=20260617k">
+    <link rel="stylesheet" href="./css/style.css?v=20260617m">
 
 </head>
 <body>
@@ -48,9 +48,9 @@
         <h3>🔍 Verifying QR ID</h3>
     </div>
     <p id="idText" style="font-size:14px; color:gray;"></p>
-    <div id="spinner" class="qrt-spinner-block" style="margin-top:20px;">
-        <div class="qrt-spinner-wrap" aria-hidden="true">
-            <div class="qrt-spinner-orbit">
+    <div id="spinner" class="qrt-spinner-block" style="margin-top:20px;" role="status" aria-live="polite">
+        <div class="qrt-spinner-wrap">
+            <div class="qrt-spinner-orbit" aria-hidden="true">
                 <svg viewBox="0 0 100 100" class="qrt-spinner-orbit-svg" xmlns="http://www.w3.org/2000/svg">
                     <defs>
                         <path id="qrtSpinnerRingPopup" d="M 50,50 m -37,0 a 37,37 0 1,1 74,0 a 37,37 0 1,1 -74,0" />
@@ -60,8 +60,8 @@
                     </text>
                 </svg>
             </div>
+            <p id="spinnerStatus" class="qrt-spinner-status">Verifying ID…</p>
         </div>
-        <p id="spinnerStatus" class="qrt-spinner-status">Verifying ID…</p>
     </div>
     <div id="result" style="display:none;"></div>
 
@@ -679,21 +679,21 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "10.28";
+    const QRTagAll_Ver_ = "10.29";
 </script>
 
 
 
 
 <!-- bump ?v= whenever JS changes to force browsers to load the new files -->
-<script src="./js/qr-utils.js?v=20260617k"></script>
+<script src="./js/qr-utils.js?v=20260617m"></script>
 <script src="./js/qr-cells.js?v=20260617i"></script>
 <script src="./js/qr-auth.js?v=20260618b"></script>
 <script src="./js/qr-fetch.js?v=20260617a"></script>
 <script src="./js/qr-edit.js?v=20260613e"></script>
 <script src="./js/qr-dashboard.js?v=20260613a"></script>
 <script src="./js/qr-ui.js?v=20260617l"></script>
-<script src="./js/qr-main.js?v=20260617k"></script>
+<script src="./js/qr-main.js?v=20260617m"></script>
 <!--   -->
 
 <!-- LOCAL DEV ONLY — do not deploy with file:// script tags (breaks claim/save on process.qrtagall.com)

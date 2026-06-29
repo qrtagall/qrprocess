@@ -121,9 +121,6 @@ async function loadAndRenderAsset(id) {
     const verifyingLabel = document.getElementById("verifyingLabel");
 
 
-    showSpinner(true, "fetch");
-
-
     try {
         popup.style.display = "block";
         verifyingLabel.style.display="none"; //ALready verified
@@ -132,12 +129,9 @@ async function loadAndRenderAsset(id) {
         injectQRBlock(id);      //show QR Panel
 
         setInlineSpinnerMessage("Fetching asset info…", "fetch");
-        //showSpinner(true);
 
 
         await renderAssetPanel(id);
-
-        showSpinner(false);
 
        // popup.style.display = "none";
        // spinner.style.display = "none";
