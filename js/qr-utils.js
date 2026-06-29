@@ -1283,7 +1283,7 @@ function buildQrShareImageCanvas(id) {
     if (!qrCanvas || !qrCanvas.width) return null;
 
     const title = getQrShareAssetTitle();
-    const qrUrl = `https://process.qrtagall.com/?id=${encodeURIComponent(id)}`;
+    const idLabel = String(id || "");
     const qrSize = 300;
     const pad = 20;
     const innerW = qrSize + pad * 2;
@@ -1329,8 +1329,8 @@ function buildQrShareImageCanvas(id) {
     });
 
     ctx.fillStyle = "#555555";
-    ctx.font = "13px Arial, sans-serif";
-    ctx.fillText(qrUrl, innerW / 2, pad + qrSize + 20 + titleBlock + 6);
+    ctx.font = "12px Consolas, Monaco, monospace";
+    ctx.fillText(idLabel, innerW / 2, pad + qrSize + 20 + titleBlock + 6);
 
     return out;
 }
