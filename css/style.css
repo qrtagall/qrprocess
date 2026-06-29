@@ -2275,44 +2275,6 @@ body.qrt-page-themed .qrt-link-preview-card {
     line-height: 0;
 }
 
-.qrt-qr-frame {
-    position: relative;
-    display: inline-block;
-    line-height: 0;
-}
-
-.qrt-qr-center-icon {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    font-size: 24px;
-    line-height: 1;
-    background: #fff;
-    border: 2px solid var(--qr-theme, #333);
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-    pointer-events: none;
-    user-select: none;
-}
-
-#qrImage .qrt-qr-center-icon {
-    width: 36px;
-    height: 36px;
-    font-size: 20px;
-    border-radius: 8px;
-}
-
-.qrt-hero-host--carousel .qrt-qr-frame canvas {
-    width: 200px !important;
-    height: 200px !important;
-}
-
 .qrt-qr-actions {
     display: flex;
     flex-wrap: wrap;

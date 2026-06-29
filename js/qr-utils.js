@@ -261,68 +261,67 @@ function getQrCanvasOptions(id, size = 160) {
     };
 }
 
-/** Center badge on QR (emoji from cells.json prefixIcons). */
-function decorateQrCanvasWithCenterIcon(canvas, id) {
-    if (!canvas) return;
-    const qrColor = getQrColorForId(id);
-    const icon =
-        typeof getPrefixIcon === "function" ? getPrefixIcon(id) : "🏷️";
+/** Paint prefix emoji at QR center (baked into canvas — survives DOM moves). */
+function paintPrefixIconOnCanvas(canvas, id) {
+    if (!canvas?.getContext) return;
+    const ctx = canvas.getContext("2d");
+    const size = canvas.width;
+    if (!size) return;
 
-    let frame = canvas.parentElement;
-    if (!frame || !frame.classList.contains("qrt-qr-frame")) {
-        frame = document.createElement("div");
-        frame.className = "qrt-qr-frame";
-        const parent = canvas.parentElement;
-        if (parent) {
-            parent.insertBefore(frame, canvas);
-            frame.appendChild(canvas);
-        }
-    }
-
-    let iconEl = frame.querySelector(".qrt-qr-center-icon");
-    if (!iconEl) {
-        iconEl = document.createElement("span");
-        iconEl.className = "qrt-qr-center-icon";
-        iconEl.setAttribute("aria-hidden", "true");
-        frame.appendChild(iconEl);
-    }
-
-    iconEl.textContent = icon;
-    iconEl.style.borderColor = qrColor;
-    iconEl.style.color = qrColor;
-    canvas.dataset.qrIconDecorated = "1";
-}
-
-function drawPrefixIconOnQrCanvas(ctx, id, qrPixelSize) {
     const icon = typeof getPrefixIcon === "function" ? getPrefixIcon(id) : "🏷️";
-    const box = Math.round(qrPixelSize * 0.24);
-    const cx = qrPixelSize / 2;
-    const cy = qrPixelSize / 2;
-    const x = cx - box / 2;
-    const y = cy - box / 2;
-    const theme = getQrColorForId(id);
-    const r = Math.max(4, Math.round(box * 0.18));
+    const glyph = Math.round(size * 0.2);
+    const pad = Math.max(2, Math.round(size * 0.012));
+    const outer = glyph + pad * 2;
+    const cx = size / 2;
+    const cy = size / 2;
+    const x = cx - outer / 2;
+    const y = cy - outer / 2;
+    const r = Math.max(2, Math.round(pad));
 
     ctx.fillStyle = "#ffffff";
     if (typeof ctx.roundRect === "function") {
         ctx.beginPath();
-        ctx.roundRect(x, y, box, box, r);
+        ctx.roundRect(x, y, outer, outer, r);
         ctx.fill();
-        ctx.strokeStyle = theme;
-        ctx.lineWidth = Math.max(2, Math.round(box * 0.06));
-        ctx.stroke();
     } else {
-        ctx.fillRect(x, y, box, box);
-        ctx.strokeStyle = theme;
-        ctx.lineWidth = Math.max(2, Math.round(box * 0.06));
-        ctx.strokeRect(x, y, box, box);
+        ctx.fillRect(x, y, outer, outer);
     }
 
-    ctx.font = `${Math.round(box * 0.62)}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+    ctx.font = `${Math.round(glyph * 0.9)}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillStyle = theme;
-    ctx.fillText(icon, cx, cy + 1);
+    ctx.fillText(icon, cx, cy);
+}
+
+function renderQrOnCanvas(canvas, id, size, done) {
+    if (!canvas) {
+        if (done) done(new Error("no canvas"));
+        return;
+    }
+    const qrUrl = `https://process.qrtagall.com/?id=${encodeURIComponent(id)}`;
+    QRCode.toCanvas(canvas, qrUrl, getQrCanvasOptions(id, size), (error) => {
+        if (error) {
+            console.error("QR generation failed:", error);
+            if (done) done(error);
+            return;
+        }
+        paintPrefixIconOnCanvas(canvas, id);
+        canvas.dataset.qrRenderedId = id;
+        if (done) done(null);
+    });
+}
+
+function applyHeroQrCanvasChrome(canvas, id) {
+    if (!canvas) return;
+    const qrColor = getQrColorForId(id);
+    const qrPrefix = getQrPrefixFromId(id);
+    canvas.style.border = `1px solid ${qrColor}`;
+    canvas.style.padding = "4px";
+    canvas.style.borderRadius = "8px";
+    canvas.style.background = "#fff";
+    canvas.style.width = "200px";
+    canvas.style.height = "200px";
+    if (qrPrefix) canvas.title = `QR type: ${qrPrefix}`;
 }
 
 // ✅ Extract query parameter from URL
@@ -751,7 +750,6 @@ function downloadQR() {
 
     // Scale and center QR
     ctx.drawImage(qrCanvas, 0, 0, desiredSize, desiredSize);
-    drawPrefixIconOnQrCanvas(ctx, id, desiredSize);
 
     // Draw ID text
     ctx.fillStyle = "#000000";
@@ -1219,7 +1217,10 @@ function generateQRCodeCanvas(id, canvasId = "qrCanvas", size = 160) {
         if (qrPrefix) canvas.title = `QR type: ${qrPrefix}`;
         QRCode.toCanvas(canvas, qrUrl, getQrCanvasOptions(id, size), (error) => {
             if (error) console.error("QR generation failed:", error);
-            else decorateQrCanvasWithCenterIcon(canvas, id);
+            else {
+                paintPrefixIconOnCanvas(canvas, id);
+                canvas.dataset.qrRenderedId = id;
+            }
         });
     });
 }
@@ -1393,12 +1394,7 @@ function createQrTapElement(id, qrCanvas, qrColor) {
     qrTap.setAttribute("aria-label", "Show QR ID and owner details");
     qrTap.title = "Show QR details";
     if (qrColor) qrTap.style.borderColor = qrColor;
-
-    decorateQrCanvasWithCenterIcon(qrCanvas, id);
-    const frame = qrCanvas.parentElement;
-    qrTap.appendChild(
-        frame && frame.classList.contains("qrt-qr-frame") ? frame : qrCanvas
-    );
+    qrTap.appendChild(qrCanvas);
     qrTap.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -1413,100 +1409,107 @@ function createQrTapElement(id, qrCanvas, qrColor) {
     return qrTap;
 }
 
+let heroQrRenderToken = 0;
+
 /** Top hero: QR only, or QR + Slide_Images carousel (10s auto, swipe, dots). */
 function refreshPageHeroCarousel(id) {
     stopPageHeroCarousel();
     const host = document.getElementById("pageHeroHost");
     if (!host) return;
 
-    let canvas = document.getElementById("qrCanvasHero");
-    if (!canvas) {
-        const qrUrl = `https://process.qrtagall.com/?id=${encodeURIComponent(id)}`;
-        canvas = document.createElement("canvas");
-        canvas.id = "qrCanvasHero";
-        canvas.style.width = "200px";
-        canvas.style.height = "200px";
-        canvas.style.background = "#fff";
-        const wrapper = document.getElementById("qrWrapper");
-        if (wrapper) wrapper.insertBefore(canvas, host);
-        QRCode.toCanvas(canvas, qrUrl, getQrCanvasOptions(id, 200), (error) => {
-            if (error) console.error("Hero QR generation failed:", error);
-            else decorateQrCanvasWithCenterIcon(canvas, id);
-        });
-    }
-
     const qrColor = getQrColorForId(id);
     const extraSlides = getPageSlideImageUrls();
     pageHeroCarouselSlideCount = 1 + extraSlides.length;
     pageHeroCarouselIndex = 0;
 
-    if (canvas.parentNode) {
-        let mount = canvas;
-        if (canvas.parentElement?.classList.contains("qrt-qr-frame")) {
-            mount = canvas.parentElement;
+    const mountHeroContent = (canvas) => {
+        if (canvas.parentNode) {
+            canvas.parentNode.removeChild(canvas);
         }
-        mount.parentNode.removeChild(mount);
-    }
-    host.replaceChildren();
+        host.replaceChildren();
 
-    if (extraSlides.length === 0) {
-        host.className = "qrt-hero-host qrt-hero-host--qr-only";
-        host.appendChild(createQrTapElement(id, canvas, qrColor));
+        if (extraSlides.length === 0) {
+            host.className = "qrt-hero-host qrt-hero-host--qr-only";
+            host.appendChild(createQrTapElement(id, canvas, qrColor));
+            return;
+        }
+
+        host.className = "qrt-hero-host qrt-hero-host--carousel";
+
+        const carousel = document.createElement("div");
+        carousel.className = "qrt-hero-carousel";
+        carousel.id = "pageHeroCarousel";
+
+        const viewport = document.createElement("div");
+        viewport.className = "qrt-hero-viewport";
+
+        const track = document.createElement("div");
+        track.className = "qrt-hero-track";
+
+        const slideQr = document.createElement("div");
+        slideQr.className = "qrt-hero-slide";
+        slideQr.appendChild(createQrTapElement(id, canvas, qrColor));
+        track.appendChild(slideQr);
+
+        extraSlides.forEach((url, idx) => {
+            const slide = document.createElement("div");
+            slide.className = "qrt-hero-slide qrt-hero-slide--image";
+            const img = document.createElement("img");
+            img.src = driveImagePreviewUrl(url);
+            img.alt = `Slide ${idx + 2}`;
+            img.className = "qrt-hero-slide-img";
+            img.loading = idx === 0 ? "eager" : "lazy";
+            img.decoding = "async";
+            slide.appendChild(img);
+            track.appendChild(slide);
+        });
+
+        viewport.appendChild(track);
+
+        const dots = document.createElement("div");
+        dots.className = "qrt-hero-dots";
+        dots.setAttribute("role", "tablist");
+        dots.setAttribute("aria-label", "Slide position");
+        for (let i = 0; i < pageHeroCarouselSlideCount; i++) {
+            const dot = document.createElement("button");
+            dot.type = "button";
+            dot.className = "qrt-hero-dot" + (i === 0 ? " active" : "");
+            dot.setAttribute("aria-label", `Go to slide ${i + 1}`);
+            dot.setAttribute("aria-selected", i === 0 ? "true" : "false");
+            dot.addEventListener("click", () => goToPageHeroSlide(i, true));
+            dots.appendChild(dot);
+        }
+
+        carousel.appendChild(viewport);
+        carousel.appendChild(dots);
+        host.appendChild(carousel);
+
+        bindPageHeroCarouselSwipe(carousel);
+        startPageHeroCarouselTimer();
+    };
+
+    let canvas = document.getElementById("qrCanvasHero");
+    if (!canvas) {
+        canvas = document.createElement("canvas");
+        canvas.id = "qrCanvasHero";
+        applyHeroQrCanvasChrome(canvas, id);
+        const wrapper = document.getElementById("qrWrapper");
+        if (wrapper) wrapper.insertBefore(canvas, host);
+    } else {
+        applyHeroQrCanvasChrome(canvas, id);
+    }
+
+    if (canvas.dataset.qrRenderedId === id && canvas.width > 0) {
+        paintPrefixIconOnCanvas(canvas, id);
+        mountHeroContent(canvas);
         return;
     }
 
-    host.className = "qrt-hero-host qrt-hero-host--carousel";
-
-    const carousel = document.createElement("div");
-    carousel.className = "qrt-hero-carousel";
-    carousel.id = "pageHeroCarousel";
-
-    const viewport = document.createElement("div");
-    viewport.className = "qrt-hero-viewport";
-
-    const track = document.createElement("div");
-    track.className = "qrt-hero-track";
-
-    const slideQr = document.createElement("div");
-    slideQr.className = "qrt-hero-slide";
-    slideQr.appendChild(createQrTapElement(id, canvas, qrColor));
-    track.appendChild(slideQr);
-
-    extraSlides.forEach((url, idx) => {
-        const slide = document.createElement("div");
-        slide.className = "qrt-hero-slide qrt-hero-slide--image";
-        const img = document.createElement("img");
-        img.src = driveImagePreviewUrl(url);
-        img.alt = `Slide ${idx + 2}`;
-        img.className = "qrt-hero-slide-img";
-        img.loading = idx === 0 ? "eager" : "lazy";
-        img.decoding = "async";
-        slide.appendChild(img);
-        track.appendChild(slide);
+    const token = ++heroQrRenderToken;
+    renderQrOnCanvas(canvas, id, 200, (error) => {
+        if (token !== heroQrRenderToken) return;
+        if (!error) mountHeroContent(canvas);
     });
-
-    viewport.appendChild(track);
-
-    const dots = document.createElement("div");
-    dots.className = "qrt-hero-dots";
-    dots.setAttribute("role", "tablist");
-    dots.setAttribute("aria-label", "Slide position");
-    for (let i = 0; i < pageHeroCarouselSlideCount; i++) {
-        const dot = document.createElement("button");
-        dot.type = "button";
-        dot.className = "qrt-hero-dot" + (i === 0 ? " active" : "");
-        dot.setAttribute("aria-label", `Go to slide ${i + 1}`);
-        dot.setAttribute("aria-selected", i === 0 ? "true" : "false");
-        dot.addEventListener("click", () => goToPageHeroSlide(i, true));
-        dots.appendChild(dot);
-    }
-
-    carousel.appendChild(viewport);
-    carousel.appendChild(dots);
-    host.appendChild(carousel);
-
-    bindPageHeroCarouselSwipe(carousel);
-    startPageHeroCarouselTimer();
 }
 
 function injectQRBlock(id) {
@@ -1523,24 +1526,9 @@ function injectQRBlock(id) {
     qrDiv.id = "qrWrapper";
     qrDiv.className = "qrt-hero-strip";
 
-    const qrUrl = `https://process.qrtagall.com/?id=${encodeURIComponent(id)}`;
-
-    const qrPrefix = getQrPrefixFromId(id);
-    const qrColor = getQrColorForId(id);
-
     const heroHost = document.createElement("div");
     heroHost.id = "pageHeroHost";
     heroHost.className = "qrt-hero-host";
-
-    const qrCanvas = document.createElement("canvas");
-    qrCanvas.id = "qrCanvasHero";
-    qrCanvas.style.border = `1px solid ${qrColor}`;
-    qrCanvas.style.padding = "4px";
-    qrCanvas.style.borderRadius = "8px";
-    qrCanvas.style.background = "#fff";
-    qrCanvas.style.width = "200px";
-    qrCanvas.style.height = "200px";
-    if (qrPrefix) qrCanvas.title = `QR type: ${qrPrefix}`;
 
     const qrActions = document.createElement("div");
     qrActions.className = "qrt-qr-actions";
@@ -1550,16 +1538,7 @@ function injectQRBlock(id) {
     qrDiv.appendChild(qrActions);
     container.insertBefore(qrDiv, document.getElementById("assetTitle"));
 
-    // Canvas must be in the document before refreshPageHeroCarousel (getElementById).
-    qrDiv.insertBefore(qrCanvas, heroHost);
-
-    QRCode.toCanvas(qrCanvas, qrUrl, getQrCanvasOptions(id, 200), (error) => {
-        if (error) {
-            console.error("Hero QR generation failed:", error);
-            return;
-        }
-        refreshPageHeroCarousel(id);
-    });
+    refreshPageHeroCarousel(id);
 }
 
 /** Tap QR image → small info popup (ID + masked owners). No navigation. */
