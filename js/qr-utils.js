@@ -257,8 +257,72 @@ function getQrCanvasOptions(id, size = 160) {
     return {
         width: size,
         color: { dark: getQrColorForId(id), light: "#ffffff" },
-        errorCorrectionLevel: "M",
+        errorCorrectionLevel: "H",
     };
+}
+
+/** Center badge on QR (emoji from cells.json prefixIcons). */
+function decorateQrCanvasWithCenterIcon(canvas, id) {
+    if (!canvas) return;
+    const qrColor = getQrColorForId(id);
+    const icon =
+        typeof getPrefixIcon === "function" ? getPrefixIcon(id) : "🏷️";
+
+    let frame = canvas.parentElement;
+    if (!frame || !frame.classList.contains("qrt-qr-frame")) {
+        frame = document.createElement("div");
+        frame.className = "qrt-qr-frame";
+        const parent = canvas.parentElement;
+        if (parent) {
+            parent.insertBefore(frame, canvas);
+            frame.appendChild(canvas);
+        }
+    }
+
+    let iconEl = frame.querySelector(".qrt-qr-center-icon");
+    if (!iconEl) {
+        iconEl = document.createElement("span");
+        iconEl.className = "qrt-qr-center-icon";
+        iconEl.setAttribute("aria-hidden", "true");
+        frame.appendChild(iconEl);
+    }
+
+    iconEl.textContent = icon;
+    iconEl.style.borderColor = qrColor;
+    iconEl.style.color = qrColor;
+    canvas.dataset.qrIconDecorated = "1";
+}
+
+function drawPrefixIconOnQrCanvas(ctx, id, qrPixelSize) {
+    const icon = typeof getPrefixIcon === "function" ? getPrefixIcon(id) : "🏷️";
+    const box = Math.round(qrPixelSize * 0.24);
+    const cx = qrPixelSize / 2;
+    const cy = qrPixelSize / 2;
+    const x = cx - box / 2;
+    const y = cy - box / 2;
+    const theme = getQrColorForId(id);
+    const r = Math.max(4, Math.round(box * 0.18));
+
+    ctx.fillStyle = "#ffffff";
+    if (typeof ctx.roundRect === "function") {
+        ctx.beginPath();
+        ctx.roundRect(x, y, box, box, r);
+        ctx.fill();
+        ctx.strokeStyle = theme;
+        ctx.lineWidth = Math.max(2, Math.round(box * 0.06));
+        ctx.stroke();
+    } else {
+        ctx.fillRect(x, y, box, box);
+        ctx.strokeStyle = theme;
+        ctx.lineWidth = Math.max(2, Math.round(box * 0.06));
+        ctx.strokeRect(x, y, box, box);
+    }
+
+    ctx.font = `${Math.round(box * 0.62)}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = theme;
+    ctx.fillText(icon, cx, cy + 1);
 }
 
 // ✅ Extract query parameter from URL
@@ -687,6 +751,7 @@ function downloadQR() {
 
     // Scale and center QR
     ctx.drawImage(qrCanvas, 0, 0, desiredSize, desiredSize);
+    drawPrefixIconOnQrCanvas(ctx, id, desiredSize);
 
     // Draw ID text
     ctx.fillStyle = "#000000";
@@ -1154,6 +1219,7 @@ function generateQRCodeCanvas(id, canvasId = "qrCanvas", size = 160) {
         if (qrPrefix) canvas.title = `QR type: ${qrPrefix}`;
         QRCode.toCanvas(canvas, qrUrl, getQrCanvasOptions(id, size), (error) => {
             if (error) console.error("QR generation failed:", error);
+            else decorateQrCanvasWithCenterIcon(canvas, id);
         });
     });
 }
@@ -1327,7 +1393,12 @@ function createQrTapElement(id, qrCanvas, qrColor) {
     qrTap.setAttribute("aria-label", "Show QR ID and owner details");
     qrTap.title = "Show QR details";
     if (qrColor) qrTap.style.borderColor = qrColor;
-    qrTap.appendChild(qrCanvas);
+
+    decorateQrCanvasWithCenterIcon(qrCanvas, id);
+    const frame = qrCanvas.parentElement;
+    qrTap.appendChild(
+        frame && frame.classList.contains("qrt-qr-frame") ? frame : qrCanvas
+    );
     qrTap.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -1358,7 +1429,10 @@ function refreshPageHeroCarousel(id) {
         canvas.style.background = "#fff";
         const wrapper = document.getElementById("qrWrapper");
         if (wrapper) wrapper.insertBefore(canvas, host);
-        QRCode.toCanvas(canvas, qrUrl, getQrCanvasOptions(id, 200));
+        QRCode.toCanvas(canvas, qrUrl, getQrCanvasOptions(id, 200), (error) => {
+            if (error) console.error("Hero QR generation failed:", error);
+            else decorateQrCanvasWithCenterIcon(canvas, id);
+        });
     }
 
     const qrColor = getQrColorForId(id);
@@ -1367,7 +1441,11 @@ function refreshPageHeroCarousel(id) {
     pageHeroCarouselIndex = 0;
 
     if (canvas.parentNode) {
-        canvas.parentNode.removeChild(canvas);
+        let mount = canvas;
+        if (canvas.parentElement?.classList.contains("qrt-qr-frame")) {
+            mount = canvas.parentElement;
+        }
+        mount.parentNode.removeChild(mount);
     }
     host.replaceChildren();
 

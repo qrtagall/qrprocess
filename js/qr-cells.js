@@ -23,8 +23,15 @@
     };
 
     const BOOTSTRAP_CELLS = {
-        version: 2,
+        version: 3,
         defaultCell: "IN",
+        defaultPrefixIcon: "🏷️",
+        prefixIcons: {
+            TMP: "🧪",
+            TMP1: "🤝",
+            VEH: "🚗",
+            QRTAG: "📲",
+        },
         prefixAliases: {},
         cells: {
             IN: { multiSheetUrl: BOOTSTRAP_MULTI_SHEET_URL },
@@ -51,7 +58,28 @@
         if (!cfg.prefixAliases || typeof cfg.prefixAliases !== "object") {
             cfg.prefixAliases = {};
         }
+        if (!cfg.prefixIcons || typeof cfg.prefixIcons !== "object") {
+            cfg.prefixIcons = {};
+        }
+        if (!cfg.defaultPrefixIcon) {
+            cfg.defaultPrefixIcon = BOOTSTRAP_CELLS.defaultPrefixIcon;
+        }
         return cfg;
+    }
+
+    function getPrefixIcon(qrIdOrPrefix) {
+        const cfg = getCellsConfigSync();
+        const icons = cfg.prefixIcons || {};
+        let prefix = String(qrIdOrPrefix || "").trim();
+        if (prefix.includes("_")) {
+            prefix =
+                typeof getQrPrefixFromId === "function"
+                    ? getQrPrefixFromId(prefix)
+                    : prefix.split("_")[0];
+        }
+        prefix = prefix.toUpperCase();
+        if (icons[prefix]) return icons[prefix];
+        return cfg.defaultPrefixIcon || BOOTSTRAP_CELLS.defaultPrefixIcon;
     }
 
     function getCellsConfigSync() {
@@ -226,6 +254,7 @@
 
     window.ensureQrCellsReady = ensureQrCellsReady;
     window.getQrCell = getQrCell;
+    window.getPrefixIcon = getPrefixIcon;
     window.getMultiSheetUrl = getMultiSheetUrl;
     window.getLegacyResolveUrl = getLegacyResolveUrl;
     window.getViewDriveUrl = getViewDriveUrl;
