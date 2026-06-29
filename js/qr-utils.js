@@ -383,10 +383,16 @@ function copyTextLink(encodedUrl) {
 function openUrlInNewTab(url) {
     const u = String(url || "").trim();
     if (!u) return;
-    const opened = window.open(u, "_blank", "noopener,noreferrer");
-    if (!opened) {
-        window.location.assign(u);
-    }
+    // Anchor click — reliable and never navigates this tab. window.open(..., "noopener")
+    // returns null even when the tab opens, so a location.assign fallback was hijacking the main page.
+    const a = document.createElement("a");
+    a.href = u;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
 }
 
 function escapeHtmlAttr(value) {
@@ -475,23 +481,28 @@ function buildFullFrameIframeHtml(src, opts = {}) {
 function buildWebEmbedShellHtml(url) {
     const safe = escapeHtmlAttr(url);
     const enc = encodeURIComponent(url);
+    let hostLabel = url;
+    try {
+        hostLabel = new URL(url).hostname.replace(/^www\./i, "");
+    } catch (_) {
+        /* keep raw url */
+    }
     return `<div class="qrt-web-embed-shell" data-original-url="${safe}">
+        <div class="qrt-preview-web-notice" role="note">
+            <span class="qrt-preview-web-notice-host">${escapeHtmlAttr(hostLabel)}</span>
+            <span class="qrt-preview-web-notice-text">Many sites block in-app preview (X-Frame-Options / CSP — not cookies). If the frame is blank or shows a browser error, open the site in a new tab.</span>
+        </div>
         ${buildFullFrameIframeHtml(url, { allow: "fullscreen" })}
         <div class="qrt-preview-web-bar">
-            <span class="qrt-preview-web-hint">Page not loading?</span>
-            <button type="button" class="qrt-btn qrt-btn-secondary qrt-btn-sm" onclick="openUrlInNewTab(decodeURIComponent('${enc}'))">Open in new tab</button>
-            <button type="button" class="qrt-btn qrt-btn-secondary qrt-btn-sm" onclick="copyTextLink('${enc}')">Copy link</button>
+            <span class="qrt-preview-web-hint">Preview blocked?</span>
+            <button type="button" class="qrt-btn qrt-btn-primary qrt-btn-sm" onclick="event.stopPropagation(); openUrlInNewTab(decodeURIComponent('${enc}')); return false;">Open in new tab</button>
+            <button type="button" class="qrt-btn qrt-btn-secondary qrt-btn-sm" onclick="event.stopPropagation(); copyTextLink('${enc}'); return false;">Copy link</button>
         </div>
     </div>`;
 }
 
-function initWebEmbedShell(container) {
-    const iframe = container?.querySelector?.(".qrt-web-embed-shell .qrt-preview-iframe");
-    if (!iframe) return;
-    iframe.addEventListener("error", () => {
-        const enc = encodeURIComponent(iframe.getAttribute("src") || "");
-        if (enc) openUrlInNewTab(decodeURIComponent(enc));
-    });
+function initWebEmbedShell(_container) {
+    /* iframe onerror does not fire for X-Frame-Options blocks; footer actions handle fallback */
 }
 
 /** Unified smart-link opener for TEXT artifact cards. */

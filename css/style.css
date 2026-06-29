@@ -2637,6 +2637,29 @@ body.qrt-page-themed .qrt-message-email-btn {
     min-height: min(75vh, 560px);
 }
 
+.qrt-preview-web-notice {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 14px;
+    background: linear-gradient(180deg, #fff8e8 0%, #fff3d6 100%);
+    border-bottom: 1px solid #e8d4a8;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #5c4a1a;
+}
+
+.qrt-preview-web-notice-host {
+    font-weight: 700;
+    font-size: 14px;
+    color: #3d2f0f;
+}
+
+.qrt-preview-web-notice-text {
+    color: #6b5620;
+}
+
 .qrt-preview-web-bar {
     display: flex;
     flex-wrap: wrap;
