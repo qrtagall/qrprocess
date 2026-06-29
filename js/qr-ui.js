@@ -1957,6 +1957,28 @@ function saveDescription() {
 
 /****************************** ADD ARTIFACT **********************/
 
+const ARTIFACT_UPLOAD_MAX_MB_DEFAULT = 10;
+const ARTIFACT_UPLOAD_MAX_MB_MEDIA = 50;
+
+function getArtifactUploadMaxBytes(fileType, file) {
+    const key = normalizeArtifactFileType(fileType || "");
+    if (key === "AUDIOFILE" || key === "VIDEOFILE") {
+        return ARTIFACT_UPLOAD_MAX_MB_MEDIA * 1024 * 1024;
+    }
+    if (file) {
+        const mime = String(file.type || "").toLowerCase();
+        if (mime.startsWith("audio/") || mime.startsWith("video/")) {
+            return ARTIFACT_UPLOAD_MAX_MB_MEDIA * 1024 * 1024;
+        }
+    }
+    return ARTIFACT_UPLOAD_MAX_MB_DEFAULT * 1024 * 1024;
+}
+
+function formatArtifactUploadMaxLabel(fileType, file) {
+    const mb = Math.round(getArtifactUploadMaxBytes(fileType, file) / (1024 * 1024));
+    return `${mb} MB`;
+}
+
 /** UI copy + accept filters per artifact file type */
 const ARTIFACT_UPLOAD_UI = {
     IMAGEFILE: {
@@ -1985,7 +2007,7 @@ const ARTIFACT_UPLOAD_UI = {
         sectionLabel: "Attach an audio file",
         mainBtn: "🎵 Select / Upload Audio",
         modalTitle: "📤 Upload Audio",
-        hint: "Choose an audio file (MP3, WAV, M4A, OGG, etc.).<br>Maximum size: <strong>10 MB</strong>.",
+        hint: "Choose an audio file (MP3, WAV, M4A, OGG, etc.).<br>Maximum size: <strong>50 MB</strong>.",
         accept: "audio/*",
         pickLabel: "🎵 Choose Audio",
         changeLabel: "🎵 Change Audio",
@@ -1996,7 +2018,7 @@ const ARTIFACT_UPLOAD_UI = {
         sectionLabel: "Attach a video",
         mainBtn: "🎬 Select / Upload Video",
         modalTitle: "📤 Upload Video",
-        hint: "Choose a video file (MP4, MOV, WebM, etc.).<br>Maximum size: <strong>10 MB</strong>.",
+        hint: "Choose a video file (MP4, MOV, WebM, etc.).<br>Maximum size: <strong>50 MB</strong>.",
         accept: "video/*",
         pickLabel: "🎬 Choose Video",
         changeLabel: "🎬 Change Video",
@@ -2060,12 +2082,12 @@ Displays as an inline scrollable Drive preview<br>
 When editing, the current file is kept unless you upload a new one`,
     AUDIOFILE: `💡 Audio upload:<br>
 MP3, WAV, M4A, OGG, and other audio formats<br>
-Maximum size: <strong>10 MB</strong><br>
+Maximum size: <strong>50 MB</strong><br>
 Plays via Google Drive inline preview player<br>
 When editing, the current file is kept unless you upload a new one`,
     VIDEOFILE: `💡 Video upload:<br>
 MP4, MOV, WebM, and other video formats<br>
-Maximum size: <strong>10 MB</strong><br>
+Maximum size: <strong>50 MB</strong><br>
 Displays as an inline video player (Drive preview)<br>
 When editing, the current file is kept unless you upload a new one`,
     DOCFILE: `💡 Document upload:<br>
@@ -2283,8 +2305,15 @@ function simulateUseFile() {
         return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-        notify("⚠️ File size exceeds 10 MB. Please select a smaller file.", "error");
+    if (file.size > getArtifactUploadMaxBytes(
+        window.uploadContext === "slide" ? "IMAGEFILE" : getCurrentArtifactFileType(),
+        file
+    )) {
+        const maxLabel = formatArtifactUploadMaxLabel(
+            window.uploadContext === "slide" ? "IMAGEFILE" : getCurrentArtifactFileType(),
+            file
+        );
+        notify(`⚠️ File size exceeds ${maxLabel}. Please select a smaller file.`, "error");
         return;
     }
 
