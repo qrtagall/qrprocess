@@ -1475,6 +1475,19 @@ function renderThumbnailGrid(thumbnails) {
 
 
 
+/** True when master registry has a row for this QR ID (signature not checked). */
+async function checkMasterRegistryExists(id) {
+    const qrId = String(id || "").trim();
+    if (!qrId) return false;
+    const callbackName = "handleQRTagAllResponse_" + Date.now();
+    const url = `${multiSheetUrlForQr(qrId)}?id=${encodeURIComponent(qrId)}&callback=${callbackName}`;
+    const data = await invokeAppsScriptGet(url, callbackName, {
+        timeoutMs: 30000,
+        softFail: true,
+    });
+    return !!(data && data.found === true);
+}
+
 async function fetchAllRemoteSheets(id, options = {}) {
     const callbackName = "handleQRTagAllResponse_" + Date.now();
     let url = `${multiSheetUrlForQr(id)}?id=${encodeURIComponent(id)}&callback=${callbackName}`;

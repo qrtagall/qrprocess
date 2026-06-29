@@ -29,6 +29,61 @@ window.qrLinkSheetMap = {};
 
 
 /**
+ * Show a message in the verify popup result area.
+ * @param {string} text
+ * @param {string} [color]
+ * @param {{ showDeleteEntry?: boolean }} [opts]
+ */
+function setVerifyResultMessage(text, color, opts) {
+    const resultDiv = document.getElementById("result");
+    const msgEl = document.getElementById("resultMessage");
+    const actions = document.getElementById("verifyFailActions");
+    if (actions) actions.style.display = opts && opts.showDeleteEntry ? "block" : "none";
+    if (resultDiv) {
+        resultDiv.style.display = "block";
+        if (color) resultDiv.style.color = color;
+    }
+    if (msgEl) {
+        msgEl.textContent = text || "";
+    } else if (resultDiv) {
+        resultDiv.textContent = text || "";
+    }
+}
+
+async function handleVerifyFailure(id) {
+    const verifyingLabel = document.getElementById("verifyingLabel");
+    if (verifyingLabel) verifyingLabel.style.display = "none";
+
+    let hasRegistry = false;
+    try {
+        if (typeof checkMasterRegistryExists === "function") {
+            hasRegistry = await checkMasterRegistryExists(id);
+        }
+    } catch (err) {
+        console.warn("Registry lookup failed:", err);
+    }
+
+    setVerifyResultMessage("❌ Invalid ID or Signature Mismatch", "var(--error)", {
+        showDeleteEntry: hasRegistry,
+    });
+
+    const pending =
+        typeof sessionStorage !== "undefined"
+            ? sessionStorage.getItem("qr_pending_registry_delete")
+            : "";
+    if (
+        hasRegistry &&
+        pending === id &&
+        typeof sessionEmail === "string" &&
+        sessionEmail &&
+        typeof openVerifyFailDeleteEntry === "function"
+    ) {
+        sessionStorage.removeItem("qr_pending_registry_delete");
+        openVerifyFailDeleteEntry({ skipLoginRedirect: true });
+    }
+}
+
+/**
  * Main entry – kicks off the verification and rendering flow
  */
 async function initQRTagAll() {
@@ -44,9 +99,7 @@ async function initQRTagAll() {
 
     if (!id) {
         if (spinner) spinner.style.display = "none";
-        resultDiv.style.display = "block";
-        resultDiv.textContent = "❌ No ID provided in URL.";
-        resultDiv.style.color = "var(--error)";
+        setVerifyResultMessage("❌ No ID provided in URL.", "var(--error)");
         return;
     }
 
@@ -59,9 +112,7 @@ async function initQRTagAll() {
 
     if (!id.includes("_")) {
         if (spinner) spinner.style.display = "none";
-        resultDiv.style.display = "block";
-        resultDiv.textContent = "❌ Invalid format. Expected format: TIMESTAMP_SIGNATURE";
-        resultDiv.style.color = "var(--error)";
+        setVerifyResultMessage("❌ Invalid format. Expected format: TIMESTAMP_SIGNATURE", "var(--error)");
         return;
     }
 
@@ -97,10 +148,8 @@ async function initQRTagAll() {
         }
     } catch (err) {
         if (spinner) spinner.style.display = "none";
-        resultDiv.style.display = "block";
-        resultDiv.textContent = "❌ Invalid ID or Signature Mismatch";
-        resultDiv.style.color = "var(--error)";
-		console.log("Error>>>>>",err);
+        await handleVerifyFailure(id);
+        console.log("Error>>>>>", err);
     }
 }
 
@@ -144,7 +193,6 @@ async function loadAndRenderAsset(id) {
     } catch (err) {
 
         console.error("❌ Failed to load asset:", err);
-        //resultDiv.style.display = "block";
         resultDiv.innerText = "❌ Failed to retrieve data.";
         spinner.style.display = "none";
         alert("❌ Failed to load asset:");
@@ -204,9 +252,7 @@ async function renderAssetPanel(id) {
         spinner.style.display = "none";
         console.log("No items found in asset listxxx.");
 
-        resultDiv.style.display = "block";
-        resultDiv.textContent = "This is a new and unclaimed ID!";
-        resultDiv.style.color = "forestgreen";
+        setVerifyResultMessage("This is a new and unclaimed ID!", "forestgreen");
         loginSection.style.display = "block";
         if (typeof applyClaimStorageOptions === "function") {
             applyClaimStorageOptions(window.qrClaimStorageOptions);

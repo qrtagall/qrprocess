@@ -523,6 +523,58 @@ async function confirmAddLinkedQR() {
 
 /*********************************************** Delete ***********************************/
 
+/**
+ * Delete registry entry from verify-failure screen (invalid signature but row exists).
+ * @param {{ skipLoginRedirect?: boolean }} [options]
+ */
+async function openVerifyFailDeleteEntry(options) {
+    const opts = options || {};
+    const id = getQueryParam("id");
+    if (!id) {
+        notify("Missing QR ID.", "error");
+        return;
+    }
+
+    const me = (typeof sessionEmail === "string" ? sessionEmail : "").toLowerCase().trim();
+    if (!me) {
+        try {
+            sessionStorage.setItem("qr_pending_registry_delete", id);
+        } catch (_) {
+            /* ignore */
+        }
+        notify("Sign in as the QR owner to delete this registry entry.", "info");
+        if (!opts.skipLoginRedirect && typeof googleLoginForEdit === "function") {
+            await googleLoginForEdit(id);
+        }
+        return;
+    }
+
+    if (typeof setInlineSpinnerMessage === "function") {
+        setInlineSpinnerMessage("Loading registry…", "fetch");
+    } else if (typeof showSpinner === "function") {
+        showSpinner(true, "fetch");
+    }
+
+    try {
+        globalRemoteAssetList =
+            typeof fetchAllRemoteSheets === "function" ? await fetchAllRemoteSheets(id) : [];
+    } catch (err) {
+        console.warn("openVerifyFailDeleteEntry:", err);
+        globalRemoteAssetList = [];
+    } finally {
+        const inline = document.getElementById("spinner");
+        if (inline) inline.style.display = "none";
+        if (typeof showSpinner === "function") showSpinner(false);
+    }
+
+    if (!getDeletableQRsForDeleteModal().length) {
+        notify("You are not signed in as the owner of this registry entry.", "error");
+        return;
+    }
+
+    openDeleteDialog();
+}
+
 /** True when session user owns Remote_Link 1 (Root) on this master page. */
 function isCurrentUserRootOwnerOnPage() {
     const me = (typeof sessionEmail === "string" ? sessionEmail : "").toLowerCase().trim();

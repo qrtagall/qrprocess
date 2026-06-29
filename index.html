@@ -24,7 +24,7 @@
 
     <!-- -->
     <link rel="stylesheet" href="./css/qrtag-theme-tokens.css?v=20260604e">
-    <link rel="stylesheet" href="./css/style.css?v=20260617m">
+    <link rel="stylesheet" href="./css/style.css?v=20260618a">
 
 </head>
 <body>
@@ -63,7 +63,13 @@
             <p id="spinnerStatus" class="qrt-spinner-status">Verifying ID…</p>
         </div>
     </div>
-    <div id="result" style="display:none;"></div>
+    <div id="result" style="display:none;">
+        <p id="resultMessage" class="qrt-verify-result-msg"></p>
+        <div id="verifyFailActions" class="qrt-verify-fail-actions" style="display:none;">
+            <p class="qrt-modal-hint">This ID is listed in the registry. Sign in as the owner to remove it.</p>
+            <button type="button" id="btnDeleteRegistryEntry" class="qrt-btn qrt-btn-danger qrt-btn-lg" onclick="openVerifyFailDeleteEntry()">Delete QR entry</button>
+        </div>
+    </div>
 
     <!--
     <div id="loginSection" class="login-options" style="display:none; font-size:13.5px;">
@@ -679,7 +685,7 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "10.29";
+    const QRTagAll_Ver_ = "10.30";
 </script>
 
 
@@ -689,11 +695,11 @@
 <script src="./js/qr-utils.js?v=20260617m"></script>
 <script src="./js/qr-cells.js?v=20260617i"></script>
 <script src="./js/qr-auth.js?v=20260618b"></script>
-<script src="./js/qr-fetch.js?v=20260617a"></script>
-<script src="./js/qr-edit.js?v=20260613e"></script>
+<script src="./js/qr-fetch.js?v=20260618a"></script>
+<script src="./js/qr-edit.js?v=20260618a"></script>
 <script src="./js/qr-dashboard.js?v=20260613a"></script>
 <script src="./js/qr-ui.js?v=20260617l"></script>
-<script src="./js/qr-main.js?v=20260617m"></script>
+<script src="./js/qr-main.js?v=20260618a"></script>
 <!--   -->
 
 <!-- LOCAL DEV ONLY — do not deploy with file:// script tags (breaks claim/save on process.qrtagall.com)

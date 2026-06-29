@@ -451,6 +451,19 @@
             color: #1565c0;
         }
 
+        .qrt-verify-result-msg {
+            margin: 0;
+        }
+
+        .qrt-verify-fail-actions {
+            margin-top: 14px;
+            text-align: center;
+        }
+
+        .qrt-verify-fail-actions .qrt-modal-hint {
+            margin: 0 0 10px;
+        }
+
         @media (prefers-reduced-motion: reduce) {
             .qrt-spinner-orbit {
                 animation-duration: 18s;
