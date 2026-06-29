@@ -1,5 +1,5 @@
 {
-  "_comment": "Routing table: prefixAliases maps QR prefix → cell key. prefixIcons maps prefix → emoji/symbol shown at QR center (not image files).",
+  "_comment": "prefixAliases: QR prefix → cell. prefixIcons: emoji (e.g. \"🚗\") OR image URL/path (png, gif, webp, svg) shown at QR center. Other examples: \"TMP1\": \"https://process.qrtagall.com/icons/partner.gif\",\"PLT\": \"./icons/plant.png\",
   "version": 3,
   "defaultCell": "IN",
   "defaultPrefixIcon": "🏷",
@@ -8,7 +8,7 @@
     "TEMP": "🧪",
     "VEH": "🚗",
     "PLT": "🏭",
-    "QRTAG": "📲",
+    "QRTAG": "https://raw.githubusercontent.com/qrtagall/qrjourney/refs/heads/main/Logo_small.png",
     "SER": "🔧",
     "SERA": "🔧",
     "SERB": "🛠️",

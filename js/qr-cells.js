@@ -67,6 +67,27 @@
         return cfg;
     }
 
+    function isPrefixIconImageUrl(value) {
+        const v = String(value || "").trim();
+        if (!v) return false;
+        if (/^https?:\/\//i.test(v) || v.startsWith("//")) return true;
+        if (/^\.{0,2}\//.test(v) || v.startsWith("./") || v.startsWith("../")) return true;
+        return /\.(png|jpe?g|gif|webp|svg|bmp|ico)(\?|#|$)/i.test(v);
+    }
+
+    function resolvePrefixIconUrl(value) {
+        const v = String(value || "").trim();
+        if (!v) return v;
+        if (/^https?:\/\//i.test(v)) return v;
+        if (v.startsWith("//")) return `${window.location.protocol}${v}`;
+        try {
+            const base = new URL(".", window.location.href);
+            return new URL(v, base).href;
+        } catch (_) {
+            return v;
+        }
+    }
+
     function getPrefixIcon(qrIdOrPrefix) {
         const cfg = getCellsConfigSync();
         const icons = cfg.prefixIcons || {};
@@ -78,7 +99,7 @@
                     : prefix.split("_")[0];
         }
         prefix = prefix.toUpperCase();
-        if (icons[prefix]) return icons[prefix];
+        if (icons[prefix]) return String(icons[prefix]).trim();
         return cfg.defaultPrefixIcon || BOOTSTRAP_CELLS.defaultPrefixIcon;
     }
 
@@ -255,6 +276,8 @@
     window.ensureQrCellsReady = ensureQrCellsReady;
     window.getQrCell = getQrCell;
     window.getPrefixIcon = getPrefixIcon;
+    window.isPrefixIconImageUrl = isPrefixIconImageUrl;
+    window.resolvePrefixIconUrl = resolvePrefixIconUrl;
     window.getMultiSheetUrl = getMultiSheetUrl;
     window.getLegacyResolveUrl = getLegacyResolveUrl;
     window.getViewDriveUrl = getViewDriveUrl;

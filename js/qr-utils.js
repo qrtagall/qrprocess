@@ -262,13 +262,7 @@ function getQrCanvasOptions(id, size = 160) {
 }
 
 /** Paint prefix emoji at QR center — white halo follows icon shape (no square box). */
-function paintPrefixIconOnCanvas(canvas, id) {
-    if (!canvas?.getContext) return;
-    const ctx = canvas.getContext("2d");
-    const size = canvas.width;
-    if (!size) return;
-
-    const icon = typeof getPrefixIcon === "function" ? getPrefixIcon(id) : "🏷️";
+function paintPrefixEmojiOnCanvas(ctx, icon, size) {
     const glyph = Math.round(size * 0.2);
     const cx = size / 2;
     const cy = size / 2;
@@ -282,7 +276,6 @@ function paintPrefixIconOnCanvas(canvas, id) {
     ctx.lineJoin = "round";
     ctx.miterLimit = 2;
 
-    // Thick white stroke tracing the emoji outline (shape-following border).
     ctx.strokeStyle = "#ffffff";
     for (const w of [outline * 1.35, outline * 0.85]) {
         ctx.lineWidth = w;
@@ -291,6 +284,99 @@ function paintPrefixIconOnCanvas(canvas, id) {
 
     ctx.fillText(icon, cx, cy);
     ctx.restore();
+}
+
+const prefixIconImageCache = new Map();
+
+function loadPrefixIconImage(url) {
+    const resolved =
+        typeof resolvePrefixIconUrl === "function" ? resolvePrefixIconUrl(url) : url;
+    const cached = prefixIconImageCache.get(resolved);
+    if (cached instanceof HTMLImageElement && cached.complete && cached.naturalWidth) {
+        return Promise.resolve(cached);
+    }
+    if (cached && typeof cached.then === "function") return cached;
+
+    const pending = new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.decoding = "async";
+        img.onload = () => {
+            prefixIconImageCache.set(resolved, img);
+            resolve(img);
+        };
+        img.onerror = () => {
+            prefixIconImageCache.delete(resolved);
+            reject(new Error(`prefix icon load failed: ${resolved}`));
+        };
+        img.src = resolved;
+    });
+    prefixIconImageCache.set(resolved, pending);
+    return pending;
+}
+
+/** Raster/SVG/GIF icon — tight white pad behind image bounds. */
+function paintPrefixImageOnCanvas(ctx, img, size) {
+    const box = Math.round(size * 0.22);
+    const cx = size / 2;
+    const cy = size / 2;
+    const pad = Math.max(2, Math.round(size * 0.008));
+    const iw = img.naturalWidth || img.width || 1;
+    const ih = img.naturalHeight || img.height || 1;
+    const scale = Math.min(box / iw, box / ih);
+    const dw = iw * scale;
+    const dh = ih * scale;
+    const outerW = dw + pad * 2;
+    const outerH = dh + pad * 2;
+    const x = cx - outerW / 2;
+    const y = cy - outerH / 2;
+    const r = Math.max(3, Math.round(Math.min(outerW, outerH) * 0.12));
+
+    ctx.save();
+    ctx.fillStyle = "#ffffff";
+    if (typeof ctx.roundRect === "function") {
+        ctx.beginPath();
+        ctx.roundRect(x, y, outerW, outerH, r);
+        ctx.fill();
+    } else {
+        ctx.fillRect(x, y, outerW, outerH);
+    }
+    ctx.drawImage(img, cx - dw / 2, cy - dh / 2, dw, dh);
+    ctx.restore();
+}
+
+function paintPrefixIconOnCanvas(canvas, id, done) {
+    if (!canvas?.getContext) {
+        if (done) done();
+        return;
+    }
+    const ctx = canvas.getContext("2d");
+    const size = canvas.width;
+    if (!size) {
+        if (done) done();
+        return;
+    }
+
+    const icon = typeof getPrefixIcon === "function" ? getPrefixIcon(id) : "🏷️";
+    const isImage =
+        typeof isPrefixIconImageUrl === "function" && isPrefixIconImageUrl(icon);
+
+    if (isImage) {
+        loadPrefixIconImage(icon)
+            .then((img) => {
+                paintPrefixImageOnCanvas(ctx, img, size);
+                if (done) done();
+            })
+            .catch((err) => {
+                console.warn("[qr] prefix image icon failed, using fallback emoji", err);
+                paintPrefixEmojiOnCanvas(ctx, "🏷️", size);
+                if (done) done();
+            });
+        return;
+    }
+
+    paintPrefixEmojiOnCanvas(ctx, icon, size);
+    if (done) done();
 }
 
 function renderQrOnCanvas(canvas, id, size, done) {
@@ -305,9 +391,10 @@ function renderQrOnCanvas(canvas, id, size, done) {
             if (done) done(error);
             return;
         }
-        paintPrefixIconOnCanvas(canvas, id);
-        canvas.dataset.qrRenderedId = id;
-        if (done) done(null);
+        paintPrefixIconOnCanvas(canvas, id, () => {
+            canvas.dataset.qrRenderedId = id;
+            if (done) done(null);
+        });
     });
 }
 
@@ -1218,8 +1305,9 @@ function generateQRCodeCanvas(id, canvasId = "qrCanvas", size = 160) {
         QRCode.toCanvas(canvas, qrUrl, getQrCanvasOptions(id, size), (error) => {
             if (error) console.error("QR generation failed:", error);
             else {
-                paintPrefixIconOnCanvas(canvas, id);
-                canvas.dataset.qrRenderedId = id;
+                paintPrefixIconOnCanvas(canvas, id, () => {
+                    canvas.dataset.qrRenderedId = id;
+                });
             }
         });
     });
@@ -1636,7 +1724,6 @@ function refreshPageHeroCarousel(id) {
     }
 
     if (canvas.dataset.qrRenderedId === id && canvas.width > 0) {
-        paintPrefixIconOnCanvas(canvas, id);
         mountHeroContent(canvas);
         return;
     }
