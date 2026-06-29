@@ -340,6 +340,11 @@
             outline: none;
         }
 
+        .qrt-emoji-ref-btn.copied {
+            background: #e8f5e9;
+            border-color: #66bb6a;
+        }
+
         .qrt-emoji-ref-empty {
             padding: 16px;
             color: #666;
@@ -624,8 +629,8 @@ POLICE: Phone: 112</div>
 
     <div class="qrt-guide-card" id="emojiReferenceCard">
         <h2>13. Emoji reference (copy &amp; paste)</h2>
-        <p>Click any emoji to copy it to the clipboard, then paste into TEXT <strong>Local Link</strong> content, page descriptions, or link banners.
-            List sourced from the <a href="https://unicode.org/emoji/charts/full-emoji-list.html" target="_blank" rel="noopener">Unicode Full Emoji List</a>
+        <p>Click an emoji to <strong>copy it</strong>, then paste (<kbd>Ctrl</kbd>+<kbd>V</kbd> or long-press → Paste) into TEXT content, descriptions, or banners.
+            Source: <a href="https://unicode.org/emoji/charts/full-emoji-list.html" target="_blank" rel="noopener">Unicode Full Emoji List</a>
             (v<span id="emojiRefVersion">17.0</span>).</p>
         <div class="qrt-emoji-ref-toolbar">
             <input type="search" id="emojiRefSearch" class="qrt-emoji-ref-search" placeholder="Search by name, code (U+1F600), or group…" autocomplete="off">
@@ -664,16 +669,45 @@ POLICE: Phone: 112</div>
             .replace(/"/g, "&quot;");
     }
 
-    function copyEmoji(emoji, name) {
-        const done = () => {
-            statusEl.textContent = "Copied " + emoji + " — " + name;
+    function copyEmoji(emoji, btn) {
+        const showOk = () => {
+            if (statusEl) {
+                statusEl.textContent = "Copied — paste anywhere";
+                window.clearTimeout(copyEmoji._t);
+                copyEmoji._t = window.setTimeout(() => {
+                    statusEl.textContent = "";
+                }, 1500);
+            }
+            if (btn) {
+                btn.classList.add("copied");
+                window.setTimeout(() => btn.classList.remove("copied"), 600);
+            }
         };
+
+        const fallbackCopy = () => {
+            const ta = document.createElement("textarea");
+            ta.value = emoji;
+            ta.setAttribute("readonly", "");
+            ta.style.cssText = "position:fixed;left:-9999px;top:0;opacity:0;";
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            ta.setSelectionRange(0, emoji.length);
+            let ok = false;
+            try {
+                ok = document.execCommand("copy");
+            } catch (_) {
+                ok = false;
+            }
+            document.body.removeChild(ta);
+            if (ok) showOk();
+            else if (statusEl) statusEl.textContent = "Copy blocked — long-press the emoji to select it";
+        };
+
         if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(emoji).then(done).catch(() => {
-                statusEl.textContent = "Copy failed — select and copy manually: " + emoji;
-            });
+            navigator.clipboard.writeText(emoji).then(showOk).catch(fallbackCopy);
         } else {
-            statusEl.textContent = "Copy: " + emoji + " (" + name + ")";
+            fallbackCopy();
         }
     }
 
@@ -752,8 +786,11 @@ POLICE: Phone: 112</div>
             btn.className = "qrt-emoji-ref-btn";
             btn.textContent = item.emoji;
             btn.title = item.name + " (" + item.code + ")";
-            btn.setAttribute("aria-label", "Copy " + item.name);
-            btn.addEventListener("click", () => copyEmoji(item.emoji, item.name));
+            btn.setAttribute("aria-label", "Copy " + item.name + " to clipboard");
+            btn.addEventListener("click", (e) => {
+                e.preventDefault();
+                copyEmoji(item.emoji, btn);
+            });
             gridEl.appendChild(btn);
         });
     }
