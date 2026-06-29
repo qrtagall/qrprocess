@@ -2,7 +2,7 @@
   "_comment": "Routing table: prefixAliases maps QR prefix → cell key. prefixIcons maps prefix → emoji/symbol shown at QR center (not image files).",
   "version": 3,
   "defaultCell": "IN",
-  "defaultPrefixIcon": "🏷️",
+  "defaultPrefixIcon": "🏷",
   "prefixIcons": {
     "TMP": "🧪",
     "TEMP": "🧪",

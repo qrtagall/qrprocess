@@ -1226,38 +1226,174 @@ function generateQRCodeCanvas(id, canvasId = "qrCanvas", size = 160) {
 }
 
 
-function shareOnWhatsApp(id) {
-    // Get title text safely
+function getQrShareAssetTitle() {
     let assetTitle = "";
-    const assetTitleEl = document.getElementById("assetTitle") ||
+    const assetTitleEl =
+        document.getElementById("assetTitle") ||
         document.querySelector(".assetTitle") ||
         document.querySelector(".description");
 
     if (assetTitleEl) assetTitle = assetTitleEl.textContent.trim();
 
-    // 🔹 Remove unwanted trailing metadata
     if (assetTitle) {
-        // Split on newline, "(" or "Owner:" to isolate first meaningful line
         assetTitle = assetTitle.split(/\r?\n|\(/)[0];
         assetTitle = assetTitle.split(/Owner:/i)[0];
         assetTitle = assetTitle.trim();
     }
 
-    if (!assetTitle) assetTitle = "(Untitled Asset)";
+    return assetTitle || "(Untitled Asset)";
+}
 
+function buildWhatsAppShareMessage(id, assetTitle) {
     const qrUrl = `https://process.qrtagall.com/?id=${id}`;
+    return ["QRTagAll Asset", "", `*${assetTitle}*`, "", qrUrl].join("\n");
+}
 
+function openWhatsAppWithText(message) {
+    const a = document.createElement("a");
+    a.href = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+}
 
-    const messageLines = [
-        "QRTagAll Asset",
-        "",
-        `*${assetTitle}*`, // bold title in WhatsApp
-        "",
-        //`ID-${id}`,
-        qrUrl
-    ];
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(messageLines.join("\n"))}`;
-    window.open(whatsappUrl, "_blank");
+function canvasToPngBlob(canvas) {
+    return new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("blob failed"))), "image/png");
+    });
+}
+
+function triggerPngDownload(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.download = filename;
+    link.href = url;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+/** Composite PNG: QR (with prefix icon) + title + link — for WhatsApp / share sheet. */
+function buildQrShareImageCanvas(id) {
+    const qrCanvas = getActiveQrCanvasElement();
+    if (!qrCanvas || !qrCanvas.width) return null;
+
+    const title = getQrShareAssetTitle();
+    const qrUrl = `https://process.qrtagall.com/?id=${encodeURIComponent(id)}`;
+    const qrSize = 300;
+    const pad = 20;
+    const innerW = qrSize + pad * 2;
+
+    const measure = document.createElement("canvas").getContext("2d");
+    measure.font = "bold 17px Arial, sans-serif";
+    const titleLines = [];
+    const maxTitleW = innerW - pad;
+    let line = "";
+    for (const word of title.split(/\s+/)) {
+        const test = line ? `${line} ${word}` : word;
+        if (measure.measureText(test).width > maxTitleW && line) {
+            titleLines.push(line);
+            line = word;
+        } else {
+            line = test;
+        }
+    }
+    if (line) titleLines.push(line);
+    const clipped = titleLines.slice(0, 2);
+    if (titleLines.length > 2 && clipped[1]) {
+        clipped[1] = `${clipped[1].replace(/\s+\S*$/, "")}…`;
+    }
+
+    const titleBlock = clipped.length * 22 + 8;
+    const urlBlock = 22;
+    const h = pad + qrSize + 14 + titleBlock + urlBlock + pad;
+
+    const out = document.createElement("canvas");
+    out.width = innerW;
+    out.height = h;
+    const ctx = out.getContext("2d");
+
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, innerW, h);
+    ctx.drawImage(qrCanvas, pad, pad, qrSize, qrSize);
+
+    ctx.fillStyle = "#1a1a1a";
+    ctx.font = "bold 17px Arial, sans-serif";
+    ctx.textAlign = "center";
+    clipped.forEach((ln, i) => {
+        ctx.fillText(ln, innerW / 2, pad + qrSize + 20 + i * 22);
+    });
+
+    ctx.fillStyle = "#555555";
+    ctx.font = "13px Arial, sans-serif";
+    ctx.fillText(qrUrl, innerW / 2, pad + qrSize + 20 + titleBlock + 6);
+
+    return out;
+}
+
+async function shareOnWhatsApp(id) {
+    const assetTitle = getQrShareAssetTitle();
+    const message = buildWhatsAppShareMessage(id, assetTitle);
+    const shareCanvas = buildQrShareImageCanvas(id);
+
+    if (!shareCanvas) {
+        openWhatsAppWithText(message);
+        return;
+    }
+
+    let blob;
+    try {
+        blob = await canvasToPngBlob(shareCanvas);
+    } catch (_) {
+        openWhatsAppWithText(message);
+        return;
+    }
+
+    const safeName = String(id || "qr").replace(/[^\w-]+/g, "_").slice(0, 40);
+    const file = new File([blob], `QRTagAll-${safeName}.png`, { type: "image/png" });
+
+    const withText = { text: message, files: [file] };
+    if (navigator.share && navigator.canShare?.(withText)) {
+        try {
+            await navigator.share(withText);
+            return;
+        } catch (err) {
+            if (err?.name === "AbortError") return;
+        }
+    }
+
+    const filesOnly = { files: [file] };
+    if (navigator.share && navigator.canShare?.(filesOnly)) {
+        try {
+            await navigator.share({ ...filesOnly, title: assetTitle, text: message });
+            return;
+        } catch (err) {
+            if (err?.name === "AbortError") return;
+        }
+    }
+
+    if (navigator.clipboard?.write && window.ClipboardItem) {
+        try {
+            await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+            openWhatsAppWithText(message);
+            if (typeof notify === "function") {
+                notify("📋 QR image copied — paste it into the WhatsApp chat.", "success");
+            }
+            return;
+        } catch (_) {
+            /* fall through */
+        }
+    }
+
+    triggerPngDownload(blob, `QRTagAll-${safeName}.png`);
+    openWhatsAppWithText(message);
+    if (typeof notify === "function") {
+        notify("📥 QR image saved — attach it in WhatsApp.", "success");
+    }
 }
 
 
