@@ -1,5 +1,5 @@
 {
-  "_comment": "prefixAliases: QR prefix → cell. prefixIcons: emoji (e.g. \"🚗\") OR image URL/path (png, gif, webp, svg) shown at QR center. Other examples: \"TMP1\": \"https://process.qrtagall.com/icons/partner.gif\",\"PLT\": \"./icons/plant.png\",
+  "_comment": "prefixAliases: QR prefix → cell. prefixIcons: emoji (e.g. \"🚗\") OR image URL/path (png, gif, webp, svg) shown at QR center. Other examples: \"TMP1\": \"https://process.qrtagall.com/icons/partner.gif\",\"PLT\": \"./icons/plant.png\"",
   "version": 3,
   "defaultCell": "IN",
   "defaultPrefixIcon": "🏷",
