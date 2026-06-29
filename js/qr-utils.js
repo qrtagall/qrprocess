@@ -261,7 +261,7 @@ function getQrCanvasOptions(id, size = 160) {
     };
 }
 
-/** Paint prefix emoji at QR center (baked into canvas — survives DOM moves). */
+/** Paint prefix emoji at QR center — white halo follows icon shape (no square box). */
 function paintPrefixIconOnCanvas(canvas, id) {
     if (!canvas?.getContext) return;
     const ctx = canvas.getContext("2d");
@@ -270,27 +270,27 @@ function paintPrefixIconOnCanvas(canvas, id) {
 
     const icon = typeof getPrefixIcon === "function" ? getPrefixIcon(id) : "🏷️";
     const glyph = Math.round(size * 0.2);
-    const pad = Math.max(2, Math.round(size * 0.012));
-    const outer = glyph + pad * 2;
     const cx = size / 2;
     const cy = size / 2;
-    const x = cx - outer / 2;
-    const y = cy - outer / 2;
-    const r = Math.max(2, Math.round(pad));
+    const fontSize = Math.round(glyph * 0.92);
+    const outline = Math.max(3, Math.round(glyph * 0.16));
 
-    ctx.fillStyle = "#ffffff";
-    if (typeof ctx.roundRect === "function") {
-        ctx.beginPath();
-        ctx.roundRect(x, y, outer, outer, r);
-        ctx.fill();
-    } else {
-        ctx.fillRect(x, y, outer, outer);
-    }
-
-    ctx.font = `${Math.round(glyph * 0.9)}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+    ctx.save();
+    ctx.font = `${fontSize}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
+    ctx.lineJoin = "round";
+    ctx.miterLimit = 2;
+
+    // Thick white stroke tracing the emoji outline (shape-following border).
+    ctx.strokeStyle = "#ffffff";
+    for (const w of [outline * 1.35, outline * 0.85]) {
+        ctx.lineWidth = w;
+        ctx.strokeText(icon, cx, cy);
+    }
+
     ctx.fillText(icon, cx, cy);
+    ctx.restore();
 }
 
 function renderQrOnCanvas(canvas, id, size, done) {
