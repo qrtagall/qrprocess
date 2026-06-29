@@ -1561,12 +1561,7 @@ function urlToContextXX(url) {
 
 */
 
-// Spinner toggler
-function showSpinner(show) {
-    const spinner = document.getElementById("fullScreenSpinner");
-    if (spinner) spinner.style.display = show ? "flex" : "none";
-}
-
+// showSpinner() — see qr-utils.js (ring text + phase colors)
 
 /*
 alert("Saved successfully");	notify("✅ Saved successfully!", "success");

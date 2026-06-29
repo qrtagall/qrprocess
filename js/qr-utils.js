@@ -770,16 +770,50 @@ function adjustColor(hex, amount) {
 }
 
 
-// Utility for spinner control
-function showSpinner(show) {
-    const spinner = document.getElementById("fullScreenSpinner");
-    if (spinner) spinner.style.display = show ? "flex" : "none";
+const QRT_SPINNER_PHASE_COLORS = {
+    verify: "#1565c0",
+    fetch: "#6a1b9a",
+    sync: "#e65100",
+    save: "#00838f",
+    default: "#3498db",
+};
+
+function applySpinnerPhaseColor(phase, scopeEl) {
+    const color = QRT_SPINNER_PHASE_COLORS[phase] || QRT_SPINNER_PHASE_COLORS.default;
+    const root =
+        scopeEl && typeof scopeEl.querySelectorAll === "function" ? scopeEl : document;
+    root.querySelectorAll(".qrt-spinner-orbit-text").forEach((el) => {
+        el.style.fill = color;
+    });
+    const statusEl = document.getElementById("spinnerStatus");
+    if (
+        statusEl &&
+        (!scopeEl ||
+            scopeEl === document ||
+            scopeEl.id === "spinner" ||
+            (scopeEl.contains && scopeEl.contains(statusEl)))
+    ) {
+        statusEl.style.color = color;
+    }
 }
 
-/** Popup loader status line (ring spinner is in #spinner). */
-function setInlineSpinnerMessage(message) {
-    const el = document.getElementById("spinnerStatus");
-    if (el) el.textContent = message || "";
+// Utility for spinner control
+function showSpinner(show, phase) {
+    const spinner = document.getElementById("fullScreenSpinner");
+    if (!spinner) return;
+    spinner.style.display = show ? "flex" : "none";
+    if (show) {
+        applySpinnerPhaseColor(phase || "save", spinner);
+    }
+}
+
+/** Popup loader: ring text + status (never replace #spinner innerHTML). */
+function setInlineSpinnerMessage(message, phase) {
+    const block = document.getElementById("spinner");
+    const statusEl = document.getElementById("spinnerStatus");
+    if (block) block.style.display = "block";
+    if (statusEl) statusEl.textContent = message || "";
+    applySpinnerPhaseColor(phase || "default", block || document);
 }
 
 

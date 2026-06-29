@@ -43,26 +43,22 @@ async function initQRTagAll() {
     const idText = document.getElementById("idText");
 
     if (!id) {
-        spinner.style.display = "none";
+        if (spinner) spinner.style.display = "none";
         resultDiv.style.display = "block";
         resultDiv.textContent = "❌ No ID provided in URL.";
         resultDiv.style.color = "var(--error)";
         return;
     }
 
+    if (spinner) spinner.style.display = "block";
+    setInlineSpinnerMessage("Verifying ID…", "verify");
+    idText.textContent = id;
+
     // Popup QR (verify / unclaimed claim) — distinct id from hero #qrCanvas in mainContent
     generateQRCodeCanvas(id, "qrCanvasPopup");
 
-    if (typeof setInlineSpinnerMessage === "function") {
-        setInlineSpinnerMessage("Verifying ID…");
-    } else {
-        document.getElementById("spinner").innerText = "⏳ Verifying ID...";
-    }
-    idText.textContent = id;
-
-
     if (!id.includes("_")) {
-        spinner.style.display = "none";
+        if (spinner) spinner.style.display = "none";
         resultDiv.style.display = "block";
         resultDiv.textContent = "❌ Invalid format. Expected format: TIMESTAMP_SIGNATURE";
         resultDiv.style.color = "var(--error)";
@@ -100,7 +96,7 @@ async function initQRTagAll() {
             throw new Error("INVALID");
         }
     } catch (err) {
-        spinner.style.display = "none";
+        if (spinner) spinner.style.display = "none";
         resultDiv.style.display = "block";
         resultDiv.textContent = "❌ Invalid ID or Signature Mismatch";
         resultDiv.style.color = "var(--error)";
@@ -125,21 +121,17 @@ async function loadAndRenderAsset(id) {
     const verifyingLabel = document.getElementById("verifyingLabel");
 
 
-    showSpinner(true);
+    showSpinner(true, "fetch");
 
 
     try {
         popup.style.display = "block";
         verifyingLabel.style.display="none"; //ALready verified
-        spinner.style.display = "block";    //show fetching info....
+        if (spinner) spinner.style.display = "block";
 
         injectQRBlock(id);      //show QR Panel
 
-        if (typeof setInlineSpinnerMessage === "function") {
-            setInlineSpinnerMessage("Fetching asset info…");
-        } else {
-            spinner.innerText = "⏳ Fetching Asset Info...";
-        }
+        setInlineSpinnerMessage("Fetching asset info…", "fetch");
         //showSpinner(true);
 
 
@@ -200,13 +192,8 @@ async function renderAssetPanel(id) {
 
     if ((remoteList?.length || 0) === 0 && getQueryParam("claimed") === "1") {
         console.log("⏳ claimed=1 but no data yet — polling master registry…");
-        const spinnerEl = document.getElementById("spinner");
         remoteList = await waitForClaimedAsset(id, 12, 2000, (n, max) => {
-            if (typeof setInlineSpinnerMessage === "function") {
-                setInlineSpinnerMessage(`Syncing claim (${n}/${max})…`);
-            } else if (spinnerEl) {
-                spinnerEl.innerText = `⏳ Syncing claim (${n}/${max})…`;
-            }
+            setInlineSpinnerMessage(`Syncing claim (${n}/${max})…`, "sync");
         });
     }
 

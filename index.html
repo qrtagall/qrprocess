@@ -24,7 +24,7 @@
 
     <!-- -->
     <link rel="stylesheet" href="./css/qrtag-theme-tokens.css?v=20260604e">
-    <link rel="stylesheet" href="./css/style.css?v=20260617j">
+    <link rel="stylesheet" href="./css/style.css?v=20260617k">
 
 </head>
 <body>
@@ -60,11 +60,8 @@
                     </text>
                 </svg>
             </div>
-            <div class="qrt-spinner-wheel-wrap">
-                <div class="spinner qrt-spinner-wheel"></div>
-            </div>
         </div>
-        <p id="spinnerStatus" class="qrt-spinner-status">Please wait…</p>
+        <p id="spinnerStatus" class="qrt-spinner-status">Verifying ID…</p>
     </div>
     <div id="result" style="display:none;"></div>
 
@@ -406,9 +403,6 @@
                 </text>
             </svg>
         </div>
-        <div class="qrt-spinner-wheel-wrap">
-            <div class="spinner qrt-spinner-wheel"></div>
-        </div>
     </div>
 </div>
 
@@ -685,21 +679,21 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "10.26";
+    const QRTagAll_Ver_ = "10.27";
 </script>
 
 
 
 
 <!-- bump ?v= whenever JS changes to force browsers to load the new files -->
-<script src="./js/qr-utils.js?v=20260617i"></script>
+<script src="./js/qr-utils.js?v=20260617k"></script>
 <script src="./js/qr-cells.js?v=20260617i"></script>
 <script src="./js/qr-auth.js?v=20260618b"></script>
 <script src="./js/qr-fetch.js?v=20260617a"></script>
 <script src="./js/qr-edit.js?v=20260613e"></script>
 <script src="./js/qr-dashboard.js?v=20260613a"></script>
-<script src="./js/qr-ui.js?v=20260617a"></script>
-<script src="./js/qr-main.js?v=20260617j"></script>
+<script src="./js/qr-ui.js?v=20260617k"></script>
+<script src="./js/qr-main.js?v=20260617k"></script>
 <!--   -->
 
 <!-- LOCAL DEV ONLY — do not deploy with file:// script tags (breaks claim/save on process.qrtagall.com)
