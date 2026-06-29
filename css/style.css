@@ -391,6 +391,69 @@
             margin: 10px auto;
         }
 
+        /* Branded loader: wheel + rotating ring text */
+        .qrt-spinner-block {
+            text-align: center;
+        }
+
+        .qrt-spinner-wrap {
+            position: relative;
+            width: 96px;
+            height: 96px;
+            margin: 0 auto;
+            flex-shrink: 0;
+        }
+
+        .qrt-spinner-orbit {
+            position: absolute;
+            inset: 0;
+            animation: spin 9s linear infinite;
+        }
+
+        .qrt-spinner-orbit-svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .qrt-spinner-orbit-text {
+            font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
+            font-size: 8.2px;
+            font-weight: 700;
+            letter-spacing: 0.22em;
+            fill: var(--primary, #3498db);
+        }
+
+        .qrt-spinner-wheel-wrap {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 46px;
+            height: 46px;
+            margin: -23px 0 0 -23px;
+        }
+
+        .qrt-spinner-wheel {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            border-width: 5px;
+            animation: spin 0.85s linear infinite;
+        }
+
+        .qrt-spinner-status {
+            margin: 10px 0 0;
+            font-size: 14px;
+            color: #555;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .qrt-spinner-orbit,
+            .qrt-spinner-wheel {
+                animation-duration: 18s;
+            }
+        }
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }

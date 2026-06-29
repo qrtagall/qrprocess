@@ -53,7 +53,11 @@ async function initQRTagAll() {
     // Popup QR (verify / unclaimed claim) — distinct id from hero #qrCanvas in mainContent
     generateQRCodeCanvas(id, "qrCanvasPopup");
 
-    document.getElementById("spinner").innerText = "⏳ Verifying ID...";
+    if (typeof setInlineSpinnerMessage === "function") {
+        setInlineSpinnerMessage("Verifying ID…");
+    } else {
+        document.getElementById("spinner").innerText = "⏳ Verifying ID...";
+    }
     idText.textContent = id;
 
 
@@ -131,7 +135,11 @@ async function loadAndRenderAsset(id) {
 
         injectQRBlock(id);      //show QR Panel
 
-        spinner.innerText = "⏳ Fetching Asset Info...";
+        if (typeof setInlineSpinnerMessage === "function") {
+            setInlineSpinnerMessage("Fetching asset info…");
+        } else {
+            spinner.innerText = "⏳ Fetching Asset Info...";
+        }
         //showSpinner(true);
 
 
@@ -194,7 +202,11 @@ async function renderAssetPanel(id) {
         console.log("⏳ claimed=1 but no data yet — polling master registry…");
         const spinnerEl = document.getElementById("spinner");
         remoteList = await waitForClaimedAsset(id, 12, 2000, (n, max) => {
-            if (spinnerEl) spinnerEl.innerText = `⏳ Syncing claim (${n}/${max})…`;
+            if (typeof setInlineSpinnerMessage === "function") {
+                setInlineSpinnerMessage(`Syncing claim (${n}/${max})…`);
+            } else if (spinnerEl) {
+                spinnerEl.innerText = `⏳ Syncing claim (${n}/${max})…`;
+            }
         });
     }
 

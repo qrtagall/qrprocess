@@ -776,6 +776,12 @@ function showSpinner(show) {
     if (spinner) spinner.style.display = show ? "flex" : "none";
 }
 
+/** Popup loader status line (ring spinner is in #spinner). */
+function setInlineSpinnerMessage(message) {
+    const el = document.getElementById("spinnerStatus");
+    if (el) el.textContent = message || "";
+}
+
 
 /*
 function getQrIdByLinkId(linkId) {
