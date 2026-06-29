@@ -393,6 +393,11 @@ function openUrlInNewTab(url) {
     document.body.appendChild(a);
     a.click();
     a.remove();
+
+    const previewModal = document.getElementById("previewModal");
+    if (previewModal && previewModal.style.display === "flex") {
+        closePreviewModal();
+    }
 }
 
 function escapeHtmlAttr(value) {
