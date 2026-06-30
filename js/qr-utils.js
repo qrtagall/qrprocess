@@ -572,6 +572,7 @@ const SMART_LINK_NEW_TAB_ONLY = new Set([
     "Linkedin_Link",
     "Twitter_Link",
     "Whatsapp_Link",
+    "Gform_Link",
 ]);
 
 function detectSmartLinkIconKey(url) {
