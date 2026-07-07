@@ -2470,6 +2470,39 @@ body.qrt-page-themed .qrt-link-preview-card {
     filter: brightness(0.92);
 }
 
+.qrt-custom-email-wrap {
+    margin: 8px 0 10px 10px;
+}
+
+.qrt-custom-email-btn {
+    min-width: 200px;
+    background: #2e7d32;
+    border: 1px solid #1b5e20;
+    color: #fff;
+    font-weight: 600;
+}
+
+.qrt-custom-email-btn:hover:not(:disabled) {
+    filter: brightness(0.92);
+}
+
+.qrt-custom-email-btn:disabled,
+.qrt-custom-email-btn.is-disabled {
+    background: #a5d6a7;
+    border-color: #81c784;
+    color: #f1f8e9;
+    cursor: not-allowed;
+    opacity: 0.85;
+}
+
+.qrt-custom-email-fields .qrt-label {
+    margin-top: 10px;
+}
+
+.qrt-custom-email-fields .qrt-field {
+    margin-bottom: 4px;
+}
+
 body.qrt-page-themed .qrt-message-email-btn {
     box-shadow: 0 1px 4px rgba(var(--qr-theme-rgb, 0, 90, 171), 0.28);
 }

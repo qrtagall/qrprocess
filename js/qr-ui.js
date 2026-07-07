@@ -2116,10 +2116,22 @@ Guests sign in with Google, then send a short message (max <strong>150</strong> 
 Only <strong>one</strong> MESSAGEEMAIL artifact per QR link block.<br>
 Owner email is never shown to visitors.`;
 
+const ARTIFACT_CUSTOMEMAIL_HINT = `💡 Custom Email artifact:<br>
+<strong>Button text</strong> (default <strong>Send Email</strong>), up to <strong>3 To</strong> and <strong>3 CC</strong> addresses (comma or semicolon).<br>
+Recipients are stored server-side and never shown to visitors.<br>
+Guests sign in with Google and send up to <strong>300</strong> characters (<strong>5 per day</strong> per QR page).<br>
+<strong>To</strong> recipients may reply via Google (first reply closes the thread). <strong>CC</strong> is observe-only.<br>
+<code>NOVIEW</code>: visitors see the button disabled.`;
+
 const GUEST_MESSAGE_MAX_LEN = 150;
+const CUSTOM_EMAIL_MAX_LEN = 300;
+const CUSTOM_EMAIL_DEFAULT_BUTTON = "Send Email";
 const MESSAGEEMAIL_BUTTON_LABEL = "Send Email";
 let guestMessageRecipientQrId = "";
+let guestMessageMode = "messageemail";
+let guestCustomEmailCtx = null;
 let ownerReplySerial = "";
+let ownerReplyMode = "messageemail";
 
 function updateArtifactFieldHints(fileType) {
     const selectedType = String(fileType || "").toUpperCase();
@@ -2132,6 +2144,9 @@ function updateArtifactFieldHints(fileType) {
     if (textHintEl) {
         if (selectedType === "MESSAGEEMAIL") {
             textHintEl.innerHTML = ARTIFACT_MESSAGEEMAIL_HINT;
+            textHintEl.style.display = "block";
+        } else if (selectedType === "CUSTOMEMAIL") {
+            textHintEl.innerHTML = ARTIFACT_CUSTOMEMAIL_HINT;
             textHintEl.style.display = "block";
         } else {
             const textKey = selectedType === "GDRIVE" ? "DRIVE" : selectedType;
@@ -2277,6 +2292,90 @@ function isMessageEmailArtifactType(fileType) {
     return String(fileType || "").toUpperCase() === "MESSAGEEMAIL";
 }
 
+function isCustomEmailArtifactType(fileType) {
+    return String(fileType || "").toUpperCase() === "CUSTOMEMAIL";
+}
+
+function parseCustomEmailRecipientsInput(raw, maxCount) {
+    const maxN = maxCount > 0 ? maxCount : 3;
+    const out = [];
+    const seen = new Set();
+    String(raw || "")
+        .split(/[,;]+/)
+        .forEach((part) => {
+            const em = String(part || "").toLowerCase().trim();
+            if (!em || seen.has(em)) return;
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) return;
+            seen.add(em);
+            out.push(em);
+        });
+    return out.slice(0, maxN);
+}
+
+function buildCustomEmailLocalLinkFromForm() {
+    const btn =
+        (document.getElementById("artifactCustomEmailButton")?.value || "").trim() ||
+        CUSTOM_EMAIL_DEFAULT_BUTTON;
+    const to = parseCustomEmailRecipientsInput(
+        document.getElementById("artifactCustomEmailTo")?.value || "",
+        3
+    );
+    const cc = parseCustomEmailRecipientsInput(
+        document.getElementById("artifactCustomEmailCc")?.value || "",
+        3
+    );
+    return `${btn}||${to.join(",")}||${cc.join(",")}`;
+}
+
+function loadCustomEmailFieldsFromItem(item) {
+    const btnEl = document.getElementById("artifactCustomEmailButton");
+    const toEl = document.getElementById("artifactCustomEmailTo");
+    const ccEl = document.getElementById("artifactCustomEmailCc");
+    if (!btnEl || !toEl || !ccEl) return;
+
+    let btn = CUSTOM_EMAIL_DEFAULT_BUTTON;
+    let toList = [];
+    let ccList = [];
+
+    if (item?.customEmailConfig) {
+        btn = item.customEmailConfig.buttonText || btn;
+        toList = Array.isArray(item.customEmailConfig.to) ? item.customEmailConfig.to : [];
+        ccList = Array.isArray(item.customEmailConfig.cc) ? item.customEmailConfig.cc : [];
+    } else if (item?.url && item.url !== "-") {
+        const parts = String(item.url).split("||");
+        btn = (parts[0] || btn).trim() || btn;
+        toList = parseCustomEmailRecipientsInput(parts[1], 3);
+        ccList = parseCustomEmailRecipientsInput(parts[2], 3);
+    } else if (item?.buttonLabel) {
+        btn = item.buttonLabel;
+    }
+
+    btnEl.value = btn;
+    toEl.value = toList.join(", ");
+    ccEl.value = ccList.join(", ");
+}
+
+function validateCustomEmailForm() {
+    const to = parseCustomEmailRecipientsInput(
+        document.getElementById("artifactCustomEmailTo")?.value || "",
+        3
+    );
+    if (!to.length) {
+        notify("Enter at least one To recipient email (max 3).", "error");
+        document.getElementById("artifactCustomEmailTo")?.focus();
+        return null;
+    }
+    return buildCustomEmailLocalLinkFromForm();
+}
+
+function getActiveGuestMessageMaxLen() {
+    return guestMessageMode === "customemail" ? CUSTOM_EMAIL_MAX_LEN : GUEST_MESSAGE_MAX_LEN;
+}
+
+function getActiveOwnerReplyMaxLen() {
+    return ownerReplyMode === "customemail" ? CUSTOM_EMAIL_MAX_LEN : GUEST_MESSAGE_MAX_LEN;
+}
+
 function isUploadBasedArtifactType(fileType) {
     const t = String(fileType || "").toUpperCase();
     return t.endsWith("FILE") || t === "OTHERS" || t === "OTHERFILE";
@@ -2398,8 +2497,10 @@ function onFileTypeChange() {
 
     const textInputSection = document.getElementById("textInputSection");
     const fileUploadSection = document.getElementById("fileUploadSection");
-    const textLabel = textInputSection.querySelector("label");
+    const textLabel = textInputSection.querySelector("label#artifactTextLabel") ||
+        textInputSection.querySelector("label");
     const textArea = document.getElementById("artifactTextInfo");
+    const customEmailSection = document.getElementById("customEmailFieldsSection");
 
     if (!textInputSection || !fileUploadSection || !textArea) return;
 
@@ -2420,6 +2521,7 @@ function onFileTypeChange() {
         fileUploadSection.style.display = "none";
 
         if (selectedType === "MESSAGEEMAIL") {
+            if (customEmailSection) customEmailSection.style.display = "none";
             textLabel.textContent = "Contact button";
             textArea.style.display = "none";
             textArea.value = "";
@@ -2430,7 +2532,23 @@ function onFileTypeChange() {
                     basicEl.value = "Contact owner by Email";
                 }
             }
+        } else if (selectedType === "CUSTOMEMAIL") {
+            textLabel.textContent = "Custom email routing";
+            textArea.style.display = "none";
+            textArea.value = "";
+            if (customEmailSection) customEmailSection.style.display = "block";
+            const btnEl = document.getElementById("artifactCustomEmailButton");
+            if (btnEl && !btnEl.value.trim()) {
+                btnEl.value = CUSTOM_EMAIL_DEFAULT_BUTTON;
+            }
+            if (currentEditMode !== "edit") {
+                const basicEl = document.getElementById("artifactBasicInfo");
+                if (basicEl && !basicEl.value.trim()) {
+                    basicEl.value = "Contact by Email";
+                }
+            }
         } else {
+            if (customEmailSection) customEmailSection.style.display = "none";
             textArea.style.display = "";
             if (selectedType === "GDRIVE" || selectedType === "DRIVE") {
                 textLabel.textContent = "Google Drive Link:";
@@ -2538,13 +2656,13 @@ function openAddModal(afterRowNum, isEditMode = false, linkId = null) {
         basicInfoInput.value = item.title || "";
         visibilityInput.value = (item.visibility || "VIEW").toUpperCase();
 
-        if (fileType === "MESSAGEEMAIL" || ["TEXT", "LINK", "URL", "GDRIVE", "DRIVE"].includes(fileType)) {
-            textInfoInput.value = fileType === "MESSAGEEMAIL" ? "" : (item.url || "");
+        if (fileType === "MESSAGEEMAIL" || fileType === "CUSTOMEMAIL" || ["TEXT", "LINK", "URL", "GDRIVE", "DRIVE"].includes(fileType)) {
+            textInfoInput.value = fileType === "MESSAGEEMAIL" || fileType === "CUSTOMEMAIL" ? "" : (item.url || "");
             setUploadedFileStatus("", "");
 
             setFieldDisabled(basicInfoInput, false);
             setFieldDisabled(fileTypeInput, false);
-            setFieldDisabled(textInfoInput, fileType === "MESSAGEEMAIL");
+            setFieldDisabled(textInfoInput, fileType === "MESSAGEEMAIL" || fileType === "CUSTOMEMAIL");
             setFieldDisabled(visibilityInput, false);
             setFieldDisabled(uploadBtn, true);
 
@@ -2552,6 +2670,10 @@ function openAddModal(afterRowNum, isEditMode = false, linkId = null) {
             toggleSection("fileUploadSection", false);
             if (fileType === "MESSAGEEMAIL") {
                 textInfoInput.style.display = "none";
+            }
+            if (fileType === "CUSTOMEMAIL") {
+                textInfoInput.style.display = "none";
+                loadCustomEmailFieldsFromItem(item);
             }
         }
 // ✅ Case 2: xxxFILE types — non-editable, only file shown
@@ -2596,7 +2718,7 @@ function openAddModal(afterRowNum, isEditMode = false, linkId = null) {
             const canEditBasic = item.editBasicInfo !== false;
             setFieldDisabled(basicInfoInput, !canEditBasic);
             setFieldDisabled(visibilityInput, false);
-            if (fileType !== "MESSAGEEMAIL" && !isUploadBasedArtifactType(fileType)) {
+            if (fileType !== "MESSAGEEMAIL" && fileType !== "CUSTOMEMAIL" && !isUploadBasedArtifactType(fileType)) {
                 setFieldDisabled(textInfoInput, false);
             }
             if (isUploadBasedArtifactType(fileType)) {
@@ -2650,6 +2772,12 @@ function openAddModal(afterRowNum, isEditMode = false, linkId = null) {
         fileTypeInput.value = "TEXT";
         visibilityInput.value = "VIEW";
         setUploadedFileStatus("No file selected yet.", "empty");
+        const customBtn = document.getElementById("artifactCustomEmailButton");
+        const customTo = document.getElementById("artifactCustomEmailTo");
+        const customCc = document.getElementById("artifactCustomEmailCc");
+        if (customBtn) customBtn.value = "";
+        if (customTo) customTo.value = "";
+        if (customCc) customCc.value = "";
 
         toggleSection("textInputSection", true);
         toggleSection("fileUploadSection", false);
@@ -2860,6 +2988,7 @@ function saveArtifact() {
     const textInfo = document.getElementById("artifactTextInfo").value.trim();
     const isText = isTextBasedArtifactType(fileType);
     const isMsgEmail = isMessageEmailArtifactType(fileType);
+    const isCustomEmail = isCustomEmailArtifactType(fileType);
     const needsFile = isUploadBasedArtifactType(fileType);
 
     const modal = document.getElementById("addArtifactModal");
@@ -2883,6 +3012,8 @@ function saveArtifact() {
 
     if (isMsgEmail) {
         // No link/text body required — button-only artifact.
+    } else if (isCustomEmail) {
+        if (!validateCustomEmailForm()) return;
     } else if (isText && fileType !== "TEXT") {
         if (!textInfo) {
             notify("Please enter a Google Drive link.", "error");
@@ -2913,7 +3044,13 @@ function saveArtifact() {
     }
 
     const fileLink = document.getElementById("uploadedFileLink").textContent.trim();
-    const url = isMsgEmail ? "-" : isText ? textInfo : selectedUploadedFileLink || fileLink;
+    const url = isMsgEmail
+        ? "-"
+        : isCustomEmail
+          ? buildCustomEmailLocalLinkFromForm()
+          : isText
+            ? textInfo
+            : selectedUploadedFileLink || fileLink;
 
     const sheetId = getSheetIdByLinkId(linkId);
 
@@ -3194,8 +3331,9 @@ function updateGuestMessageCharCount() {
     const input = document.getElementById("guestMessageInput");
     const counter = document.getElementById("guestMessageCharCount");
     if (!input || !counter) return;
+    const maxLen = getActiveGuestMessageMaxLen();
     const len = (input.value || "").length;
-    counter.textContent = `${len} / ${GUEST_MESSAGE_MAX_LEN}`;
+    counter.textContent = `${len} / ${maxLen}`;
 }
 
 function openGuestMessageModal(recipientQrId) {
@@ -3208,6 +3346,8 @@ function openGuestMessageModal(recipientQrId) {
         return;
     }
 
+    guestMessageMode = "messageemail";
+    guestCustomEmailCtx = null;
     guestMessageRecipientQrId = String(recipientQrId || "").trim();
     if (!guestMessageRecipientQrId) {
         notify("Missing QR context for this message.", "error");
@@ -3216,7 +3356,45 @@ function openGuestMessageModal(recipientQrId) {
 
     resetContactModalUi("guest");
     if (titleEl) titleEl.textContent = `✉️ ${MESSAGEEMAIL_BUTTON_LABEL}`;
+    input.maxLength = GUEST_MESSAGE_MAX_LEN;
     input.value = sessionStorage.getItem("qrtagall_guest_msg_draft") || "";
+    updateGuestMessageCharCount();
+    modal.style.display = "flex";
+    input.focus();
+}
+
+function openCustomGuestEmailModal(ctx) {
+    const modal = document.getElementById("guestMessageModal");
+    const titleEl = document.getElementById("guestMessageModalTitle");
+    const input = document.getElementById("guestMessageInput");
+
+    if (!modal || !input) {
+        notify("Message dialog is unavailable. Refresh the page.", "error");
+        return;
+    }
+
+    const pageQrId = String(ctx?.pageQrId || getQueryParam("id") || "").trim();
+    const recipientQrId = String(ctx?.recipientQrId || "").trim();
+    const sheetId = String(ctx?.sheetId || "").trim();
+    const artifactRow = Number(ctx?.artifactRow) || 0;
+    const buttonLabel = String(ctx?.buttonLabel || CUSTOM_EMAIL_DEFAULT_BUTTON).trim() || CUSTOM_EMAIL_DEFAULT_BUTTON;
+
+    if (!pageQrId || !recipientQrId || !sheetId || !artifactRow) {
+        notify("Custom email is not configured correctly. Refresh the page.", "error");
+        return;
+    }
+
+    guestMessageMode = "customemail";
+    guestCustomEmailCtx = { pageQrId, recipientQrId, sheetId, artifactRow, buttonLabel };
+    guestMessageRecipientQrId = recipientQrId;
+
+    resetContactModalUi("guest");
+    if (titleEl) titleEl.textContent = `✉️ ${buttonLabel}`;
+    input.maxLength = CUSTOM_EMAIL_MAX_LEN;
+    input.value =
+        sessionStorage.getItem("qrtagall_guest_custom_msg_draft") ||
+        sessionStorage.getItem("qrtagall_guest_msg_draft") ||
+        "";
     updateGuestMessageCharCount();
     modal.style.display = "flex";
     input.focus();
@@ -3226,6 +3404,8 @@ function closeGuestMessageModal() {
     const modal = document.getElementById("guestMessageModal");
     if (modal) modal.style.display = "none";
     guestMessageRecipientQrId = "";
+    guestMessageMode = "messageemail";
+    guestCustomEmailCtx = null;
     resetContactModalUi("guest");
 }
 
@@ -3233,6 +3413,8 @@ async function submitGuestMessage() {
     const input = document.getElementById("guestMessageInput");
     const sendBtn = document.getElementById("guestMessageSendBtn");
     const content = (input?.value || "").trim();
+    const maxLen = getActiveGuestMessageMaxLen();
+    const isCustom = guestMessageMode === "customemail";
 
     if (!guestMessageRecipientQrId) {
         notify("Missing QR context for this message.", "error");
@@ -3243,15 +3425,28 @@ async function submitGuestMessage() {
         input?.focus();
         return;
     }
-    if (content.length > GUEST_MESSAGE_MAX_LEN) {
-        notify(`Message must be ${GUEST_MESSAGE_MAX_LEN} characters or fewer.`, "error");
+    if (content.length > maxLen) {
+        notify(`Message must be ${maxLen} characters or fewer.`, "error");
         return;
     }
 
     if (!sessionEmail) {
-        sessionStorage.setItem("qrtagall_guest_msg_draft", content);
-        sessionStorage.setItem("qrtagall_guest_msg_recipient", guestMessageRecipientQrId);
-        if (typeof googleLoginForSendMessage === "function") {
+        if (isCustom && guestCustomEmailCtx) {
+            sessionStorage.setItem("qrtagall_guest_custom_msg_draft", content);
+            sessionStorage.setItem(
+                "qrtagall_guest_custom_ctx",
+                JSON.stringify(guestCustomEmailCtx)
+            );
+        } else {
+            sessionStorage.setItem("qrtagall_guest_msg_draft", content);
+            sessionStorage.setItem("qrtagall_guest_msg_recipient", guestMessageRecipientQrId);
+        }
+        if (isCustom && typeof googleLoginForSendCustomEmail === "function") {
+            googleLoginForSendCustomEmail(
+                guestCustomEmailCtx?.pageQrId || getQueryParam("id"),
+                guestCustomEmailCtx
+            );
+        } else if (typeof googleLoginForSendMessage === "function") {
             googleLoginForSendMessage(getQueryParam("id"), guestMessageRecipientQrId);
         } else {
             notify("Please sign in with Google to send a message.", "error");
@@ -3264,15 +3459,32 @@ async function submitGuestMessage() {
     showSpinner(true);
 
     try {
-        const result = await sendOwnerMessageEmail({
-            recipientQrId: guestMessageRecipientQrId,
-            content,
-        });
+        let result;
+        if (isCustom) {
+            const ctx = guestCustomEmailCtx || {};
+            if (!ctx.sheetId || !ctx.artifactRow) {
+                throw new Error("Custom email configuration is missing.");
+            }
+            result = await sendCustomEmailMessage({
+                pageQrId: ctx.pageQrId || getQueryParam("id"),
+                recipientQrId: ctx.recipientQrId || guestMessageRecipientQrId,
+                sheetId: ctx.sheetId,
+                artifactRow: ctx.artifactRow,
+                content,
+            });
+        } else {
+            result = await sendOwnerMessageEmail({
+                recipientQrId: guestMessageRecipientQrId,
+                content,
+            });
+        }
         showSpinner(false);
 
         if (result?.success) {
             sessionStorage.removeItem("qrtagall_guest_msg_draft");
             sessionStorage.removeItem("qrtagall_guest_msg_recipient");
+            sessionStorage.removeItem("qrtagall_guest_custom_msg_draft");
+            sessionStorage.removeItem("qrtagall_guest_custom_ctx");
             if (input) input.value = "";
             showContactModalResult("guest", "success", "MESSAGE SENT");
         } else {
@@ -3298,12 +3510,14 @@ function updateOwnerReplyCharCount() {
     const input = document.getElementById("ownerReplyInput");
     const counter = document.getElementById("ownerReplyCharCount");
     if (!input || !counter) return;
-    counter.textContent = `${(input.value || "").length} / ${GUEST_MESSAGE_MAX_LEN}`;
+    const maxLen = getActiveOwnerReplyMaxLen();
+    counter.textContent = `${(input.value || "").length} / ${maxLen}`;
 }
 
-function openOwnerReplyModal(serial) {
+function openOwnerReplyModal(serial, isCustomReply) {
     const modal = document.getElementById("ownerReplyModal");
     const input = document.getElementById("ownerReplyInput");
+    const titleEl = modal?.querySelector(".qrt-modal-header-stripe h4");
 
     if (!modal || !input) {
         notify("Reply dialog is unavailable. Refresh the page.", "error");
@@ -3316,7 +3530,14 @@ function openOwnerReplyModal(serial) {
         return;
     }
 
+    ownerReplyMode = isCustomReply ? "customemail" : "messageemail";
+    const maxLen = getActiveOwnerReplyMaxLen();
+    input.maxLength = maxLen;
+
     resetContactModalUi("owner");
+    if (titleEl) {
+        titleEl.textContent = isCustomReply ? "↩️ Reply to guest" : "↩️ Reply anonymously";
+    }
     input.value = sessionStorage.getItem("qrtagall_owner_reply_draft") || "";
     updateOwnerReplyCharCount();
     modal.style.display = "flex";
@@ -3327,6 +3548,7 @@ function closeOwnerReplyModal() {
     const modal = document.getElementById("ownerReplyModal");
     if (modal) modal.style.display = "none";
     ownerReplySerial = "";
+    ownerReplyMode = "messageemail";
     resetContactModalUi("owner");
 }
 
@@ -3334,6 +3556,8 @@ async function submitOwnerReply() {
     const input = document.getElementById("ownerReplyInput");
     const sendBtn = document.getElementById("ownerReplySendBtn");
     const content = (input?.value || "").trim();
+    const maxLen = getActiveOwnerReplyMaxLen();
+    const isCustom = ownerReplyMode === "customemail";
 
     if (!ownerReplySerial) {
         notify("Invalid reply link.", "error");
@@ -3344,18 +3568,28 @@ async function submitOwnerReply() {
         input?.focus();
         return;
     }
-    if (content.length > GUEST_MESSAGE_MAX_LEN) {
-        notify(`Reply must be ${GUEST_MESSAGE_MAX_LEN} characters or fewer.`, "error");
+    if (content.length > maxLen) {
+        notify(`Reply must be ${maxLen} characters or fewer.`, "error");
         return;
     }
 
     if (!sessionEmail) {
         sessionStorage.setItem("qrtagall_owner_reply_draft", content);
         sessionStorage.setItem("qrtagall_owner_reply_serial", ownerReplySerial);
-        if (typeof googleLoginForOwnerReply === "function") {
-            googleLoginForOwnerReply(getQueryParam("id"), ownerReplySerial);
+        if (isCustom) {
+            sessionStorage.setItem("qrtagall_owner_reply_custom", "1");
         } else {
-            notify("Please sign in with Google as the QR owner to reply.", "error");
+            sessionStorage.removeItem("qrtagall_owner_reply_custom");
+        }
+        if (typeof googleLoginForOwnerReply === "function") {
+            googleLoginForOwnerReply(getQueryParam("id"), ownerReplySerial, isCustom);
+        } else {
+            notify(
+                isCustom
+                    ? "Please sign in with Google using a To recipient address to reply."
+                    : "Please sign in with Google as the QR owner to reply.",
+                "error"
+            );
         }
         return;
     }
@@ -3365,12 +3599,15 @@ async function submitOwnerReply() {
     showSpinner(true);
 
     try {
-        const result = await sendOwnerReplyEmail({ serial: ownerReplySerial, content });
+        const result = isCustom
+            ? await sendCustomEmailReplyEmail({ serial: ownerReplySerial, content })
+            : await sendOwnerReplyEmail({ serial: ownerReplySerial, content });
         showSpinner(false);
 
         if (result?.success) {
             sessionStorage.removeItem("qrtagall_owner_reply_draft");
             sessionStorage.removeItem("qrtagall_owner_reply_serial");
+            sessionStorage.removeItem("qrtagall_owner_reply_custom");
             if (input) input.value = "";
             showContactModalResult("owner", "success", "REPLY SENT");
         } else {
@@ -3400,13 +3637,18 @@ function maybeResumeOwnerReplyFlow() {
         "";
     if (!serial) return;
 
+    const isCustom =
+        getQueryParam("custom") === "1" ||
+        sessionStorage.getItem("qrtagall_owner_reply_custom") === "1";
+
     const cleanUrl = new URL(window.location.href);
     cleanUrl.searchParams.delete("reply");
     cleanUrl.searchParams.delete("serial");
+    cleanUrl.searchParams.delete("custom");
     window.history.replaceState({}, "", cleanUrl.pathname + cleanUrl.search);
 
     setTimeout(() => {
-        openOwnerReplyModal(serial);
+        openOwnerReplyModal(serial, isCustom);
     }, 300);
 }
 
@@ -3425,6 +3667,45 @@ function maybeResumeGuestMessageFlow() {
 
     setTimeout(() => {
         openGuestMessageModal(recipientQrId);
+    }, 300);
+}
+
+function maybeResumeGuestCustomEmailFlow() {
+    if (getQueryParam("sendCustomEmail") !== "1") return;
+
+    let ctx = null;
+    try {
+        const stored = sessionStorage.getItem("qrtagall_guest_custom_ctx");
+        if (stored) ctx = JSON.parse(stored);
+    } catch (e) {
+        ctx = null;
+    }
+
+    const pageQrId = getQueryParam("id") || ctx?.pageQrId || "";
+    const recipientQrId =
+        getQueryParam("recipientQrId") || ctx?.recipientQrId || "";
+    const sheetId = getQueryParam("sheetId") || ctx?.sheetId || "";
+    const artifactRow =
+        Number(getQueryParam("artifactRow")) || Number(ctx?.artifactRow) || 0;
+    const buttonLabel = ctx?.buttonLabel || CUSTOM_EMAIL_DEFAULT_BUTTON;
+
+    if (!recipientQrId || !sheetId || !artifactRow) return;
+
+    const cleanUrl = new URL(window.location.href);
+    cleanUrl.searchParams.delete("sendCustomEmail");
+    cleanUrl.searchParams.delete("recipientQrId");
+    cleanUrl.searchParams.delete("sheetId");
+    cleanUrl.searchParams.delete("artifactRow");
+    window.history.replaceState({}, "", cleanUrl.pathname + cleanUrl.search);
+
+    setTimeout(() => {
+        openCustomGuestEmailModal({
+            pageQrId,
+            recipientQrId,
+            sheetId,
+            artifactRow,
+            buttonLabel,
+        });
     }, 300);
 }
 
@@ -3480,6 +3761,57 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
     }
 
     const mainBlock = document.createElement("div");
+
+    if (typeUpper === "CUSTOMEMAIL") {
+        const headerTitle = escapeHtml(title || "Contact");
+        const buttonLabel = escapeHtml(
+            asset.buttonLabel ||
+                asset.customEmailConfig?.buttonText ||
+                CUSTOM_EMAIL_DEFAULT_BUTTON
+        );
+        const isNoviewGuest = visibilityUpper === "NOVIEW" && !isArticatOener;
+        const disabledAttr = isNoviewGuest ? " disabled" : "";
+        const disabledCls = isNoviewGuest
+            ? "qrt-custom-email-btn is-disabled"
+            : "qrt-custom-email-btn";
+        const rid = escapeHtml(linkId || "");
+        const sheetRow = Number(asset.sheetRow) || 0;
+
+        mainBlock.innerHTML = `
+            <p>${serialPrefixOrFallback}<b>${headerTitle}</b> ${visibilityIcon}</p>
+            <div class="qrt-custom-email-wrap">
+                <button type="button" class="qrt-btn ${disabledCls}" data-recipient-qr-id="${rid}" data-sheet-row="${sheetRow}"${disabledAttr}>
+                    ${buttonLabel}
+                </button>
+            </div>`;
+        wrapper.appendChild(mainBlock);
+        const btn = mainBlock.querySelector(".qrt-custom-email-btn");
+        if (btn && !isNoviewGuest) {
+            btn.addEventListener("click", () => {
+                const sheetId =
+                    typeof getSheetIdByLinkId === "function"
+                        ? getSheetIdByLinkId(linkId)
+                        : "";
+                openCustomGuestEmailModal({
+                    pageQrId: getQueryParam("id"),
+                    recipientQrId: linkId,
+                    sheetId,
+                    artifactRow: sheetRow,
+                    buttonLabel:
+                        asset.buttonLabel ||
+                        asset.customEmailConfig?.buttonText ||
+                        CUSTOM_EMAIL_DEFAULT_BUTTON,
+                });
+            });
+        }
+        if (isEditable && editMode) {
+            const actionBar = document.createElement("div");
+            actionBar.innerHTML = getArtifactActionBarMarkup(index, { linkId, typeUpper });
+            wrapper.appendChild(actionBar);
+        }
+        applyArtifactBlockTone(wrapper, mainBlock, isArticatOener);
+        return wrapper;
+    }
 
     if (visibilityUpper === "NOVIEW" && !isArticatOener) {
         mainBlock.innerHTML = `<p>${serialPrefix}<b>${title}</b> <span style="color:gray;">(🔒 No view permission)</span></p>`;

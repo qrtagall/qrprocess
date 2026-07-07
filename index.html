@@ -24,7 +24,7 @@
 
     <!-- -->
     <link rel="stylesheet" href="./css/qrtag-theme-tokens.css?v=20260604e">
-    <link rel="stylesheet" href="./css/style.css?v=20260618a">
+    <link rel="stylesheet" href="./css/style.css?v=20260704a">
 
 </head>
 <body>
@@ -478,6 +478,7 @@
                 <option value="VIDEOFILE">VIDEOFILE</option>
                 <option value="DRIVE">GDRIVE</option>
                 <option value="MESSAGEEMAIL">MESSAGEEMAIL</option>
+                <option value="CUSTOMEMAIL">CUSTOMEMAIL</option>
                 <option value="OTHERS">OTHERFILE</option>
             </select>
         </div>
@@ -492,8 +493,16 @@
         </div>
 
         <div id="textInputSection" class="qrt-form-section qrt-section-text">
-            <label class="qrt-label">Text Info</label>
+            <label class="qrt-label" id="artifactTextLabel">Text Info</label>
             <textarea id="artifactTextInfo" class="qrt-field qrt-textarea" placeholder="Enter your text here..."></textarea>
+            <div id="customEmailFieldsSection" class="qrt-custom-email-fields" style="display:none;">
+                <label class="qrt-label" for="artifactCustomEmailButton">Button text</label>
+                <input id="artifactCustomEmailButton" type="text" class="qrt-field" placeholder="Send Email" maxlength="40" />
+                <label class="qrt-label" for="artifactCustomEmailTo">To recipients <span class="qrt-label-muted">(max 3, comma or semicolon)</span></label>
+                <input id="artifactCustomEmailTo" type="text" class="qrt-field" placeholder="one@example.com, two@example.com" />
+                <label class="qrt-label" for="artifactCustomEmailCc">CC recipients <span class="qrt-label-muted">(max 3, optional)</span></label>
+                <input id="artifactCustomEmailCc" type="text" class="qrt-field" placeholder="optional@example.com" />
+            </div>
             <div id="artifactTextHint" class="qrt-hint-box qrt-artifact-hint qrt-artifact-hint--text" style="display:none;"></div>
         </div>
 
@@ -524,9 +533,9 @@
         <div class="qrt-form-section qrt-section-text">
             <div id="ownerReplyCompose" class="qrt-msg-compose">
                 <label class="qrt-label" for="ownerReplyInput">Your response</label>
-                <textarea id="ownerReplyInput" class="qrt-field qrt-textarea" maxlength="150"
-                    placeholder="Enter your reply (max 150 characters)…"></textarea>
-                <p id="ownerReplyCharCount" class="qrt-guest-msg-count">0 / 150</p>
+                <textarea id="ownerReplyInput" class="qrt-field qrt-textarea" maxlength="300"
+                    placeholder="Enter your reply…"></textarea>
+                <p id="ownerReplyCharCount" class="qrt-guest-msg-count">0 / 300</p>
             </div>
             <div id="ownerReplyResult" class="qrt-msg-result" style="display:none;" aria-live="polite">
                 <p id="ownerReplyResultText" class="qrt-msg-result-text"></p>
@@ -548,9 +557,9 @@
         <div class="qrt-form-section qrt-section-text">
             <div id="guestMessageCompose" class="qrt-msg-compose">
                 <label class="qrt-label" for="guestMessageInput">Your message</label>
-                <textarea id="guestMessageInput" class="qrt-field qrt-textarea" maxlength="150"
-                    placeholder="Write your message (max 150 characters)…"></textarea>
-                <p id="guestMessageCharCount" class="qrt-guest-msg-count">0 / 150</p>
+                <textarea id="guestMessageInput" class="qrt-field qrt-textarea" maxlength="300"
+                    placeholder="Write your message…"></textarea>
+                <p id="guestMessageCharCount" class="qrt-guest-msg-count">0 / 300</p>
             </div>
             <div id="guestMessageResult" class="qrt-msg-result" style="display:none;" aria-live="polite">
                 <p id="guestMessageResultText" class="qrt-msg-result-text"></p>
@@ -689,7 +698,7 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "10.36";
+    const QRTagAll_Ver_ = "10.40";
 </script>
 
 
@@ -698,12 +707,12 @@
 <!-- bump ?v= whenever JS changes to force browsers to load the new files -->
 <script src="./js/qr-utils.js?v=20260630b"></script>
 <script src="./js/qr-cells.js?v=20260617i"></script>
-<script src="./js/qr-auth.js?v=20260618d"></script>
-<script src="./js/qr-fetch.js?v=20260618a"></script>
+<script src="./js/qr-auth.js?v=20260704a"></script>
+<script src="./js/qr-fetch.js?v=20260704a"></script>
 <script src="./js/qr-edit.js?v=20260618b"></script>
 <script src="./js/qr-dashboard.js?v=20260613a"></script>
-<script src="./js/qr-ui.js?v=20260617l"></script>
-<script src="./js/qr-main.js?v=20260618c"></script>
+<script src="./js/qr-ui.js?v=20260704a"></script>
+<script src="./js/qr-main.js?v=20260704a"></script>
 <!--   -->
 
 <!-- LOCAL DEV ONLY — do not deploy with file:// script tags (breaks claim/save on process.qrtagall.com)

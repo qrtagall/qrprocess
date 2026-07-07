@@ -643,8 +643,26 @@ function googleLoginForSendMessage(pageQrId, recipientQrId) {
     window.location.href = buildGoogleOAuthRedirectUrl({ redirectUri, scope, state });
 }
 
+/** Full-page OAuth before guest sends CUSTOMEMAIL (email scope only). */
+function googleLoginForSendCustomEmail(pageQrId, ctx) {
+    const redirectUri = "https://process.qrtagall.com/oauth-callback.html";
+    const scope = QRTAGALL_EMAIL_ONLY_SCOPES;
+    const c = ctx || {};
+    const state = encodeURIComponent(
+        JSON.stringify({
+            intent: "sendCustomEmail",
+            pageQrId: pageQrId || getQueryParam("id") || "",
+            recipientQrId: c.recipientQrId || "",
+            sheetId: c.sheetId || "",
+            artifactRow: Number(c.artifactRow) || 0,
+        })
+    );
+
+    window.location.href = buildGoogleOAuthRedirectUrl({ redirectUri, scope, state });
+}
+
 /** Full-page OAuth before owner sends anonymous reply (email scope only). */
-function googleLoginForOwnerReply(pageQrId, serial) {
+function googleLoginForOwnerReply(pageQrId, serial, isCustomReply) {
     const redirectUri = "https://process.qrtagall.com/oauth-callback.html";
     const scope = QRTAGALL_EMAIL_ONLY_SCOPES;
     const state = encodeURIComponent(
@@ -652,6 +670,7 @@ function googleLoginForOwnerReply(pageQrId, serial) {
             intent: "ownerReply",
             pageQrId: pageQrId || getQueryParam("id") || "",
             serial: serial || "",
+            custom: isCustomReply ? "1" : "",
         })
     );
 

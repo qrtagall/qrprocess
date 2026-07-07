@@ -128,14 +128,35 @@
           return;
         }
 
+        if (stateObj.intent === "sendCustomEmail") {
+          const pageQrId = stateObj.pageQrId || stateObj.id || "";
+          const recipientQrId = stateObj.recipientQrId || "";
+          const sheetId = stateObj.sheetId || "";
+          const artifactRow = stateObj.artifactRow || "";
+          window.location.href =
+            "https://process.qrtagall.com/index.html?id=" +
+            encodeURIComponent(pageQrId) +
+            "&sendCustomEmail=1&recipientQrId=" +
+            encodeURIComponent(recipientQrId) +
+            "&sheetId=" +
+            encodeURIComponent(sheetId) +
+            "&artifactRow=" +
+            encodeURIComponent(artifactRow) +
+            "&verified=1&email=" +
+            encodeURIComponent(email || "");
+          return;
+        }
+
         if (stateObj.intent === "ownerReply") {
           const pageQrId = stateObj.pageQrId || stateObj.id || "";
           const serial = stateObj.serial || "";
+          const customParam = stateObj.custom === "1" ? "&custom=1" : "";
           window.location.href =
             "https://process.qrtagall.com/index.html?id=" +
             encodeURIComponent(pageQrId) +
             "&reply=1&serial=" +
             encodeURIComponent(serial) +
+            customParam +
             "&verified=1&email=" +
             encodeURIComponent(email || "");
           return;

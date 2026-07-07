@@ -350,6 +350,9 @@ function parseRemoteSheetsPayload(data) {
             assets: items.map((item) => ({
                 ...item,
                 editBasicInfo: item.editBasicInfo !== false,
+                sheetRow: Number(item.sheetRow) || 0,
+                buttonLabel: item.buttonLabel != null ? String(item.buttonLabel) : "",
+                customEmailConfig: item.customEmailConfig || null,
             })),
         });
     }
@@ -451,6 +454,49 @@ async function sendOwnerMessageEmail({ recipientQrId, content }) {
         [QRTAGALL_AUTH_PARAM]: token,
     };
     return invokeAppsScriptPostJson(payload, multiSheetUrlForQr(recipientQrId));
+}
+
+/** Guest CUSTOMEMAIL — send via MultiSheet (To/CC hidden server-side). */
+async function sendCustomEmailMessage({
+    pageQrId,
+    recipientQrId,
+    sheetId,
+    artifactRow,
+    content,
+}) {
+    const token = await ensureAccessTokenForMutation();
+    const sender =
+        (typeof sessionEmail === "string" && sessionEmail) ||
+        localStorage.getItem("qr_claimed_email") ||
+        "";
+    const payload = {
+        mode: "sendCustomEmail",
+        pageQrId: String(pageQrId || getQueryParam("id") || "").trim(),
+        recipientQrId: String(recipientQrId || "").trim(),
+        sheetId: String(sheetId || "").trim(),
+        artifactRow: Number(artifactRow) || 0,
+        content: String(content || "").trim(),
+        email: String(sender).toLowerCase(),
+        [QRTAGALL_AUTH_PARAM]: token,
+    };
+    return invokeAppsScriptPostJson(payload, multiSheetUrlForQr(pageQrId || recipientQrId));
+}
+
+/** To recipient reply for CUSTOMEMAIL thread. */
+async function sendCustomEmailReplyEmail({ serial, content }) {
+    const token = await ensureAccessTokenForMutation();
+    const sender =
+        (typeof sessionEmail === "string" && sessionEmail) ||
+        localStorage.getItem("qr_claimed_email") ||
+        "";
+    const payload = {
+        mode: "sendCustomEmailReply",
+        serial: String(serial || "").trim(),
+        content: String(content || "").trim(),
+        email: String(sender).toLowerCase(),
+        [QRTAGALL_AUTH_PARAM]: token,
+    };
+    return invokeAppsScriptPostJson(payload, multiSheetUrlForQr());
 }
 
 /** Server check before adding a new artifact row (IDConfig EXTRA_ARTIFACT per prefix). */

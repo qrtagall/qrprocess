@@ -362,6 +362,9 @@ async function renderAssetPanel(id) {
     if (typeof maybeResumeGuestMessageFlow === "function") {
         maybeResumeGuestMessageFlow();
     }
+    if (typeof maybeResumeGuestCustomEmailFlow === "function") {
+        maybeResumeGuestCustomEmailFlow();
+    }
     if (typeof maybeResumeOwnerReplyFlow === "function") {
         maybeResumeOwnerReplyFlow();
     }
