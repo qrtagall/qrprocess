@@ -102,16 +102,20 @@
 
         <p id="claimStatusLine" style="display:none; font-size:13px; color:#555; margin:8px auto; max-width:90%;"></p>
 
-        <div id="claimSpinner" style="display:none; margin:12px auto;">
-            <div style="
-                border:4px solid #f3f3f3;
-                border-top:4px solid #3498db;
-                border-radius:50%;
-                width:36px;
-                height:36px;
-                animation:spin 1s linear infinite;
-                margin:0 auto 8px;
-            "></div>
+        <div id="claimSpinner" class="qrt-spinner-block" style="display:none; margin:12px auto;" role="status" aria-live="polite">
+            <div class="qrt-spinner-wrap">
+                <div class="qrt-spinner-orbit" aria-hidden="true">
+                    <svg viewBox="0 0 100 100" class="qrt-spinner-orbit-svg" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <path id="qrtSpinnerRingClaimInline" d="M 50,50 m -37,0 a 37,37 0 1,1 74,0 a 37,37 0 1,1 -74,0" />
+                        </defs>
+                        <text class="qrt-spinner-orbit-text">
+                            <textPath href="#qrtSpinnerRingClaimInline" startOffset="0%">QRTagAll · QRTagAll · QRTagAll ·</textPath>
+                        </text>
+                    </svg>
+                </div>
+                <p id="claimSpinnerStatus" class="qrt-spinner-status">Starting claim…</p>
+            </div>
         </div>
 
         <!-- 👇 Vertical layout with floating info button -->
@@ -685,16 +689,16 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "10.35";
+    const QRTagAll_Ver_ = "10.36";
 </script>
 
 
 
 
 <!-- bump ?v= whenever JS changes to force browsers to load the new files -->
-<script src="./js/qr-utils.js?v=20260630a"></script>
+<script src="./js/qr-utils.js?v=20260630b"></script>
 <script src="./js/qr-cells.js?v=20260617i"></script>
-<script src="./js/qr-auth.js?v=20260618c"></script>
+<script src="./js/qr-auth.js?v=20260618d"></script>
 <script src="./js/qr-fetch.js?v=20260618a"></script>
 <script src="./js/qr-edit.js?v=20260618b"></script>
 <script src="./js/qr-dashboard.js?v=20260613a"></script>

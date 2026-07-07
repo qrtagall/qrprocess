@@ -4,7 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>QRTagAll – Claiming QR...</title>
-  <link rel="stylesheet" href="./css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/style.css?v=20260618d" />
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -15,23 +18,10 @@
       margin: 0;
       box-sizing: border-box;
     }
-    .claim-callback-spinner {
-      border: 6px solid #f3f3f3;
-      border-top: 6px solid #3498db;
-      border-radius: 50%;
-      width: 44px;
-      height: 44px;
-      animation: spin 1s linear infinite;
-      margin: 20px auto 12px;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
     .info {
       font-size: 14px;
-      color: #555;
-      margin-top: 10px;
+      color: #b91c1c;
+      margin-top: 14px;
       max-width: 420px;
       margin-left: auto;
       margin-right: auto;
@@ -40,29 +30,67 @@
     .email-hint {
       font-size: 13px;
       color: #666;
-      margin-top: 6px;
+      margin: 0 0 12px;
+    }
+    #claimSpinner {
+      margin: 16px auto;
     }
   </style>
-  <script src="./js/qr-utils.js?v=20260604b"></script>
-  <script src="./js/qr-cells.js?v=20260613c"></script>
-  <script src="./js/qr-fetch.js?v=20260617a"></script>
-  <script src="./js/qr-auth.js?v=20260618b"></script>
+  <script src="./js/qr-utils.js?v=20260630b"></script>
+  <script src="./js/qr-cells.js?v=20260617i"></script>
+  <script src="./js/qr-fetch.js?v=20260618a"></script>
+  <script src="./js/qr-auth.js?v=20260618c"></script>
 </head>
 <body>
   <h2>🔐 Finalizing QR Claim</h2>
-  <p class="info" id="status">Verifying your Google account…</p>
   <p class="email-hint" id="emailHint" style="display:none;"></p>
-  <div class="claim-callback-spinner" id="claimSpinner" aria-hidden="true"></div>
+
+  <div id="claimSpinner" class="qrt-spinner-block" role="status" aria-live="polite">
+    <div class="qrt-spinner-wrap">
+      <div class="qrt-spinner-orbit" aria-hidden="true">
+        <svg viewBox="0 0 100 100" class="qrt-spinner-orbit-svg" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <path id="qrtSpinnerRingClaim" d="M 50,50 m -37,0 a 37,37 0 1,1 74,0 a 37,37 0 1,1 -74,0" />
+          </defs>
+          <text class="qrt-spinner-orbit-text">
+            <textPath href="#qrtSpinnerRingClaim" startOffset="0%">QRTagAll · QRTagAll · QRTagAll ·</textPath>
+          </text>
+        </svg>
+      </div>
+      <p id="claimSpinnerStatus" class="qrt-spinner-status">Verifying your Google account…</p>
+    </div>
+  </div>
+
+  <p class="info" id="statusError" style="display:none;"></p>
 
   <script>
+    function inferClaimSpinnerPhase(message) {
+      const m = String(message || "").toLowerCase();
+      if (/complete|redirect|opening/.test(m)) return "save";
+      if (/register|folder|creating|claim|loading|contacting|sync/.test(m)) return "sync";
+      return "verify";
+    }
+
     function setClaimCallbackStatus(message, isError) {
-      const statusEl = document.getElementById("status");
-      const spinnerEl = document.getElementById("claimSpinner");
-      if (statusEl) {
-        statusEl.textContent = message;
-        statusEl.style.color = isError ? "#b91c1c" : "#555";
+      const block = document.getElementById("claimSpinner");
+      const statusEl = document.getElementById("claimSpinnerStatus");
+      const errEl = document.getElementById("statusError");
+
+      if (isError) {
+        if (block) block.style.display = "none";
+        if (errEl) {
+          errEl.style.display = "block";
+          errEl.textContent = message || "";
+        }
+        return;
       }
-      if (spinnerEl) spinnerEl.style.display = isError ? "none" : "block";
+
+      if (block) block.style.display = "block";
+      if (errEl) errEl.style.display = "none";
+      if (statusEl) statusEl.textContent = message || "";
+      if (typeof applySpinnerPhaseColor === "function") {
+        applySpinnerPhaseColor(inferClaimSpinnerPhase(message), block || document);
+      }
     }
 
     async function finalizeQRClaim() {
@@ -83,8 +111,10 @@
           "Google sign-in was cancelled or blocked. " + (oauthErrorDesc || oauthError),
           true
         );
-        document.getElementById("status").innerHTML +=
-          "<br><br><a href=\"./index.html\">← Back to QR</a>";
+        const errEl = document.getElementById("statusError");
+        if (errEl) {
+          errEl.innerHTML += "<br><br><a href=\"./index.html\">← Back to QR</a>";
+        }
         return;
       }
 
@@ -166,6 +196,10 @@
         console.error("❌ Error:", err);
         setClaimCallbackStatus("Error: " + (err.message || "Claim failed."), true);
       }
+    }
+
+    if (typeof applySpinnerPhaseColor === "function") {
+      applySpinnerPhaseColor("verify", document.getElementById("claimSpinner"));
     }
 
     finalizeQRClaim();

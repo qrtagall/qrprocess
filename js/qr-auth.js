@@ -196,15 +196,28 @@ function setClaimStatus(message, isError) {
 }
 
 /** Full-screen + inline spinner while claim OAuth / registration is in progress. */
-function setClaimSpinner(show, statusMessage) {
+function setClaimSpinner(show, statusMessage, phase) {
     const overlay = document.getElementById("fullScreenSpinner");
     if (overlay) overlay.style.display = show ? "flex" : "none";
 
     const inline = document.getElementById("claimSpinner");
     if (inline) inline.style.display = show ? "block" : "none";
 
-    if (show && statusMessage) {
-        setClaimStatus(statusMessage);
+    if (show) {
+        if (statusMessage) {
+            const statusEl = document.getElementById("claimSpinnerStatus");
+            if (statusEl) {
+                statusEl.textContent = statusMessage;
+                setClaimStatus("");
+            } else {
+                setClaimStatus(statusMessage);
+            }
+        }
+        if (typeof applySpinnerPhaseColor === "function") {
+            const scope =
+                inline && inline.querySelector(".qrt-spinner-orbit") ? inline : overlay;
+            applySpinnerPhaseColor(phase || "verify", scope || document);
+        }
     }
 }
 

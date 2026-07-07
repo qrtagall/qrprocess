@@ -793,16 +793,19 @@ function applySpinnerPhaseColor(phase, scopeEl) {
     root.querySelectorAll(".qrt-spinner-orbit-text").forEach((el) => {
         el.style.fill = color;
     });
-    const statusEl = document.getElementById("spinnerStatus");
-    if (
-        statusEl &&
-        (!scopeEl ||
+    const statusNodes =
+        scopeEl && typeof scopeEl.querySelectorAll === "function"
+            ? scopeEl.querySelectorAll(".qrt-spinner-status")
+            : document.querySelectorAll(".qrt-spinner-status");
+    statusNodes.forEach((el) => {
+        if (
+            !scopeEl ||
             scopeEl === document ||
-            scopeEl.id === "spinner" ||
-            (scopeEl.contains && scopeEl.contains(statusEl)))
-    ) {
-        statusEl.style.color = color;
-    }
+            (scopeEl.contains && scopeEl.contains(el))
+        ) {
+            el.style.color = color;
+        }
+    });
 }
 
 // Utility for spinner control
