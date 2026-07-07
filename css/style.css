@@ -819,35 +819,54 @@ body {
 
 .qrt-artifact-btn {
     display: inline-flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    justify-content: center;
-    gap: 5px;
-    flex: 1 1 100px;
-    min-width: 92px;
-    max-width: 140px;
+    justify-content: flex-start;
+    gap: 10px;
+    flex: 1 1 120px;
+    min-width: 108px;
+    max-width: 168px;
     min-height: 52px;
-    padding: 10px 10px 8px;
+    padding: 11px 14px;
     font-family: inherit;
     font-weight: 600;
     line-height: 1.2;
-    border-radius: 10px;
+    border-radius: 12px;
     border: 1px solid #b8c9d6;
     background: #fff;
     color: #1a3a52;
     cursor: pointer;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
-    box-shadow: 0 1px 4px rgba(0, 60, 100, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 60, 100, 0.08);
     box-sizing: border-box;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, border-color 0.15s ease;
 }
 
 .qrt-artifact-btn:active {
     transform: scale(0.98);
 }
 
+@media (hover: hover) {
+    .qrt-artifact-btn-edit:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 90, 171, 0.16);
+    }
+
+    .qrt-artifact-btn-delete:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(183, 28, 28, 0.14);
+    }
+
+    .qrt-artifact-btn-add:hover,
+    .qrt-artifact-btn-new:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(27, 94, 32, 0.14);
+    }
+}
+
 .qrt-artifact-btn-icon {
-    font-size: 24px;
+    font-size: 20px;
     line-height: 1;
 }
 
@@ -943,31 +962,46 @@ body {
 /* QR-level edit toolbar (Clone / Transfer / …) */
 .qrt-edit-qr-btn {
     display: inline-flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    justify-content: center;
-    gap: 4px;
+    justify-content: flex-start;
+    gap: 10px;
     flex: 1 1 calc(50% - 10px);
-    min-width: 130px;
+    min-width: 140px;
     min-height: 52px;
-    padding: 10px 12px;
+    padding: 11px 14px;
     font-family: inherit;
     font-size: 15px;
     font-weight: 600;
     line-height: 1.25;
-    border-radius: 10px;
+    border-radius: 12px;
     border: 1px solid #c5b8e0;
-    background: #faf8ff;
+    background: linear-gradient(180deg, #faf8ff 0%, #f3effc 100%);
     color: #3d2d6b;
     cursor: pointer;
     touch-action: manipulation;
-    box-shadow: 0 1px 4px rgba(60, 40, 100, 0.08);
+    box-shadow: 0 2px 8px rgba(60, 40, 100, 0.08);
     box-sizing: border-box;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+@media (hover: hover) {
+    .qrt-edit-qr-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(60, 40, 100, 0.14);
+    }
 }
 
 .qrt-edit-qr-btn-icon {
-    font-size: 22px;
+    font-size: 20px;
     line-height: 1;
+    flex-shrink: 0;
+}
+
+.qrt-edit-qr-btn-label {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.25;
 }
 
 .qrt-edit-qr-btn-delete {
@@ -1031,22 +1065,31 @@ body {
 }
 
 .qrt-btn-dashboard-refresh {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     flex: 0 0 auto;
-    min-height: 36px;
+    min-height: 44px;
     min-width: auto;
-    padding: 6px 14px;
+    padding: 10px 14px;
+    font-family: inherit;
     font-size: 14px;
     font-weight: 600;
-    border-radius: 8px;
+    border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.55);
-    background: rgba(255, 255, 255, 0.22);
+    background: rgba(255, 255, 255, 0.2);
     color: #fff;
     cursor: pointer;
     touch-action: manipulation;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 
 .qrt-btn-dashboard-refresh:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.38);
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.34);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.16);
 }
 
 .qrt-btn-dashboard-refresh:disabled {
@@ -1372,12 +1415,12 @@ body {
     box-shadow: 0 2px 14px rgba(40, 30, 80, 0.06);
 }
 
-.qrt-session-btn {
+/* —— Shared action buttons (session bar, email artifacts, toolbars, modals) —— */
+.qrt-action-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
-    flex: 1 1 180px;
     min-height: 52px;
     padding: 11px 16px;
     font-family: inherit;
@@ -1389,7 +1432,47 @@ body {
     cursor: pointer;
     touch-action: manipulation;
     box-sizing: border-box;
+    text-align: left;
     transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.qrt-action-btn-icon,
+.qrt-session-btn-icon,
+.qrt-artifact-btn-icon,
+.qrt-edit-qr-btn-icon {
+    font-size: 20px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.qrt-action-btn-text,
+.qrt-session-btn-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    gap: 2px;
+    min-width: 0;
+}
+
+.qrt-action-btn-label,
+.qrt-session-btn-label,
+.qrt-artifact-btn-label {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.qrt-action-btn-hint,
+.qrt-session-btn-hint {
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.3;
+    opacity: 0.78;
+}
+
+.qrt-session-btn {
+    flex: 1 1 180px;
 }
 
 .qrt-session-btn-icon {
@@ -1664,22 +1747,30 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 10px;
     width: 100%;
     max-width: 320px;
     min-height: 52px;
     margin: 0 auto 14px;
-    padding: 14px 20px;
-    font-size: 17px;
-    font-weight: 700;
-    color: #fff;
-    background: linear-gradient(135deg, #e67e22 0%, #f39c12 100%);
-    border: none;
+    padding: 11px 18px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.2;
+    color: #7c4a12;
+    background: linear-gradient(180deg, #fff8ef 0%, #ffefd9 100%);
+    border: 1px solid #e8b88a;
     border-radius: 12px;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(230, 126, 34, 0.4);
+    box-shadow: 0 2px 8px rgba(230, 126, 34, 0.14);
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.qrt-choose-file-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(230, 126, 34, 0.2);
 }
 
 .qrt-choose-file-btn:active {
@@ -1797,28 +1888,31 @@ body {
 }
 
 .qrt-upload-btn {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 10px;
     width: 100%;
-    min-height: 48px;
-    padding: 12px 16px;
-    font-size: 16px;
+    min-height: 52px;
+    padding: 11px 18px;
+    font-family: inherit;
+    font-size: 15px;
     font-weight: 600;
-    color: #fff;
-    background: linear-gradient(135deg, #e67e22 0%, #f39c12 100%);
-    border: none;
-    border-radius: 10px;
+    line-height: 1.2;
+    color: #7c4a12;
+    background: linear-gradient(180deg, #fff8ef 0%, #ffefd9 100%);
+    border: 1px solid #e8b88a;
+    border-radius: 12px;
     cursor: pointer;
-    box-shadow: 0 3px 10px rgba(230, 126, 34, 0.35);
+    box-shadow: 0 2px 8px rgba(230, 126, 34, 0.14);
     touch-action: manipulation;
     margin-bottom: 10px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 
 .qrt-upload-btn:hover:not(:disabled) {
-    filter: brightness(1.05);
     transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(230, 126, 34, 0.2);
 }
 
 .qrt-upload-btn:disabled {
@@ -2454,45 +2548,82 @@ body.qrt-page-themed .qrt-link-preview-card {
     margin: 0 0 8px;
 }
 
-.qrt-message-email-wrap {
-    margin: 8px 0 10px 10px;
+.qrt-message-email-wrap,
+.qrt-custom-email-wrap,
+.qrt-email-artifact-wrap {
+    margin: 10px 0 12px;
+    display: flex;
+    justify-content: center;
+    padding: 0 8px;
 }
 
+.qrt-email-artifact-btn {
+    flex: 0 1 auto;
+    min-width: min(100%, 280px);
+    max-width: 360px;
+    width: 100%;
+    justify-content: flex-start;
+}
+
+.qrt-email-artifact-btn--message {
+    background: linear-gradient(
+        180deg,
+        rgba(var(--qr-theme-rgb, 0, 90, 171), 0.18) 0%,
+        rgba(var(--qr-theme-rgb, 0, 90, 171), 0.09) 100%
+    );
+    border-color: rgba(var(--qr-theme-rgb, 0, 90, 171), 0.34);
+    color: var(--qr-theme, var(--primary, #005aab));
+    box-shadow: 0 2px 8px rgba(var(--qr-theme-rgb, 0, 90, 171), 0.12);
+}
+
+.qrt-email-artifact-btn--custom {
+    background: linear-gradient(180deg, #f1faf2 0%, #e6f4e8 100%);
+    border-color: #81c784;
+    color: #1b5e20;
+    box-shadow: 0 2px 8px rgba(46, 125, 50, 0.12);
+}
+
+.qrt-email-artifact-btn--custom .qrt-action-btn-hint {
+    color: #2e7d32;
+    opacity: 0.85;
+}
+
+.qrt-email-artifact-btn.is-disabled,
+.qrt-email-artifact-btn:disabled,
+.qrt-custom-email-btn.is-disabled,
+.qrt-custom-email-btn:disabled {
+    background: linear-gradient(180deg, #f5f5f5 0%, #ececec 100%);
+    border-color: #d0d0d0;
+    color: #9e9e9e;
+    cursor: not-allowed;
+    opacity: 0.9;
+    box-shadow: none;
+    transform: none;
+}
+
+@media (hover: hover) {
+    .qrt-email-artifact-btn--message:hover:not(:disabled):not(.is-disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(var(--qr-theme-rgb, 0, 90, 171), 0.2);
+    }
+
+    .qrt-email-artifact-btn--custom:hover:not(:disabled):not(.is-disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(46, 125, 50, 0.18);
+    }
+}
+
+/* Legacy class hooks — keep for themed overrides */
 .qrt-message-email-btn {
-    min-width: 200px;
-    background: var(--qr-theme, var(--primary));
-    border: 1px solid var(--qr-theme, var(--primary));
-    color: #fff;
-    font-weight: 600;
-}
-
-.qrt-message-email-btn:hover {
-    filter: brightness(0.92);
-}
-
-.qrt-custom-email-wrap {
-    margin: 8px 0 10px 10px;
+    min-width: 0;
 }
 
 .qrt-custom-email-btn {
-    min-width: 200px;
-    background: #2e7d32;
-    border: 1px solid #1b5e20;
-    color: #fff;
-    font-weight: 600;
+    min-width: 0;
 }
 
-.qrt-custom-email-btn:hover:not(:disabled) {
-    filter: brightness(0.92);
-}
-
-.qrt-custom-email-btn:disabled,
-.qrt-custom-email-btn.is-disabled {
-    background: #a5d6a7;
-    border-color: #81c784;
-    color: #f1f8e9;
-    cursor: not-allowed;
-    opacity: 0.85;
+body.qrt-page-themed .qrt-email-artifact-btn--message {
+    box-shadow: 0 2px 10px rgba(var(--qr-theme-rgb, 0, 90, 171), 0.16);
 }
 
 .qrt-custom-email-fields .qrt-label {
@@ -2501,10 +2632,6 @@ body.qrt-page-themed .qrt-link-preview-card {
 
 .qrt-custom-email-fields .qrt-field {
     margin-bottom: 4px;
-}
-
-body.qrt-page-themed .qrt-message-email-btn {
-    box-shadow: 0 1px 4px rgba(var(--qr-theme-rgb, 0, 90, 171), 0.28);
 }
 
 .qrt-guest-msg-count {
@@ -2842,35 +2969,66 @@ body.qrt-page-themed .qrt-message-email-btn {
 }
 
 .qrt-btn {
-    min-height: 44px;
-    min-width: 88px;
-    padding: 10px 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 48px;
+    min-width: 96px;
+    padding: 11px 18px;
+    font-family: inherit;
     font-size: 15px;
-    border-radius: 8px;
-    border: none;
+    font-weight: 600;
+    line-height: 1.2;
+    border-radius: 12px;
+    border: 1px solid transparent;
     cursor: pointer;
     touch-action: manipulation;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, border-color 0.15s ease;
 }
 
 .qrt-btn-primary {
-    background: var(--primary);
-    color: #fff;
-    font-weight: 600;
+    background: linear-gradient(
+        180deg,
+        rgba(var(--qr-theme-rgb, 0, 90, 171), 0.2) 0%,
+        rgba(var(--qr-theme-rgb, 0, 90, 171), 0.1) 100%
+    );
+    border-color: rgba(var(--qr-theme-rgb, 0, 90, 171), 0.38);
+    color: var(--qr-theme, var(--primary, #005aab));
+    box-shadow: 0 2px 8px rgba(var(--qr-theme-rgb, 0, 90, 171), 0.12);
 }
 
 .qrt-btn-secondary {
-    background: #e8e8e8;
-    color: #333;
+    background: #fff;
+    border-color: #d0d5dd;
+    color: #444;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.06);
 }
 
 .qrt-btn-danger {
-    background: #c0392b;
-    color: #fff;
-    font-weight: 600;
+    background: linear-gradient(180deg, #fff5f5 0%, #ffecec 100%);
+    border-color: #e0a0a0;
+    color: #b71c1c;
+    box-shadow: 0 2px 8px rgba(183, 28, 28, 0.1);
 }
 
-.qrt-btn-danger:hover {
-    background: #a93226;
+@media (hover: hover) {
+    .qrt-btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(var(--qr-theme-rgb, 0, 90, 171), 0.18);
+    }
+
+    .qrt-btn-secondary:hover {
+        transform: translateY(-1px);
+        background: #f8f9fa;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    .qrt-btn-danger:hover {
+        transform: translateY(-1px);
+        background: linear-gradient(180deg, #fff0f0 0%, #ffe0e0 100%);
+        box-shadow: 0 4px 12px rgba(183, 28, 28, 0.14);
+    }
 }
 
 /* Master page link tree (Root → Branches) */

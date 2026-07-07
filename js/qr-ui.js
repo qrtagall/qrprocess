@@ -2118,9 +2118,11 @@ Owner email is never shown to visitors.`;
 
 const ARTIFACT_CUSTOMEMAIL_HINT = `💡 Custom Email artifact:<br>
 <strong>Button text</strong> (default <strong>Send Email</strong>), up to <strong>3 To</strong> and <strong>3 CC</strong> addresses (comma or semicolon).<br>
+Recipients can use <strong>any email provider</strong>; only <strong>To</strong> addresses can reply, and only via <strong>Google sign-in</strong> matching that address.<br>
+Your <strong>owner email is removed automatically</strong> from To/CC if you add it.<br>
 Recipients are stored server-side and never shown to visitors.<br>
 Guests sign in with Google and send up to <strong>300</strong> characters (<strong>5 per day</strong> per QR page).<br>
-<strong>To</strong> recipients may reply via Google (first reply closes the thread). <strong>CC</strong> is observe-only.<br>
+<strong>To</strong> recipients may reply once (first reply closes the thread). <strong>CC</strong> is observe-only.<br>
 <code>NOVIEW</code>: visitors see the button disabled.`;
 
 const GUEST_MESSAGE_MAX_LEN = 150;
@@ -2355,13 +2357,74 @@ function loadCustomEmailFieldsFromItem(item) {
     ccEl.value = ccList.join(", ");
 }
 
-function validateCustomEmailForm() {
+function getCustomEmailBlockOwnerEmail(linkId) {
+    const block =
+        typeof findAssetBlockByLinkOrSheet === "function"
+            ? findAssetBlockByLinkOrSheet(linkId)
+            : null;
+    const fromBlock = String(block?.email || "")
+        .toLowerCase()
+        .trim();
+    if (fromBlock && fromBlock !== "unknown@user") return fromBlock;
+    return String(typeof sessionEmail === "string" ? sessionEmail : "")
+        .toLowerCase()
+        .trim();
+}
+
+/** Remove owner email from To/CC fields; toast when stripped. */
+function applyCustomEmailOwnerConflictStrip(linkId) {
+    const ownerEmail = getCustomEmailBlockOwnerEmail(linkId);
+    const toEl = document.getElementById("artifactCustomEmailTo");
+    const ccEl = document.getElementById("artifactCustomEmailCc");
+    if (!toEl || !ccEl) {
+        return { removed: false, to: [], cc: [] };
+    }
+
+    let to = parseCustomEmailRecipientsInput(toEl.value, 3);
+    let cc = parseCustomEmailRecipientsInput(ccEl.value, 3);
+    let removed = false;
+
+    if (ownerEmail) {
+        const stripOwner = (list) =>
+            list.filter((em) => {
+                if (em === ownerEmail) {
+                    removed = true;
+                    return false;
+                }
+                return true;
+            });
+        to = stripOwner(to);
+        cc = stripOwner(cc);
+    }
+
+    if (removed) {
+        toEl.value = to.join(", ");
+        ccEl.value = cc.join(", ");
+        notify(
+            "Your owner email was removed from To/CC — it cannot be a recipient on your own artifact.",
+            "info"
+        );
+    }
+
+    return { removed, to, cc };
+}
+
+function validateCustomEmailForm(linkId) {
+    const lid =
+        linkId ||
+        document.getElementById("addArtifactModal")?.getAttribute("data-link-id") ||
+        "";
+    applyCustomEmailOwnerConflictStrip(lid);
+
     const to = parseCustomEmailRecipientsInput(
         document.getElementById("artifactCustomEmailTo")?.value || "",
         3
     );
     if (!to.length) {
-        notify("Enter at least one To recipient email (max 3).", "error");
+        notify(
+            "Enter at least one To recipient (max 3). Owner email is not allowed.",
+            "error"
+        );
         document.getElementById("artifactCustomEmailTo")?.focus();
         return null;
     }
@@ -3014,7 +3077,7 @@ function saveArtifact() {
     if (isMsgEmail) {
         // No link/text body required — button-only artifact.
     } else if (isCustomEmail) {
-        customEmailLink = validateCustomEmailForm();
+        customEmailLink = validateCustomEmailForm(linkId);
         if (!customEmailLink) return;
     } else if (isText && fileType !== "TEXT") {
         if (!textInfo) {
@@ -3300,6 +3363,35 @@ async function saveArtifactInfo({
 
 
 /**************** Guest MESSAGEEMAIL ****************/
+
+function buildEmailArtifactButtonHtml(opts) {
+    const {
+        variant = "message",
+        label = MESSAGEEMAIL_BUTTON_LABEL,
+        hint = "",
+        recipientQrId = "",
+        sheetRow = 0,
+        disabled = false,
+    } = opts || {};
+    const isCustom = variant === "custom";
+    const defaultHint = "Sign in with Google to send";
+    const hintText = escapeHtml(hint || defaultHint);
+    const labelText = escapeHtml(label || MESSAGEEMAIL_BUTTON_LABEL);
+    const rid = escapeHtml(recipientQrId || "");
+    const variantCls = isCustom
+        ? "qrt-email-artifact-btn--custom qrt-custom-email-btn"
+        : "qrt-email-artifact-btn--message qrt-message-email-btn";
+    const disabledAttr = disabled ? " disabled" : "";
+    const disabledCls = disabled ? " is-disabled" : "";
+    const dataSheet = isCustom ? ` data-sheet-row="${Number(sheetRow) || 0}"` : "";
+    return `<button type="button" class="qrt-action-btn qrt-email-artifact-btn ${variantCls}${disabledCls}" data-recipient-qr-id="${rid}"${dataSheet}${disabledAttr}>
+        <span class="qrt-action-btn-icon" aria-hidden="true">✉️</span>
+        <span class="qrt-action-btn-text">
+            <span class="qrt-action-btn-label">${labelText}</span>
+            <span class="qrt-action-btn-hint">${hintText}</span>
+        </span>
+    </button>`;
+}
 
 function getContactModalEls(kind) {
     const isGuest = kind === "guest";
@@ -3776,25 +3868,22 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
 
     if (typeUpper === "CUSTOMEMAIL") {
         const headerTitle = escapeHtml(title || "Contact");
-        const buttonLabel = escapeHtml(
-            asset.buttonLabel ||
-                asset.customEmailConfig?.buttonText ||
-                CUSTOM_EMAIL_DEFAULT_BUTTON
-        );
         const isNoviewGuest = visibilityUpper === "NOVIEW" && !isArticatOener;
-        const disabledAttr = isNoviewGuest ? " disabled" : "";
-        const disabledCls = isNoviewGuest
-            ? "qrt-custom-email-btn is-disabled"
-            : "qrt-custom-email-btn";
-        const rid = escapeHtml(linkId || "");
         const sheetRow = Number(asset.sheetRow) || 0;
 
         mainBlock.innerHTML = `
             <p>${serialPrefixOrFallback}<b>${headerTitle}</b> ${visibilityIcon}</p>
-            <div class="qrt-custom-email-wrap">
-                <button type="button" class="qrt-btn ${disabledCls}" data-recipient-qr-id="${rid}" data-sheet-row="${sheetRow}"${disabledAttr}>
-                    ${buttonLabel}
-                </button>
+            <div class="qrt-email-artifact-wrap qrt-custom-email-wrap">
+                ${buildEmailArtifactButtonHtml({
+                    variant: "custom",
+                    label:
+                        asset.buttonLabel ||
+                        asset.customEmailConfig?.buttonText ||
+                        CUSTOM_EMAIL_DEFAULT_BUTTON,
+                    recipientQrId: linkId,
+                    sheetRow,
+                    disabled: isNoviewGuest,
+                })}
             </div>`;
         wrapper.appendChild(mainBlock);
         const btn = mainBlock.querySelector(".qrt-custom-email-btn");
@@ -3834,13 +3923,14 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
 
     if (typeUpper === "MESSAGEEMAIL") {
         const headerTitle = escapeHtml(title || "Contact");
-        const rid = escapeHtml(linkId || "");
         mainBlock.innerHTML = `
             <p>${serialPrefixOrFallback}<b>${headerTitle}</b> ${visibilityIcon}</p>
-            <div class="qrt-message-email-wrap">
-                <button type="button" class="qrt-btn qrt-message-email-btn" data-recipient-qr-id="${rid}">
-                    ${MESSAGEEMAIL_BUTTON_LABEL}
-                </button>
+            <div class="qrt-email-artifact-wrap qrt-message-email-wrap">
+                ${buildEmailArtifactButtonHtml({
+                    variant: "message",
+                    label: MESSAGEEMAIL_BUTTON_LABEL,
+                    recipientQrId: linkId,
+                })}
             </div>`;
         wrapper.appendChild(mainBlock);
         const btn = mainBlock.querySelector(".qrt-message-email-btn");

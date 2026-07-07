@@ -24,7 +24,7 @@
 
     <!-- -->
     <link rel="stylesheet" href="./css/qrtag-theme-tokens.css?v=20260604e">
-    <link rel="stylesheet" href="./css/style.css?v=20260704a">
+    <link rel="stylesheet" href="./css/style.css?v=20260707c">
 
 </head>
 <body>
@@ -169,20 +169,20 @@
     <!-- Action buttons visible only in editMode -->
     <!-- Action buttons visible only in editMode -->
     <div id="editActions" class="edit-actions-bar" style="display: none;">
-        <button type="button" class="qrt-edit-qr-btn qrt-edit-qr-btn-clone" onclick="openCloneDialog()">
-            <span class="qrt-edit-qr-btn-icon" aria-hidden="true">🔁</span><span>Clone QR</span>
+        <button type="button" class="qrt-action-btn qrt-edit-qr-btn qrt-edit-qr-btn-clone" onclick="openCloneDialog()">
+            <span class="qrt-edit-qr-btn-icon" aria-hidden="true">🔁</span><span class="qrt-edit-qr-btn-label">Clone QR</span>
         </button>
-        <button type="button" class="qrt-edit-qr-btn qrt-edit-qr-btn-transfer" onclick="openTransferDialog()">
-            <span class="qrt-edit-qr-btn-icon" aria-hidden="true">🔀</span><span>Transfer QR</span>
+        <button type="button" class="qrt-action-btn qrt-edit-qr-btn qrt-edit-qr-btn-transfer" onclick="openTransferDialog()">
+            <span class="qrt-edit-qr-btn-icon" aria-hidden="true">🔀</span><span class="qrt-edit-qr-btn-label">Transfer QR</span>
         </button>
-        <button type="button" class="qrt-edit-qr-btn qrt-edit-qr-btn-addqr" onclick="openAddQRDialog()">
-            <span class="qrt-edit-qr-btn-icon" aria-hidden="true">➕</span><span>Add QR</span>
+        <button type="button" class="qrt-action-btn qrt-edit-qr-btn qrt-edit-qr-btn-addqr" onclick="openAddQRDialog()">
+            <span class="qrt-edit-qr-btn-icon" aria-hidden="true">➕</span><span class="qrt-edit-qr-btn-label">Add QR</span>
         </button>
-        <button type="button" class="qrt-edit-qr-btn qrt-edit-qr-btn-delete" onclick="openDeleteDialog()">
-            <span class="qrt-edit-qr-btn-icon" aria-hidden="true">❌</span><span>Delete QR</span>
+        <button type="button" class="qrt-action-btn qrt-edit-qr-btn qrt-edit-qr-btn-delete" onclick="openDeleteDialog()">
+            <span class="qrt-edit-qr-btn-icon" aria-hidden="true">❌</span><span class="qrt-edit-qr-btn-label">Delete QR</span>
         </button>
-        <button type="button" class="qrt-edit-qr-btn qrt-edit-qr-btn-explore" onclick="openUserDashboardFromEditBar()">
-            <span class="qrt-edit-qr-btn-icon" aria-hidden="true">📊</span><span>Explore all other Assets</span>
+        <button type="button" class="qrt-action-btn qrt-edit-qr-btn qrt-edit-qr-btn-explore" onclick="openUserDashboardFromEditBar()">
+            <span class="qrt-edit-qr-btn-icon" aria-hidden="true">📊</span><span class="qrt-edit-qr-btn-label">Explore all other Assets</span>
         </button>
     </div>
 
@@ -351,14 +351,14 @@
     -->
 
     <div class="qrt-session-bar" id="sessionActionBar" aria-label="Account actions">
-        <button id="editBtn" class="qrt-session-btn qrt-session-btn--edit qrt-session-btn--guest" type="button" onclick="editAlert()" aria-label="Log in to edit this ID">
+        <button id="editBtn" class="qrt-action-btn qrt-session-btn qrt-session-btn--edit qrt-session-btn--guest" type="button" onclick="editAlert()" aria-label="Log in to edit this ID">
             <span class="qrt-session-btn-icon" aria-hidden="true">🔐</span>
             <span class="qrt-session-btn-text">
                 <span class="qrt-session-btn-label">Log in to edit</span>
                 <span class="qrt-session-btn-hint">Sign in with Google</span>
             </span>
         </button>
-        <button id="logoutBtn" class="qrt-session-btn qrt-session-btn--logout qrt-session-hidden" type="button" onclick="handleLogout()" aria-label="Log out of your account">
+        <button id="logoutBtn" class="qrt-action-btn qrt-session-btn qrt-session-btn--logout qrt-session-hidden" type="button" onclick="handleLogout()" aria-label="Log out of your account">
             <span class="qrt-session-btn-icon" aria-hidden="true">↪</span>
             <span class="qrt-session-btn-label">Log out</span>
         </button>
@@ -698,7 +698,7 @@
 
 
 <script>
-    const QRTagAll_Ver_ = "10.41";
+    const QRTagAll_Ver_ = "10.43";
 </script>
 
 
@@ -711,7 +711,7 @@
 <script src="./js/qr-fetch.js?v=20260707a"></script>
 <script src="./js/qr-edit.js?v=20260618b"></script>
 <script src="./js/qr-dashboard.js?v=20260613a"></script>
-<script src="./js/qr-ui.js?v=20260707a"></script>
+<script src="./js/qr-ui.js?v=20260707c"></script>
 <script src="./js/qr-main.js?v=20260704a"></script>
 <!--   -->
 
