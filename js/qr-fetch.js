@@ -551,7 +551,12 @@ async function saveGdriveArtifactInBrowser({
         throw new Error("QR ID mismatch in spreadsheet");
     }
 
-    const values = valuesRaw ? String(valuesRaw).split("||") : [];
+    const values =
+        typeof splitArtifactSaveValues === "function"
+            ? splitArtifactSaveValues(valuesRaw)
+            : valuesRaw
+              ? String(valuesRaw).split("||")
+              : [];
     const { row, col } = parseArtifactRange(startRange);
     const rowIndex = row - 1;
 
@@ -2034,11 +2039,19 @@ async function triggerLink_post(params, rawfiledata, rawfilename, modalId = null
                 rawfiledata,
                 rawfilename
             );
-            const parts = (urlParams.get("values") || "").split("||");
+            const parts =
+                typeof splitArtifactSaveValues === "function"
+                    ? splitArtifactSaveValues(urlParams.get("values") || "")
+                    : (urlParams.get("values") || "").split("||");
             while (parts.length < 5) parts.push("");
             parts[3] = link;
             parts[4] = artifactDateTimeStamp();
-            urlParams.set("values", parts.join("||"));
+            urlParams.set(
+                "values",
+                typeof joinArtifactSaveValues === "function"
+                    ? joinArtifactSaveValues(parts)
+                    : parts.join("||||")
+            );
             await triggerLink_get(urlParams.toString(), modalId);
         } catch (err) {
             if (spinner) spinner.style.display = "none";

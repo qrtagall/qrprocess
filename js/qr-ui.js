@@ -3010,10 +3010,12 @@ function saveArtifact() {
         return;
     }
 
+    let customEmailLink = "";
     if (isMsgEmail) {
         // No link/text body required — button-only artifact.
     } else if (isCustomEmail) {
-        if (!validateCustomEmailForm()) return;
+        customEmailLink = validateCustomEmailForm();
+        if (!customEmailLink) return;
     } else if (isText && fileType !== "TEXT") {
         if (!textInfo) {
             notify("Please enter a Google Drive link.", "error");
@@ -3047,7 +3049,7 @@ function saveArtifact() {
     const url = isMsgEmail
         ? "-"
         : isCustomEmail
-          ? buildCustomEmailLocalLinkFromForm()
+          ? customEmailLink
           : isText
             ? textInfo
             : selectedUploadedFileLink || fileLink;
@@ -3072,15 +3074,22 @@ function saveArtifact() {
         saveArtifactInfo({
             startCell: cellOffset,
             basicInfo: effectiveBasicInfo,
-            fileType: isMsgEmail ? fileType : isText ? fileType : original.type || "TEXT",
+            fileType:
+                isMsgEmail || isCustomEmail
+                    ? fileType
+                    : isText
+                      ? fileType
+                      : original.type || "TEXT",
             visibility,
             linkOrText: isMsgEmail
                 ? "-"
-                : isText
+                : isCustomEmail
                   ? url
-                  : hasNewFileUpload
-                    ? selectedUploadedFileLink || url
-                    : original.url || "",
+                  : isText
+                    ? url
+                    : hasNewFileUpload
+                      ? selectedUploadedFileLink || url
+                      : original.url || "",
             modalId,
             targetLinkId: sheetId,
             rawfilename: hasNewFileUpload ? selectedUploadedFileName : undefined,
@@ -3165,7 +3174,10 @@ async function saveArtifactInfo({
     if (fileType !== undefined) valueParts.push(safe(fileType));
     if (visibility !== undefined) valueParts.push(safe(visibility));
     if (linkOrText !== undefined) valueParts.push(safe(linkOrText));
-    const finalValues = valueParts.join("||");
+    const finalValues =
+        typeof joinArtifactSaveValues === "function"
+            ? joinArtifactSaveValues(valueParts)
+            : valueParts.join("||||");
 
     const userEmail = sessionEmail;
 

@@ -2,6 +2,23 @@
 
 let EditLinkID=null;
 
+/** Artifact save payload separator (distinct from CUSTOMEMAIL Local Link `||`). */
+const ARTIFACT_SAVE_FIELD_SEP = "||||";
+
+function joinArtifactSaveValues(parts) {
+    return (Array.isArray(parts) ? parts : [])
+        .map((p) => String(p ?? ""))
+        .join(ARTIFACT_SAVE_FIELD_SEP);
+}
+
+function splitArtifactSaveValues(raw) {
+    const s = String(raw || "");
+    if (s.includes(ARTIFACT_SAVE_FIELD_SEP)) {
+        return s.split(ARTIFACT_SAVE_FIELD_SEP);
+    }
+    return s ? s.split("||") : [];
+}
+
 
 const BaseColorApproved = "#e5fee5";
 const BaseColorNotApproved = "#fedcdc";
