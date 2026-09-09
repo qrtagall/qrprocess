@@ -52,7 +52,8 @@
   "prefixAliases": {
     "TMP": "IN",
     "TEMP": "IN",
-    "VEH": "IN",
+	"RNT": "IN",
+	"VEH": "IN",
     "PLT": "IN",
     "QRTAG": "IN",
     "SER": "IN",
