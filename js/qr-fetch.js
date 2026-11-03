@@ -1527,36 +1527,64 @@ function renderThumbnailGrid(thumbnails) {
 
 
 /** True when master registry has a row for this QR ID (signature not checked). */
+async function invokeMultiSheetGetWithFallback(qrId, buildUrl, options = {}) {
+    const primary = multiSheetUrlForQr(qrId);
+    const callbackName =
+        options.callbackName || "handleQRTagAllResponse_" + Date.now();
+    const primaryUrl = buildUrl(primary, callbackName);
+    let data = await invokeAppsScriptGet(primaryUrl, callbackName, {
+        timeoutMs: options.timeoutMs || 60000,
+        softFail: true,
+    });
+    if (data && data.found !== false) {
+        return data;
+    }
+    const fallback =
+        typeof getFallbackMultiSheetUrl === "function"
+            ? getFallbackMultiSheetUrl(qrId)
+            : "";
+    if (!fallback || fallback === primary) {
+        return data;
+    }
+    const cb2 = (options.callbackName || "handleQRTagAllResponse_") + "_fb_" + Date.now();
+    console.log("[qr-fetch] primary cell miss — retrying IN fallback for", qrId);
+    const fbData = await invokeAppsScriptGet(buildUrl(fallback, cb2), cb2, {
+        timeoutMs: options.timeoutMs || 60000,
+        softFail: true,
+    });
+    return fbData || data;
+}
+
 async function checkMasterRegistryExists(id) {
     const qrId = String(id || "").trim();
     if (!qrId) return false;
-    const callbackName = "handleQRTagAllResponse_" + Date.now();
-    const url = `${multiSheetUrlForQr(qrId)}?id=${encodeURIComponent(qrId)}&callback=${callbackName}`;
-    const data = await invokeAppsScriptGet(url, callbackName, {
-        timeoutMs: 30000,
-        softFail: true,
-    });
+    const data = await invokeMultiSheetGetWithFallback(
+        qrId,
+        (base, cb) => `${base}?id=${encodeURIComponent(qrId)}&callback=${cb}`,
+        { timeoutMs: 30000 }
+    );
     return !!(data && data.found === true);
 }
 
 async function fetchAllRemoteSheets(id, options = {}) {
-    const callbackName = "handleQRTagAllResponse_" + Date.now();
-    let url = `${multiSheetUrlForQr(id)}?id=${encodeURIComponent(id)}&callback=${callbackName}`;
-
     // Count a view only when explicitly requested (initial page load). The
     // server excludes the owner; pass the logged-in email so owner visits skip.
-    if (options.countView) {
-        url += `&countView=1`;
+    const viewQs = (() => {
+        if (!options.countView) return "";
+        let qs = `&countView=1`;
         const viewer =
             typeof sessionEmail === "string" && sessionEmail ? sessionEmail : "";
-        if (viewer) url += `&viewerEmail=${encodeURIComponent(viewer)}`;
-    }
+        if (viewer) qs += `&viewerEmail=${encodeURIComponent(viewer)}`;
+        return qs;
+    })();
 
     try {
-        const data = await invokeAppsScriptGet(url, callbackName, {
-            timeoutMs: 60000,
-            softFail: true,
-        });
+        const data = await invokeMultiSheetGetWithFallback(
+            id,
+            (base, cb) =>
+                `${base}?id=${encodeURIComponent(id)}&callback=${cb}${viewQs}`,
+            { timeoutMs: 60000 }
+        );
         if (!data) {
             console.warn("fetchAllRemoteSheets: no response");
             return [];

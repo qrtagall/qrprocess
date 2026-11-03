@@ -247,6 +247,30 @@
         return getQrCell(qrIdOrPrefix).multiSheetUrl;
     }
 
+    /**
+     * For RNT/RNTT: if primary cell is not IN, return IN MultiSheet URL so
+     * legacy QRs still registered on the main cell can be resolved.
+     */
+    function getFallbackMultiSheetUrl(qrIdOrPrefix) {
+        const cell = getQrCell(qrIdOrPrefix);
+        const key = String(cell.cellKey || "").toUpperCase();
+        if (key === "IN" || key === "") return "";
+        let prefix = String(qrIdOrPrefix || "").trim();
+        if (prefix.includes("_")) {
+            prefix =
+                typeof getRoutingPrefixFromId === "function"
+                    ? getRoutingPrefixFromId(prefix)
+                    : prefix.split("_")[0];
+        }
+        const p = String(prefix || "").toUpperCase();
+        if (p !== "RNT" && p !== "RNTT") return "";
+        const cfg = getCellsConfigSync();
+        const inCell = cfg.cells && cfg.cells.IN;
+        const fallbackUrl = inCell && inCell.multiSheetUrl;
+        if (!fallbackUrl || fallbackUrl === cell.multiSheetUrl) return "";
+        return fallbackUrl;
+    }
+
     function getLegacyResolveUrl() {
         return clientScripts.legacyResolveUrl || EMBEDDED_CLIENT_SCRIPTS.legacyResolveUrl;
     }
@@ -279,6 +303,7 @@
     window.isPrefixIconImageUrl = isPrefixIconImageUrl;
     window.resolvePrefixIconUrl = resolvePrefixIconUrl;
     window.getMultiSheetUrl = getMultiSheetUrl;
+    window.getFallbackMultiSheetUrl = getFallbackMultiSheetUrl;
     window.getLegacyResolveUrl = getLegacyResolveUrl;
     window.getViewDriveUrl = getViewDriveUrl;
     window.getClaimRemoteUrl = getClaimRemoteUrl;
