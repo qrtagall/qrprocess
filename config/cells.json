@@ -1,6 +1,6 @@
 {
   "_comment": "prefixAliases: QR prefix → cell. prefixIcons: emoji (e.g. \"🚗\") OR image URL/path (png, gif, webp, svg) shown at QR center. Other examples: \"TMP1\": \"https://process.qrtagall.com/icons/partner.gif\",\"PLT\": \"./icons/plant.png\"",
-  "version": 4,
+  "version": 8,
   "defaultCell": "IN",
   "defaultPrefixIcon": "https://raw.githubusercontent.com/qrtagall/qrjourney/refs/heads/main/Logo_small.png",
   "prefixIcons": {
@@ -8,9 +8,9 @@
     "TEMP": "🧪",
     "VEH": "🚗",
     "PLT": "🏭",
-    "FLO1": "./icons/flo1-divineblossoms.png",
+    "FLO1": "./icons/flo1-logo.png",
     "QRTAG": "https://raw.githubusercontent.com/qrtagall/qrjourney/refs/heads/main/Logo_small.png",
-	"RNT": "🏠",
+    "RNT": "🏠",
     "SER": "🦺",
     "SERA": "🩺",
     "SERB": "🚙",
@@ -48,14 +48,15 @@
     "EOF": "📌",
     "EOG": "🧾",
     "EOH": "📎",
-    "TMP1": "🤝"
+    "TMP1": "🤝",
+    "IN": "🏷️"
   },
   "prefixAliases": {
     "TMP": "IN",
     "TEMP": "IN",
-	"RNT": "IN",
-	"RNTT": "IN",
-	"VEH": "IN",
+    "RNT": "IN",
+    "RNTT": "IN",
+    "VEH": "IN",
     "PLT": "IN",
     "FLO1": "IN",
     "QRTAG": "IN",
@@ -96,7 +97,8 @@
     "EOF": "IN",
     "EOG": "IN",
     "EOH": "IN",
-    "TMP1": "TMP1"
+    "TMP1": "TMP1",
+    "IN": "IN"
   },
   "cells": {
     "IN": {

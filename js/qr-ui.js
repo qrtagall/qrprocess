@@ -742,8 +742,9 @@ function renderMultipleRemoteBlocks(remoteList) {
                 }
             }
 
-            // Asset loading
+            // Asset loading (guard before async — EXPAND + "last link" can both call loadAssets)
             let isLoaded = false;
+            let isLoading = false;
             const isBlockEditable =
                 !dataUnavailable &&
                 sessionEmail &&
@@ -751,13 +752,15 @@ function renderMultipleRemoteBlocks(remoteList) {
                 sessionEmail.toLowerCase() === email.toLowerCase();
 
             const loadAssets = () => {
-                if (isLoaded) return;
+                if (isLoaded || isLoading) return;
+                isLoading = true;
                 if (dataUnavailable) {
                     contentDiv.innerHTML =
                         '<p class="qrt-data-unavailable">⚠️ <b>Data is not available.</b> ' +
                         "The linked spreadsheet or files may have been removed from Google Drive " +
                         "while this QR is still registered. As owner, you can <b>Delete QR</b> to clear the registry entry.</p>";
                     isLoaded = true;
+                    isLoading = false;
                     return;
                 }
 
@@ -767,6 +770,10 @@ function renderMultipleRemoteBlocks(remoteList) {
 
                 setTimeout(() => {
                     spinner.remove();
+                    if (isLoaded) {
+                        isLoading = false;
+                        return;
+                    }
                     let visibleSerial = 0;
                     (assets || []).forEach((asset, i) => {
                         let displaySerial = null;
@@ -780,6 +787,7 @@ function renderMultipleRemoteBlocks(remoteList) {
                         contentDiv.appendChild(block);
                     });
                     isLoaded = true;
+                    isLoading = false;
                 }, 200);
             };
 
