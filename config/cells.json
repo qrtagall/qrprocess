@@ -109,8 +109,9 @@
       "label": "Partner TMP1 cell"
     },
     "RNT": {
-      "multiSheetUrl": "https://script.google.com/macros/s/AKfycbzQQfgRYy4XF6m7atfPq5DBEtqbuotD_g1dlmLcpK5CNEypSoPKaPV14473N0r1OWm8/exec",
-      "label": "Rent RNT cell"
+      "multiSheetUrl": "https://script.google.com/macros/s/AKfycbytl1ePW3PbGoAUlnwBtCvKruI5SMQUcYxypyK399mjau981sjwtyEcSzMkYSTlOLmY/exec",
+      "label": "Rent RNT cell (routed via IN MultiSheet — prior RNT-only exec returned Google HTML for ?id= / form authToken)",
+      "brokenExecNote": "AKfycbzQQfgRYy4XF6m7atfPq5DBEtqbuotD_g1dlmLcpK5CNEypSoPKaPV14473N0r1OWm8 — redeploy MultiSheet as Anyone before pointing RNT here again"
     }
   }
 }
