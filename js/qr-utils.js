@@ -969,10 +969,22 @@ function printQR() {
 }
 
 
+/**
+ * Parse link-banner description tags (B2).
+ * EXPAND modes:
+ *   <EXPAND> / <EX>              → auto-open
+ *   <EXPAND=DISABLE>             → collapsed; click shows "Disabled"
+ *   <EXPAND=AUTH=code>           → collapsed; click prompts for code (max 8 ASCII)
+ *   <EX=…> accepted as short form of EXPAND=
+ */
 function parseInlineOptions(text) {
     const out = {
         cleanText: "",
         expand: false,
+        /** @type {null|"open"|"disable"|"auth"} */
+        expandMode: null,
+        /** Auth code when expandMode === "auth" (max 8 ASCII printable, no spaces). */
+        expandAuth: "",
         color: null,
         noid: false,
         noowner: false,
@@ -983,10 +995,26 @@ function parseInlineOptions(text) {
 
     let clean = typeof text === "string" ? text : String(text);
 
-    // --- Expand / EX ---
-    if (/<\s*(EXPAND|EX)\s*>/i.test(clean)) {
+    // --- Expand variants (parameterized forms first) ---
+    if (/<\s*(EXPAND|EX)\s*=\s*DISABLE\s*>/i.test(clean)) {
+        out.expandMode = "disable";
+        out.expand = false;
+        clean = clean.replace(/<\s*(EXPAND|EX)\s*=\s*DISABLE\s*>/gi, "");
+    }
+
+    const authMatch = clean.match(/<\s*(EXPAND|EX)\s*=\s*AUTH\s*=\s*([!-~]{1,8})\s*>/i);
+    if (authMatch) {
+        out.expandMode = "auth";
+        out.expandAuth = String(authMatch[2] || "");
+        out.expand = false;
+        clean = clean.replace(/<\s*(EXPAND|EX)\s*=\s*AUTH\s*=\s*[!-~]{1,8}\s*>/gi, "");
+    }
+
+    // Plain <EXPAND> / <EX> — auto-open (only if no parameterized mode already set)
+    if (!out.expandMode && /<\s*(EXPAND|EX)\s*>/i.test(clean)) {
         out.expand = true;
-        clean = clean.replace(/<\s*(EXPAND|EX)\s*>/ig, "");
+        out.expandMode = "open";
+        clean = clean.replace(/<\s*(EXPAND|EX)\s*>/gi, "");
     }
 
     // --- Color / Col ---

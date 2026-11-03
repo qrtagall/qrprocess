@@ -680,6 +680,25 @@
     </div>
 </div>
 
+<!-- 🔐 Link banner EXPAND=AUTH unlock (session only; collapses again after refresh) -->
+<div id="expandAuthModal" class="qrt-modal" style="display:none;" role="dialog" aria-labelledby="expandAuthTitle" aria-modal="true">
+    <div class="qrt-modal-panel qrt-modal-panel-center qrt-modal-panel-confirm">
+        <div class="qrt-modal-header-stripe qrt-stripe-warn">
+            <h3 id="expandAuthTitle">🔐 Enter Auth Code</h3>
+        </div>
+        <div class="qrt-form-section" style="margin: 12px 0 0;">
+            <label class="qrt-label" for="expandAuthInput">Auth code</label>
+            <input id="expandAuthInput" type="password" class="qrt-field" maxlength="8" autocomplete="off"
+                placeholder="Up to 8 characters" onkeydown="if(event.key==='Enter'){event.preventDefault();submitExpandAuthCode();}">
+            <p id="expandAuthError" class="qrt-modal-hint" style="display:none;color:#c0392b;margin-top:8px;"></p>
+        </div>
+        <div class="qrt-modal-actions qrt-modal-actions-center">
+            <button type="button" class="qrt-btn qrt-btn-primary qrt-btn-lg" onclick="submitExpandAuthCode()">Unlock</button>
+            <button type="button" class="qrt-btn qrt-btn-secondary qrt-btn-lg" onclick="closeExpandAuthModal(false)">Cancel</button>
+        </div>
+    </div>
+</div>
+
 
 <!-- 🌐 Universal Preview Modal -->
 <div id="previewModal" class="qrt-modal qrt-modal-preview" style="display:none;">
@@ -705,13 +724,13 @@
 
 
 <!-- bump ?v= whenever JS changes to force browsers to load the new files -->
-<script src="./js/qr-utils.js?v=20260707a"></script>
+<script src="./js/qr-utils.js?v=20261103b"></script>
 <script src="./js/qr-cells.js?v=20260617i"></script>
 <script src="./js/qr-auth.js?v=20260704a"></script>
 <script src="./js/qr-fetch.js?v=20260707a"></script>
 <script src="./js/qr-edit.js?v=20260618b"></script>
 <script src="./js/qr-dashboard.js?v=20260613a"></script>
-<script src="./js/qr-ui.js?v=20261103a"></script>
+<script src="./js/qr-ui.js?v=20261103b"></script>
 <script src="./js/qr-main.js?v=20260704a"></script>
 <!--   -->
 

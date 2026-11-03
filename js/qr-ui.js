@@ -348,6 +348,70 @@ function confirmDialogCancel() {
     _pendingConfirmCallback = null;
 }
 
+/** Callback for EXPAND=AUTH unlock (in-memory only; cleared on refresh). */
+let _pendingExpandAuthCallback = null;
+let _pendingExpandAuthExpected = "";
+
+/**
+ * Prompt for link-banner auth code (<EXPAND=AUTH=code>).
+ * @param {string} expectedCode
+ * @param {(ok:boolean)=>void} onDone
+ */
+function promptExpandAuthCode(expectedCode, onDone) {
+    const modal = document.getElementById("expandAuthModal");
+    const input = document.getElementById("expandAuthInput");
+    const errEl = document.getElementById("expandAuthError");
+
+    if (!modal || !input) {
+        const typed = window.prompt("Enter Auth Code");
+        const ok = typed != null && String(typed) === String(expectedCode || "");
+        if (!ok && typed != null && typeof notify === "function") {
+            notify("Incorrect auth code.", "error");
+        }
+        if (typeof onDone === "function") onDone(ok);
+        return;
+    }
+
+    _pendingExpandAuthExpected = String(expectedCode || "");
+    _pendingExpandAuthCallback = typeof onDone === "function" ? onDone : null;
+    input.value = "";
+    if (errEl) {
+        errEl.textContent = "";
+        errEl.style.display = "none";
+    }
+    modal.style.display = "flex";
+    setTimeout(() => input.focus(), 50);
+}
+
+function closeExpandAuthModal(ok) {
+    const modal = document.getElementById("expandAuthModal");
+    if (modal) modal.style.display = "none";
+    const cb = _pendingExpandAuthCallback;
+    _pendingExpandAuthCallback = null;
+    _pendingExpandAuthExpected = "";
+    if (typeof cb === "function") cb(!!ok);
+}
+
+function submitExpandAuthCode() {
+    const input = document.getElementById("expandAuthInput");
+    const errEl = document.getElementById("expandAuthError");
+    const typed = String(input?.value || "");
+    if (typed === _pendingExpandAuthExpected) {
+        closeExpandAuthModal(true);
+        return;
+    }
+    if (errEl) {
+        errEl.textContent = "Incorrect auth code.";
+        errEl.style.display = "block";
+    } else if (typeof notify === "function") {
+        notify("Incorrect auth code.", "error");
+    }
+    if (input) {
+        input.select();
+        input.focus();
+    }
+}
+
 
 
 /**
@@ -695,7 +759,10 @@ function renderMultipleRemoteBlocks(remoteList) {
             const rawDescription = description || "";
             const parsed = parseInlineOptions(rawDescription);
             const xdescription = parsed.cleanText || "(No Description)";
-            const autoExpandFlag = !!parsed.expand;
+            const expandMode = parsed.expandMode || (parsed.expand ? "open" : null);
+            const expandAuthCode = String(parsed.expandAuth || "");
+            const autoExpandFlag = expandMode === "open";
+            const gatedExpand = expandMode === "disable" || expandMode === "auth";
             const customColorVal = parsed.color; // 1..100 or null
             const hideID         = parsed.noid;
             const hideOwner      = parsed.noowner;
@@ -791,25 +858,71 @@ function renderMultipleRemoteBlocks(remoteList) {
                 }, 200);
             };
 
-            // Collapse/expand logic
+            // Collapse/expand logic (EXPAND=DISABLE / EXPAND=AUTH gate expand, not collapse)
+            let expandAuthUnlocked = false;
+            const openLinkSection = () => {
+                if (!headerBlock.classList.contains("asset-banner")) {
+                    headerBlock.classList.add("asset-banner");
+                }
+                headerBlock.classList.add("active");
+                if (!isLoaded) loadAssets();
+                if (editMode && artifactOwner) {
+                    const editActions = document.getElementById("editActions");
+                    if (editActions) editActions.style.display = "flex";
+                }
+            };
+            const closeLinkSection = () => {
+                headerBlock.classList.remove("active");
+            };
+
             if (!editMode || (editMode && artifactOwner)) {
                 headerBlock.style.cursor = "pointer";
                 headerBlock.onclick = () => {
                     if (!headerBlock.classList.contains("asset-banner")) {
                         headerBlock.classList.add("asset-banner");
                     }
-                    const isActive = headerBlock.classList.toggle("active");
-                    if (isActive && !isLoaded) loadAssets();
 
-                    if (editMode && artifactOwner) {
-                        const editActions = document.getElementById("editActions");
-                        if (editActions) editActions.style.display = "flex";
+                    // Already open → allow collapse (including after AUTH unlock)
+                    if (headerBlock.classList.contains("active")) {
+                        closeLinkSection();
+                        return;
                     }
+
+                    const bypassGate = !!(editMode && artifactOwner);
+                    if (!bypassGate && expandMode === "disable") {
+                        if (typeof notify === "function") notify("Disabled", "info", 2200);
+                        else alert("Disabled");
+                        return;
+                    }
+                    if (!bypassGate && expandMode === "auth") {
+                        if (expandAuthUnlocked) {
+                            openLinkSection();
+                            return;
+                        }
+                        if (typeof promptExpandAuthCode === "function") {
+                            promptExpandAuthCode(expandAuthCode, (ok) => {
+                                if (!ok) return;
+                                expandAuthUnlocked = true;
+                                openLinkSection();
+                            });
+                        } else {
+                            const typed = window.prompt("Enter Auth Code");
+                            if (typed != null && String(typed) === expandAuthCode) {
+                                expandAuthUnlocked = true;
+                                openLinkSection();
+                            } else if (typed != null && typeof notify === "function") {
+                                notify("Incorrect auth code.", "error");
+                            }
+                        }
+                        return;
+                    }
+
+                    openLinkSection();
                 };
 
-                // Auto-expand owner’s block in edit mode
+                // Auto-expand owner’s block in edit mode (bypasses DISABLE / AUTH)
                 if (editMode && artifactOwner) {
-                    headerBlock.onclick();
+                    openLinkSection();
                 }
             } else if (editMode && !artifactOwner) {
                 applyLinkBlockTheme(headerBlock, contentDiv, {
@@ -821,16 +934,14 @@ function renderMultipleRemoteBlocks(remoteList) {
                 headerBlock.onclick = () => alert("You can't edit this Artifact!");
             }
 
-            // Auto-expand by inline option
+            // Auto-expand by plain <EXPAND> / <EX>
             if (autoExpandFlag) {
-                headerBlock.classList.add("active");
-                requestAnimationFrame(() => loadAssets());
+                openLinkSection();
             }
 
-            // Auto-expand the last one when not in editMode
-            if (!editMode && idx === remoteList.length - 1) {
-                headerBlock.classList.add("active");
-                requestAnimationFrame(() => loadAssets());
+            // Auto-expand the last one when not in editMode — skip gated sections
+            if (!editMode && idx === remoteList.length - 1 && !gatedExpand) {
+                openLinkSection();
             }
 
             // Always surface missing-data message for registry-only links
@@ -1808,7 +1919,8 @@ function editDescription(linkId = null, currentText = "") {
                 "💡 <strong>Banner description</strong> (link A, B, …) — saved in that link’s spreadsheet row B2.<br>" +
                 "Optional tags: <code>&lt;NOID&gt;</code> <code>&lt;NOOWNER&gt;</code> " +
                 "<code>&lt;COL:X&gt;</code> <code>&lt;EXPAND&gt;</code> " +
-                "<code>&lt;BALOON:text&gt;</code> <code>&lt;ANIMATE&gt;</code> (1s glow pulse on balloon)";
+                "<code>&lt;EXPAND=DISABLE&gt;</code> <code>&lt;EXPAND=AUTH=code&gt;</code> " +
+                "(code max 8 ASCII) <code>&lt;BALOON:text&gt;</code> <code>&lt;ANIMATE&gt;</code>";
         }
     } else {
         input.value = String(

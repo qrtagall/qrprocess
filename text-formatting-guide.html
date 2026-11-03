@@ -641,12 +641,19 @@ POLICE: Phone: 112</div>
                 <tr><td><code>&lt;NOOWNER&gt;</code></td><td>Hide owner email in the banner info row</td></tr>
                 <tr><td><code>&lt;COL:X&gt;</code></td><td>Soft pastel background shade (<code>X</code> = 1–100)</td></tr>
                 <tr><td><code>&lt;EXPAND&gt;</code> or <code>&lt;EX&gt;</code></td><td>Open this link section by default</td></tr>
+                <tr><td><code>&lt;EXPAND=DISABLE&gt;</code> or <code>&lt;EX=DISABLE&gt;</code></td><td>Keep collapsed. Tapping the banner shows a small <strong>Disabled</strong> notice and does not expand. Owners can still open it while editing.</td></tr>
+                <tr><td><code>&lt;EXPAND=AUTH=code&gt;</code> or <code>&lt;EX=AUTH=code&gt;</code></td><td>Keep collapsed. Tapping opens <strong>Enter Auth Code</strong>. On a correct match the section expands. Unlock is in-memory only — a page refresh collapses it again. <code>code</code> is max <strong>8</strong> ASCII characters (letters, digits, punctuation; no spaces).</td></tr>
                 <tr><td><code>&lt;BALOON:text&gt;</code> or <code>&lt;BALOON&gt;text&lt;/BALOON&gt;</code></td><td>Orange capsule promo label (max <strong>15</strong> chars) floating on the banner — visible even when collapsed</td></tr>
                 <tr><td><code>&lt;ANIMATE&gt;</code></td><td>1-second glow ↔ dim pulse on the promo capsule only. Use with <code>&lt;BALOON:…&gt;</code></td></tr>
             </tbody>
         </table>
         <p>Example: <code>&lt;BALOON:Offer!&gt;&lt;ANIMATE&gt; Summer sale items</code> — animated “Offer!” capsule (1s pulse),
             title <strong>Summer sale items</strong>.</p>
+        <p>Expand examples:</p>
+        <ul>
+            <li><code>Staff documents &lt;EXPAND=DISABLE&gt;</code> — guests cannot open the section</li>
+            <li><code>Private album &lt;EXPAND=AUTH=Ab12!@#&gt;</code> — guests enter <code>Ab12!@#</code> to unlock until they refresh</li>
+        </ul>
 
         <h2>12. What does not apply to TEXT</h2>
         <ul>
