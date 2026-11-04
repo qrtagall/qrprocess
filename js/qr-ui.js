@@ -513,12 +513,12 @@ async function renderInfoBlock(data) {
         } else if (type.includes("FILE") && /drive\.google\.com/.test(url)) {
             const match = url.match(/\/d\/([^/]+)/);
             const fileId = match ? match[1] : null;
-            if (fileId) {
-                const iframe = `https://drive.google.com/file/d/${fileId}/preview`;
+            if (fileId && typeof buildInlineDriveFileHtml === "function") {
+                html += `<p>${serialMark}<b>${title}</b> ${visibilityIcon}</p>${buildInlineDriveFileHtml(fileId)}`;
+            } else if (fileId) {
+                const view = `https://drive.google.com/file/d/${fileId}/view`;
                 html += `<p>${serialMark}<b>${title}</b> ${visibilityIcon}</p>
-                         <iframe src="${iframe}" width="100%" height="400" frameborder="0"
-                             allow="autoplay; encrypted-media"
-                             sandbox="allow-scripts allow-same-origin allow-presentation"></iframe>`;
+                         <p><a href="${view}" target="_blank" rel="noopener noreferrer">Open in Drive</a></p>`;
             } else {
                 html += `<p>${serialMark}<b>${title}</b>: <a href="${url}" target="_blank">${url}</a></p>`;
             }
@@ -4081,12 +4081,13 @@ function createAssetBlockFromHTML(asset, index, isEditable = false, isArticatOen
     } else if (typeUpper.includes("FILE") && /drive\.google\.com/.test(url)) {
         const match = url.match(/\/d\/([^/]+)/);
         const fileId = match ? match[1] : null;
-        if (fileId) {
-            const iframe = `https://drive.google.com/file/d/${fileId}/preview`;
+        if (fileId && typeof buildInlineDriveFileHtml === "function") {
+            mainBlock.innerHTML = `<p>${serialPrefixOrFallback}<b>${title}</b> ${visibilityIcon}</p>${buildInlineDriveFileHtml(fileId)}`;
+            wrapper.appendChild(mainBlock);
+        } else if (fileId) {
+            const view = `https://drive.google.com/file/d/${fileId}/view`;
             mainBlock.innerHTML = `<p>${serialPrefixOrFallback}<b>${title}</b> ${visibilityIcon}</p>
-                                   <iframe src="${iframe}" width="100%" height="400" frameborder="0"
-                                       allow="autoplay; encrypted-media"
-                                       sandbox="allow-scripts allow-same-origin allow-presentation"></iframe>`;
+                <p><a href="${view}" target="_blank" rel="noopener noreferrer">Open in Drive</a></p>`;
             wrapper.appendChild(mainBlock);
         }
     } else if (typeUpper.includes("DRIVE") && url.includes("drive.google.com/drive/")) {

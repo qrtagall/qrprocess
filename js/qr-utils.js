@@ -654,8 +654,128 @@ function buildFullFrameIframeHtml(src, opts = {}) {
     return `<iframe class="qrt-preview-iframe qrt-preview-iframe--full"
         src="${escapeHtmlAttr(src)}"
         allow="${allow}"
+        allowfullscreen
         referrerpolicy="no-referrer-when-downgrade"
         loading="lazy"></iframe>`;
+}
+
+/** Mobile Safari/Chrome often leave Drive PDF /preview iframes blank — prefer external open. */
+function prefersExternalDocPreview() {
+    try {
+        if (window.matchMedia && window.matchMedia("(pointer: coarse)").matches) return true;
+        if (window.matchMedia && window.matchMedia("(max-width: 820px)").matches) {
+            if (navigator.maxTouchPoints > 0) return true;
+        }
+    } catch (_) {
+        /* ignore */
+    }
+    const ua = String(navigator.userAgent || "");
+    return /iPhone|iPad|iPod|Android|Mobile/i.test(ua);
+}
+
+function driveFileViewUrl(fileId) {
+    return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/view`;
+}
+
+function driveFilePreviewUrl(fileId) {
+    return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/preview`;
+}
+
+function driveFileThumbUrl(fileId) {
+    return `https://drive.google.com/thumbnail?id=${encodeURIComponent(fileId)}&sz=w1000`;
+}
+
+/**
+ * Drive file modal body: desktop keeps /preview iframe; mobile uses thumb + Open
+ * (PDF embed in iframe is unreliable on iOS/Android).
+ */
+function buildDriveFilePreviewHtml(fileId, opts = {}) {
+    const viewUrl = driveFileViewUrl(fileId);
+    const previewUrl = driveFilePreviewUrl(fileId);
+    const thumbUrl = driveFileThumbUrl(fileId);
+    const encView = encodeURIComponent(viewUrl);
+    const mobile = prefersExternalDocPreview();
+    const label = opts.label || "Drive file";
+    const openLabel = opts.openLabel || "Open in Drive";
+
+    if (mobile) {
+        return `<div class="qrt-drive-doc-shell qrt-drive-doc-shell--mobile" data-file-id="${escapeHtmlAttr(fileId)}">
+        <div class="qrt-preview-web-notice" role="note">
+            <span class="qrt-preview-web-notice-host">${escapeHtmlAttr(label)}</span>
+            <span class="qrt-preview-web-notice-text">Phone browsers usually cannot show Drive PDFs inside this app. Open the file in Google Drive to view or download.</span>
+        </div>
+        <div class="qrt-drive-doc-thumb-wrap">
+            <img class="qrt-drive-doc-thumb" src="${escapeHtmlAttr(thumbUrl)}" alt="Document preview"
+                 onerror="this.classList.add('is-hidden'); this.nextElementSibling && this.nextElementSibling.classList.remove('is-hidden');">
+            <div class="qrt-drive-doc-thumb-fallback is-hidden" aria-hidden="true">📄</div>
+        </div>
+        <div class="qrt-preview-web-bar">
+            <button type="button" class="qrt-btn qrt-btn-primary" onclick="event.stopPropagation(); openUrlInNewTab(decodeURIComponent('${encView}')); return false;">${escapeHtmlAttr(openLabel)}</button>
+            <button type="button" class="qrt-btn qrt-btn-secondary qrt-btn-sm" onclick="event.stopPropagation(); copyTextLink('${encView}'); return false;">Copy link</button>
+        </div>
+    </div>`;
+    }
+
+    return `<div class="qrt-drive-doc-shell" data-file-id="${escapeHtmlAttr(fileId)}">
+        ${buildFullFrameIframeHtml(previewUrl, {
+            allow: "autoplay; encrypted-media; fullscreen",
+        })}
+        <div class="qrt-preview-web-bar">
+            <span class="qrt-preview-web-hint">Preview blank?</span>
+            <button type="button" class="qrt-btn qrt-btn-primary qrt-btn-sm" onclick="event.stopPropagation(); openUrlInNewTab(decodeURIComponent('${encView}')); return false;">${escapeHtmlAttr(openLabel)}</button>
+            <button type="button" class="qrt-btn qrt-btn-secondary qrt-btn-sm" onclick="event.stopPropagation(); copyTextLink('${encView}'); return false;">Copy link</button>
+        </div>
+    </div>`;
+}
+
+/** Inline artifact block for IMAGEFILE/PDFFILE/… Drive links (mobile-safe). */
+function buildInlineDriveFileHtml(fileId, opts = {}) {
+    const id = String(fileId || "").trim();
+    if (!id) return "";
+    const viewUrl = driveFileViewUrl(id);
+    const previewUrl = driveFilePreviewUrl(id);
+    const encView = encodeURIComponent(viewUrl);
+    const mobile = prefersExternalDocPreview();
+    const openLabel = opts.openLabel || "Open in Drive";
+    const mobileClass = mobile ? " qrt-inline-drive-file--mobile" : "";
+    return `<div class="qrt-inline-drive-file${mobileClass}">
+        <iframe src="${escapeHtmlAttr(previewUrl)}"
+            allow="autoplay; encrypted-media; fullscreen"
+            allowfullscreen
+            referrerpolicy="no-referrer-when-downgrade"
+            title="Drive file preview"></iframe>
+        <div class="qrt-inline-drive-file-actions">
+            <button type="button" class="qrt-btn qrt-btn-primary qrt-btn-sm"
+                onclick="event.stopPropagation(); openUrlInNewTab(decodeURIComponent('${encView}')); return false;">${escapeHtmlAttr(openLabel)}</button>
+            <button type="button" class="qrt-btn qrt-btn-secondary qrt-btn-sm"
+                onclick="event.stopPropagation(); openPreviewModal('${escapeHtmlAttr(viewUrl)}', 'FILE'); return false;">Preview</button>
+        </div>
+    </div>`;
+}
+
+function buildPdfPreviewHtml(url) {
+    const safe = String(url || "").trim();
+    const enc = encodeURIComponent(safe);
+    if (prefersExternalDocPreview()) {
+        return `<div class="qrt-drive-doc-shell qrt-drive-doc-shell--mobile">
+        <div class="qrt-preview-web-notice" role="note">
+            <span class="qrt-preview-web-notice-host">PDF</span>
+            <span class="qrt-preview-web-notice-text">This phone browser often cannot render PDFs inside the preview. Open the file in a new tab instead.</span>
+        </div>
+        <div class="qrt-drive-doc-thumb-wrap">
+            <div class="qrt-drive-doc-thumb-fallback" aria-hidden="true">📄</div>
+        </div>
+        <div class="qrt-preview-web-bar">
+            <button type="button" class="qrt-btn qrt-btn-primary" onclick="event.stopPropagation(); openUrlInNewTab(decodeURIComponent('${enc}')); return false;">Open PDF</button>
+            <button type="button" class="qrt-btn qrt-btn-secondary qrt-btn-sm" onclick="event.stopPropagation(); copyTextLink('${enc}'); return false;">Copy link</button>
+        </div>
+    </div>`;
+    }
+    return `${buildFullFrameIframeHtml(safe)}
+        <div class="qrt-preview-web-bar">
+            <span class="qrt-preview-web-hint">Preview blank?</span>
+            <button type="button" class="qrt-btn qrt-btn-primary qrt-btn-sm" onclick="event.stopPropagation(); openUrlInNewTab(decodeURIComponent('${enc}')); return false;">Open PDF</button>
+        </div>`;
 }
 
 function buildWebEmbedShellHtml(url) {
@@ -2388,10 +2508,11 @@ function openPreviewModal(url, type = "auto") {
     let html = "";
 
     if (typeUpper.includes("FILE") && /drive\.google\.com/.test(url) && fileId) {
-        const iframeUrl = `https://drive.google.com/file/d/${fileId}/preview`;
         if (panel) panel.classList.add("qrt-preview-panel--wide");
-        html = buildFullFrameIframeHtml(iframeUrl, {
-            allow: "autoplay; encrypted-media; fullscreen",
+        inner.classList.add("qrt-preview-inner--web");
+        html = buildDriveFilePreviewHtml(fileId, {
+            label: "Google Drive",
+            openLabel: "Open in Drive",
         });
     } else if (typeUpper === "IMAGE" || /\.(jpg|jpeg|png|gif|webp)$/i.test(url)) {
         html = `<img src="${escapeHtmlAttr(url)}" class="qrt-preview-image" alt="">`;
@@ -2402,7 +2523,8 @@ function openPreviewModal(url, type = "auto") {
             </video>`;
     } else if (typeUpper === "PDF" || /\.pdf$/i.test(url)) {
         if (panel) panel.classList.add("qrt-preview-panel--wide");
-        html = buildFullFrameIframeHtml(url);
+        inner.classList.add("qrt-preview-inner--web");
+        html = buildPdfPreviewHtml(url);
     } else if (typeUpper === "YOUTUBE" || (typeUpper === "AUTO" && normaliseYouTubeEmbed(url))) {
         const src =
             typeUpper === "YOUTUBE" && /youtube\.com\/embed\//i.test(url)
